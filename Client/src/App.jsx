@@ -1,0 +1,199 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ChatProvider } from './context/ChatContext';
+import { useAuth } from './context/useAuth';
+import AdminDashboard from './pages/admin/adminDashboard';
+import AdminUsers from './pages/admin/adminUsers';
+import Settings from './pages/admin/Settings';
+import AlumniDashboard from './pages/alumni/alumniDashboard';
+import AlumniProfile from './pages/alumni/alumniProfile';
+import AlumniAccounts from './pages/alumni/alumniAccounts';
+import AlumniMessage from './pages/alumni/alumniMessage';
+import AlumniCareer from './pages/alumni/alumniCareer';
+import AlumniEmployment from './pages/alumni/alumniEmployment';
+import AlumniReferral from './pages/alumni/alumniReferral';
+import AlumniSuccess from './pages/alumni/alumniSuccess';
+import StudentDashboard from './pages/student/studentDashboard';
+import Login from './auth/login';
+import Logout from './auth/logout';
+import Signup from './auth/signup';
+import ForgetPassword from './auth/forget-password';
+import MagicLinkVerification from './auth/magic-link-verify';
+import SetupPassword from './auth/setup-password';
+import { Roles } from './utils/roles';
+
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-white">
+        <div className="text-center">
+          <svg className="animate-spin h-8 w-8 mx-auto text-[#009639]" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+              strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p className="mt-3 text-[13px] font-semibold text-zinc-700">Checking your session...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  if (user?.passwordSetupRequired) {
+    return <Navigate to="/setup-password" replace />;
+  }
+
+  // Role gate (UI only — API enforces via `authorize()`).
+  // Usage: <ProtectedRoute allowedRoles={[Roles.ADMIN]}>...</ProtectedRoute>
+  if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
+
+// Role router: all login flows navigate to '/' — this single choke point
+// sends each role to its own landing without touching every auth page.
+const RoleIndex = () => {
+  const { user } = useAuth();
+
+  if (user?.role === Roles.ADMIN) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (user?.role === Roles.STUDENT) {
+    return <Navigate to="/student" replace />;
+  }
+
+  return <Navigate to="/alumni" replace />;
+};
+
+// Legacy '/inbox' links land here and bounce to the role's inbox.
+// Add per-role inbox pages later and point them here.
+const InboxRedirect = () => {
+  const { user } = useAuth();
+
+  if (user?.role === Roles.ADMIN) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (user?.role === Roles.STUDENT) {
+    return <Navigate to="/student" replace />;
+  }
+
+  return <Navigate to="/alumni/message" replace />;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/logout" element={
+        <ProtectedRoute>
+          <Logout />
+        </ProtectedRoute>
+      } />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgetPassword />} />
+      <Route path="/verify-magic-link" element={<MagicLinkVerification />} />
+      <Route path="/setup-password" element={<SetupPassword />} />
+      <Route path="/" element={
+        <ProtectedRoute>
+          <RoleIndex />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/settings" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <Settings />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/users" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminUsers />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/profile" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/profile/:id" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/accounts" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniAccounts />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/message" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniMessage />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/career" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniCareer />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/employment" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniEmployment />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/referral" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniReferral />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/success" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniSuccess />
+        </ProtectedRoute>
+      } />
+      <Route path="/student" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentDashboard />
+        </ProtectedRoute>
+      } />
+      {/* Legacy inbox links (sidebars) redirect per role */}
+      <Route path="/inbox" element={
+        <ProtectedRoute>
+          <InboxRedirect />
+        </ProtectedRoute>
+      } />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <ChatProvider>
+          <AppRoutes />
+        </ChatProvider>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App;

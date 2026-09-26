@@ -1,0 +1,172 @@
+import React, { useState } from 'react';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardCheck,
+  Briefcase,
+  ArrowLeftRight,
+  FileText,
+  Calendar,
+  Link2,
+  Megaphone,
+  MessageSquare,
+  Settings,
+  LogOut,
+} from 'lucide-react';
+import clsuLogo from '../../../assets/logo/clsu_logo.png';
+
+const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: controlledSet }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Controlled when parent passes props (dashboard topbar hamburger),
+  // otherwise falls back to internal state.
+  const mobileOpen = controlledOpen ?? internalOpen;
+  const setMobileOpen = controlledSet ?? setInternalOpen;
+
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+  const isSettingsActive = location.pathname.startsWith('/admin/settings');
+
+  const navItemClass = (active) =>
+    `group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+      active
+        ? 'bg-[#009639]/10 text-[#009639] font-semibold'
+        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium'
+    }`;
+
+  const handleLogout = () => {
+    navigate('/logout');
+  };
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        ></div>
+      )}
+
+      <aside
+        id="sidebar"
+        className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-zinc-200 transform transition-transform duration-300 z-30 flex flex-col ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0`}
+        style={{ fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif" }}
+      >
+        {/* Header / Brand */}
+        <div className="px-4 pt-5 pb-5 border-b border-zinc-100">
+          <Link to="/admin" className="flex flex-col items-center text-center group">
+            <img
+              src={clsuLogo}
+              alt="CLSU"
+              className="h-16 w-16 object-contain"
+            />
+            <div className="leading-tight mt-1">
+              <p className="font-extrabold text-[17px] tracking-tight text-zinc-800">SielAlumni</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Nav */}
+        <div className="flex-1 overflow-y-auto px-2.5 pb-2 pt-6 space-y-0.5">
+
+          {/* Primary group */}
+          <nav className="space-y-0.5">
+            <NavLink to="/admin" end className={navItemClass(isActive('/admin/dashboard') || location.pathname === '/admin')}>
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              <span className="truncate">Dashboard</span>
+            </NavLink>
+
+            <NavLink to="/admin/users" className={navItemClass(isActive('/admin/users'))}>
+              <Users className="w-4 h-4 shrink-0" />
+              <span className="truncate">Users</span>
+            </NavLink>
+
+            <NavLink to="/admin/tracer" className={navItemClass(isActive('/admin/tracer'))}>
+              <ClipboardCheck className="w-4 h-4 shrink-0" />
+              <span className="truncate">Tracer Study</span>
+            </NavLink>
+
+            <NavLink to="/admin/jobs" className={navItemClass(isActive('/admin/jobs'))}>
+              <Briefcase className="w-4 h-4 shrink-0" />
+              <span className="truncate">Job Posts</span>
+            </NavLink>
+
+            <NavLink to="/admin/conversion" className={navItemClass(isActive('/admin/conversion'))}>
+              <ArrowLeftRight className="w-4 h-4 shrink-0" />
+              <span className="truncate">Conversion</span>
+            </NavLink>
+
+            <NavLink to="/admin/surveys" className={navItemClass(isActive('/admin/surveys'))}>
+              <FileText className="w-4 h-4 shrink-0" />
+              <span className="truncate">Survey</span>
+            </NavLink>
+          </nav>
+
+          {/* Secondary group */}
+          <nav className="space-y-0.5">
+            <NavLink to="/admin/events" className={navItemClass(isActive('/admin/events'))}>
+              <Calendar className="w-4 h-4 shrink-0" />
+              <span className="truncate">Calendar</span>
+            </NavLink>
+
+            <NavLink to="/admin/connections" className={navItemClass(isActive('/admin/connections'))}>
+              <Link2 className="w-4 h-4 shrink-0" />
+              <span className="truncate">Connections</span>
+            </NavLink>
+
+            <NavLink to="/admin/announcements" className={navItemClass(isActive('/admin/announcements'))}>
+              <Megaphone className="w-4 h-4 shrink-0" />
+              <span className="truncate">Announcements</span>
+            </NavLink>
+
+            <NavLink to="/inbox" className={navItemClass(isActive('/inbox'))}>
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              <span className="truncate">Message</span>
+            </NavLink>
+          </nav>
+
+          {/* Settings */}
+          <div id="nav-settings-group">
+            <NavLink to="/admin/settings" className={navItemClass(isSettingsActive)}>
+              <Settings className="w-4 h-4 shrink-0" />
+              <span className="truncate">Settings</span>
+            </NavLink>
+          </div>
+        </div>
+
+        {/* User + Logout */}
+        <div className="p-2.5 border-t border-zinc-200">
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 transition-colors">
+            <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100">
+              {(user?.name || 'A').charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold text-zinc-800 truncate leading-tight">
+                {user?.name || 'Admin'}
+              </p>
+              <p className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
+                {user?.email || 'admin@clsu.edu.ph'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[12px] font-medium text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className="truncate">Logout</span>
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+};
+
+export default AdminSidebar;
