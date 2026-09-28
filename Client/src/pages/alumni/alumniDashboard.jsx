@@ -131,7 +131,7 @@ const AlumniDashboard = () => {
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/alumni/surveys')}
+                onClick={() => navigate('/alumni/tracer')}
                 className="mt-3 w-full rounded-xl bg-white py-2 text-[12px] font-bold text-[#007a2e] transition hover:bg-emerald-50"
               >
                 Answer now

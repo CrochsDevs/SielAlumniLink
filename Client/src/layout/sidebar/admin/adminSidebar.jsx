@@ -5,7 +5,6 @@ import {
   Users,
   ClipboardCheck,
   Briefcase,
-  ArrowLeftRight,
   FileText,
   Calendar,
   Link2,
@@ -96,11 +95,6 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
               <span className="truncate">Job Posts</span>
             </NavLink>
 
-            <NavLink to="/admin/conversion" className={navItemClass(isActive('/admin/conversion'))}>
-              <ArrowLeftRight className="w-4 h-4 shrink-0" />
-              <span className="truncate">Conversion</span>
-            </NavLink>
-
             <NavLink to="/admin/surveys" className={navItemClass(isActive('/admin/surveys'))}>
               <FileText className="w-4 h-4 shrink-0" />
               <span className="truncate">Survey</span>
@@ -124,7 +118,7 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
               <span className="truncate">Announcements</span>
             </NavLink>
 
-            <NavLink to="/inbox" className={navItemClass(isActive('/inbox'))}>
+            <NavLink to="/admin/message" className={navItemClass(isActive('/admin/message'))}>
               <MessageSquare className="w-4 h-4 shrink-0" />
               <span className="truncate">Message</span>
             </NavLink>

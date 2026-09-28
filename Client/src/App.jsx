@@ -5,6 +5,13 @@ import { ChatProvider } from './context/ChatContext';
 import { useAuth } from './context/useAuth';
 import AdminDashboard from './pages/admin/adminDashboard';
 import AdminUsers from './pages/admin/adminUsers';
+import AdminTracer from './pages/admin/adminTracer';
+import AdminJobs from './pages/admin/adminJobs';
+import AdminSurveys from './pages/admin/adminSurveys';
+import AdminEvents from './pages/admin/adminEvents';
+import AdminConnections from './pages/admin/adminConnections';
+import AdminAnnouncements from './pages/admin/adminAnnouncements';
+import AdminMessage from './pages/admin/adminMessage';
 import Settings from './pages/admin/Settings';
 import AlumniDashboard from './pages/alumni/alumniDashboard';
 import AlumniProfile from './pages/alumni/alumniProfile';
@@ -14,7 +21,14 @@ import AlumniCareer from './pages/alumni/alumniCareer';
 import AlumniEmployment from './pages/alumni/alumniEmployment';
 import AlumniReferral from './pages/alumni/alumniReferral';
 import AlumniSuccess from './pages/alumni/alumniSuccess';
+import AlumniTracer from './pages/alumni/alumniTracer';
+import AlumniSurveys from './pages/alumni/alumniSurveys';
+import AlumniSurveyAnswer from './pages/alumni/alumniSurveyAnswer';
 import StudentDashboard from './pages/student/studentDashboard';
+import StudentProfile from './pages/student/studentProfile';
+import StudentJourney from './pages/student/studentJourney';
+import StudentPortfolio from './pages/student/studentPortfolio';
+import StudentCareer from './pages/student/studentCareer';
 import Login from './auth/login';
 import Logout from './auth/logout';
 import Signup from './auth/signup';
@@ -124,6 +138,41 @@ function AppRoutes() {
           <AdminUsers />
         </ProtectedRoute>
       } />
+      <Route path="/admin/tracer" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminTracer />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/jobs" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminJobs />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/surveys" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminSurveys />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/events" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminEvents />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/connections" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminConnections />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/announcements" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminAnnouncements />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/message" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+          <AdminMessage />
+        </ProtectedRoute>
+      } />
       <Route path="/alumni" element={
         <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
           <AlumniDashboard />
@@ -169,9 +218,49 @@ function AppRoutes() {
           <AlumniSuccess />
         </ProtectedRoute>
       } />
+      <Route path="/alumni/tracer" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN, Roles.STUDENT]}>
+          <AlumniTracer />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/surveys" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN, Roles.STUDENT]}>
+          <AlumniSurveys />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/surveys/:id" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN, Roles.STUDENT]}>
+          <AlumniSurveyAnswer />
+        </ProtectedRoute>
+      } />
       <Route path="/student" element={
         <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
           <StudentDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/profile" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/profile/:id" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/journey" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentJourney />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/portfolio" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentPortfolio />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/career" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentCareer />
         </ProtectedRoute>
       } />
       {/* Legacy inbox links (sidebars) redirect per role */}

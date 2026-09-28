@@ -19,7 +19,6 @@ const breadcrumbMap = [
   ['/admin/users', 'Users'],
   ['/admin/tracer', 'Tracer Study'],
   ['/admin/jobs', 'Job Posts'],
-  ['/admin/conversion', 'Conversion'],
   ['/admin/surveys', 'Survey'],
   ['/admin/events', 'Calendar'],
   ['/admin/connections', 'Connections'],

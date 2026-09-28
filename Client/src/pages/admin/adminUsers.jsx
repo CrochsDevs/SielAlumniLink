@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
-import { Search, Trash2, Users as UsersIcon, ShieldCheck, GraduationCap, BookOpen, ScrollText, RefreshCw, Circle } from 'lucide-react';
+import { Search, Users as UsersIcon, GraduationCap, BookOpen, ScrollText, RefreshCw, Circle, DatabaseZap } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { usePresence } from '../../realtime/usePresence';
 import AdminSidebar from '../../layout/sidebar/admin/adminSidebar';
 import AdminTopbar from '../../layout/topbar/alumni/adminTopbar';
 import api from '../../utils/axios';
 import { Roles } from '../../utils/roles';
+import DataPagination from '../../components/ui/data-pagination';
 
 const ROLE_META = {
-  [Roles.ADMIN]: { icon: ShieldCheck, style: 'bg-red-50 text-red-600 ring-red-200/60' },
   [Roles.ALUMNI]: { icon: GraduationCap, style: 'bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60' },
   [Roles.STUDENT]: { icon: BookOpen, style: 'bg-blue-50 text-blue-600 ring-blue-200/60' },
 };
@@ -35,6 +35,13 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [audit, setAudit] = useState([]);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [userPage, setUserPage] = useState(1);
+  const [userPerPage, setUserPerPage] = useState(10);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPerPage, setAuditPerPage] = useState(10);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [syncSummary, setSyncSummary] = useState(null);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -48,9 +55,31 @@ export default function AdminUsers() {
     }
   }, []);
 
+  const fetchAudit = useCallback(async () => {
+    setAuditLoading(true);
+    try {
+      const res = await api.get('/activity', { params: { limit: 50 } });
+      setAudit(res.data.data || []);
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to load audit logs', 'error');
+    } finally {
+      setAuditLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
     fetchAudit();
+  }, [fetchUsers, fetchAudit]);
+
+  // Auto-refresh every 30s so Last Login / Status stay current
+  // while the admin keeps this page open.
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetchUsers();
+      fetchAudit();
+    }, 30000);
+    return () => clearInterval(id);
   }, [fetchUsers, fetchAudit]);
 
   // Per-email last login/logout from the audit trail (persistent,
@@ -69,27 +98,36 @@ export default function AdminUsers() {
     return map;
   }, [audit]);
 
-  const fetchAudit = useCallback(async () => {
-    setAuditLoading(true);
-    try {
-      const res = await api.get('/activity', { params: { limit: 50 } });
-      setAudit(res.data.data || []);
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to load audit logs', 'error');
-    } finally {
-      setAuditLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (view === 'audit') fetchAudit();
   }, [view, fetchAudit]);
 
+  // ---- CAIS sync (one-click live pull) ----
+  // One-click live pull from the CAIS API — loading, then stored.
+  const runCaisSync = async () => {
+    setSyncLoading(true);
+    setSyncSummary(null);
+    try {
+      const res = await api.post('/users/sync', { source: 'cais' });
+      setSyncSummary(res.data.data);
+      fetchUsers();
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'CAIS sync failed. Check CAIS_API_URL in Server/.env', 'error');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const closeSync = () => {
+    setSyncOpen(false);
+    setSyncSummary(null);
+  };
+
   const counts = useMemo(() => {
-    const c = { all: users.length, admin: 0, alumni: 0, student: 0 };
-    users.forEach((u) => {
-      if (u.role === Roles.ADMIN) c.admin += 1;
-      else if (u.role === Roles.STUDENT) c.student += 1;
+    const visible = users.filter((u) => u.role !== Roles.ADMIN);
+    const c = { all: visible.length, alumni: 0, student: 0 };
+    visible.forEach((u) => {
+      if (u.role === Roles.STUDENT) c.student += 1;
       else c.alumni += 1;
     });
     return c;
@@ -97,44 +135,29 @@ export default function AdminUsers() {
 
   const filtered = users.filter((u) => {
     if (u.role === Roles.ADMIN) return false;
-    const matchesQuery =
-      (u.name || '').toLowerCase().includes(query.toLowerCase()) ||
-      (u.email || '').toLowerCase().includes(query.toLowerCase());
+    const haystack = [u.name, u.email, u.studentId, u.program, u.yearLevel, u.section, u.academicStatus, u.contactNumber]
+      .filter(Boolean).join(' ').toLowerCase();
+    const matchesQuery = haystack.includes(query.toLowerCase());
     const matchesRole = roleFilter === 'all' || (u.role || Roles.ALUMNI) === roleFilter;
     return matchesQuery && matchesRole;
   });
 
-  const handleRoleChange = async (profileId, email, newRole) => {
-    try {
-      await api.put(`/users/${profileId}/role`, { role: newRole });
-      setUsers((prev) => prev.map((u) => (u._id === profileId ? { ...u, role: newRole } : u)));
-      Swal.fire({ title: 'Role updated', text: `${email} is now ${newRole}.`, icon: 'success', timer: 1500, showConfirmButton: false });
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to update role', 'error');
-      fetchUsers();
-    }
-  };
+  // Reset to first page when filters change.
+  useEffect(() => {
+    setUserPage(1);
+  }, [query, roleFilter]);
 
-  const handleDelete = async (profileId, email) => {
-    const result = await Swal.fire({
-      title: 'Delete user?',
-      text: `Remove ${email} from the directory? This cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#dc2626',
-      reverseButtons: true,
-    });
-    if (!result.isConfirmed) return;
-    try {
-      await api.delete(`/users/${profileId}`);
-      setUsers((prev) => prev.filter((u) => u._id !== profileId));
-      Swal.fire({ title: 'Deleted', icon: 'success', timer: 1500, showConfirmButton: false });
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to delete user', 'error');
-    }
-  };
+  const totalUserPages = Math.max(1, Math.ceil(filtered.length / userPerPage));
+  const pagedUsers = filtered.slice((userPage - 1) * userPerPage, userPage * userPerPage);
+
+  // Audit logs exclude admins (matched by email from the users list).
+  const adminEmails = useMemo(
+    () => new Set(users.filter((u) => u.role === Roles.ADMIN).map((u) => u.email)),
+    [users]
+  );
+  const filteredAudit = audit.filter((log) => !adminEmails.has(log.email));
+  const totalAuditPages = Math.max(1, Math.ceil(filteredAudit.length / auditPerPage));
+  const pagedAudit = filteredAudit.slice((auditPage - 1) * auditPerPage, auditPage * auditPerPage);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -145,10 +168,9 @@ export default function AdminUsers() {
 
         <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
           {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
             {[
               { label: 'Total Users', value: counts.all, icon: UsersIcon },
-              { label: 'Admins', value: counts.admin, icon: ShieldCheck },
               { label: 'Alumni', value: counts.alumni, icon: GraduationCap },
               { label: 'Students', value: counts.student, icon: BookOpen },
             ].map(({ label, value, icon: Icon }) => (
@@ -210,7 +232,7 @@ export default function AdminUsers() {
             {auditLoading ? (
               <p className="p-6 text-[13px] text-zinc-500">Loading audit logs...</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full min-w-[560px] text-left text-[12.5px]">
                   <thead>
                     <tr className="border-b border-zinc-100 text-[10.5px] uppercase tracking-wider text-zinc-400">
@@ -220,7 +242,7 @@ export default function AdminUsers() {
                     </tr>
                   </thead>
                   <tbody>
-                    {audit.map((log) => (
+                    {pagedAudit.map((log) => (
                       <tr key={log._id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
                         <td className="px-5 py-3 font-medium text-zinc-800">{log.email}</td>
                         <td className="px-5 py-3">
@@ -235,13 +257,22 @@ export default function AdminUsers() {
                         </td>
                       </tr>
                     ))}
-                    {audit.length === 0 && (
+                    {filteredAudit.length === 0 && (
                       <tr><td colSpan={3} className="px-5 py-8 text-center text-zinc-400">No activity yet.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
             )}
+            <DataPagination
+              page={Math.min(auditPage, totalAuditPages)}
+              totalPages={totalAuditPages}
+              onPageChange={setAuditPage}
+              perPage={auditPerPage}
+              onPerPageChange={(n) => { setAuditPerPage(n); setAuditPage(1); }}
+              totalItems={filteredAudit.length}
+              itemLabel="logs"
+            />
           </div>
           ) : (
           <>
@@ -258,7 +289,7 @@ export default function AdminUsers() {
                 />
               </div>
               <div className="flex gap-1.5">
-                {['all', Roles.ADMIN, Roles.ALUMNI, Roles.STUDENT].map((r) => (
+                {['all', Roles.ALUMNI, Roles.STUDENT].map((r) => (
                   <button
                     key={r}
                     type="button"
@@ -270,26 +301,38 @@ export default function AdminUsers() {
                     {r}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setSyncOpen(true)}
+                  className="flex items-center gap-1.5 rounded-full bg-zinc-900 px-3.5 py-1.5 text-[11.5px] font-bold text-white transition hover:bg-zinc-800"
+                >
+                  <DatabaseZap className="h-3.5 w-3.5" />
+                  Sync CAIS
+                </button>
               </div>
             </div>
 
             {loading ? (
               <p className="p-6 text-[13px] text-zinc-500">Loading users...</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-[12.5px]">
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full min-w-[1240px] text-left text-[12.5px]">
                   <thead>
                     <tr className="border-b border-zinc-100 text-[10.5px] uppercase tracking-wider text-zinc-400">
-                      <th className="px-5 py-3 font-semibold">User</th>
+                      <th className="px-5 py-3 font-semibold">Student ID</th>
+                      <th className="px-5 py-3 font-semibold min-w-[200px]">Full Name</th>
+                      <th className="px-5 py-3 font-semibold">Program/Course</th>
+                      <th className="px-5 py-3 font-semibold">Year Level</th>
+                      <th className="px-5 py-3 font-semibold">Section</th>
+                      <th className="px-5 py-3 font-semibold">Academic Status</th>
+                      <th className="px-5 py-3 font-semibold">Email</th>
+                      <th className="px-5 py-3 font-semibold">Contact Number</th>
                       <th className="px-5 py-3 font-semibold">Role</th>
                       <th className="px-5 py-3 font-semibold">Status</th>
-                      <th className="px-5 py-3 font-semibold">Last Login</th>
-                      <th className="px-5 py-3 font-semibold">Joined</th>
-                      <th className="px-5 py-3 font-semibold text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((u) => {
+                    {pagedUsers.map((u) => {
                       const meta = ROLE_META[u.role] || ROLE_META[Roles.ALUMNI];
                       const RoleIcon = meta.icon;
                       const online = onlineIds.has(String(u.authId));
@@ -305,17 +348,18 @@ export default function AdminUsers() {
                             : 'Never logged in';
                       return (
                         <tr key={u._id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
+                          <td className="px-5 py-3 font-medium text-zinc-800">{u.studentId || '—'}</td>
+                          <td className="px-5 py-3 font-semibold text-zinc-800 whitespace-nowrap min-w-[200px]">{u.name || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-600">{u.program || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-600">{u.yearLevel || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-600">{u.section || '—'}</td>
                           <td className="px-5 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[12px] font-bold text-[#009639]">
-                                {(u.name || 'U').charAt(0).toUpperCase()}
-                              </span>
-                              <span>
-                                <span className="block font-semibold text-zinc-800">{u.name || '—'}</span>
-                                <span className="block text-[11px] text-zinc-500">{u.email}</span>
-                              </span>
-                            </div>
+                            <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-zinc-600">
+                              {u.academicStatus || '—'}
+                            </span>
                           </td>
+                          <td className="px-5 py-3 text-zinc-500">{u.email}</td>
+                          <td className="px-5 py-3 text-zinc-600">{u.contactNumber || '—'}</td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 ${meta.style}`}>
                               <RoleIcon className="h-3 w-3" />
@@ -334,49 +378,101 @@ export default function AdminUsers() {
                               </span>
                             )}
                           </td>
-                          <td className="px-5 py-3 text-zinc-500">
-                            {activity.login ? (
-                              <span title={new Date(activity.login).toLocaleString()}>
-                                {formatRelative(activity.login)}
-                              </span>
-                            ) : '—'}
-                          </td>
-                          <td className="px-5 py-3 text-zinc-500">
-                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <select
-                                value={u.role || Roles.ALUMNI}
-                                onChange={(e) => handleRoleChange(u._id, u.email, e.target.value)}
-                                className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-[11.5px] font-semibold text-zinc-700 outline-none focus:border-[#009639]"
-                                aria-label={`Change role for ${u.email}`}
-                              >
-                                {Object.values(Roles).map((r) => (
-                                  <option key={r} value={r}>{r}</option>
-                                ))}
-                              </select>
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(u._id, u.email)}
-                                className="rounded-lg p-2 text-zinc-300 transition hover:bg-red-50 hover:text-red-600"
-                                aria-label={`Delete ${u.email}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
                         </tr>
                       );
                     })}
                     {filtered.length === 0 && (
-                      <tr><td colSpan={6} className="px-5 py-8 text-center text-zinc-400">No users found.</td></tr>
+                      <tr><td colSpan={10} className="px-5 py-8 text-center text-zinc-400">No users found.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
             )}
+            <DataPagination
+              page={Math.min(userPage, totalUserPages)}
+              totalPages={totalUserPages}
+              onPageChange={setUserPage}
+              perPage={userPerPage}
+              onPerPageChange={(n) => { setUserPerPage(n); setUserPage(1); }}
+              totalItems={filtered.length}
+              itemLabel="users"
+            />
           </div>
+
+      {/* CAIS sync modal */}
+      {syncOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeSync}>
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900">
+              <RefreshCw className={`h-4 w-4 text-[#009639] ${syncLoading ? 'animate-spin' : ''}`} />
+              Sync from CAIS
+            </h2>
+            <p className="mt-0.5 text-[12px] text-zinc-500">
+              Pulls all records live from the CAIS API and stores them in SielAlumniLink.
+              New accounts get no password — they sign in via magic link.
+            </p>
+
+            {!syncSummary && !syncLoading && (
+              <button
+                type="button"
+                onClick={runCaisSync}
+                className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#009639] text-[13.5px] font-bold text-white shadow-sm transition hover:bg-[#007a2e]"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Sync Now
+              </button>
+            )}
+
+            {syncLoading && (
+              <div className="mt-4 flex flex-col items-center rounded-2xl bg-zinc-50 py-8">
+                <svg className="h-8 w-8 animate-spin text-[#009639]" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <p className="mt-3 text-[13px] font-bold text-zinc-700">Syncing from CAIS...</p>
+                <p className="text-[11px] text-zinc-400">Fetching records and storing them</p>
+              </div>
+            )}
+
+            {syncSummary && (
+              <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                {[
+                  ['Total', syncSummary.total],
+                  ['Create', syncSummary.created],
+                  ['Update', syncSummary.updated],
+                  ['Skip', syncSummary.skipped?.length || 0],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl bg-zinc-50 px-2 py-2.5">
+                    <p className="text-lg font-extrabold text-zinc-900">{value}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {syncSummary?.skipped?.length > 0 && (
+              <ul className="mt-2 max-h-28 space-y-1 overflow-y-auto rounded-xl bg-red-50/60 p-2.5 text-[11px] text-red-600">
+                {syncSummary.skipped.slice(0, 20).map((s, i) => (
+                  <li key={i}>{s.email || '(no email)'} — {s.reason}</li>
+                ))}
+                {syncSummary.skipped.length > 20 && <li>…and {syncSummary.skipped.length - 20} more</li>}
+              </ul>
+            )}
+
+            <div className="mt-4 flex gap-2">
+              <button type="button" onClick={closeSync}
+                className="h-10 flex-1 rounded-xl border border-zinc-200 text-[13px] font-bold text-zinc-600 transition hover:bg-zinc-50">
+                {syncSummary ? 'Done' : 'Close'}
+              </button>
+              {syncSummary && (
+                <button type="button" onClick={() => { setSyncSummary(null); runCaisSync(); }}
+                  className="h-10 flex-1 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e]">
+                  Sync Again
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
           </>
           )}
         </main>

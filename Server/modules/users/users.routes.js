@@ -6,6 +6,7 @@ import {
   updateUser, 
   updateUserRole,
   updateMyProfile,
+  syncUsers,
   deleteUser 
 } from './users.controllers.js';
 import { protect, authorize } from '../../middlewares/auth.middleware.js';
@@ -23,6 +24,9 @@ router.get('/', getUsers);
 router.put('/me', updateMyProfile);
 
 router.get('/:id', getUserById);
+
+// CAIS bulk sync: admin only (must come before '/:id' routes).
+router.post('/sync', authorize(Roles.ADMIN), syncUsers);
 
 // Management: admin only
 router.post('/', authorize(Roles.ADMIN), createUser);

@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { Users, ShieldCheck, Bell, Moon, Trash2 } from 'lucide-react';
+import { Users, ShieldCheck, Bell, Moon } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import AdminSidebar from '../../layout/sidebar/admin/adminSidebar';
 import AdminTopbar from '../../layout/topbar/alumni/adminTopbar';
 import api from '../../utils/axios';
-import { Roles } from '../../utils/roles';
 
 const TABS = [
   { key: 'account', label: 'Account Management', icon: Users },
@@ -26,16 +25,19 @@ const loadNotifs = () => {
 };
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const activeTab = TABS.some((t) => t.key === searchParams.get('tab'))
     ? searchParams.get('tab')
     : 'account';
 
-  // Account tab state
-  const [users, setUsers] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(false);
+  // Account tab state (personal information only —
+  // role changes and deletes live in /admin/users).
+  const [myName, setMyName] = useState('');
+  const [myEmail, setMyEmail] = useState('');
+  const [myNameSaving, setMyNameSaving] = useState(false);
 
   // Security tab state
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -47,21 +49,52 @@ export default function Settings() {
   // Appearance tab state
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
 
-  const fetchUsers = useCallback(async () => {
-    setUsersLoading(true);
-    try {
-      const res = await api.get('/users');
-      setUsers(res.data.data || []);
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to load users', 'error');
-    } finally {
-      setUsersLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    if (activeTab === 'account') fetchUsers();
-  }, [activeTab, fetchUsers]);
+    if (user?.name) setMyName(user.name);
+    if (user?.email) setMyEmail(user.email);
+  }, [user?.name, user?.email]);
+
+  const handleSaveMyInfo = async (e) => {
+    e.preventDefault();
+    if (!myName.trim() || !myEmail.trim()) {
+      Swal.fire('Error', 'Please provide name and email', 'error');
+      return;
+    }
+    const emailChanged = myEmail.trim() !== user?.email;
+    if (emailChanged) {
+      const confirm = await Swal.fire({
+        title: 'Change your email?',
+        text: 'Your login will switch to the new email and you will be logged out.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, change it',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#009639',
+        reverseButtons: true,
+      });
+      if (!confirm.isConfirmed) return;
+    }
+    setMyNameSaving(true);
+    try {
+      // Admin route syncs both directory profile and login record.
+      const res = await api.put(`/users/${user._id}`, {
+        name: myName.trim(),
+        email: myEmail.trim(),
+      });
+      if (res.data.data?.emailChanged) {
+        await logout();
+        Swal.fire('Email updated', 'Please log in again with your new email.', 'success');
+        navigate('/login', { replace: true });
+        return;
+      }
+      await refreshUser();
+      Swal.fire({ title: 'Saved', text: 'Your personal information has been updated.', icon: 'success', timer: 1500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to update profile', 'error');
+    } finally {
+      setMyNameSaving(false);
+    }
+  };
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -69,37 +102,6 @@ export default function Settings() {
   }, [dark]);
 
   const switchTab = (key) => setSearchParams({ tab: key });
-
-  const handleRoleChange = async (profileId, email, newRole) => {
-    try {
-      await api.put(`/users/${profileId}/role`, { role: newRole });
-      setUsers((prev) => prev.map((u) => (u._id === profileId ? { ...u, role: newRole } : u)));
-      Swal.fire({ title: 'Role updated', text: `${email} is now ${newRole}.`, icon: 'success', timer: 1500, showConfirmButton: false });
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to update role', 'error');
-    }
-  };
-
-  const handleDelete = async (profileId, email) => {
-    const result = await Swal.fire({
-      title: 'Delete user?',
-      text: `Remove ${email} from the directory? This cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: '#dc2626',
-      reverseButtons: true,
-    });
-    if (!result.isConfirmed) return;
-    try {
-      await api.delete(`/users/${profileId}`);
-      setUsers((prev) => prev.filter((u) => u._id !== profileId));
-      Swal.fire({ title: 'Deleted', icon: 'success', timer: 1500, showConfirmButton: false });
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to delete user', 'error');
-    }
-  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -168,59 +170,32 @@ export default function Settings() {
 
           {/* ACCOUNT */}
           {activeTab === 'account' && (
+            <div className="space-y-4">
+            {/* My personal information */}
             <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-100">
-                <h2 className="text-[15px] font-bold text-zinc-800">Account Management</h2>
-                <p className="text-[12px] text-zinc-500">Change roles or remove directory profiles.</p>
+                <h2 className="text-[15px] font-bold text-zinc-800">My Personal Information</h2>
+                <p className="text-[12px] text-zinc-500">Update your own admin profile.</p>
               </div>
-              {usersLoading ? (
-                <p className="p-5 text-[13px] text-zinc-500">Loading users...</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[12.5px]">
-                    <thead>
-                      <tr className="text-zinc-400 text-[11px] uppercase tracking-wider border-b border-zinc-100">
-                        <th className="px-5 py-3 font-semibold">Name</th>
-                        <th className="px-5 py-3 font-semibold">Email</th>
-                        <th className="px-5 py-3 font-semibold">Role</th>
-                        <th className="px-5 py-3 font-semibold text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((u) => (
-                        <tr key={u._id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
-                          <td className="px-5 py-3 font-medium text-zinc-800">{u.name || '—'}</td>
-                          <td className="px-5 py-3 text-zinc-500">{u.email}</td>
-                          <td className="px-5 py-3">
-                            <select
-                              value={u.role || Roles.ALUMNI}
-                              onChange={(e) => handleRoleChange(u._id, u.email, e.target.value)}
-                              className="h-8 rounded-md border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-700 outline-none focus:border-[#009639]"
-                            >
-                              {Object.values(Roles).map((r) => (
-                                <option key={r} value={r}>{r}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(u._id, u.email)}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-zinc-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {users.length === 0 && (
-                        <tr><td colSpan={4} className="px-5 py-6 text-center text-zinc-400">No users found.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+              <form onSubmit={handleSaveMyInfo} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <label className="mb-1 block text-[11px] font-semibold text-zinc-700">Full Name</label>
+                  <input value={myName} onChange={(e) => setMyName(e.target.value)} required
+                    placeholder="Your full name"
+                    className="w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15" />
                 </div>
-              )}
+                <div className="flex-1">
+                  <label className="mb-1 block text-[11px] font-semibold text-zinc-700">Email</label>
+                  <input type="email" value={myEmail} onChange={(e) => setMyEmail(e.target.value)} required
+                    placeholder="Your email"
+                    className="w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15" />
+                </div>
+                <button type="submit" disabled={myNameSaving}
+                  className="h-9 rounded-lg bg-[#009639] px-5 text-[12.5px] font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-60">
+                  {myNameSaving ? 'Saving...' : 'Save'}
+                </button>
+              </form>
+            </div>
             </div>
           )}
 

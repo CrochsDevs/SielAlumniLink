@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import {
   BadgeCheck,
   MapPin,
@@ -8,6 +9,7 @@ import {
   GraduationCap,
   Plus,
   Check,
+  Clock,
   Pencil,
   Sparkles,
   Award,
@@ -16,6 +18,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
+import { useChat } from '../../context/ChatContext';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
 import api from '../../utils/axios';
@@ -49,10 +52,12 @@ const STATS = [
 
 const AlumniProfile = () => {
   const { user } = useAuth();
+  const { openChatByEmail } = useChat();
   const { id } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [connectState, setConnectState] = useState('none'); // none | pending | connected
+  const [connectLoading, setConnectLoading] = useState(false);
   const [profile, setProfile] = useState(null);
   const [loadingOther, setLoadingOther] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -69,6 +74,34 @@ const AlumniProfile = () => {
       .catch(() => setNotFound(true))
       .finally(() => setLoadingOther(false));
   }, [id, isOwn]);
+
+  // Check existing connection with this person.
+  useEffect(() => {
+    if (isOwn || !profile?.email) return;
+    api.get('/connections/me')
+      .then((res) => {
+        const found = (res.data.data || []).find(
+          (c) => c.requesterEmail === profile.email || c.recipientEmail === profile.email
+        );
+        if (found) setConnectState(found.status === 'accepted' ? 'connected' : 'pending');
+        else setConnectState('none');
+      })
+      .catch(() => {});
+  }, [isOwn, profile?.email]);
+
+  const handleConnect = async () => {
+    if (connectState !== 'none' || !profile?.email) return;
+    setConnectLoading(true);
+    try {
+      await api.post('/connections', { email: profile.email });
+      setConnectState('pending');
+      Swal.fire({ title: 'Request sent', text: 'They will be notified.', icon: 'success', timer: 1500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to send request', 'error');
+    } finally {
+      setConnectLoading(false);
+    }
+  };
 
   const person = isOwn ? user : profile;
 
@@ -173,18 +206,27 @@ const AlumniProfile = () => {
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => setConnected(!connected)}
-                        className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-bold shadow-sm transition ${
-                          connected
-                            ? 'border border-[#009639] text-[#007a2e] hover:bg-emerald-50'
-                            : 'bg-[#009639] text-white shadow-emerald-900/20 hover:bg-[#007a2e]'
+                        onClick={handleConnect}
+                        disabled={connectState !== 'none' || connectLoading}
+                        className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-bold shadow-sm transition disabled:cursor-default ${
+                          connectState === 'connected'
+                            ? 'border border-[#009639] text-[#007a2e]'
+                            : connectState === 'pending'
+                              ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                              : 'bg-[#009639] text-white shadow-emerald-900/20 hover:bg-[#007a2e]'
                         }`}
                       >
-                        {connected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                        {connected ? 'Connected' : 'Connect'}
+                        {connectState === 'connected' ? (
+                          <><Check className="h-4 w-4" /> Connected</>
+                        ) : connectState === 'pending' ? (
+                          <><Clock className="h-4 w-4" /> Pending</>
+                        ) : (
+                          <><Plus className="h-4 w-4" /> {connectLoading ? 'Sending...' : 'Connect'}</>
+                        )}
                       </button>
                       <button
                         type="button"
+                        onClick={() => profile?.email && openChatByEmail(profile.email)}
                         className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 transition hover:border-[#009639] hover:text-[#007a2e]"
                       >
                         Message

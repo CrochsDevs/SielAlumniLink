@@ -6,6 +6,7 @@ import {
   Building2,
   Share2,
   Trophy,
+  FileText,
   MessageSquare,
   Settings,
   LogOut,
@@ -93,6 +94,11 @@ const AlumniSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contro
             <NavLink to="/alumni/success" className={navItemClass(isActive('/alumni/success'))}>
               <Trophy className="w-4 h-4 shrink-0" />
               <span className="truncate">Success Stories</span>
+            </NavLink>
+
+            <NavLink to="/alumni/surveys" className={navItemClass(isActive('/alumni/surveys'))}>
+              <FileText className="w-4 h-4 shrink-0" />
+              <span className="truncate">Surveys</span>
             </NavLink>
           </nav>
 

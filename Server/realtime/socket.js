@@ -54,6 +54,8 @@ export const initSocket = (server) => {
 
   io.on('connection', (socket) => {
     const authId = String(socket.user._id);
+    // Personal room so the server can push to all of a user's tabs.
+    socket.join(`user:${authId}`);
     PresenceStore.markOnline(socket.user._id, socket.user.email);
 
     // Tell everyone (including the newcomer) who is online.
@@ -70,4 +72,11 @@ export const initSocket = (server) => {
 
 export const getIO = () => io;
 
-export default { initSocket, getIO };
+// Push an event to every connected socket of one user.
+export const emitToUser = (authId, event, payload) => {
+  if (io) {
+    io.to(`user:${String(authId)}`).emit(event, payload);
+  }
+};
+
+export default { initSocket, getIO, emitToUser };

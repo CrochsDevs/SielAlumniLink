@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 import {
   Search,
   MapPin,
@@ -10,75 +11,58 @@ import {
   ListChecks,
   FileCheck,
   SlidersHorizontal,
+  PenLine,
+  Trash2,
+  Lightbulb,
+  Map as MapIcon,
+  MessageSquareQuote,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
+import api from '../../utils/axios';
 
-// TEMPORARY content — papalitan ng totoong data mula sa API.
-// TODO(alumni): wire jobs to backend endpoints.
-const JOBS = [
-  {
-    id: 1,
-    role: 'Software Engineer',
-    company: 'Tech Corp',
-    location: 'Makati City • Hybrid',
-    type: 'Full-time',
-    posted: '2d ago',
-    applicants: 48,
-    tags: ['React', 'Node.js'],
-    about:
-      'We are looking for a passionate Software Engineer to join our growing team. You will build products used by thousands of Filipinos every day.',
-    responsibilities: ['Build and ship web features', 'Collaborate with designers', 'Write clean, tested code'],
-  },
-  {
-    id: 2,
-    role: 'Data Analyst',
-    company: 'DataHub',
-    location: 'Remote',
-    type: 'Full-time',
-    posted: '5h ago',
-    applicants: 112,
-    tags: ['SQL', 'Python'],
-    about:
-      'Turn raw data into decisions. Join our analytics team and help shape product strategy with insights.',
-    responsibilities: ['Build dashboards', 'Run ad-hoc analyses', 'Present findings to stakeholders'],
-  },
-  {
-    id: 3,
-    role: 'HR Associate',
-    company: 'CLSU Partner Org',
-    location: 'Muñoz, Nueva Ecija • On-site',
-    type: 'Full-time',
-    posted: '1w ago',
-    applicants: 23,
-    tags: ['Recruitment'],
-    about:
-      'Support hiring and employee engagement for a CLSU partner organization. Fresh graduates are welcome.',
-    responsibilities: ['Screen applicants', 'Coordinate interviews', 'Assist onboarding'],
-  },
-  {
-    id: 4,
-    role: 'Marketing Specialist',
-    company: 'Innovate Inc',
-    location: 'Clark, Pampanga • On-site',
-    type: 'Contract',
-    posted: '3d ago',
-    applicants: 67,
-    tags: ['SEO', 'Content'],
-    about:
-      'Drive content and campaigns for a fast-growing startup. Contract role with possible regularization.',
-    responsibilities: ['Manage social channels', 'Write SEO content', 'Track campaign metrics'],
-  },
-];
+const formatPosted = (iso) => {
+  if (!iso) return '';
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
 
 const AlumniCareer = () => {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState(JOBS[0].id);
+  const [selectedId, setSelectedId] = useState(null);
   const [saved, setSaved] = useState({});
   const [applied, setApplied] = useState({});
+  const [tab, setTab] = useState('jobs');
+  const [guides, setGuides] = useState([]);
+  const [guidesLoading, setGuidesLoading] = useState(false);
+  const [guideType, setGuideType] = useState('all');
+  const [guideForm, setGuideForm] = useState({ title: '', body: '', type: 'advice', tags: '' });
+  const [guideSaving, setGuideSaving] = useState(false);
+  const [guideFormOpen, setGuideFormOpen] = useState(false);
+
+  const canPost = ['admin', 'alumni'].includes(user?.role);
+
+  useEffect(() => {
+    api.get('/jobs')
+      .then((res) => {
+        const list = res.data.data || [];
+        setJobs(list);
+        if (list.length > 0) setSelectedId(list[0]._id);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const toggleSave = (id) => setSaved((prev) => ({ ...prev, [id]: !prev[id] }));
   const applyJob = (id) => setApplied((prev) => ({ ...prev, [id]: true }));
@@ -86,13 +70,82 @@ const AlumniCareer = () => {
   const savedCount = Object.values(saved).filter(Boolean).length;
   const appliedCount = Object.values(applied).filter(Boolean).length;
 
-  const filtered = JOBS.filter(
+  const filtered = jobs.filter(
     (job) =>
-      job.role.toLowerCase().includes(query.toLowerCase()) ||
-      job.company.toLowerCase().includes(query.toLowerCase())
+      (job.title || '').toLowerCase().includes(query.toLowerCase()) ||
+      (job.company || '').toLowerCase().includes(query.toLowerCase())
   );
 
-  const selected = JOBS.find((j) => j.id === selectedId) || filtered[0];
+  const selected = jobs.find((j) => j._id === selectedId) || filtered[0];
+
+  const fetchGuides = async () => {
+    setGuidesLoading(true);
+    try {
+      const res = await api.get('/career-posts');
+      setGuides(res.data.data || []);
+    } catch {
+      // stay silent — guides are secondary to jobs
+    } finally {
+      setGuidesLoading(false);
+    }
+  };
+
+  const switchTab = (t) => {
+    setTab(t);
+    if (t === 'guides' && guides.length === 0) fetchGuides();
+  };
+
+  const handleGuideSave = async (id, savedByMe) => {
+    try {
+      const res = await api.post(`/career-posts/${id}/save`);
+      setGuides((prev) => prev.map((g) =>
+        g._id === id
+          ? { ...g, savedByMe: res.data.data.saved, savesCount: (g.savesCount || 0) + (res.data.data.saved ? 1 : -1) }
+          : g
+      ));
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to save', 'error');
+    }
+  };
+
+  const handleGuideDelete = async (id) => {
+    const result = await Swal.fire({
+      title: 'Delete guide?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      confirmButtonColor: '#dc2626',
+      reverseButtons: true,
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await api.delete(`/career-posts/${id}`);
+      setGuides((prev) => prev.filter((g) => g._id !== id));
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to delete', 'error');
+    }
+  };
+
+  const handleGuidePost = async (e) => {
+    e.preventDefault();
+    setGuideSaving(true);
+    try {
+      await api.post('/career-posts', guideForm);
+      setGuideForm({ title: '', body: '', type: 'advice', tags: '' });
+      setGuideFormOpen(false);
+      fetchGuides();
+      Swal.fire({ title: 'Posted!', icon: 'success', timer: 1500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to post', 'error');
+    } finally {
+      setGuideSaving(false);
+    }
+  };
+
+  const filteredGuides = guides.filter((g) =>
+    (guideType === 'all' || g.type === guideType) &&
+    `${g.title} ${g.body}`.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-[#f4f2ee]">
@@ -102,6 +155,160 @@ const AlumniCareer = () => {
         <AlumniTopbar user={user} title="Career" onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="mx-auto max-w-6xl space-y-3 p-4 sm:p-6">
+          {/* Tabs */}
+          <div className="flex gap-1.5">
+            {[
+              { key: 'jobs', label: 'Job Board' },
+              { key: 'guides', label: 'Career Guides' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchTab(key)}
+                className={`rounded-full px-4 py-2 text-[12.5px] font-bold transition ${
+                  tab === key ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'guides' ? (
+          <section className="space-y-3">
+            {canPost && (
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+                {!guideFormOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setGuideFormOpen(true)}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#009639] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#007a2e]"
+                  >
+                    <PenLine className="h-4 w-4" />
+                    Share career advice, insight, or roadmap
+                  </button>
+                ) : (
+                  <form onSubmit={handleGuidePost} className="space-y-2.5">
+                    <input
+                      value={guideForm.title}
+                      onChange={(e) => setGuideForm({ ...guideForm, title: e.target.value })}
+                      required
+                      placeholder="Title — e.g. How to pass technical interviews"
+                      className="h-10 w-full rounded-xl border border-zinc-200 px-3.5 text-[13px] outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                    />
+                    <div className="flex gap-2">
+                      <select
+                        value={guideForm.type}
+                        onChange={(e) => setGuideForm({ ...guideForm, type: e.target.value })}
+                        className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-[12.5px] font-medium outline-none focus:border-[#009639]"
+                      >
+                        <option value="advice">Career Advice</option>
+                        <option value="insight">Industry Insight</option>
+                        <option value="roadmap">Career Roadmap</option>
+                      </select>
+                      <input
+                        value={guideForm.tags}
+                        onChange={(e) => setGuideForm({ ...guideForm, tags: e.target.value })}
+                        placeholder="Tags (comma-separated)"
+                        className="h-10 flex-1 rounded-xl border border-zinc-200 px-3.5 text-[13px] outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                      />
+                    </div>
+                    <textarea
+                      value={guideForm.body}
+                      onChange={(e) => setGuideForm({ ...guideForm, body: e.target.value })}
+                      rows={4}
+                      placeholder="Write your guide..."
+                      className="w-full rounded-xl border border-zinc-200 px-3.5 py-2.5 text-[13px] outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => setGuideFormOpen(false)}
+                        className="h-9 rounded-xl px-4 text-[12.5px] font-bold text-zinc-500 hover:bg-zinc-100">
+                        Cancel
+                      </button>
+                      <button type="submit" disabled={guideSaving}
+                        className="h-9 rounded-xl bg-[#009639] px-5 text-[12.5px] font-bold text-white hover:bg-[#007a2e] disabled:opacity-60">
+                        {guideSaving ? 'Posting...' : 'Post guide'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-1.5">
+              {['all', 'advice', 'insight', 'roadmap'].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setGuideType(t)}
+                  className={`rounded-full px-3 py-1.5 text-[11.5px] font-bold capitalize transition ${
+                    guideType === t ? 'bg-[#009639] text-white' : 'bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900'
+                  }`}
+                >
+                  {t === 'all' ? 'All' : t === 'advice' ? 'Career Advice' : t === 'insight' ? 'Industry Insights' : 'Roadmaps'}
+                </button>
+              ))}
+            </div>
+
+            {guidesLoading ? (
+              <p className="rounded-xl border border-zinc-200 bg-white p-8 text-center text-[13px] text-zinc-500 shadow-sm">
+                Loading guides...
+              </p>
+            ) : filteredGuides.length === 0 ? (
+              <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+                <p className="text-[13px] font-bold text-zinc-800">No guides yet</p>
+                <p className="text-[12px] text-zinc-500">Be the first alumni to share one.</p>
+              </div>
+            ) : (
+              filteredGuides.map((g) => {
+                const TypeIcon = g.type === 'insight' ? Lightbulb : g.type === 'roadmap' ? MapIcon : MessageSquareQuote;
+                const canDelete = user?.role === 'admin' || String(g.authorAuthId) === String(user?._id);
+                return (
+                  <article key={g._id} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#009639]/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-[#007a2e]">
+                        <TypeIcon className="h-3 w-3" />
+                        {g.type}
+                      </span>
+                      {canDelete && (
+                        <button type="button" onClick={() => handleGuideDelete(g._id)}
+                          className="rounded-lg p-1.5 text-zinc-300 transition hover:bg-red-50 hover:text-red-600" aria-label="Delete guide">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <h3 className="mt-2 text-[15px] font-extrabold tracking-tight text-zinc-900">{g.title}</h3>
+                    <p className="mt-1 text-[12.5px] text-zinc-500">
+                      by {g.authorName || g.authorEmail} • {formatPosted(g.createdAt)}
+                    </p>
+                    <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-zinc-700">{g.body}</p>
+                    {(g.tags || []).length > 0 && (
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {g.tags.map((tag) => (
+                          <span key={tag} className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10.5px] font-semibold text-zinc-600">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleGuideSave(g._id, g.savedByMe)}
+                      className={`mt-3 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition ${
+                        g.savedByMe ? 'bg-[#009639] text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                      }`}
+                    >
+                      <Bookmark className={`h-3.5 w-3.5 ${g.savedByMe ? 'fill-current' : ''}`} />
+                      {g.savedByMe ? 'Saved' : 'Save'}
+                      {g.savesCount > 0 && <span>• {g.savesCount}</span>}
+                    </button>
+                  </article>
+                );
+              })
+            )}
+          </section>
+          ) : (
+          <>
           {/* Search */}
           <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
             <div className="relative">
@@ -146,11 +353,11 @@ const AlumniCareer = () => {
             <section className={`space-y-2 ${selected ? 'hidden lg:block' : 'block'}`}>
               {filtered.map((job) => (
                 <button
-                  key={job.id}
+                  key={job._id}
                   type="button"
-                  onClick={() => setSelectedId(job.id)}
+                  onClick={() => setSelectedId(job._id)}
                   className={`w-full rounded-xl border bg-white p-4 text-left shadow-sm transition hover:shadow-md ${
-                    selected?.id === job.id ? 'border-[#009639] ring-1 ring-[#009639]/30' : 'border-zinc-200'
+                    selected?._id === job._id ? 'border-[#009639] ring-1 ring-[#009639]/30' : 'border-zinc-200'
                   }`}
                 >
                   <div className="flex gap-3">
@@ -159,16 +366,16 @@ const AlumniCareer = () => {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-bold text-zinc-900 hover:text-[#009639] hover:underline">
-                        {job.role}
+                        {job.title}
                       </span>
                       <span className="block truncate text-[12px] text-zinc-600">{job.company}</span>
                       <span className="block truncate text-[11.5px] text-zinc-400">
-                        {job.location} • {job.posted}
+                        {job.location}{job.location && job.mode ? ' • ' : ''}{job.mode} • {formatPosted(job.createdAt)}
                       </span>
                       <span className="mt-1 flex items-center gap-2 text-[11px] text-zinc-400">
                         <Clock className="h-3 w-3" />
-                        {job.applicants} applicants
-                        {applied[job.id] && (
+                        {job.type}
+                        {applied[job._id] && (
                           <span className="font-bold text-[#009639]">• Applied</span>
                         )}
                       </span>
@@ -176,10 +383,18 @@ const AlumniCareer = () => {
                   </div>
                 </button>
               ))}
-              {filtered.length === 0 && (
+              {loading ? (
                 <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
-                  <p className="text-[13px] font-bold text-zinc-800">No jobs found</p>
-                  <p className="text-[12px] text-zinc-500">Try a different keyword.</p>
+                  <p className="text-[13px] text-zinc-500">Loading jobs...</p>
+                </div>
+              ) : filtered.length === 0 && (
+                <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+                  <p className="text-[13px] font-bold text-zinc-800">
+                    {jobs.length === 0 ? 'No job posts yet' : 'No jobs found'}
+                  </p>
+                  <p className="text-[12px] text-zinc-500">
+                    {jobs.length === 0 ? 'Check back soon for openings.' : 'Try a different keyword.'}
+                  </p>
                 </div>
               )}
             </section>
@@ -198,26 +413,26 @@ const AlumniCareer = () => {
                   </button>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h2 className="text-lg font-extrabold tracking-tight text-zinc-900">{selected.role}</h2>
+                      <h2 className="text-lg font-extrabold tracking-tight text-zinc-900">{selected.title}</h2>
                       <p className="text-[13px] text-zinc-600">{selected.company} • {selected.type}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-[12px] text-zinc-400">
                         <MapPin className="h-3.5 w-3.5" />
-                        {selected.location} • {selected.posted}
+                        {selected.location}{selected.location && selected.mode ? ' • ' : ''}{selected.mode} • {formatPosted(selected.createdAt)}
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => toggleSave(selected.id)}
+                      onClick={() => toggleSave(selected._id)}
                       className={`rounded-full p-2.5 transition ${
-                        saved[selected.id] ? 'bg-[#009639]/10 text-[#009639]' : 'text-zinc-300 hover:bg-zinc-100'
+                        saved[selected._id] ? 'bg-[#009639]/10 text-[#009639]' : 'text-zinc-300 hover:bg-zinc-100'
                       }`}
                       aria-label="Save job"
                     >
-                      <Bookmark className={`h-5 w-5 ${saved[selected.id] ? 'fill-current' : ''}`} />
+                      <Bookmark className={`h-5 w-5 ${saved[selected._id] ? 'fill-current' : ''}`} />
                     </button>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {selected.tags.map((tag) => (
+                    {(selected.tags || []).map((tag) => (
                       <span key={tag} className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10.5px] font-semibold text-zinc-600">
                         {tag}
                       </span>
@@ -226,32 +441,30 @@ const AlumniCareer = () => {
                   <div className="mt-4 flex gap-2">
                     <button
                       type="button"
-                      onClick={() => applyJob(selected.id)}
-                      disabled={applied[selected.id]}
+                      onClick={() => applyJob(selected._id)}
+                      disabled={applied[selected._id]}
                       className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full text-[13px] font-bold transition disabled:cursor-default ${
-                        applied[selected.id]
+                        applied[selected._id]
                           ? 'bg-emerald-50 text-[#007a2e]'
                           : 'bg-[#009639] text-white hover:bg-[#007a2e]'
                       }`}
                     >
                       <Briefcase className="h-4 w-4" />
-                      {applied[selected.id] ? 'Applied' : 'Click Apply'}
+                      {applied[selected._id] ? 'Applied' : 'Easy Apply'}
                     </button>
                   </div>
                 </div>
                 <div className="max-h-80 overflow-y-auto p-5">
                   <h3 className="text-[13px] font-bold text-zinc-900">About the role</h3>
-                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-zinc-600">{selected.about}</p>
-                  <h3 className="mt-4 text-[13px] font-bold text-zinc-900">What you'll do</h3>
-                  <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[12.5px] text-zinc-600">
-                    {selected.responsibilities.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-zinc-600">
+                    {selected.description || 'No description provided.'}
+                  </p>
                 </div>
               </section>
             )}
           </div>
+          </>
+          )}
         </main>
       </div>
     </div>

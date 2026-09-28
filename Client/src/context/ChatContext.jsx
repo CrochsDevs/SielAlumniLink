@@ -1,83 +1,155 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
+import api from '../utils/axios';
+import { getSocket } from '../realtime/socket';
+import { useAuth } from './useAuth';
 import ChatDock from '../components/chat/ChatDock';
 
 export const ChatContext = createContext(null);
 
-// TEMPORARY chat data — wire to backend threads later.
-const CHAT_CONVOS = [
-  {
-    id: 1,
-    name: 'Maria Santos',
-    meta: 'HR Manager • Batch 2015',
-    initial: 'M',
-    preview: 'Send me your resume when ready!',
-    time: '2h',
-    unread: 2,
-  },
-  {
-    id: 2,
-    name: 'Jose Ramos',
-    meta: 'Software Engineer • Batch 2019',
-    initial: 'J',
-    preview: 'Salamat sa referral!',
-    time: '1d',
-    unread: 0,
-  },
-  {
-    id: 3,
-    name: 'CLSU Career Office',
-    meta: 'Official • Career Services',
-    initial: 'C',
-    preview: 'Homecoming registration is open.',
-    time: '3d',
-    unread: 0,
-  },
-];
+const toInitial = (name, email) => (name || email || 'U').charAt(0).toUpperCase();
 
-const INITIAL_THREADS = {
-  1: [
-    { from: 'them', text: 'Hi! I saw your profile — impressive background.' },
-    { from: 'them', text: 'We have an opening you might like. Send me your resume when ready!' },
-  ],
-  2: [
-    { from: 'me', text: 'Good luck sa interview bukas!' },
-    { from: 'them', text: 'Salamat sa referral!' },
-  ],
-  3: [{ from: 'them', text: 'Homecoming registration is now open. See you there!' }],
-};
-
-// Lives at app root so chat windows survive page navigation —
-// they only close when the user presses X.
+// Real messaging lives here at app root so chat windows survive
+// page navigation — they only close when the user presses X.
 export const ChatProvider = ({ children }) => {
-  const [openChats, setOpenChats] = useState([]);
-  const [threads, setThreads] = useState(INITIAL_THREADS);
+  const { user } = useAuth();
+  const myAuthId = user?._id ? String(user._id) : null;
+  const myAuthIdRef = useRef(myAuthId);
+  myAuthIdRef.current = myAuthId;
 
-  // Open a chat window (max 2 — oldest gets replaced).
-  const openChat = useCallback((convo) => {
-    setOpenChats((prev) => {
-      const existing = prev.find((w) => w.id === convo.id);
-      if (existing) {
-        return prev.map((w) => (w.id === convo.id ? { ...w, minimized: false } : w));
-      }
-      const next = [...prev, { id: convo.id, convo, minimized: false }];
-      return next.length > 2 ? next.slice(next.length - 2) : next;
-    });
+  const [convos, setConvos] = useState([]);
+  const [openChats, setOpenChats] = useState([]);
+  const [threads, setThreads] = useState({});
+
+  const refreshConvos = useCallback(async () => {
+    if (!myAuthIdRef.current) return;
+    try {
+      const res = await api.get('/conversations');
+      setConvos(
+        (res.data.data || []).map((c) => ({
+          ...c,
+          initial: toInitial(c.name, c.email),
+        }))
+      );
+    } catch {
+      // stay silent — chat is secondary
+    }
   }, []);
 
+  useEffect(() => {
+    if (myAuthId) {
+      refreshConvos();
+    } else {
+      setConvos([]);
+      setOpenChats([]);
+      setThreads({});
+    }
+  }, [myAuthId, refreshConvos]);
+
+  // Live incoming messages (both participants get pushed).
+  useEffect(() => {
+    const socket = getSocket();
+    const onNew = ({ conversationId, message }) => {
+      const from = String(message.senderAuthId) === String(myAuthIdRef.current) ? 'me' : 'them';
+      setThreads((prev) => ({
+        ...prev,
+        [conversationId]: [...(prev[conversationId] || []), { from, text: message.text }],
+      }));
+      setConvos((prev) =>
+        prev.map((c) =>
+          c._id === conversationId || String(c._id) === String(conversationId)
+            ? {
+                ...c,
+                preview: message.text,
+                time: message.at,
+                unread: from === 'me' ? c.unread : (c.unread || 0) + 1,
+              }
+            : c
+        )
+      );
+    };
+    socket.on('message:new', onNew);
+    return () => {
+      socket.off('message:new', onNew);
+    };
+  }, []);
+
+  const loadThread = useCallback(async (convoId) => {
+    try {
+      const res = await api.get(`/conversations/${convoId}/messages`);
+      setThreads((prev) => ({ ...prev, [convoId]: res.data.data || [] }));
+      // Incoming now read — clear badge locally.
+      setConvos((prev) => prev.map((c) => (String(c._id) === String(convoId) ? { ...c, unread: 0 } : c)));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Open a chat window (max 2 — oldest gets replaced).
+  const openChat = useCallback(
+    (convo) => {
+      const id = String(convo._id);
+      loadThread(id);
+      setOpenChats((prev) => {
+        const existing = prev.find((w) => String(w.id) === id);
+        if (existing) {
+          return prev.map((w) => (String(w.id) === id ? { ...w, minimized: false } : w));
+        }
+        const next = [...prev, { id, convo: { ...convo, initial: convo.initial || toInitial(convo.name, convo.email) }, minimized: false }];
+        return next.length > 2 ? next.slice(next.length - 2) : next;
+      });
+    },
+    [loadThread]
+  );
+
+  // Start (or reopen) a chat with someone by email — used by
+  // profile Message buttons.
+  const openChatByEmail = useCallback(
+    async (email) => {
+      try {
+        const res = await api.post('/conversations', { email });
+        const convo = { ...res.data.data, initial: toInitial(res.data.data.name, res.data.data.email) };
+        setConvos((prev) => {
+          const exists = prev.some((c) => String(c._id) === String(convo._id));
+          return exists ? prev.map((c) => (String(c._id) === String(convo._id) ? convo : c)) : [convo, ...prev];
+        });
+        openChat(convo);
+        return true;
+      } catch (err) {
+        Swal.fire('Error', err.response?.data?.message || 'Cannot open chat', 'error');
+        return false;
+      }
+    },
+    [openChat]
+  );
+
   const closeChat = useCallback((id) => {
-    setOpenChats((prev) => prev.filter((w) => w.id !== id));
+    setOpenChats((prev) => prev.filter((w) => String(w.id) !== String(id)));
   }, []);
 
   const toggleMinChat = useCallback((id) => {
-    setOpenChats((prev) => prev.map((w) => (w.id === id ? { ...w, minimized: !w.minimized } : w)));
+    setOpenChats((prev) => prev.map((w) => (String(w.id) === String(id) ? { ...w, minimized: !w.minimized } : w)));
   }, []);
 
-  const sendChat = useCallback((id, text) => {
+  const sendChat = useCallback(async (id, text) => {
+    // Optimistic bubble; server push confirms to all tabs.
     setThreads((prev) => ({ ...prev, [id]: [...(prev[id] || []), { from: 'me', text }] }));
+    try {
+      await api.post(`/conversations/${id}/messages`, { text });
+      setConvos((prev) =>
+        prev.map((c) => (String(c._id) === String(id) ? { ...c, preview: text, time: new Date().toISOString() } : c))
+      );
+    } catch {
+      // keep optimistic bubble; refresh on next load
+    }
   }, []);
+
+  const unreadTotal = convos.reduce((sum, c) => sum + (c.unread || 0), 0);
 
   return (
-    <ChatContext.Provider value={{ convos: CHAT_CONVOS, openChat }}>
+    <ChatContext.Provider
+      value={{ convos, threads, openChat, openChatByEmail, refreshConvos, loadThread, sendChat, unreadTotal }}
+    >
       {children}
       <ChatDock
         windows={openChats}

@@ -102,6 +102,29 @@ export const AuthModel = {
         );
     },
 
+    // Admin email change: login identity follows the new email.
+    async updateEmailById(authId, email) {
+        return await authCollection.updateOne(
+            { _id: authId },
+            { $set: { email, updatedAt: new Date() } }
+        );
+    },
+
+    // CAIS-synced accounts: no local password. The user sets it later
+    // via magic link -> setup-password. Role is pre-validated by caller.
+    async createSyncedUser({ email, role }) {
+        const newUser = {
+            email,
+            role,
+            isVerified: true,
+            passwordSetupRequired: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+        const result = await authCollection.insertOne(newUser);
+        return { ...newUser, _id: result.insertedId };
+    },
+
     // One-time normalization for accounts created before Roles existed
     // ('user' / missing role -> 'alumni'). Safe to run on every startup.
     async normalizeLegacyRoles() {

@@ -1,32 +1,35 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../../context/useAuth';
+import StudentSidebar from '../../layout/sidebar/student/studentSidebar';
+import StudentTopbar from '../../layout/topbar/student/studentTopbar';
 
-// TEMPORARY placeholder — papalitan ng totoong student pages.
+// TEMPORARY placeholder — lalagyan ng tunay na content kapag ready na.
 // TODO(student): build real student dashboard here.
 const StudentDashboard = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Student Portal</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-gray-600">Welcome, {user?.name || user?.email}!</span>
-          {user?.role && (
-            <span className="text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-[#007a2e] border border-emerald-200 px-2 py-1 rounded-full">
-              {user.role}
-            </span>
-          )}
-          <button
-            onClick={() => navigate('/logout')}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#f3f6f3]">
+      <StudentSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
+
+      <div className="lg:pl-64">
+        <StudentTopbar user={user} title="Dashboard" onMenuClick={() => setSidebarOpen(true)} />
+
+        <main className="mx-auto max-w-3xl p-4 sm:p-6">
+          <div className="rounded-3xl bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] p-8 text-center text-white shadow-lg shadow-emerald-900/10 sm:p-10">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">
+              Student Portal
+            </p>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
+              Welcome, {user?.name?.split(' ')[0] || 'Student'}!
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-white/75">
+              Your academic journey hub is being prepared. Stay tuned.
+            </p>
+          </div>
+        </main>
       </div>
-      <p className="text-gray-500">Student pages coming soon.</p>
     </div>
   );
 };
