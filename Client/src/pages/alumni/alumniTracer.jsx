@@ -8,10 +8,25 @@ import api from '../../utils/axios';
 
 const STATUSES = ['Employed', 'Self-employed', 'Unemployed', 'Studying'];
 
+const SALARY_RANGES = [
+  'Prefer not to say',
+  'Below ₱15,000',
+  '₱15,000 – ₱25,000',
+  '₱25,001 – ₱40,000',
+  '₱40,001 – ₱60,000',
+  'Above ₱60,000',
+];
+
+const EMPTY_FORM = {
+  batch: '', program: '', status: 'Employed',
+  company: '', position: '', salaryRange: 'Prefer not to say',
+  employmentDate: '', location: '',
+};
+
 const AlumniTracer = () => {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [form, setForm] = useState({ batch: '', program: '', status: 'Employed', company: '', location: '' });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [answered, setAnswered] = useState(false);
@@ -20,8 +35,14 @@ const AlumniTracer = () => {
     api.get('/tracer/me')
       .then((res) => {
         if (res.data.data) {
-          const { batch, program, status, company, location } = res.data.data;
-          setForm({ batch: batch || '', program: program || '', status: status || 'Employed', company: company || '', location: location || '' });
+          const { batch, program, status, company, position, salaryRange, employmentDate, location } = res.data.data;
+          setForm({
+            batch: batch || '', program: program || '', status: status || 'Employed',
+            company: company || '', position: position || '',
+            salaryRange: salaryRange || 'Prefer not to say',
+            employmentDate: employmentDate ? String(employmentDate).slice(0, 7) : '',
+            location: location || '',
+          });
           setAnswered(true);
         }
       })
@@ -47,14 +68,14 @@ const AlumniTracer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
         <AlumniTopbar user={user} title="Tracer Study" onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="mx-auto max-w-2xl p-4 sm:p-6">
-          <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm">
+          <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
             <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-5 py-5 sm:px-6">
               <h1 className="flex items-center gap-2 text-[16px] font-extrabold text-white">
                 <ClipboardCheck className="h-5 w-5" />
@@ -64,7 +85,7 @@ const AlumniTracer = () => {
                 Help CLSU track graduate outcomes. Takes about 3 minutes.
               </p>
               {answered && (
-                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold text-white">
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-zinc-900/15 px-3 py-1 text-[11px] font-bold text-white">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   You already answered — update anytime
                 </p>
@@ -72,19 +93,19 @@ const AlumniTracer = () => {
             </div>
 
             {loading ? (
-              <p className="p-6 text-[13px] text-zinc-500">Loading...</p>
+              <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">Loading...</p>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Batch Graduated
                     </label>
                     <input value={form.batch} onChange={(e) => setForm({ ...form, batch: e.target.value })}
                       required placeholder="e.g. 2019" className={inputClass} />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Program
                     </label>
                     <input value={form.program} onChange={(e) => setForm({ ...form, program: e.target.value })}
@@ -93,7 +114,7 @@ const AlumniTracer = () => {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                  <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Employment Status
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -116,15 +137,38 @@ const AlumniTracer = () => {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
-                      Company / School <span className="font-medium normal-case text-zinc-400">(optional)</span>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      Company / School <span className="font-medium normal-case text-zinc-400 dark:text-zinc-500">(optional)</span>
                     </label>
                     <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
                       placeholder="Where do you work now?" className={inputClass} />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
-                      Location <span className="font-medium normal-case text-zinc-400">(optional)</span>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      Position <span className="font-medium normal-case text-zinc-400 dark:text-zinc-500">(optional)</span>
+                    </label>
+                    <input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })}
+                      placeholder="e.g. HR Manager" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      Salary Range <span className="font-medium normal-case text-zinc-400 dark:text-zinc-500">(optional)</span>
+                    </label>
+                    <select value={form.salaryRange} onChange={(e) => setForm({ ...form, salaryRange: e.target.value })}
+                      className={inputClass}>
+                      {SALARY_RANGES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      Employment Date <span className="font-medium normal-case text-zinc-400 dark:text-zinc-500">(optional)</span>
+                    </label>
+                    <input type="month" value={form.employmentDate} onChange={(e) => setForm({ ...form, employmentDate: e.target.value })}
+                      className={inputClass} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      Location <span className="font-medium normal-case text-zinc-400 dark:text-zinc-500">(optional)</span>
                     </label>
                     <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
                       placeholder="e.g. Makati City" className={inputClass} />

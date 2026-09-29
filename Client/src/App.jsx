@@ -22,6 +22,7 @@ import AlumniEmployment from './pages/alumni/alumniEmployment';
 import AlumniReferral from './pages/alumni/alumniReferral';
 import AlumniSuccess from './pages/alumni/alumniSuccess';
 import AlumniTracer from './pages/alumni/alumniTracer';
+import AlumniRequests from './pages/alumni/alumniRequests';
 import AlumniSurveys from './pages/alumni/alumniSurveys';
 import AlumniSurveyAnswer from './pages/alumni/alumniSurveyAnswer';
 import StudentDashboard from './pages/student/studentDashboard';
@@ -29,6 +30,11 @@ import StudentProfile from './pages/student/studentProfile';
 import StudentJourney from './pages/student/studentJourney';
 import StudentPortfolio from './pages/student/studentPortfolio';
 import StudentCareer from './pages/student/studentCareer';
+import StudentReferrals from './pages/student/studentReferrals';
+import StudentMentorship from './pages/student/studentMentorship';
+import StudentInternship from './pages/student/studentInternship';
+import StudentRequests from './pages/student/studentRequests';
+import StudentMessage from './pages/student/studentMessage';
 import Login from './auth/login';
 import Logout from './auth/logout';
 import Signup from './auth/signup';
@@ -184,7 +190,7 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/alumni/profile/:id" element={
-        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN, Roles.STUDENT]}>
           <AlumniProfile />
         </ProtectedRoute>
       } />
@@ -221,6 +227,11 @@ function AppRoutes() {
       <Route path="/alumni/tracer" element={
         <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN, Roles.STUDENT]}>
           <AlumniTracer />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/requests" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniRequests />
         </ProtectedRoute>
       } />
       <Route path="/alumni/surveys" element={
@@ -261,6 +272,31 @@ function AppRoutes() {
       <Route path="/student/career" element={
         <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
           <StudentCareer />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/referrals" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentReferrals />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/mentorship" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentMentorship />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/internship" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentInternship />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/requests" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentRequests />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/message" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentMessage />
         </ProtectedRoute>
       } />
       {/* Legacy inbox links (sidebars) redirect per role */}

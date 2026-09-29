@@ -13,18 +13,25 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
+import { useNotifications } from '../../../realtime/useNotifications';
+import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
+import { useChat } from '../../../context/ChatContext';
 
 const breadcrumbMap = [
   ['/student/journey', 'Journey'],
   ['/student/portfolio', 'Portfolio'],
+  ['/student/internship', 'Internship'],
   ['/student/internship', 'Internship'],
   ['/student/mentorship', 'Mentorship'],
   ['/student/competency', 'Competency'],
   ['/student/certificate', 'Certificate'],
   ['/student/readiness', 'Readiness'],
   ['/student/career', 'Career'],
+  ['/student/referrals', 'Referrals'],
+  ['/student/requests', 'Requests'],
   ['/student/accounts', 'Accounts'],
   ['/student/profile', 'Profile'],
+  ['/student/message', 'Message'],
   ['/student/message', 'Message'],
   ['/inbox', 'Message'],
 ];
@@ -33,15 +40,19 @@ const StudentTopbar = ({
   user,
   title,
   onMenuClick,
-  unreadMessages = 0,
-  notificationDot = true,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
+  const { unreadTotal: chatUnread, convos, openChat } = useChat();
   const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
+  const chatRef = useRef(null);
 
   const pageTitle =
     title ||
@@ -58,6 +69,8 @@ const StudentTopbar = ({
       if (e.key === 'Escape') {
         setSearchOpen(false);
         setDropdownOpen(false);
+        setNotifOpen(false);
+        setChatOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -68,11 +81,17 @@ const StudentTopbar = ({
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const onClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+      if (chatRef.current && !chatRef.current.contains(e.target)) {
+        setChatOpen(false);
       }
     };
     document.addEventListener('mousedown', onClick);
@@ -156,29 +175,89 @@ const StudentTopbar = ({
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-0.5">
-          <Link
-            to="/inbox"
-            className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
-            aria-label="Messages"
-          >
-            <MessageSquare className="h-[18px] w-[18px]" />
-            {unreadMessages > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
-                {unreadMessages > 99 ? '99+' : unreadMessages}
-              </span>
+          <div className="relative" ref={chatRef}>
+            <button
+              type="button"
+              onClick={() => setChatOpen(!chatOpen)}
+              className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
+              aria-label="Chats"
+            >
+              <MessageSquare className="h-[18px] w-[18px]" />
+              {(chatUnread > 0) && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
+                  {chatUnread > 99 ? '99+' : chatUnread}
+                </span>
+              )}
+            </button>
+            {chatOpen && (
+              <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <p className="text-[14px] font-extrabold tracking-tight text-zinc-900">Chats</p>
+                  <Link
+                    to="/student/message"
+                    onClick={() => setChatOpen(false)}
+                    className="text-[11.5px] font-semibold text-[#009639] hover:underline"
+                  >
+                    See all
+                  </Link>
+                </div>
+                <ul className="max-h-80 overflow-y-auto pb-1.5">
+                  {convos.map((c) => (
+                    <li key={c._id}>
+                      <button
+                        type="button"
+                        onClick={() => { openChat(c); setChatOpen(false); }}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50"
+                      >
+                        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639]">
+                          {c.initial}
+                          {c.unread > 0 && (
+                            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                              {c.unread}
+                            </span>
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[12.5px] font-bold text-zinc-800">{c.name}</span>
+                          <span className="block truncate text-[11px] text-zinc-500">{c.preview}</span>
+                        </span>
+                        <span className="shrink-0 text-[10px] text-zinc-400">{c.time}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {convos.length === 0 && (
+                    <li className="px-4 py-6 text-center text-[12px] text-zinc-400">
+                      No conversations yet.
+                    </li>
+                  )}
+                </ul>
+              </div>
             )}
-          </Link>
+          </div>
 
-          <button
-            type="button"
-            className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
-            aria-label="Notifications"
-          >
-            <Bell className="h-[18px] w-[18px]" />
-            {notificationDot && (
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-amber-300 ring-2 ring-[#007a2e]"></span>
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              onClick={() => { setNotifOpen(!notifOpen); refreshNotifs(); }}
+              className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
+              aria-label="Notifications"
+            >
+              <Bell className="h-[18px] w-[18px]" />
+              {notifUnread > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
+                  {notifUnread > 99 ? '99+' : notifUnread}
+                </span>
+              )}
+            </button>
+            {notifOpen && (
+              <NotificationDropdown
+                items={notifs}
+                onRead={markNotifRead}
+                onReadAll={markAllNotifsRead}
+                onClose={() => setNotifOpen(false)}
+              />
             )}
-          </button>
+          </div>
         </div>
 
         {/* User */}
@@ -197,12 +276,12 @@ const StudentTopbar = ({
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-900/10 z-20">
-              <div className="mb-1 rounded-xl bg-emerald-50/60 px-3 py-2.5">
-                <p className="truncate text-[12.5px] font-bold text-zinc-800">
+            <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl shadow-zinc-900/10 z-20">
+              <div className="mb-1 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 px-3 py-2.5">
+                <p className="truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">
                   {user?.name || 'Student'}
                 </p>
-                <p className="truncate text-[10.5px] text-zinc-500">
+                <p className="truncate text-[10.5px] text-zinc-500 dark:text-zinc-400">
                   {user?.email || 'student@clsu.edu.ph'}
                 </p>
               </div>
@@ -210,7 +289,7 @@ const StudentTopbar = ({
               <Link
                 to="/student/profile"
                 onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-zinc-600 transition hover:bg-zinc-100"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <User className="h-4 w-4 shrink-0 text-zinc-400" />
                 Profile
@@ -218,18 +297,18 @@ const StudentTopbar = ({
               <Link
                 to="/student/accounts"
                 onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-zinc-600 transition hover:bg-zinc-100"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <Settings className="h-4 w-4 shrink-0 text-zinc-400" />
                 Settings
               </Link>
 
-              <div className="my-1 border-t border-zinc-100"></div>
+              <div className="my-1 border-t border-zinc-100 dark:border-zinc-800"></div>
 
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12.5px] font-medium text-zinc-500 transition hover:bg-red-50 hover:text-red-600"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[12.5px] font-medium text-zinc-500 dark:text-zinc-400 transition hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 Logout

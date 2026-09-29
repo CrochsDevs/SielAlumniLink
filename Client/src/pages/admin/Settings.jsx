@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { Users, ShieldCheck, Bell, Moon } from 'lucide-react';
+import { Users, ShieldCheck, Bell, Moon, Sun, Monitor, Upload } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
+import { useNotifications } from '../../realtime/useNotifications';
+import { getTheme, setTheme } from '../../lib/theme';
 import AdminSidebar from '../../layout/sidebar/admin/adminSidebar';
 import AdminTopbar from '../../layout/topbar/alumni/adminTopbar';
 import api from '../../utils/axios';
@@ -13,16 +15,6 @@ const TABS = [
   { key: 'notifications', label: 'Notification', icon: Bell },
   { key: 'appearance', label: 'Dark Mode', icon: Moon },
 ];
-
-const NOTIF_DEFAULTS = { announcements: true, jobs: true, messages: true };
-
-const loadNotifs = () => {
-  try {
-    return { ...NOTIF_DEFAULTS, ...JSON.parse(localStorage.getItem('notifPrefs') || '{}') };
-  } catch {
-    return { ...NOTIF_DEFAULTS };
-  }
-};
 
 export default function Settings() {
   const { user, refreshUser, logout } = useAuth();
@@ -43,11 +35,36 @@ export default function Settings() {
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwLoading, setPwLoading] = useState(false);
 
-  // Notification tab state
-  const [notifs, setNotifs] = useState(loadNotifs);
+  // Notification tab: preference toggles (persisted) filter the real feed.
+  const [notifPrefs, setNotifPrefs] = useState(() => {
+    try {
+      return { announcements: true, jobs: true, events: true, ...JSON.parse(localStorage.getItem('notifPrefs') || '{}') };
+    } catch {
+      return { announcements: true, jobs: true, events: true };
+    }
+  });
+  const { items: notifItems, markRead: markNotifRead, markAllRead: markAllNotifsRead } = useNotifications();
+
+  const toggleNotifPref = (key) => {
+    setNotifPrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('notifPrefs', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const visibleNotifs = notifItems.filter((item) => {
+    if (!item.kind || item.kind === 'general') return true;
+    return notifPrefs[item.kind] !== false;
+  });
 
   // Appearance tab state
-  const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [theme, setThemeState] = useState(getTheme);
+
+  const changeTheme = (value) => {
+    setTheme(value);
+    setThemeState(value);
+  };
 
   useEffect(() => {
     if (user?.name) setMyName(user.name);
@@ -96,11 +113,6 @@ export default function Settings() {
     }
   };
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-  }, [dark]);
-
   const switchTab = (key) => setSearchParams({ tab: key });
 
   const handlePasswordChange = async (e) => {
@@ -111,9 +123,29 @@ export default function Settings() {
     }
     setPwLoading(true);
     try {
-      const res = await api.post('/auth/password/change', pwForm);
-      Swal.fire('Success', res.data.message, 'success');
+      await api.post('/auth/password/change', pwForm);
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+      // Stay or logout? Auto-logout after 5 seconds of no choice.
+      const choice = await Swal.fire({
+        title: 'Password changed!',
+        text: 'Stay logged in on this device, or log out now? Auto logout in 5 seconds.',
+        icon: 'success',
+        showConfirmButton: true,
+        confirmButtonText: 'Stay logged in',
+        confirmButtonColor: '#009639',
+        showDenyButton: true,
+        denyButtonText: 'Log out now',
+        denyButtonColor: '#71717a',
+        reverseButtons: true,
+        timer: 5000,
+        timerProgressBar: true,
+      });
+
+      if (!choice.isConfirmed) {
+        await logout();
+        navigate('/login', { replace: true });
+      }
     } catch (err) {
       Swal.fire('Error', err.response?.data?.message || 'Failed to change password', 'error');
     } finally {
@@ -121,19 +153,11 @@ export default function Settings() {
     }
   };
 
-  const toggleNotif = (key) => {
-    setNotifs((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem('notifPrefs', JSON.stringify(next));
-      return next;
-    });
-  };
-
   const inputClass =
-    'w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15';
+    'w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15';
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <AdminSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -142,7 +166,7 @@ export default function Settings() {
         <main className="p-4 sm:p-6">
           <div className="flex flex-col md:flex-row gap-5 items-start">
             {/* Sub-sidebar */}
-            <aside className="w-full md:w-60 shrink-0 rounded-xl border border-zinc-200 bg-white shadow-sm p-2">
+            <aside className="w-full md:w-60 shrink-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-2">
               <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                 Settings
               </p>
@@ -172,23 +196,47 @@ export default function Settings() {
           {activeTab === 'account' && (
             <div className="space-y-4">
             {/* My personal information */}
-            <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-100">
-                <h2 className="text-[15px] font-bold text-zinc-800">My Personal Information</h2>
-                <p className="text-[12px] text-zinc-500">Update your own admin profile.</p>
+                <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">My Personal Information</h2>
+                <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Update your own admin profile.</p>
+              </div>
+              <div className="flex items-center gap-4 px-5 pt-5">
+                <div className="relative">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-2xl font-extrabold text-[#009639] ring-2 ring-emerald-100">
+                    {(user?.name || 'A').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 rounded-full bg-zinc-900 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
+                    Soon
+                  </span>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    disabled
+                    title="Photo upload coming soon (Cloudinary)"
+                    className="flex h-9 items-center gap-1.5 cursor-not-allowed rounded-lg border border-zinc-200 px-4 text-[12.5px] font-semibold text-zinc-400 opacity-60"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Upload photo
+                  </button>
+                  <p className="mt-1 text-[10.5px] text-zinc-400">
+                    Photo upload coming soon — will use Cloudinary.
+                  </p>
+                </div>
               </div>
               <form onSubmit={handleSaveMyInfo} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-end">
                 <div className="flex-1">
                   <label className="mb-1 block text-[11px] font-semibold text-zinc-700">Full Name</label>
                   <input value={myName} onChange={(e) => setMyName(e.target.value)} required
                     placeholder="Your full name"
-                    className="w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15" />
+                    className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15" />
                 </div>
                 <div className="flex-1">
                   <label className="mb-1 block text-[11px] font-semibold text-zinc-700">Email</label>
                   <input type="email" value={myEmail} onChange={(e) => setMyEmail(e.target.value)} required
                     placeholder="Your email"
-                    className="w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15" />
+                    className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15" />
                 </div>
                 <button type="submit" disabled={myNameSaving}
                   className="h-9 rounded-lg bg-[#009639] px-5 text-[12.5px] font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-60">
@@ -201,9 +249,9 @@ export default function Settings() {
 
           {/* SECURITY */}
           {activeTab === 'security' && (
-            <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-5 max-w-md">
-              <h2 className="text-[15px] font-bold text-zinc-800">Security and Password</h2>
-              <p className="text-[12px] text-zinc-500 mb-4">Change your own login password.</p>
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 max-w-md">
+              <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">Security and Password</h2>
+              <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mb-4">Change your own login password.</p>
               <form onSubmit={handlePasswordChange} className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-zinc-700 mb-1">Current Password</label>
@@ -233,43 +281,94 @@ export default function Settings() {
 
           {/* NOTIFICATIONS */}
           {activeTab === 'notifications' && (
-            <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-5 max-w-md space-y-1">
-              <h2 className="text-[15px] font-bold text-zinc-800">Notification</h2>
-              <p className="text-[12px] text-zinc-500 mb-3">Stored on this device.</p>
-              {[
-                ['announcements', 'Announcements', 'University and alumni announcements'],
-                ['jobs', 'Job alerts', 'New job posts matching your profile'],
-                ['messages', 'Messages', 'New inbox messages'],
-              ].map(([key, label, desc]) => (
-                <button key={key} type="button" onClick={() => toggleNotif(key)}
-                  className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-zinc-50 transition-colors text-left">
-                  <span>
-                    <span className="block text-[13px] font-semibold text-zinc-800">{label}</span>
-                    <span className="block text-[11.5px] text-zinc-500">{desc}</span>
-                  </span>
-                  <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${notifs[key] ? 'bg-[#009639]' : 'bg-zinc-200'}`}>
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${notifs[key] ? 'left-[22px]' : 'left-0.5'}`} />
-                  </span>
-                </button>
-              ))}
+            <div className="space-y-4 max-w-md">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-1">
+                <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">Preferences</h2>
+                <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mb-2">Choose which alerts appear in your feed.</p>
+                {[
+                  ['announcements', 'Announcements', 'University and alumni announcements'],
+                  ['jobs', 'Job alerts', 'New job posts matching your profile'],
+                  ['events', 'Events', 'New gatherings and activities'],
+                ].map(([key, label, desc]) => (
+                  <button key={key} type="button" onClick={() => toggleNotifPref(key)}
+                    className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left">
+                    <span>
+                      <span className="block text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">{label}</span>
+                      <span className="block text-[11.5px] text-zinc-500 dark:text-zinc-400">{desc}</span>
+                    </span>
+                    <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${notifPrefs[key] !== false ? 'bg-[#009639]' : 'bg-zinc-200'}`}>
+                      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${notifPrefs[key] !== false ? 'left-[22px]' : 'left-0.5'}`} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">Recent Alerts</h2>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Filtered by your preferences.</p>
+                  </div>
+                  <button type="button" onClick={markAllNotifsRead}
+                    className="text-[11.5px] font-semibold text-[#009639] hover:underline">
+                    Mark all read
+                  </button>
+                </div>
+                <ul className="space-y-1">
+                  {visibleNotifs.slice(0, 10).map((item) => (
+                    <li key={item._id}>
+                      <button type="button" onClick={() => markNotifRead(item._id)}
+                        className={`flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800 ${!item.read ? 'bg-emerald-50/50' : ''}`}>
+                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${!item.read ? 'bg-[#009639]' : 'bg-zinc-200'}`} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">{item.title}</span>
+                          {item.body && <span className="block truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">{item.body}</span>}
+                          <span className="block text-[10.5px] text-zinc-400">
+                            {new Date(item.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                  {visibleNotifs.length === 0 && (
+                    <li className="py-6 text-center text-[12.5px] text-zinc-400">
+                      No alerts — enable a category above or wait for new posts.
+                    </li>
+                  )}
+                </ul>
+              </div>
             </div>
           )}
 
           {/* APPEARANCE */}
           {activeTab === 'appearance' && (
-            <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-5 max-w-md">
-              <h2 className="text-[15px] font-bold text-zinc-800">Dark Mode</h2>
-              <p className="text-[12px] text-zinc-500 mb-3">Toggles the dark theme across the app.</p>
-              <button type="button" onClick={() => setDark(!dark)}
-                className="flex items-center justify-between w-full px-3 py-3 rounded-lg hover:bg-zinc-50 transition-colors text-left">
-                <span>
-                  <span className="block text-[13px] font-semibold text-zinc-800">Dark mode</span>
-                  <span className="block text-[11.5px] text-zinc-500">{dark ? 'On' : 'Off'}</span>
-                </span>
-                <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${dark ? 'bg-[#009639]' : 'bg-zinc-200'}`}>
-                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${dark ? 'left-[22px]' : 'left-0.5'}`} />
-                </span>
-              </button>
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 max-w-md">
+              <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">Appearance</h2>
+              <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mb-3">Choose how SielAlumni looks on this device.</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: 'light', label: 'Light', icon: Sun },
+                  { key: 'dark', label: 'Dark', icon: Moon },
+                  { key: 'system', label: 'System', icon: Monitor },
+                ].map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => changeTheme(key)}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3.5 transition ${
+                      theme === key
+                        ? 'border-[#009639] bg-emerald-50/50 text-[#007a2e]'
+                        : 'border-zinc-200 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 hover:text-zinc-700'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="text-[12px] font-bold">{label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-[11.5px] text-zinc-400">
+                System follows your device setting and updates automatically.
+              </p>
             </div>
           )}
             </div>

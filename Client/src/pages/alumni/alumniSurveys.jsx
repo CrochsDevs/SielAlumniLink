@@ -21,7 +21,7 @@ const AlumniSurveys = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -29,16 +29,16 @@ const AlumniSurveys = () => {
 
         <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6">
           {loading ? (
-            <p className="rounded-3xl border border-emerald-900/10 bg-white p-8 text-center text-[13px] text-zinc-500 shadow-sm">
+            <p className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Loading surveys...
             </p>
           ) : surveys.length === 0 ? (
-            <div className="rounded-3xl border border-emerald-900/10 bg-white p-10 text-center shadow-sm">
-              <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639]">
+            <div className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
+              <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:text-emerald-300">
                 <FileText className="h-6 w-6" />
               </span>
-              <p className="text-[14px] font-bold text-zinc-800">No surveys right now</p>
-              <p className="mt-0.5 text-[12px] text-zinc-500">Check back later for new surveys.</p>
+              <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">No surveys right now</p>
+              <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">Check back later for new surveys.</p>
             </div>
           ) : (
             surveys.map((survey) => (
@@ -46,27 +46,27 @@ const AlumniSurveys = () => {
                 key={survey._id}
                 type="button"
                 onClick={() => navigate(`/alumni/surveys/${survey._id}`)}
-                className="flex w-full items-center gap-3.5 rounded-3xl border border-emerald-900/10 bg-white p-5 text-left shadow-sm transition hover:shadow-md"
+                className="flex w-full items-center gap-3.5 rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 text-left shadow-sm transition hover:shadow-md"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#009639]/10 text-[#009639]">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
                   <FileText className="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-extrabold text-zinc-900">{survey.title}</span>
-                  <span className="block truncate text-[12px] text-zinc-500">
+                  <span className="block truncate text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">{survey.title}</span>
+                  <span className="block truncate text-[12px] text-zinc-500 dark:text-zinc-400">
                     {survey.description || `${survey.questions?.length || 0} questions`}
                   </span>
-                  <span className="mt-1 block text-[11px] font-semibold text-[#009639]">
+                  <span className="mt-1 block text-[11px] font-semibold text-[#009639] dark:text-emerald-300">
                     {survey.questions?.length || 0} questions
                   </span>
                 </span>
-                <ChevronRight className="h-5 w-5 shrink-0 text-zinc-300" />
+                <ChevronRight className="h-5 w-5 shrink-0 text-zinc-300 dark:text-zinc-500" />
               </button>
             ))
           )}
           {surveys.length > 0 && (
-            <p className="flex items-center justify-center gap-1.5 text-[11.5px] text-zinc-400">
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#009639]" />
+            <p className="flex items-center justify-center gap-1.5 text-[11.5px] text-zinc-400 dark:text-zinc-500">
+              <CheckCircle2 className="h-3.5 w-3.5 text-[#009639] dark:text-emerald-300" />
               Your answers help CLSU serve alumni better.
             </p>
           )}

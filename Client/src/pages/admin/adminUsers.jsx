@@ -160,7 +160,7 @@ export default function AdminUsers() {
   const pagedAudit = filteredAudit.slice((auditPage - 1) * auditPerPage, auditPage * auditPerPage);
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <AdminSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -174,14 +174,14 @@ export default function AdminUsers() {
               { label: 'Alumni', value: counts.alumni, icon: GraduationCap },
               { label: 'Students', value: counts.student, icon: BookOpen },
             ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <div key={label} className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-zinc-500">{label}</span>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639]">
+                  <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">{label}</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
                     <Icon className="h-4 w-4" />
                   </span>
                 </div>
-                <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-zinc-900">{value}</p>
+                <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">{value}</p>
               </div>
             ))}
           </div>
@@ -213,29 +213,29 @@ export default function AdminUsers() {
           </div>
 
           {view === 'audit' ? (
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-zinc-100 p-4">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 p-4">
               <div>
-                <h2 className="text-[14px] font-extrabold text-zinc-900">Audit Logs</h2>
-                <p className="text-[11.5px] text-zinc-500">Logins and logouts — newest first.</p>
+                <h2 className="text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">Audit Logs</h2>
+                <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">Logins and logouts — newest first.</p>
               </div>
               <button
                 type="button"
                 onClick={fetchAudit}
                 disabled={auditLoading}
-                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-[11.5px] font-bold text-zinc-600 transition hover:border-[#009639] hover:text-[#007a2e] disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-[11.5px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e] disabled:opacity-50"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${auditLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
             {auditLoading ? (
-              <p className="p-6 text-[13px] text-zinc-500">Loading audit logs...</p>
+              <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">Loading audit logs...</p>
             ) : (
               <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full min-w-[560px] text-left text-[12.5px]">
                   <thead>
-                    <tr className="border-b border-zinc-100 text-[10.5px] uppercase tracking-wider text-zinc-400">
+                    <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                       <th className="px-5 py-3 font-semibold">User</th>
                       <th className="px-5 py-3 font-semibold">Action</th>
                       <th className="px-5 py-3 font-semibold">Time</th>
@@ -243,8 +243,8 @@ export default function AdminUsers() {
                   </thead>
                   <tbody>
                     {pagedAudit.map((log) => (
-                      <tr key={log._id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
-                        <td className="px-5 py-3 font-medium text-zinc-800">{log.email}</td>
+                      <tr key={log._id} className="border-b border-zinc-50 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:bg-zinc-800/60">
+                        <td className="px-5 py-3 font-medium text-zinc-800 dark:text-zinc-100">{log.email}</td>
                         <td className="px-5 py-3">
                           <span className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ${
                             log.action === 'login' ? 'bg-[#009639]/10 text-[#007a2e]' : 'bg-zinc-100 text-zinc-500'
@@ -252,13 +252,13 @@ export default function AdminUsers() {
                             {log.action}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-zinc-500">
+                        <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">
                           {new Date(log.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })}
                         </td>
                       </tr>
                     ))}
                     {filteredAudit.length === 0 && (
-                      <tr><td colSpan={3} className="px-5 py-8 text-center text-zinc-400">No activity yet.</td></tr>
+                      <tr><td colSpan={3} className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-500">No activity yet.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -277,15 +277,15 @@ export default function AdminUsers() {
           ) : (
           <>
           {/* Table card */}
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-zinc-100 p-4 sm:flex-row sm:items-center">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-zinc-100 dark:border-zinc-800 p-4 sm:flex-row sm:items-center">
               <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search name or email..."
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
+                  className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
                 />
               </div>
               <div className="flex gap-1.5">
@@ -313,12 +313,12 @@ export default function AdminUsers() {
             </div>
 
             {loading ? (
-              <p className="p-6 text-[13px] text-zinc-500">Loading users...</p>
+              <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">Loading users...</p>
             ) : (
               <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full min-w-[1240px] text-left text-[12.5px]">
                   <thead>
-                    <tr className="border-b border-zinc-100 text-[10.5px] uppercase tracking-wider text-zinc-400">
+                    <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                       <th className="px-5 py-3 font-semibold">Student ID</th>
                       <th className="px-5 py-3 font-semibold min-w-[200px]">Full Name</th>
                       <th className="px-5 py-3 font-semibold">Program/Course</th>
@@ -347,19 +347,19 @@ export default function AdminUsers() {
                             ? `Last login ${formatRelative(activity.login)}`
                             : 'Never logged in';
                       return (
-                        <tr key={u._id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/60">
-                          <td className="px-5 py-3 font-medium text-zinc-800">{u.studentId || '—'}</td>
-                          <td className="px-5 py-3 font-semibold text-zinc-800 whitespace-nowrap min-w-[200px]">{u.name || '—'}</td>
-                          <td className="px-5 py-3 text-zinc-600">{u.program || '—'}</td>
-                          <td className="px-5 py-3 text-zinc-600">{u.yearLevel || '—'}</td>
-                          <td className="px-5 py-3 text-zinc-600">{u.section || '—'}</td>
+                        <tr key={u._id} className="border-b border-zinc-50 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:bg-zinc-800/60">
+                          <td className="px-5 py-3 font-medium text-zinc-800 dark:text-zinc-100">{u.studentId || '—'}</td>
+                          <td className="px-5 py-3 font-semibold text-zinc-800 dark:text-zinc-100 whitespace-nowrap min-w-[200px]">{u.name || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{u.program || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{u.yearLevel || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{u.section || '—'}</td>
                           <td className="px-5 py-3">
-                            <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-zinc-600">
+                            <span className="inline-block rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
                               {u.academicStatus || '—'}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-zinc-500">{u.email}</td>
-                          <td className="px-5 py-3 text-zinc-600">{u.contactNumber || '—'}</td>
+                          <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">{u.email}</td>
+                          <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{u.contactNumber || '—'}</td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 ${meta.style}`}>
                               <RoleIcon className="h-3 w-3" />
@@ -369,11 +369,11 @@ export default function AdminUsers() {
                           <td className="px-5 py-3">
                             {online ? (
                               <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[#007a2e]">
-                                <Circle className="h-2 w-2 fill-current text-[#009639]" />
+                                <Circle className="h-2 w-2 fill-current text-[#009639] dark:text-emerald-300" />
                                 Active now
                               </span>
                             ) : (
-                              <span className="text-[11.5px] text-zinc-400">
+                              <span className="text-[11.5px] text-zinc-400 dark:text-zinc-500">
                                 {offlineLabel}
                               </span>
                             )}
@@ -382,7 +382,7 @@ export default function AdminUsers() {
                       );
                     })}
                     {filtered.length === 0 && (
-                      <tr><td colSpan={10} className="px-5 py-8 text-center text-zinc-400">No users found.</td></tr>
+                      <tr><td colSpan={10} className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-500">No users found.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -402,12 +402,12 @@ export default function AdminUsers() {
       {/* CAIS sync modal */}
       {syncOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeSync}>
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900">
-              <RefreshCw className={`h-4 w-4 text-[#009639] ${syncLoading ? 'animate-spin' : ''}`} />
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
+              <RefreshCw className={`h-4 w-4 text-[#009639] dark:text-emerald-300 ${syncLoading ? 'animate-spin' : ''}`} />
               Sync from CAIS
             </h2>
-            <p className="mt-0.5 text-[12px] text-zinc-500">
+            <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
               Pulls all records live from the CAIS API and stores them in SielAlumniLink.
               New accounts get no password — they sign in via magic link.
             </p>
@@ -424,13 +424,13 @@ export default function AdminUsers() {
             )}
 
             {syncLoading && (
-              <div className="mt-4 flex flex-col items-center rounded-2xl bg-zinc-50 py-8">
-                <svg className="h-8 w-8 animate-spin text-[#009639]" viewBox="0 0 24 24">
+              <div className="mt-4 flex flex-col items-center rounded-2xl bg-zinc-50 dark:bg-zinc-800 py-8">
+                <svg className="h-8 w-8 animate-spin text-[#009639] dark:text-emerald-300" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                <p className="mt-3 text-[13px] font-bold text-zinc-700">Syncing from CAIS...</p>
-                <p className="text-[11px] text-zinc-400">Fetching records and storing them</p>
+                <p className="mt-3 text-[13px] font-bold text-zinc-700 dark:text-zinc-200">Syncing from CAIS...</p>
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Fetching records and storing them</p>
               </div>
             )}
 
@@ -442,9 +442,9 @@ export default function AdminUsers() {
                   ['Update', syncSummary.updated],
                   ['Skip', syncSummary.skipped?.length || 0],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-xl bg-zinc-50 px-2 py-2.5">
-                    <p className="text-lg font-extrabold text-zinc-900">{value}</p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{label}</p>
+                  <div key={label} className="rounded-xl bg-zinc-50 dark:bg-zinc-800 px-2 py-2.5">
+                    <p className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">{value}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">{label}</p>
                   </div>
                 ))}
               </div>
@@ -460,7 +460,7 @@ export default function AdminUsers() {
 
             <div className="mt-4 flex gap-2">
               <button type="button" onClick={closeSync}
-                className="h-10 flex-1 rounded-xl border border-zinc-200 text-[13px] font-bold text-zinc-600 transition hover:bg-zinc-50">
+                className="h-10 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:bg-zinc-800">
                 {syncSummary ? 'Done' : 'Close'}
               </button>
               {syncSummary && (

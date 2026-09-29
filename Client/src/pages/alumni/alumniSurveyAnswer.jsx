@@ -51,7 +51,7 @@ const AlumniSurveyAnswer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -61,29 +61,29 @@ const AlumniSurveyAnswer = () => {
           <button
             type="button"
             onClick={() => navigate('/alumni/surveys')}
-            className="mb-3 flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 transition hover:text-[#007a2e]"
+            className="mb-3 flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400 transition hover:text-[#007a2e]"
           >
             <ArrowLeft className="h-4 w-4" />
             All surveys
           </button>
 
           {loading ? (
-            <p className="rounded-3xl border border-emerald-900/10 bg-white p-8 text-center text-[13px] text-zinc-500 shadow-sm">
+            <p className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Loading survey...
             </p>
           ) : !survey ? (
-            <p className="rounded-3xl border border-emerald-900/10 bg-white p-8 text-center text-[13px] text-zinc-500 shadow-sm">
+            <p className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Survey not found.
             </p>
           ) : (
-            <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-5 py-5 sm:px-6">
                 <h1 className="text-[16px] font-extrabold text-white">{survey.title}</h1>
                 {survey.description && (
                   <p className="mt-0.5 text-[12px] text-white/70">{survey.description}</p>
                 )}
                 {answered && (
-                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold text-white">
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-zinc-900/15 px-3 py-1 text-[11px] font-bold text-white">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Already answered — update anytime
                   </p>
@@ -93,7 +93,7 @@ const AlumniSurveyAnswer = () => {
               <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
                 {(survey.questions || []).map((q, i) => (
                   <div key={i}>
-                    <label className="mb-1.5 block text-[13px] font-bold text-zinc-800">
+                    <label className="mb-1.5 block text-[13px] font-bold text-zinc-800 dark:text-zinc-100">
                       {i + 1}. {q.text}
                     </label>
                     <textarea
@@ -102,7 +102,7 @@ const AlumniSurveyAnswer = () => {
                       required
                       rows={2}
                       placeholder="Your answer..."
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50/60 px-3.5 py-2.5 text-[13px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3.5 py-2.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
                     />
                   </div>
                 ))}

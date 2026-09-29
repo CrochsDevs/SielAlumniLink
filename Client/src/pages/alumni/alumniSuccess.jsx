@@ -44,24 +44,24 @@ const INITIAL_STORIES = [
 ];
 
 const StoryCard = ({ story, liked, onLike }) => (
-  <article className="flex flex-col rounded-3xl border border-emerald-900/10 bg-white p-5 shadow-sm transition hover:shadow-md">
+  <article className="flex flex-col rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm transition hover:shadow-md">
     <div className="flex items-center gap-2.5">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-sm font-bold text-[#009639]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-sm font-bold text-[#009639] dark:text-emerald-300">
         {story.initial}
       </span>
       <div className="min-w-0">
-        <p className="flex items-center gap-1 truncate text-[13px] font-bold text-zinc-900">
+        <p className="flex items-center gap-1 truncate text-[13px] font-bold text-zinc-900 dark:text-zinc-100">
           {story.name}
-          <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[#009639]" />
+          <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[#009639] dark:text-emerald-300" />
         </p>
-        <p className="truncate text-[11px] text-zinc-500">{story.meta}</p>
+        <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">{story.meta}</p>
       </div>
     </div>
-    <h3 className="mt-3 text-[14.5px] font-extrabold leading-snug tracking-tight text-zinc-900">
+    <h3 className="mt-3 text-[14.5px] font-extrabold leading-snug tracking-tight text-zinc-900 dark:text-zinc-100">
       {story.title}
     </h3>
-    <p className="mt-1.5 flex-1 text-[12.5px] leading-relaxed text-zinc-600">{story.text}</p>
-    <div className="mt-3 flex items-center gap-1 border-t border-zinc-100 pt-2.5">
+    <p className="mt-1.5 flex-1 text-[12.5px] leading-relaxed text-zinc-600 dark:text-zinc-300">{story.text}</p>
+    <div className="mt-3 flex items-center gap-1 border-t border-zinc-100 dark:border-zinc-800 pt-2.5">
       <button
         type="button"
         onClick={onLike}
@@ -72,7 +72,7 @@ const StoryCard = ({ story, liked, onLike }) => (
         <ThumbsUp className="h-3.5 w-3.5" />
         {story.likes + (liked ? 1 : 0)}
       </button>
-      <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-semibold text-zinc-500">
+      <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-semibold text-zinc-500 dark:text-zinc-400">
         <MessageSquare className="h-3.5 w-3.5" />
         {story.comments}
       </span>
@@ -121,7 +121,7 @@ const AlumniSuccess = () => {
   const rest = stories.filter((s) => !s.featured);
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -132,7 +132,7 @@ const AlumniSuccess = () => {
           {featured && (
             <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] p-6 text-white shadow-lg shadow-emerald-900/10 sm:p-8">
               <Quote className="absolute -right-4 -top-4 h-32 w-32 text-white/10" />
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-zinc-900/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider">
                 <Trophy className="h-3 w-3" />
                 Featured Story
               </span>
@@ -147,9 +147,9 @@ const AlumniSuccess = () => {
           )}
 
           {/* Share form */}
-          <section className="rounded-3xl border border-emerald-900/10 bg-white p-5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-zinc-900">
-              <PenLine className="h-4 w-4 text-[#009639]" />
+          <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+            <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
+              <PenLine className="h-4 w-4 text-[#009639] dark:text-emerald-300" />
               Share your story
             </h2>
             <form onSubmit={handleShare} className="mt-3 space-y-2.5">

@@ -137,7 +137,7 @@ const StudentPortfolio = () => {
                 {type === 'cards' && (
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     {data[key].map((item, i) => (
-                      <div key={i} className="group relative rounded-2xl border border-zinc-100 p-4 transition hover:border-zinc-300">
+                      <div key={i} className="group relative rounded-2xl border border-zinc-100 p-4 transition hover:border-zinc-300 dark:hover:border-zinc-600">
                         <button type="button" onClick={() => removeItem(key, i)}
                           className="absolute right-2.5 top-2.5 rounded-md p-1 text-zinc-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
                           aria-label="Remove item">

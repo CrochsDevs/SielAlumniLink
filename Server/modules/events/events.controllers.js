@@ -1,4 +1,5 @@
 import EventModel from './events.models.js';
+import NotificationModel from '../notifications/notifications.models.js';
 
 // Any logged-in user sees active events.
 export const listEvents = async (req, res) => {
@@ -43,6 +44,16 @@ export const createEvent = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide an event title' });
     }
     const event = await EventModel.create({ ...req.body, createdBy: req.user._id });
+    if (event.isActive) {
+      void NotificationModel.broadcast({
+        title: `New event: ${event.title}`,
+        body: event.location || '',
+        link: '/alumni/message',
+        audience: 'all',
+        kind: 'events',
+        excludeAuthId: req.user._id,
+      });
+    }
     res.status(201).json({
       success: true,
       data: event,

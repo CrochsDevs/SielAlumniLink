@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useAuth } from '../context/useAuth';
 import clsuLogo from '../assets/logo/clsu_logo.png';
+
+const errorToast = (message) => Swal.fire({
+  toast: true,
+  position: 'top',
+  icon: 'error',
+  title: message,
+  showConfirmButton: false,
+  timer: 3500,
+  timerProgressBar: true,
+  customClass: { popup: 'mt-4' },
+});
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,7 +21,6 @@ const Login = () => {
   const [authMode, setAuthMode] = useState('magic');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [magicMessage, setMagicMessage] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -20,7 +31,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
     const result = await login(formData.email, formData.password);
     if (result.success) {
@@ -28,21 +38,20 @@ const Login = () => {
       setTimeout(() => navigate('/'), 600);
       return;
     } else {
-      setError(result.error || authError || 'Login failed');
+      errorToast(result.error || authError || 'Login failed');
     }
     setLoading(false);
   };
 
   const handleMagicLinkSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setMagicMessage('');
     setLoading(true);
     const result = await requestMagicLink(formData.email);
     if (result.success) {
       setMagicMessage(result.message);
     } else {
-      setError(result.error || authError || 'Failed to send magic link');
+      errorToast(result.error || authError || 'Failed to send magic link');
     }
     setLoading(false);
   };
@@ -56,48 +65,36 @@ const Login = () => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="mt-2.5 text-[12px] font-semibold text-zinc-700">Signing you in...</p>
+            <p className="mt-2.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">Signing you in...</p>
             <p className="text-[10.5px] text-zinc-400">Loading your account</p>
           </div>
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-emerald-50/30 flex items-center justify-center p-4 font-sans">
+      <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-emerald-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-emerald-950/30 flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-          <div className="bg-white rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 sm:p-6 relative overflow-hidden">
 
             <div className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-[#009639]/8 via-transparent to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
 
               <div className="text-center mb-5">
-                <h1 className="text-[19px] font-bold text-zinc-900 tracking-tight mb-1">
+                <h1 className="text-[19px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-1">
                   Get started with <span className="text-[#009639]">SielAlumni</span>
                 </h1>
-                <p className="text-[11px] text-zinc-500 leading-relaxed">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
                   Start exploring smarter connections<br />
                   and faster results with CLSU Alumni Network
                 </p>
               </div>
 
-              {(error || authError) && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 p-2 rounded-lg mb-3 text-[11px]">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mt-0.5 shrink-0" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" x2="12" y1="8" y2="12" />
-                    <line x1="12" x2="12.01" y1="16" y2="16" />
-                  </svg>
-                  <span>{error || authError}</span>
-                </div>
-              )}
-
               <div className="space-y-2.5">
                 {authMode === 'password' ? (
                   <form onSubmit={handleSubmit} className="space-y-2.5">
                     <div>
-                      <label className="block text-[10.5px] font-semibold text-zinc-700 mb-1">Email</label>
+                      <label className="block text-[10.5px] font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Email</label>
                       <input
                         type="email"
                         name="email"
@@ -105,13 +102,13 @@ const Login = () => {
                         onChange={handleChange}
                         required
                         placeholder="Enter your email"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
                       />
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[10.5px] font-semibold text-zinc-700">Password</label>
+                        <label className="block text-[10.5px] font-semibold text-zinc-700 dark:text-zinc-200">Password</label>
                         <Link
                           to="/forgot-password"
                           className="text-[10px] font-medium text-[#009639] hover:text-[#007a2e] transition-colors hover:underline underline-offset-2"
@@ -126,7 +123,7 @@ const Login = () => {
                         onChange={handleChange}
                         required
                         placeholder="Enter your password"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
                       />
                     </div>
 
@@ -148,8 +145,8 @@ const Login = () => {
 
                     <button
                       type="button"
-                      onClick={() => { setAuthMode('magic'); setError(''); }}
-                      className="w-full h-7 text-[10.5px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors"
+                      onClick={() => setAuthMode('magic')}
+                      className="w-full h-7 text-[10.5px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 transition-colors"
                     >
                       Use single-use login instead
                     </button>
@@ -157,7 +154,7 @@ const Login = () => {
                 ) : (
                   <form onSubmit={handleMagicLinkSubmit} className="space-y-2.5">
                     <div>
-                      <label className="block text-[10.5px] font-semibold text-zinc-700 mb-1">Email</label>
+                      <label className="block text-[10.5px] font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Email</label>
                       <input
                         type="email"
                         name="email"
@@ -165,7 +162,7 @@ const Login = () => {
                         onChange={handleChange}
                         required
                         placeholder="Enter your email"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
                       />
                     </div>
 
@@ -198,8 +195,8 @@ const Login = () => {
 
                     <button
                       type="button"
-                      onClick={() => { setAuthMode('password'); setError(''); }}
-                      className="w-full h-7 text-[10.5px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors"
+                      onClick={() => setAuthMode('password')}
+                      className="w-full h-7 text-[10.5px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 transition-colors"
                     >
                       Use password instead
                     </button>
@@ -216,7 +213,7 @@ const Login = () => {
               <div className="space-y-2">
                 <button
                   type="button"
-                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-200 active:scale-[0.99]"
+                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] font-medium text-zinc-700 dark:text-zinc-200 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:hover:bg-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-200 active:scale-[0.99]"
                 >
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -229,7 +226,7 @@ const Login = () => {
 
                 <button
                   type="button"
-                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-200 active:scale-[0.99]"
+                  className="w-full h-8 flex items-center justify-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] font-medium text-zinc-700 dark:text-zinc-200 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:hover:bg-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-200 active:scale-[0.99]"
                 >
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
@@ -240,9 +237,9 @@ const Login = () => {
 
               <p className="text-center text-[9.5px] text-zinc-400 mt-5 leading-relaxed">
                 By continuing, you agree to SielAlumni's{' '}
-                <a href="#" className="text-zinc-600 hover:text-[#009639] font-medium transition-colors">Terms</a>
+                <a href="#" className="text-zinc-600 dark:text-zinc-300 hover:text-[#009639] font-medium transition-colors">Terms</a>
                 {' '}&amp;{' '}
-                <a href="#" className="text-zinc-600 hover:text-[#009639] font-medium transition-colors">Privacy Policy</a>
+                <a href="#" className="text-zinc-600 dark:text-zinc-300 hover:text-[#009639] font-medium transition-colors">Privacy Policy</a>
               </p>
             </div>
           </div>

@@ -56,7 +56,8 @@ export const signup = async (req, res) => {
 
         const newUserProfile = await UserModel.createUserProfile(newAuth._id, {
             name,
-            email
+            email,
+            role: newAuth.role
         });
 
         const token = jwt.sign(
@@ -122,7 +123,7 @@ export const login = async (req, res) => {
         if (!isPasswordValid) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials'
+                message: 'Wrong password. Please try again.'
             });
         }
 

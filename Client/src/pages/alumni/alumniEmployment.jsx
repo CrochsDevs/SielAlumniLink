@@ -45,7 +45,7 @@ const AlumniEmployment = () => {
   const current = HISTORY.find((h) => h.current);
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -62,7 +62,7 @@ const AlumniEmployment = () => {
               }}
             />
             <div className="relative flex flex-wrap items-center gap-4">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/30">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900/15 ring-1 ring-white/30">
                 <Building2 className="h-6 w-6" />
               </span>
               <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ const AlumniEmployment = () => {
               <button
                 type="button"
                 onClick={() => setEditing(!editing)}
-                className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-[12.5px] font-bold text-[#007a2e] transition hover:bg-emerald-50"
+                className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-zinc-900 px-4 py-2 text-[12.5px] font-bold text-[#007a2e] transition hover:bg-emerald-50"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Update
@@ -90,8 +90,8 @@ const AlumniEmployment = () => {
             </div>
 
             {editing && (
-              <form onSubmit={saveStatus} className="relative mt-4 grid gap-2.5 rounded-2xl bg-white p-4 sm:grid-cols-2">
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className={`${inputClass} text-zinc-800`}>
+              <form onSubmit={saveStatus} className="relative mt-4 grid gap-2.5 rounded-2xl bg-white dark:bg-zinc-900 p-4 sm:grid-cols-2">
+                <select value={status} onChange={(e) => setStatus(e.target.value)} className={`${inputClass} text-zinc-800 dark:text-zinc-100`}>
                   {['Employed', 'Self-employed', 'Unemployed', 'Studying'].map((s) => (
                     <option key={s}>{s}</option>
                   ))}
@@ -111,9 +111,9 @@ const AlumniEmployment = () => {
           </section>
 
           {/* History */}
-          <section className="rounded-3xl border border-emerald-900/10 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900">Employment History</h2>
-            <p className="text-[12px] text-zinc-500">Where fellow Sielesyuans have worked.</p>
+          <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+            <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Employment History</h2>
+            <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Where fellow Sielesyuans have worked.</p>
             <ol className="mt-4 space-y-0">
               {HISTORY.map((job, i) => (
                 <li key={job.id} className="relative flex gap-4 pb-6 last:pb-0">
@@ -125,8 +125,8 @@ const AlumniEmployment = () => {
                   }`}>
                     <Building2 className="h-4 w-4" />
                   </span>
-                  <div className="min-w-0 flex-1 rounded-2xl bg-zinc-50/70 p-4 transition hover:bg-emerald-50/50">
-                    <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-zinc-900">
+                  <div className="min-w-0 flex-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800/70 p-4 transition hover:bg-emerald-50/50">
+                    <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
                       {job.position}
                       {job.current && (
                         <span className="rounded-full bg-[#009639] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
@@ -134,8 +134,8 @@ const AlumniEmployment = () => {
                         </span>
                       )}
                     </p>
-                    <p className="text-[12px] font-medium text-zinc-600">{job.company}</p>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-400">
+                    <p className="text-[12px] font-medium text-zinc-600 dark:text-zinc-300">{job.company}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-400 dark:text-zinc-500">
                       <span className="flex items-center gap-1">
                         <CalendarDays className="h-3 w-3" />
                         {job.period}

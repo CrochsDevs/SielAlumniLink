@@ -12,6 +12,8 @@ import connectionsRoutes from '../modules/connections/connections.routes.js';
 import announcementsRoutes from '../modules/announcements/announcements.routes.js';
 import careerPostsRoutes from '../modules/career-posts/career-posts.routes.js';
 import messagesRoutes from '../modules/messages/messages.routes.js';
+import notificationsRoutes from '../modules/notifications/notifications.routes.js';
+import referralsRoutes from '../modules/referrals/referrals.routes.js';
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use('/api/connections', connectionsRoutes);
 app.use('/api/announcements', announcementsRoutes);
 app.use('/api/career-posts', careerPostsRoutes);
 app.use('/api/conversations', messagesRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/referrals', referralsRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({

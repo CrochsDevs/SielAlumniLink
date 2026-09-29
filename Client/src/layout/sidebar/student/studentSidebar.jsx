@@ -5,11 +5,13 @@ import {
   Route,
   FolderKanban,
   Briefcase,
+  Share2,
   Users,
   Award,
   BadgeCheck,
   BarChart3,
   MessageSquare,
+  UserPlus,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -30,8 +32,8 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
   const navItemClass = (active) =>
     `group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
       active
-        ? 'bg-[#009639]/10 text-[#009639] font-semibold'
-        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium'
+        ? 'bg-[#009639]/10 text-[#009639] font-semibold dark:bg-[#009639]/20 dark:text-emerald-300'
+        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
     }`;
 
   const handleLogout = () => {
@@ -50,17 +52,17 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
 
       <aside
         id="sidebar"
-        className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-zinc-200 transform transition-transform duration-300 z-30 flex flex-col ${
+        className={`fixed left-0 top-0 h-full w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 z-30 flex flex-col ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
         style={{ fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif" }}
       >
         {/* Header / Brand */}
-        <div className="px-4 pt-5 pb-5 border-b border-zinc-100">
+        <div className="px-4 pt-5 pb-5 border-b border-zinc-100 dark:border-zinc-800">
           <Link to="/student" className="flex flex-col items-center text-center group">
             <img src={clsuLogo} alt="CLSU" className="h-16 w-16 object-contain" />
             <div className="leading-tight mt-1">
-              <p className="font-extrabold text-[17px] tracking-tight text-zinc-800">
+              <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">
                 Siel<span className="text-[#009639]">Alumni</span>
               </p>
             </div>
@@ -116,11 +118,16 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
               <Briefcase className="w-4 h-4 shrink-0" />
               <span className="truncate">Career</span>
             </NavLink>
+
+            <NavLink to="/student/referrals" className={navItemClass(isActive('/student/referrals'))}>
+              <Share2 className="w-4 h-4 shrink-0" />
+              <span className="truncate">Referrals</span>
+            </NavLink>
           </nav>
 
           {/* Secondary group */}
           <nav className="space-y-0.5">
-            <NavLink to="/inbox" className={navItemClass(isActive('/inbox'))}>
+            <NavLink to="/student/message" className={navItemClass(isActive('/student/message'))}>
               <MessageSquare className="w-4 h-4 shrink-0" />
               <span className="truncate">Message</span>
             </NavLink>
@@ -136,16 +143,16 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
         </div>
 
         {/* User + Logout */}
-        <div className="p-2.5 border-t border-zinc-200">
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 transition-colors">
+        <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
             <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100">
               {(user?.name || 'S').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-zinc-800 truncate leading-tight">
+              <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">
                 {user?.name || 'Student'}
               </p>
-              <p className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-tight mt-0.5">
                 {user?.email || 'student@clsu.edu.ph'}
               </p>
             </div>
@@ -154,7 +161,7 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[12px] font-medium text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[12px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 transition-colors text-left"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             <span className="truncate">Logout</span>

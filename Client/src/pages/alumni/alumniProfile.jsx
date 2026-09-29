@@ -21,6 +21,8 @@ import { useAuth } from '../../context/useAuth';
 import { useChat } from '../../context/ChatContext';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
+import StudentSidebar from '../../layout/sidebar/student/studentSidebar';
+import StudentTopbar from '../../layout/topbar/student/studentTopbar';
 import api from '../../utils/axios';
 
 // TEMPORARY content — papalitan ng totoong data mula sa API.
@@ -104,20 +106,23 @@ const AlumniProfile = () => {
   };
 
   const person = isOwn ? user : profile;
+  const isStudent = user?.role === 'student';
+  const Sidebar = isStudent ? StudentSidebar : AlumniSidebar;
+  const Topbar = isStudent ? StudentTopbar : AlumniTopbar;
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
-      <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
+      <Sidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
-        <AlumniTopbar user={user} title="Profile" onMenuClick={() => setSidebarOpen(true)} />
+        <Topbar user={user} title="Profile" onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6">
           {!isOwn && (
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 transition hover:text-[#007a2e]"
+              className="flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400 transition hover:text-[#007a2e]"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -125,22 +130,22 @@ const AlumniProfile = () => {
           )}
 
           {loadingOther ? (
-            <div className="rounded-3xl border border-emerald-900/10 bg-white p-10 text-center shadow-sm">
-              <svg className="mx-auto h-8 w-8 animate-spin text-[#009639]" viewBox="0 0 24 24">
+            <div className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
+              <svg className="mx-auto h-8 w-8 animate-spin text-[#009639] dark:text-emerald-300" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <p className="mt-3 text-[13px] font-medium text-zinc-500">Loading profile...</p>
+              <p className="mt-3 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">Loading profile...</p>
             </div>
           ) : notFound || (!isOwn && !profile) ? (
-            <div className="rounded-3xl border border-emerald-900/10 bg-white p-10 text-center shadow-sm">
-              <p className="text-[15px] font-bold text-zinc-800">Profile not found</p>
-              <p className="mt-1 text-[12.5px] text-zinc-500">This alumni profile does not exist.</p>
+            <div className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
+              <p className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">Profile not found</p>
+              <p className="mt-1 text-[12.5px] text-zinc-500 dark:text-zinc-400">This alumni profile does not exist.</p>
             </div>
           ) : (
             <>
               {/* Profile header */}
-              <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm">
+              <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
                 <div
                   className="relative h-32 bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] sm:h-40"
                   style={{
@@ -151,7 +156,7 @@ const AlumniProfile = () => {
                 <div className="px-5 pb-5 sm:px-7">
                   <div className="-mt-10 flex flex-wrap items-end justify-between gap-3">
                     <div className="relative">
-                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-3xl font-extrabold text-[#009639] shadow-lg ring-4 ring-white">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white dark:bg-zinc-900 text-3xl font-extrabold text-[#009639] dark:text-emerald-300 shadow-lg ring-4 ring-white">
                         {(person?.name || 'A').charAt(0).toUpperCase()}
                       </div>
                       <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-[#009639]" title="Active" />
@@ -159,7 +164,7 @@ const AlumniProfile = () => {
                     {isOwn && (
                       <button
                         type="button"
-                        className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3.5 py-1.5 text-[12px] font-semibold text-zinc-600 transition hover:border-emerald-300 hover:text-[#007a2e]"
+                        className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 px-3.5 py-1.5 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 transition hover:border-emerald-300 hover:text-[#007a2e]"
                         aria-label="Edit profile"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -168,14 +173,14 @@ const AlumniProfile = () => {
                     )}
                   </div>
 
-                  <h2 className="mt-3 flex items-center gap-1.5 text-2xl font-extrabold tracking-tight text-zinc-900">
+                  <h2 className="mt-3 flex items-center gap-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                     {person?.name || 'Alumni'}
-                    <BadgeCheck className="h-5 w-5 shrink-0 text-[#009639]" />
+                    <BadgeCheck className="h-5 w-5 shrink-0 text-[#009639] dark:text-emerald-300" />
                   </h2>
-                  <p className="text-[13.5px] font-medium text-zinc-600">
+                  <p className="text-[13.5px] font-medium text-zinc-600 dark:text-zinc-300">
                     HR Manager at Tech Corp • CLSU Batch 2015 • BS Psychology
                   </p>
-                  <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-zinc-400">
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-zinc-400 dark:text-zinc-500">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3.5 w-3.5" />
                       Manila, Philippines
@@ -190,13 +195,13 @@ const AlumniProfile = () => {
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 transition hover:border-[#009639] hover:text-[#007a2e]"
+                        className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e]"
                       >
                         Edit profile
                       </button>
                       <button
                         type="button"
-                        className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 transition hover:border-[#009639] hover:text-[#007a2e]"
+                        className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e]"
                       >
                         <Share2 className="h-4 w-4" />
                         Share profile
@@ -227,7 +232,7 @@ const AlumniProfile = () => {
                       <button
                         type="button"
                         onClick={() => profile?.email && openChatByEmail(profile.email)}
-                        className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 transition hover:border-[#009639] hover:text-[#007a2e]"
+                        className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e]"
                       >
                         Message
                       </button>
@@ -236,15 +241,15 @@ const AlumniProfile = () => {
                 </div>
 
                 {/* Stats strip */}
-                <div className="grid grid-cols-3 divide-x divide-zinc-100 border-t border-zinc-100 bg-emerald-50/40">
+                <div className="grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 border-t border-zinc-100 dark:border-zinc-800 bg-emerald-50/40">
                   {STATS.map(({ icon: Icon, value, label }) => (
                     <div key={label} className="flex items-center justify-center gap-2.5 px-2 py-3.5">
-                      <span className="hidden h-9 w-9 items-center justify-center rounded-xl bg-white text-[#009639] shadow-sm sm:flex">
+                      <span className="hidden h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 text-[#009639] dark:text-emerald-300 shadow-sm sm:flex">
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="text-center sm:text-left">
-                        <span className="block text-[16px] font-extrabold leading-none text-zinc-900">{value}</span>
-                        <span className="block text-[10.5px] font-medium uppercase tracking-wide text-zinc-400">{label}</span>
+                        <span className="block text-[16px] font-extrabold leading-none text-zinc-900 dark:text-zinc-100">{value}</span>
+                        <span className="block text-[10.5px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">{label}</span>
                       </span>
                     </div>
                   ))}
@@ -252,14 +257,14 @@ const AlumniProfile = () => {
               </section>
 
               {/* About */}
-              <section className="rounded-3xl border border-emerald-900/10 bg-white p-5 shadow-sm sm:p-6">
-                <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639]">
+              <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+                <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
                     <Sparkles className="h-3.5 w-3.5" />
                   </span>
                   About
                 </h3>
-                <p className="mt-2.5 text-[13px] leading-relaxed text-zinc-600">
+                <p className="mt-2.5 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
                   Proud CLSU graduate passionate about people, community, and lifelong learning.
                   Open to mentoring fellow Sielesyuans and collaborating on alumni initiatives that
                   give back to the university.
@@ -268,7 +273,7 @@ const AlumniProfile = () => {
                   {SKILLS.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-[#007a2e] ring-1 ring-emerald-100"
+                      className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-[#007a2e] ring-1 ring-emerald-100 dark:ring-emerald-900"
                     >
                       {skill}
                     </span>
@@ -277,9 +282,9 @@ const AlumniProfile = () => {
               </section>
 
               {/* Experience timeline */}
-              <section className="rounded-3xl border border-emerald-900/10 bg-white p-5 shadow-sm sm:p-6">
-                <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639]">
+              <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+                <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
                     <Briefcase className="h-3.5 w-3.5" />
                   </span>
                   Experience
@@ -295,8 +300,8 @@ const AlumniProfile = () => {
                       }`}>
                         <Briefcase className="h-3.5 w-3.5" />
                       </span>
-                      <div className="min-w-0 flex-1 rounded-2xl bg-zinc-50/70 p-3.5 transition hover:bg-emerald-50/50">
-                        <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-zinc-900">
+                      <div className="min-w-0 flex-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800/70 p-3.5 transition hover:bg-emerald-50/50">
+                        <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
                           {job.role}
                           {job.current && (
                             <span className="rounded-full bg-[#009639] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
@@ -304,8 +309,8 @@ const AlumniProfile = () => {
                             </span>
                           )}
                         </p>
-                        <p className="text-[12px] font-medium text-zinc-600">{job.company}</p>
-                        <p className="mt-0.5 text-[11px] text-zinc-400">{job.period} • {job.location}</p>
+                        <p className="text-[12px] font-medium text-zinc-600 dark:text-zinc-300">{job.company}</p>
+                        <p className="mt-0.5 text-[11px] text-zinc-400 dark:text-zinc-500">{job.period} • {job.location}</p>
                       </div>
                     </li>
                   ))}
@@ -313,21 +318,21 @@ const AlumniProfile = () => {
               </section>
 
               {/* Education */}
-              <section className="rounded-3xl border border-emerald-900/10 bg-white p-5 shadow-sm sm:p-6">
-                <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639]">
+              <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+                <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
                     <GraduationCap className="h-3.5 w-3.5" />
                   </span>
                   Education
                 </h3>
-                <div className="mt-3 flex items-center gap-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-white p-4 ring-1 ring-emerald-100">
+                <div className="mt-3 flex items-center gap-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-white p-4 ring-1 ring-emerald-100 dark:ring-emerald-900">
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#009639] text-white shadow-sm">
                     <GraduationCap className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[13.5px] font-bold text-zinc-900">Central Luzon State University</p>
-                    <p className="text-[12px] text-zinc-600">BS Psychology</p>
-                    <p className="text-[11px] text-zinc-400">2011 — 2015 • Muñoz, Nueva Ecija</p>
+                    <p className="text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">Central Luzon State University</p>
+                    <p className="text-[12px] text-zinc-600 dark:text-zinc-300">BS Psychology</p>
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-500">2011 — 2015 • Muñoz, Nueva Ecija</p>
                   </div>
                 </div>
               </section>

@@ -19,9 +19,12 @@ export const syncUsers = async (req, res) => {
   try {
     let users = req.body.users;
     const { source } = req.body;
+    let caisMeta = null;
 
     if (source === 'cais') {
-      users = await fetchFromCAIS();
+      const pulled = await fetchFromCAIS();
+      users = pulled.users;
+      caisMeta = pulled.meta;
     }
 
     if (!Array.isArray(users) || users.length === 0) {
@@ -48,6 +51,7 @@ export const syncUsers = async (req, res) => {
       const profileData = {
         name,
         email,
+        role,
         studentId: String(entry.studentId || '').trim(),
         program: String(entry.program || '').trim(),
         yearLevel: String(entry.yearLevel || '').trim(),
@@ -98,7 +102,7 @@ export const syncUsers = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: summary,
+      data: { ...summary, sources: caisMeta },
       message: 'Sync complete'
     });
   } catch (error) {
@@ -114,17 +118,24 @@ export const getUsers = async (req, res) => {
     const users = await UserModel.findAll();
     const safeUsers = await Promise.all(users.map(async (user) => {
       const { password, ...rest } = user;
-      let role = null;
-      if (user.authId) {
+      // Role lives on the profile; auth record is the fallback.
+      let role = user.role || null;
+      if (!role && user.authId) {
         const auth = await AuthModel.findById(user.authId);
         role = auth?.role || null;
       }
       return { ...rest, role };
     }));
 
+    // Optional role filter (?role=alumni) — used by mentorship discovery.
+    const { role } = req.query;
+    const data = role
+      ? safeUsers.filter((u) => (u.role || '').toLowerCase() === String(role).toLowerCase())
+      : safeUsers;
+
     res.status(200).json({
       success: true,
-      data: safeUsers,
+      data,
       message: "Users fetched successfully"
     });
   } catch (error) {
@@ -149,8 +160,9 @@ export const getUserById = async (req, res) => {
     
     const { password, ...safeUser } = user;
 
-    let role = null;
-    if (user.authId) {
+    // Role lives on the profile; auth record is the fallback.
+    let role = user.role || null;
+    if (!role && user.authId) {
       const auth = await AuthModel.findById(user.authId);
       role = auth?.role || null;
     }
@@ -296,8 +308,66 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// Admin-only: change a user's role (student / alumni / admin).
-// Role lives on the auth record; the directory `:id` is the profile id.
+// Admin-only: graduate a student -> converts Student to Alumni.
+// Sets role=alumni, academicStatus=Graduated, graduatedAt=now.
+// Safe to call on alumni already (idempotent refresh).
+export const graduateUser = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide the graduate email'
+      });
+    }
+
+    const auth = await AuthModel.findByEmail(String(email).trim().toLowerCase());
+    if (!auth) {
+      return res.status(404).json({
+        success: false,
+        message: 'Account not found'
+      });
+    }
+    if (auth.role === Roles.ADMIN) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot graduate an admin account'
+      });
+    }
+
+    if (auth.role !== Roles.ALUMNI) {
+      await AuthModel.updateRoleById(auth._id, Roles.ALUMNI);
+    }
+
+    const profile = await UserModel.findByAuthId(auth._id);
+    if (profile) {
+      await UserModel.updateById(String(profile._id), {
+        role: Roles.ALUMNI,
+        academicStatus: 'Graduated',
+        graduatedAt: new Date(),
+      });
+    } else {
+      await UserModel.createUserProfile(auth._id, {
+        name: auth.email,
+        email: auth.email,
+        role: Roles.ALUMNI,
+        academicStatus: 'Graduated',
+        graduatedAt: new Date(),
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${auth.email} is now an alumnus`,
+      data: { email: auth.email, role: Roles.ALUMNI }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 export const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -334,6 +404,7 @@ export const updateUserRole = async (req, res) => {
     }
 
     await AuthModel.updateRoleById(profile.authId, role);
+    await UserModel.updateById(String(profile._id), { role });
 
     res.status(200).json({
       success: true,

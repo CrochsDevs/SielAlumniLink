@@ -3,7 +3,7 @@ import TracerModel, { TRACER_STATUSES } from './tracer.models.js';
 // Any logged-in user submits/updates their OWN tracer response.
 export const submitResponse = async (req, res) => {
   try {
-    const { batch, program, status, company, location } = req.body;
+    const { batch, program, status, company, position, salaryRange, employmentDate, location } = req.body;
 
     if (!batch || !program || !status) {
       return res.status(400).json({
@@ -25,6 +25,9 @@ export const submitResponse = async (req, res) => {
       program: String(program).trim(),
       status,
       company: (company || '').trim(),
+      position: (position || '').trim(),
+      salaryRange: (salaryRange || '').trim(),
+      employmentDate: employmentDate ? new Date(employmentDate) : null,
       location: (location || '').trim(),
     });
 

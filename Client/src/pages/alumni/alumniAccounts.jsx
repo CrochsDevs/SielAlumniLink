@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
-import { UserRound, ShieldCheck, Lock, Mail, BadgeCheck } from 'lucide-react';
+import { UserRound, ShieldCheck, Lock, Mail, BadgeCheck, Palette, Sun, Moon, Monitor } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
 import api from '../../utils/axios';
+import { getTheme, setTheme } from '../../lib/theme';
 
 const TABS = [
   { key: 'profile', label: 'Profile', desc: 'Name and account details', icon: UserRound },
   { key: 'password', label: 'Change Password', desc: 'Keep your account secure', icon: ShieldCheck },
+  { key: 'appearance', label: 'Appearance', desc: 'Light, dark, or system theme', icon: Palette },
 ];
 
 const AlumniAccounts = () => {
@@ -19,9 +21,15 @@ const AlumniAccounts = () => {
   const [saving, setSaving] = useState(false);
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwLoading, setPwLoading] = useState(false);
+  const [theme, setThemeState] = useState(getTheme);
+
+  const changeTheme = (value) => {
+    setTheme(value);
+    setThemeState(value);
+  };
 
   const inputClass =
-    'w-full h-11 px-3.5 rounded-xl border border-zinc-200 bg-zinc-50/60 text-[13px] text-zinc-800 placeholder-zinc-400 outline-none transition-all hover:border-zinc-300 focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15';
+    'w-full h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-800 text-[13px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15';
 
   const handleSaveName = async (e) => {
     e.preventDefault();
@@ -60,7 +68,7 @@ const AlumniAccounts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3]">
+    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -77,7 +85,7 @@ const AlumniAccounts = () => {
               }}
             />
             <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl font-extrabold text-white ring-1 ring-white/30 backdrop-blur">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900/15 text-2xl font-extrabold text-white ring-1 ring-white/30 backdrop-blur">
                 {(user?.name || 'A').charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -90,7 +98,7 @@ const AlumniAccounts = () => {
                     {user?.email}
                   </span>
                   {user?.role && (
-                    <span className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                    <span className="flex items-center gap-1 rounded-full bg-white dark:bg-zinc-900/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                       <BadgeCheck className="h-3 w-3" />
                       {user.role}
                     </span>
@@ -102,8 +110,8 @@ const AlumniAccounts = () => {
 
           <div className="flex flex-col md:flex-row gap-5 items-start">
             {/* Sub-sidebar */}
-            <aside className="w-full md:w-64 shrink-0 overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm">
-              <p className="px-4 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+            <aside className="w-full md:w-64 shrink-0 overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
+              <p className="px-4 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Account Settings
               </p>
               <nav className="space-y-1 p-2">
@@ -126,16 +134,16 @@ const AlumniAccounts = () => {
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0">
-                        <span className={`block truncate text-[12.5px] font-bold ${active ? 'text-[#007a2e]' : 'text-zinc-700'}`}>
+                        <span className={`block truncate text-[12.5px] font-bold ${active ? 'text-[#007a2e]' : 'text-zinc-700 dark:text-zinc-200'}`}>
                           {label}
                         </span>
-                        <span className="block truncate text-[10.5px] text-zinc-400">{desc}</span>
+                        <span className="block truncate text-[10.5px] text-zinc-400 dark:text-zinc-500">{desc}</span>
                       </span>
                     </button>
                   );
                 })}
               </nav>
-              <div className="m-2 mt-1 rounded-2xl bg-emerald-50/70 p-3 text-[11px] leading-relaxed text-zinc-500">
+              <div className="m-2 mt-1 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/50 p-3 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-300">
                 Your email is managed by your institution. Contact an admin to change it.
               </div>
             </aside>
@@ -143,27 +151,27 @@ const AlumniAccounts = () => {
             {/* Content */}
             <div className="flex-1 min-w-0 w-full">
               {activeTab === 'profile' && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm">
-                  <div className="border-b border-zinc-100 px-5 py-4 sm:px-6">
-                    <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900">Profile Information</h2>
-                    <p className="text-[12px] text-zinc-500">How you appear across the alumni network.</p>
+                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
+                  <div className="border-b border-zinc-100 dark:border-zinc-800 px-5 py-4 sm:px-6">
+                    <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Profile Information</h2>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">How you appear across the alumni network.</p>
                   </div>
                   <form onSubmit={handleSaveName} className="space-y-4 p-5 sm:p-6">
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                         Full Name
                       </label>
                       <input value={name} onChange={(e) => setName(e.target.value)} required
                         placeholder="Your full name" className={inputClass} />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                         Email Address
                       </label>
                       <input value={user?.email || ''} disabled
-                        className={`${inputClass} cursor-not-allowed bg-zinc-100/70 text-zinc-400`} />
+                        className={`${inputClass} cursor-not-allowed bg-zinc-100 dark:bg-zinc-800/70 text-zinc-400 dark:text-zinc-500`} />
                     </div>
-                    <div className="flex justify-end border-t border-zinc-100 pt-4">
+                    <div className="flex justify-end border-t border-zinc-100 dark:border-zinc-800 pt-4">
                       <button type="submit" disabled={saving}
                         className="h-10 rounded-xl bg-[#009639] px-6 text-[13px] font-bold text-white shadow-sm transition hover:bg-[#007a2e] disabled:opacity-60">
                         {saving ? 'Saving...' : 'Save changes'}
@@ -174,20 +182,20 @@ const AlumniAccounts = () => {
               )}
 
               {activeTab === 'password' && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm">
-                  <div className="border-b border-zinc-100 px-5 py-4 sm:px-6">
-                    <h2 className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
+                  <div className="border-b border-zinc-100 dark:border-zinc-800 px-5 py-4 sm:px-6">
+                    <h2 className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                       Change Password
                       <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#007a2e]">
                         <Lock className="h-2.5 w-2.5" />
                         Secure
                       </span>
                     </h2>
-                    <p className="text-[12px] text-zinc-500">Use at least 6 characters with a mix of letters and numbers.</p>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Use at least 6 characters with a mix of letters and numbers.</p>
                   </div>
                   <form onSubmit={handlePasswordChange} className="space-y-4 p-5 sm:p-6">
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                         Current Password
                       </label>
                       <input type="password" required value={pwForm.currentPassword}
@@ -196,7 +204,7 @@ const AlumniAccounts = () => {
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                        <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                           New Password
                         </label>
                         <input type="password" required minLength={6} value={pwForm.newPassword}
@@ -204,7 +212,7 @@ const AlumniAccounts = () => {
                           placeholder="At least 6 characters" className={inputClass} />
                       </div>
                       <div>
-                        <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                        <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                           Confirm New
                         </label>
                         <input type="password" required minLength={6} value={pwForm.confirmPassword}
@@ -212,13 +220,46 @@ const AlumniAccounts = () => {
                           placeholder="Repeat new password" className={inputClass} />
                       </div>
                     </div>
-                    <div className="flex justify-end border-t border-zinc-100 pt-4">
+                    <div className="flex justify-end border-t border-zinc-100 dark:border-zinc-800 pt-4">
                       <button type="submit" disabled={pwLoading}
                         className="h-10 rounded-xl bg-zinc-900 px-6 text-[13px] font-bold text-white transition hover:bg-zinc-800 disabled:opacity-60">
                         {pwLoading ? 'Updating...' : 'Update password'}
                       </button>
                     </div>
                   </form>
+                </section>
+              )}
+
+              {activeTab === 'appearance' && (
+                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+                  <div className="border-b border-zinc-100 dark:border-zinc-800 px-5 py-4 sm:px-6">
+                    <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Appearance</h2>
+                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Choose how SielAlumni looks on this device.</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 p-5 sm:p-6">
+                    {[
+                      { key: 'light', label: 'Light', icon: Sun },
+                      { key: 'dark', label: 'Dark', icon: Moon },
+                      { key: 'system', label: 'System', icon: Monitor },
+                    ].map(({ key, label, icon: Icon }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => changeTheme(key)}
+                        className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition ${
+                          theme === key
+                            ? 'border-[#009639] bg-emerald-50/50 dark:bg-emerald-950/30 text-[#007a2e] dark:text-emerald-300'
+                            : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span className="text-[12px] font-bold">{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="px-5 pb-5 text-[11.5px] text-zinc-400 dark:text-zinc-500 sm:px-6">
+                    System follows your device setting and updates automatically.
+                  </p>
                 </section>
               )}
             </div>

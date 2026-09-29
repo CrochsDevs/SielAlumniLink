@@ -6,6 +6,7 @@ import {
   updateUser, 
   updateUserRole,
   updateMyProfile,
+  graduateUser,
   syncUsers,
   deleteUser 
 } from './users.controllers.js';
@@ -24,6 +25,9 @@ router.get('/', getUsers);
 router.put('/me', updateMyProfile);
 
 router.get('/:id', getUserById);
+
+// Graduation (Student -> Alumni): admin only.
+router.post('/graduate', authorize(Roles.ADMIN), graduateUser);
 
 // CAIS bulk sync: admin only (must come before '/:id' routes).
 router.post('/sync', authorize(Roles.ADMIN), syncUsers);

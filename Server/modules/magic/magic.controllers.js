@@ -4,6 +4,7 @@ import MagicLinkModel from './magic.models.js';
 import UserModel from '../users/users.models.js';
 import AuthModel from '../auth/auth.models.js';
 import ActivityModel from '../activity/activity.models.js';
+import Roles from '../../constant/roles.js';
 import { sendMagicLinkEmail } from '../../utils/email.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -30,12 +31,22 @@ export const sendMagicLink = async (req, res) => {
       });
     }
 
-    const user = await AuthModel.findByEmail(email);
+    let user = await AuthModel.findByEmail(email);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account found with this email.'
-      });
+      // Email-only records (CAIS users collection, no login yet):
+      // auto-create the login record on first magic-link request.
+      // Role defaults to alumni; admin/CAIS sync corrects it later.
+      const profile = await UserModel.findByEmail(email);
+      if (!profile) {
+        return res.status(404).json({
+          success: false,
+          message: 'No account found with this email.'
+        });
+      }
+      const newAuth = await AuthModel.createSyncedUser({ email, role: Roles.ALUMNI });
+      // Link the existing profile to the new login record.
+      await UserModel.updateById(String(profile._id), { authId: newAuth._id });
+      user = newAuth;
     }
 
     const token = generateToken();

@@ -1,4 +1,5 @@
 import JobModel from './jobs.models.js';
+import NotificationModel from '../notifications/notifications.models.js';
 
 // Any logged-in user sees active postings (alumni job board).
 export const listJobs = async (req, res) => {
@@ -51,6 +52,16 @@ export const createJob = async (req, res) => {
       return res.status(400).json({ success: false, message: error });
     }
     const job = await JobModel.create({ ...req.body, createdBy: req.user._id });
+    if (job.isActive) {
+      void NotificationModel.broadcast({
+        title: `New job: ${job.title}`,
+        body: `${job.company}${job.location ? ` • ${job.location}` : ''}`,
+        link: '/alumni/career',
+        audience: 'all',
+        kind: 'jobs',
+        excludeAuthId: req.user._id,
+      });
+    }
     res.status(201).json({
       success: true,
       data: job,

@@ -61,6 +61,19 @@ export const initSocket = (server) => {
     // Tell everyone (including the newcomer) who is online.
     broadcastPresence();
 
+    // WebRTC call signaling relay (voice/video). The server never
+    // touches media — it only forwards envelopes between users.
+    // Payload: { toAuthId, kind: 'invite'|'accept'|'decline'|'signal'|'end', data }
+    socket.on('call:signal', ({ toAuthId, kind, data }) => {
+      if (!toAuthId || !kind) return;
+      io.to(`user:${String(toAuthId)}`).emit('call:signal', {
+        fromAuthId: authId,
+        fromEmail: socket.user.email,
+        kind,
+        data: data || null,
+      });
+    });
+
     socket.on('disconnect', () => {
       PresenceStore.markOffline(authId);
       broadcastPresence();

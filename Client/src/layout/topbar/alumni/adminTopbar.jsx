@@ -15,6 +15,8 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
+import { useNotifications } from '../../../realtime/useNotifications';
+import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
 const breadcrumbMap = [
   ['/admin/users', 'Users'],
   ['/admin/tracer', 'Tracer Study'],
@@ -32,7 +34,6 @@ const AdminTopbar = ({
   title,
   onMenuClick,
   unreadMessages = 0,
-  notificationDot = true,
   crumbLabel = 'Admin',
   crumbPath = '/admin',
   profilePath = '/admin/profile',
@@ -42,9 +43,12 @@ const AdminTopbar = ({
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
   const [now, setNow] = useState(new Date());
   const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
 
   const pageTitle =
     title ||
@@ -61,6 +65,7 @@ const AdminTopbar = ({
       if (e.key === 'Escape') {
         setSearchOpen(false);
         setDropdownOpen(false);
+        setNotifOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -77,11 +82,14 @@ const AdminTopbar = ({
     return () => clearInterval(id);
   }, []);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const onClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', onClick);
@@ -107,7 +115,7 @@ const AdminTopbar = ({
 
   return (
     <nav
-      className="sticky top-0 z-10 bg-white border-b border-zinc-200"
+      className="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800"
       style={{ fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif" }}
     >
       <div className="flex items-center justify-between h-14 px-3 sm:px-4 lg:px-6 gap-3">
@@ -119,7 +127,7 @@ const AdminTopbar = ({
           <button
             type="button"
             onClick={onMenuClick}
-            className="lg:hidden p-1.5 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors shrink-0"
+            className="lg:hidden p-1.5 rounded-md text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors shrink-0"
             aria-label="Open sidebar"
           >
             <Menu className="w-5 h-5" />
@@ -128,11 +136,11 @@ const AdminTopbar = ({
           {/* Breadcrumb (hidden kapag searchOpen) */}
           {!searchOpen && (
             <nav aria-label="breadcrumb" className="hidden sm:flex min-w-0">
-              <ol className="flex items-center gap-1.5 text-[12px] text-zinc-500 min-w-0">
+              <ol className="flex items-center gap-1.5 text-[12px] text-zinc-500 dark:text-zinc-400 min-w-0">
                 <li className="flex items-center">
                   <Link
                     to={crumbPath}
-                    className="flex items-center gap-1.5 font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+                    className="flex items-center gap-1.5 font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
                   >
                     <Home className="w-3.5 h-3.5" />
                     <span>{crumbLabel}</span>
@@ -142,7 +150,7 @@ const AdminTopbar = ({
                   <ChevronRight className="w-3.5 h-3.5" />
                 </li>
                 <li className="flex items-center">
-                  <span className="text-zinc-800 font-semibold truncate">{pageTitle}</span>
+                  <span className="text-zinc-800 dark:text-zinc-100 font-semibold truncate">{pageTitle}</span>
                 </li>
               </ol>
             </nav>
@@ -159,7 +167,7 @@ const AdminTopbar = ({
                   ref={searchInputRef}
                   type="text"
                   placeholder="Search..."
-                  className="w-full h-9 rounded-lg border border-zinc-200 bg-zinc-50/70 pl-[2.7rem] pr-12 text-[12px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
+                  className="w-full h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 pl-[2.7rem] pr-12 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
                 />
                 <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-zinc-200 bg-white text-[9px] font-medium text-zinc-500 leading-none">
@@ -175,19 +183,19 @@ const AdminTopbar = ({
         <div className="flex items-center gap-0.5 shrink-0">
 
           {/* Live Date & Time chip */}
-          <div className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-zinc-200 bg-zinc-50/70 text-[11px] text-zinc-600 font-medium">
+          <div className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
             <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <span className="truncate">{dateStr}</span>
             <span className="w-px h-3 bg-zinc-300"></span>
             <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            <span className="tabular-nums font-semibold text-zinc-700">{timeStr}</span>
+            <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-200">{timeStr}</span>
           </div>
 
           {/* Search toggle */}
           <button
             type="button"
             onClick={() => setSearchOpen(!searchOpen)}
-            className={`p-2 rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors hidden md:inline-flex ${searchOpen ? 'bg-zinc-100 text-zinc-900' : ''}`}
+            className={`p-2 rounded-md transition-colors hidden md:inline-flex ${searchOpen ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
             aria-label="Toggle search"
           >
             {searchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
@@ -195,8 +203,8 @@ const AdminTopbar = ({
 
           {/* Messages */}
           <Link
-            to="/inbox"
-            className="relative p-2 rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors inline-flex items-center justify-center"
+            to="/admin/message"
+            className="relative p-2 rounded-md text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors inline-flex items-center justify-center"
             aria-label="Messages"
           >
             <MessageSquare className="w-4 h-4" />
@@ -208,25 +216,38 @@ const AdminTopbar = ({
           </Link>
 
           {/* Notifications */}
-          <button
-            type="button"
-            className="relative p-2 rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
-            aria-label="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-            {notificationDot && (
-              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              onClick={() => { setNotifOpen(!notifOpen); refreshNotifs(); }}
+              className={`relative p-2 rounded-md transition-colors ${notifOpen ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {notifUnread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 ring-2 ring-white text-[9px] font-bold text-white flex items-center justify-center">
+                  {notifUnread > 99 ? '99+' : notifUnread}
+                </span>
+              )}
+            </button>
+            {notifOpen && (
+              <NotificationDropdown
+                items={notifs}
+                onRead={markNotifRead}
+                onReadAll={markAllNotifsRead}
+                onClose={() => setNotifOpen(false)}
+              />
             )}
-          </button>
+          </div>
 
-          <div className="w-px h-5 bg-zinc-200 mx-1.5"></div>
+          <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1.5"></div>
 
           {/* User dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md cursor-pointer select-none hover:bg-zinc-100 transition-colors"
+              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md cursor-pointer select-none hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             >
               <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100">
                 {(user?.name || 'A').charAt(0).toUpperCase()}
@@ -245,16 +266,16 @@ const AdminTopbar = ({
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-1 w-60 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg shadow-zinc-900/5 z-20">
-                <div className="flex items-center gap-2.5 px-2.5 py-2 border-b border-zinc-100 mb-1">
-                  <div className="h-9 w-9 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[12px] font-semibold shrink-0 ring-1 ring-emerald-100">
+              <div className="absolute right-0 mt-1 w-60 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1 shadow-lg shadow-zinc-900/5 z-20">
+                <div className="flex items-center gap-2.5 px-2.5 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
+                  <div className="h-9 w-9 rounded-full bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300 flex items-center justify-center text-[12px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:ring-emerald-900">
                     {(user?.name || 'A').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-semibold text-zinc-800 truncate leading-tight">
+                    <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">
                       {user?.name || 'Admin'}
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-tight mt-0.5">
                       {user?.email || 'admin@clsu.edu.ph'}
                     </p>
                   </div>
@@ -263,7 +284,7 @@ const AdminTopbar = ({
                 <Link
                   to={profilePath}
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                  className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-[12px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   <User className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">Profile</span>
@@ -272,13 +293,13 @@ const AdminTopbar = ({
                 <Link
                   to={settingsPath}
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                  className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-[12px] font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">Settings</span>
                 </Link>
 
-                <div className="my-1 border-t border-zinc-100"></div>
+                <div className="my-1 border-t border-zinc-100 dark:border-zinc-800"></div>
 
                 <button
                   type="button"

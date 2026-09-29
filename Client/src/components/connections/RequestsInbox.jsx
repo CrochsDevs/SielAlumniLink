@@ -1,0 +1,136 @@
+import { useCallback, useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
+import { Check, X, UserPlus, Inbox } from 'lucide-react';
+import api from '../../utils/axios';
+import { getSocket } from '../../realtime/socket';
+
+// Shared invitations inbox: accept or decline connection requests.
+// Used by both alumni and student requests pages.
+export const useRequests = () => {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/connections/requests');
+      setRequests(res.data.data || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+
+    const socket = getSocket();
+    const onNew = () => { fetchRequests(); };
+    socket.on('notification:new', onNew);
+
+    return () => {
+      socket.off('notification:new', onNew);
+    };
+  }, [fetchRequests]);
+
+  const respond = async (id, status) => {
+    try {
+      await api.put(`/connections/${id}`, { status });
+      setRequests((prev) => prev.filter((r) => String(r._id) !== String(id)));
+      Swal.fire({
+        title: status === 'accepted' ? 'Connected!' : 'Declined',
+        text: status === 'accepted' ? 'You can now chat with each other.' : undefined,
+        icon: status === 'accepted' ? 'success' : 'info',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire('Error', err.response?.data?.message || 'Failed to respond', 'error');
+    }
+  };
+
+  return { requests, loading, respond, refresh: fetchRequests };
+};
+
+const RequestsList = ({ requests, loading, onRespond }) => {
+  if (loading) {
+    return (
+      <p className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400">
+        Loading invitations...
+      </p>
+    );
+  }
+
+  if (requests.length === 0) {
+    return (
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-10 text-center">
+        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300">
+          <Inbox className="h-6 w-6" />
+        </span>
+        <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">No pending invitations</p>
+        <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">New connect requests will appear here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-2.5">
+      {requests.map((r) => (
+        <li
+          key={r._id}
+          className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
+            {(r.name || 'U').charAt(0).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">{r.name}</span>
+            <span className="block truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">
+              {[r.program, r.email].filter(Boolean).join(' • ')}
+            </span>
+          </span>
+          <span className="flex shrink-0 gap-1.5">
+            <button
+              type="button"
+              onClick={() => onRespond(r._id, 'declined')}
+              className="flex h-9 items-center gap-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3.5 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              <X className="h-3.5 w-3.5" />
+              Ignore
+            </button>
+            <button
+              type="button"
+              onClick={() => onRespond(r._id, 'accepted')}
+              className="flex h-9 items-center gap-1 rounded-xl bg-[#009639] px-3.5 text-[12px] font-bold text-white transition hover:bg-[#007a2e]"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Accept
+            </button>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+export const RequestsHeader = ({ count }) => (
+  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+    <h1 className="flex items-center gap-2 text-[16px] font-extrabold text-zinc-900 dark:text-zinc-100">
+      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#009639]/10 dark:bg-[#009639]/20 text-[#009639] dark:text-emerald-300">
+        <UserPlus className="h-4 w-4" />
+      </span>
+      Invitations
+      {count > 0 && (
+        <span className="rounded-full bg-[#009639] px-2 py-0.5 text-[10.5px] font-bold text-white">
+          {count}
+        </span>
+      )}
+    </h1>
+    <p className="mt-1 text-[12.5px] text-zinc-500 dark:text-zinc-400">
+      Accept to connect — chat unlocks after both sides connect.
+    </p>
+  </div>
+);
+
+export default RequestsList;

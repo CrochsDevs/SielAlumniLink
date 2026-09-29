@@ -1,4 +1,5 @@
 import AnnouncementModel from './announcements.models.js';
+import NotificationModel from '../notifications/notifications.models.js';
 
 const AUDIENCES = ['all', 'alumni', 'students'];
 
@@ -48,6 +49,16 @@ export const createAnnouncement = async (req, res) => {
       return res.status(400).json({ success: false, message: `Audience must be one of: ${AUDIENCES.join(', ')}` });
     }
     const announcement = await AnnouncementModel.create({ ...req.body, createdBy: req.user._id });
+    if (announcement.isActive) {
+      void NotificationModel.broadcast({
+        title: announcement.title,
+        body: (announcement.body || '').slice(0, 140),
+        link: '/alumni/message',
+        audience: announcement.audience || 'all',
+        kind: 'announcements',
+        excludeAuthId: req.user._id,
+      });
+    }
     res.status(201).json({
       success: true,
       data: announcement,

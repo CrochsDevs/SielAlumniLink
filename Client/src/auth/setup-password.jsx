@@ -99,7 +99,7 @@ const SetupPassword = () => {
               required
               minLength={6}
               placeholder="Enter a new password"
-              className="w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+              className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
             />
           </div>
 
@@ -114,7 +114,7 @@ const SetupPassword = () => {
               required
               minLength={6}
               placeholder="Confirm your new password"
-              className="w-full h-9 px-3 rounded-lg border border-zinc-200 bg-white text-[12.5px] text-zinc-800 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+              className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
             />
           </div>
 
