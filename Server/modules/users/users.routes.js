@@ -2,13 +2,15 @@ import express from 'express';
 import { 
   getUsers, 
   getUserById, 
+  getMyProfile,
   createUser, 
   updateUser, 
   updateUserRole,
   updateMyProfile,
   graduateUser,
   syncUsers,
-  deleteUser 
+  deleteUser,
+  trackProfileView 
 } from './users.controllers.js';
 import { protect, authorize } from '../../middlewares/auth.middleware.js';
 import Roles from '../../constant/roles.js';
@@ -23,8 +25,12 @@ router.get('/', getUsers);
 
 // Own profile: any authenticated user (must come before '/:id' routes)
 router.put('/me', updateMyProfile);
+router.get('/me', getMyProfile);
 
 router.get('/:id', getUserById);
+
+// Track profile view (any authenticated user viewing another's profile)
+router.post('/:id/view', trackProfileView);
 
 // Graduation (Student -> Alumni): admin only.
 router.post('/graduate', authorize(Roles.ADMIN), graduateUser);

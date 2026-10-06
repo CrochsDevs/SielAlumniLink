@@ -19,7 +19,15 @@ export const UserModel = {
   },
 
   async findByAuthId(authId) {
-    return await usersCollection.findOne({ authId: authId });
+    const { ObjectId } = await import('mongodb');
+    const query = { authId };
+    if (typeof authId === 'string' && /^[0-9a-fA-F]{24}$/.test(authId)) {
+      query.$or = [
+        { authId: authId },
+        { authId: new ObjectId(authId) },
+      ];
+    }
+    return await usersCollection.findOne(query);
   },
 
   async findById(id) {
@@ -33,9 +41,23 @@ export const UserModel = {
 
   async updateById(id, updateData) {
     const { ObjectId } = await import('mongodb');
+    const hasOperators = Object.keys(updateData).some((k) => k.startsWith('$'));
+    let updateDoc;
+    if (hasOperators) {
+      const ops = {};
+      const setFields = {};
+      for (const [key, value] of Object.entries(updateData)) {
+        if (key.startsWith('$')) ops[key] = value;
+        else setFields[key] = value;
+      }
+      setFields.updatedAt = new Date();
+      updateDoc = { ...ops, $set: setFields };
+    } else {
+      updateDoc = { $set: { ...updateData, updatedAt: new Date() } };
+    }
     const result = await usersCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { ...updateData, updatedAt: new Date() } }
+      updateDoc
     );
     return result.modifiedCount > 0;
   },

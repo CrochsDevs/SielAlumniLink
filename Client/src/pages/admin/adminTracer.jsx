@@ -175,49 +175,51 @@ export default function AdminTracer() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1020px] text-left text-[12.5px]">
-                <thead>
-                  <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    <th className="px-5 py-3 font-semibold">Graduate</th>
-                    <th className="px-5 py-3 font-semibold">Batch</th>
-                    <th className="px-5 py-3 font-semibold">Status</th>
-                    <th className="px-5 py-3 font-semibold">Company</th>
-                    <th className="px-5 py-3 font-semibold">Position</th>
-                    <th className="px-5 py-3 font-semibold">Salary Range</th>
-                    <th className="px-5 py-3 font-semibold">Responded</th>
-                    <th className="px-5 py-3 font-semibold text-right">Actions</th>
+            <div className="overflow-auto max-h-[600px]">
+              <table className="w-full min-w-[900px] text-left text-[12.5px]">
+                <thead className="sticky top-0 z-10">
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                    <th className="px-4 py-3 font-semibold">Graduate</th>
+                    <th className="px-4 py-3 font-semibold">Batch</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Company</th>
+                    <th className="px-4 py-3 font-semibold">Position</th>
+                    <th className="px-4 py-3 font-semibold">Salary</th>
+                    <th className="px-4 py-3 font-semibold">Location</th>
+                    <th className="px-4 py-3 font-semibold">Responded</th>
+                    <th className="px-4 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={8} className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-500">Loading responses...</td></tr>
+                    <tr><td colSpan={9} className="px-4 py-8 text-center text-zinc-400 dark:text-zinc-500">Loading responses...</td></tr>
                   ) : paged.map((r) => (
-                    <tr key={r._id} className="border-b border-zinc-50 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:bg-zinc-800/60">
-                      <td className="px-5 py-3">
+                    <tr key={r._id} className="border-b border-zinc-50 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[12px] font-bold text-[#009639] dark:text-emerald-300">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[12px] font-bold text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
                             {(r.email || 'U').charAt(0).toUpperCase()}
                           </span>
-                          <span>
+                          <span className="min-w-0">
                             <span className="block font-semibold text-zinc-800 dark:text-zinc-100">{r.email}</span>
                             <span className="block text-[11px] text-zinc-500 dark:text-zinc-400">{r.program}</span>
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{r.batch}</td>
-                      <td className="px-5 py-3">
-                        <span className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 ${STATUS_STYLE[r.status] || 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 dark:text-zinc-500 ring-zinc-200 dark:ring-zinc-700'}`}>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{r.batch}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 ${STATUS_STYLE[r.status] || 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 ring-zinc-200 dark:ring-zinc-700'}`}>
                           {r.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">{r.company || '—'}</td>
-                      <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{r.position || '—'}</td>
-                      <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">{r.salaryRange || '—'}</td>
-                      <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">
+                      <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{r.company || '—'}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{r.position || '—'}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">{r.salaryRange || '—'}</td>
+                      <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{r.location || '—'}</td>
+                      <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                         {r.respondedAt ? new Date(r.respondedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                       </td>
-                      <td className="px-5 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         {roleByEmail[r.email] === 'student' ? (
                           <button
                             type="button"
@@ -237,8 +239,8 @@ export default function AdminTracer() {
                   ))}
                   {!loading && paged.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-5 py-10 text-center">
-                        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:text-emerald-300">
+                      <td colSpan={9} className="px-4 py-10 text-center">
+                        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
                           <ClipboardList className="h-6 w-6" />
                         </span>
                         <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">

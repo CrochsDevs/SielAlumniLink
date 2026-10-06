@@ -209,11 +209,6 @@ function AppRoutes() {
           <AlumniCareer />
         </ProtectedRoute>
       } />
-      <Route path="/alumni/employment" element={
-        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
-          <AlumniEmployment />
-        </ProtectedRoute>
-      } />
       <Route path="/alumni/referral" element={
         <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
           <AlumniReferral />

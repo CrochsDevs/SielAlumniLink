@@ -18,6 +18,7 @@ import {
   UserPlus,
   Check,
   X,
+  Megaphone,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useChat } from '../../context/ChatContext';
@@ -90,6 +91,9 @@ const AlumniDashboard = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [connecting, setConnecting] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [profileStats, setProfileStats] = useState({ program: '', batch: '', viewers: 0, connections: 0 });
+  const [tracerAccess, setTracerAccess] = useState(false);
 
   const toggleLike = (id) => setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -161,8 +165,50 @@ const AlumniDashboard = () => {
     }
     loadRequests();
     loadSuggestions();
+    loadAnnouncements();
+    loadProfileStats();
+    loadTracerAccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashTab]);
+
+  const loadAnnouncements = async () => {
+    try {
+      const res = await api.get('/announcements');
+      const all = res.data.data || [];
+      const filtered = all.filter((a) => a.audience === 'all' || a.audience === 'alumni');
+      setAnnouncements(filtered.slice(0, 5));
+    } catch {
+      // ignore
+    }
+  };
+
+  const loadProfileStats = async () => {
+    try {
+      const [profileRes, connsRes] = await Promise.all([
+        api.get('/users/me'),
+        api.get('/connections/me'),
+      ]);
+      const p = profileRes.data.data || {};
+      const connections = (connsRes.data.data || []).filter((c) => c.status === 'accepted').length;
+      setProfileStats({
+        program: p.program || 'BS Program',
+        batch: p.batch || '20XX',
+        viewers: p.profileViews || 0,
+        connections,
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  const loadTracerAccess = async () => {
+    try {
+      const res = await api.get('/tracer/access');
+      setTracerAccess(res.data.data?.hasAccess || false);
+    } catch {
+      // ignore
+    }
+  };
 
   const handleRespond = async (id, status) => {
     try {
@@ -215,19 +261,17 @@ const AlumniDashboard = () => {
                   <span className="truncate">{user?.name || 'Alumni'}</span>
                   <BadgeCheck className="h-4 w-4 shrink-0 text-[#009639] dark:text-emerald-300" />
                 </p>
-                <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">BS Program • Batch 20XX</p>
+                <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">
+                  {profileStats.program}{profileStats.batch ? ` • Batch ${profileStats.batch}` : ''}
+                </p>
                 <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#009639]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#007a2e]">
                   <GraduationCap className="h-3 w-3" />
                   Verified Alumni
                 </span>
                 <div className="mt-3 space-y-1 border-t border-zinc-100 dark:border-zinc-800 pt-3 text-left text-[11.5px]">
                   <button type="button" className="flex w-full justify-between py-0.5 text-zinc-500 dark:text-zinc-400 transition hover:text-[#009639] dark:text-emerald-300">
-                    <span>Profile viewers</span>
-                    <span className="font-bold text-[#009639] dark:text-emerald-300">127</span>
-                  </button>
-                  <button type="button" className="flex w-full justify-between py-0.5 text-zinc-500 dark:text-zinc-400 transition hover:text-[#009639] dark:text-emerald-300">
-                    <span>Fellow Sieles</span>
-                    <span className="font-bold text-[#009639] dark:text-emerald-300">248</span>
+                    <span>Total Connections</span>
+                    <span className="font-bold text-[#009639] dark:text-emerald-300">{profileStats.connections}</span>
                   </button>
                 </div>
                 <button
@@ -509,7 +553,7 @@ const AlumniDashboard = () => {
               )}
               <button
                 type="button"
-                onClick={() => navigate('/alumni/accounts')}
+                onClick={() => navigate('/alumni/requests')}
                 className="mt-3 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-[#009639] hover:text-[#007a2e] dark:hover:text-emerald-300"
               >
                 View more
@@ -519,19 +563,25 @@ const AlumniDashboard = () => {
             <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-4 py-2.5">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
-                  <MapPin className="h-3.5 w-3.5" />
+                  <Megaphone className="h-3.5 w-3.5" />
                   At CLSU Today
                 </p>
               </div>
               <ul className="space-y-3 p-4">
-                {EVENTS.map((item) => (
-                  <li key={item.title} className="cursor-pointer">
-                    <p className="text-[12px] font-semibold leading-snug text-zinc-800 dark:text-zinc-100 transition hover:text-[#009639] dark:text-emerald-300">
-                      {item.title}
-                    </p>
-                    <p className="text-[10.5px] text-zinc-400 dark:text-zinc-500">{item.meta}</p>
-                  </li>
-                ))}
+                {announcements.length === 0 ? (
+                  <li className="py-2 text-center text-[11.5px] text-zinc-400">No announcements</li>
+                ) : (
+                  announcements.map((item) => (
+                    <li key={item._id} className="cursor-pointer">
+                      <p className="text-[12px] font-semibold leading-snug text-zinc-800 dark:text-zinc-100 transition hover:text-[#009639] dark:text-emerald-300">
+                        {item.title}
+                      </p>
+                      <p className="text-[10.5px] text-zinc-400 dark:text-zinc-500">
+                        {item.body || item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                      </p>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           </aside>

@@ -59,7 +59,28 @@ export const ConnectionModel = {
   },
 
   async findAll() {
-    return await connectionsCollection.find({}).sort({ updatedAt: -1 }).toArray();
+    const connections = await connectionsCollection.find({}).sort({ updatedAt: -1 }).toArray();
+    const usersCollection = db.collection('users');
+    
+    const enriched = await Promise.all(connections.map(async (conn) => {
+      const [requester, recipient] = await Promise.all([
+        usersCollection.findOne({ email: conn.requesterEmail }),
+        usersCollection.findOne({ email: conn.recipientEmail }),
+      ]);
+      return {
+        ...conn,
+        requesterRole: requester?.role || null,
+        recipientRole: recipient?.role || null,
+        requesterName: requester?.name || null,
+        recipientName: recipient?.name || null,
+        requesterAuthId: requester?.authId || null,
+        recipientAuthId: recipient?.authId || null,
+        requesterProfileId: requester?._id ? String(requester._id) : null,
+        recipientProfileId: recipient?._id ? String(recipient._id) : null,
+      };
+    }));
+    
+    return enriched;
   },
 
   async updateStatus(id, status) {

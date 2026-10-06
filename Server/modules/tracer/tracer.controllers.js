@@ -1,4 +1,15 @@
 import TracerModel, { TRACER_STATUSES } from './tracer.models.js';
+import ConnectionModel from '../connections/connections.models.js';
+import AuthModel from '../auth/auth.models.js';
+
+// Check if current user has tracer access — any authenticated user.
+export const checkAccess = async (req, res) => {
+  try {
+    res.status(200).json({ success: true, data: { hasAccess: true } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // Any logged-in user submits/updates their OWN tracer response.
 export const submitResponse = async (req, res) => {

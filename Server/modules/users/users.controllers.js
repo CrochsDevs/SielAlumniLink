@@ -146,10 +146,30 @@ export const getUsers = async (req, res) => {
   }
 };
 
+export const getMyProfile = async (req, res) => {
+  try {
+    const user = await UserModel.findByAuthId(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Profile not found' });
+    }
+    const { password, ...safeUser } = user;
+    res.status(200).json({
+      success: true,
+      data: { ...safeUser, role: req.user.role }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await UserModel.findById(id);
+    let user = await UserModel.findById(id);
+    
+    if (!user) {
+      user = await UserModel.findByAuthId(id);
+    }
     
     if (!user) {
       return res.status(404).json({
@@ -160,7 +180,6 @@ export const getUserById = async (req, res) => {
     
     const { password, ...safeUser } = user;
 
-    // Role lives on the profile; auth record is the fallback.
     let role = user.role || null;
     if (!role && user.authId) {
       const auth = await AuthModel.findById(user.authId);
@@ -424,44 +443,54 @@ export const updateUserRole = async (req, res) => {
 // by sync / admins.
 export const updateMyProfile = async (req, res) => {
   try {
-    const { name, interests } = req.body;
+    const { name, program, batch, location, bio, skills, employmentHistory, education, interests } = req.body;
 
     const updateData = {};
+
+    // Handle MongoDB operators ($push, $addToSet, $pull, etc.)
+    const mongoOps = {};
+    if (req.body.$push) mongoOps.$push = req.body.$push;
+    if (req.body.$addToSet) mongoOps.$addToSet = req.body.$addToSet;
+    if (req.body.$pull) mongoOps.$pull = req.body.$pull;
+    if (req.body.$set) mongoOps.$set = req.body.$set;
+
     if (name !== undefined) {
       if (!String(name).trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "Please provide a name"
-        });
+        return res.status(400).json({ success: false, message: "Please provide a name" });
       }
       updateData.name = String(name).trim();
     }
+    if (program !== undefined) updateData.program = String(program).trim();
+    if (batch !== undefined) updateData.batch = String(batch).trim();
+    if (location !== undefined) updateData.location = String(location).trim();
+    if (bio !== undefined) updateData.bio = String(bio).trim();
+    if (skills !== undefined) {
+      if (!Array.isArray(skills)) {
+        return res.status(400).json({ success: false, message: "Skills must be an array" });
+      }
+      updateData.skills = skills.map((s) => String(s).trim()).filter(Boolean);
+    }
+    if (employmentHistory !== undefined) updateData.employmentHistory = employmentHistory;
+    if (education !== undefined) updateData.education = education;
     if (interests !== undefined) {
       if (!Array.isArray(interests) || interests.length > 20) {
-        return res.status(400).json({
-          success: false,
-          message: "Interests must be an array (max 20)"
-        });
+        return res.status(400).json({ success: false, message: "Interests must be an array (max 20)" });
       }
       updateData.interests = interests.map((i) => String(i).trim()).filter(Boolean).slice(0, 20);
     }
 
     const profile = await UserModel.findByAuthId(req.user._id);
     if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: "Profile not found"
-      });
+      return res.status(404).json({ success: false, message: "Profile not found" });
     }
 
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Nothing to update"
-      });
+    const hasUpdates = Object.keys(updateData).length > 0 || Object.keys(mongoOps).length > 0;
+    if (!hasUpdates) {
+      return res.status(400).json({ success: false, message: "Nothing to update" });
     }
 
-    await UserModel.updateById(String(profile._id), updateData);
+    const finalUpdate = { ...updateData, ...mongoOps };
+    await UserModel.updateById(String(profile._id), finalUpdate);
     const updated = await UserModel.findById(String(profile._id));
     const { password, ...safeProfile } = updated;
 
@@ -475,5 +504,22 @@ export const updateMyProfile = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+// Track a profile view — increments view count on the viewed user's profile.
+export const trackProfileView = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (String(id) === String(req.user._id)) {
+      return res.status(200).json({ success: true, message: 'Own profile — not counted' });
+    }
+    const result = await UserModel.updateById(id, { $inc: { profileViews: 1 } });
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ success: true, message: 'Profile view recorded' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -117,28 +117,28 @@ const AlumniTopbar = ({
 
         {/* Breadcrumb + date */}
         <nav aria-label="breadcrumb" className="hidden min-w-0 flex-1 sm:block">
-          <ol className="flex items-center gap-1.5 text-[12px] text-zinc-500">
+          <ol className="flex items-center gap-1.5 text-[12px] text-zinc-600 dark:text-zinc-400">
             <li className="flex items-center">
               <Link
                 to="/alumni"
-                className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-[#007a2e] transition hover:bg-emerald-100"
+                className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 font-semibold text-[#007a2e] dark:text-emerald-300 transition hover:bg-emerald-100 dark:hover:bg-emerald-900"
               >
                 <Home className="h-3.5 w-3.5" />
                 <span>Alumni</span>
               </Link>
             </li>
-            <li aria-hidden="true" className="text-zinc-300">
+            <li aria-hidden="true" className="text-zinc-300 dark:text-zinc-600">
               <ChevronRight className="h-3.5 w-3.5" />
             </li>
             <li className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-[13px] font-bold text-zinc-800">{pageTitle}</span>
+              <span className="truncate text-[13px] font-bold text-zinc-900 dark:text-zinc-100">{pageTitle}</span>
             </li>
           </ol>
         </nav>
 
         {/* Mobile title (breadcrumb hidden on small screens) */}
         <div className="min-w-0 flex-1 sm:hidden">
-          <h1 className="truncate text-[14px] font-extrabold tracking-tight text-zinc-900">
+          <h1 className="truncate text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
             {pageTitle}
           </h1>
         </div>

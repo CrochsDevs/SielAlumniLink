@@ -82,11 +82,6 @@ const AlumniSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contro
               <span className="truncate">Career</span>
             </NavLink>
 
-            <NavLink to="/alumni/employment" className={navItemClass(isActive('/alumni/employment'))}>
-              <Building2 className="w-4 h-4 shrink-0" />
-              <span className="truncate">Employment</span>
-            </NavLink>
-
             <NavLink to="/alumni/referral" className={navItemClass(isActive('/alumni/referral'))}>
               <Share2 className="w-4 h-4 shrink-0" />
               <span className="truncate">Referral</span>
@@ -126,16 +121,16 @@ const AlumniSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contro
         </div>
 
         {/* User + Logout */}
-        <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-            <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100">
+        <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <div className="h-8 w-8 rounded-full bg-[#009639] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
               {(user?.name || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">
+              <p className="text-[12px] font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight">
                 {user?.name || 'Alumni'}
               </p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-tight mt-0.5">
+              <p className="text-[10px] text-zinc-600 dark:text-zinc-400 truncate leading-tight mt-0.5">
                 {user?.email || 'alumni@clsu.edu.ph'}
               </p>
             </div>
