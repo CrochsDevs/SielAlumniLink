@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import {
@@ -18,6 +18,7 @@ import {
   Share2,
   Trash2,
   X,
+  Camera,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useChat } from '../../context/ChatContext';
@@ -27,6 +28,30 @@ import StudentSidebar from '../../layout/sidebar/student/studentSidebar';
 import StudentTopbar from '../../layout/topbar/student/studentTopbar';
 import api from '../../utils/axios';
 import { getSocket } from '../../realtime/socket';
+
+const readImage = (file, maxW, maxH, quality = 0.85) =>
+  new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      reject(new Error('Please choose an image file.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the image.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That image could not be opened.'));
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width, maxH / img.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
 const AlumniProfile = () => {
   const { user } = useAuth();
@@ -40,6 +65,11 @@ const AlumniProfile = () => {
   const [loadingOther, setLoadingOther] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [bannerImage, setBannerImage] = useState(null);
+  const savedImages = useRef({ profilePicture: null, bannerImage: null });
+  const avatarInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [showAddExp, setShowAddExp] = useState(false);
   const [showAddEdu, setShowAddEdu] = useState(false);
@@ -89,7 +119,7 @@ const AlumniProfile = () => {
       .then((res) => {
         setProfile(res.data.data);
         fetchConnectionState();
-        api.post(`/users/${id}/view`).catch(() => {});
+        api.post(`/users/${id}/view`).catch(() => { });
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoadingOther(false));
@@ -124,8 +154,14 @@ const AlumniProfile = () => {
           employmentHistory: p.employmentHistory || [],
           education: p.education || [],
         });
+        savedImages.current = {
+          profilePicture: p.profilePicture || null,
+          bannerImage: p.bannerImage || null,
+        };
+        setProfilePicture(p.profilePicture || null);
+        setBannerImage(p.bannerImage || null);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isOwn, user?._id, user?.authId, user?.name]);
 
   const handleConnect = async () => {
@@ -149,13 +185,18 @@ const AlumniProfile = () => {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      await api.put('/users/me', {
+      const payload = {
         name: form.name,
         program: form.program,
         batch: form.batch,
         location: form.location,
         bio: form.bio,
-      });
+      };
+      // Only send images that actually changed, so existing ones are never overwritten with null.
+      if (profilePicture !== savedImages.current.profilePicture) payload.profilePicture = profilePicture;
+      if (bannerImage !== savedImages.current.bannerImage) payload.bannerImage = bannerImage;
+      await api.put('/users/me', payload);
+      savedImages.current = { profilePicture, bannerImage };
       setEditing(false);
       Swal.fire({ title: 'Saved', text: 'Profile updated.', icon: 'success', timer: 1500, showConfirmButton: false });
     } catch (err) {
@@ -281,6 +322,31 @@ const AlumniProfile = () => {
     }
   };
 
+  const toggleEditing = () => {
+    if (editing) {
+      // Cancel: discard unsaved image changes
+      setProfilePicture(savedImages.current.profilePicture);
+      setBannerImage(savedImages.current.bannerImage);
+    }
+    setEditing(!editing);
+  };
+
+  const handleImagePick = async (e, kind) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      Swal.fire('Error', 'Image is too large. Please choose one under 10 MB.', 'error');
+      return;
+    }
+    try {
+      if (kind === 'avatar') setProfilePicture(await readImage(file, 400, 400));
+      else setBannerImage(await readImage(file, 1400, 500));
+    } catch (err) {
+      Swal.fire('Error', err.message || 'Failed to load image', 'error');
+    }
+  };
+
   const computePeriod = (startDate, endDate, current) => {
     if (!startDate) return '';
     const start = new Date(startDate);
@@ -294,6 +360,8 @@ const AlumniProfile = () => {
   };
 
   const person = isOwn ? { ...user, ...form, employmentHistory: form.employmentHistory, education: form.education } : profile;
+  const avatarSrc = isOwn ? profilePicture : profile?.profilePicture;
+  const bannerSrc = isOwn ? bannerImage : profile?.bannerImage;
   const isStudent = user?.role === 'student';
   const Sidebar = isStudent ? StudentSidebar : AlumniSidebar;
   const Topbar = isStudent ? StudentTopbar : AlumniTopbar;
@@ -337,24 +405,64 @@ const AlumniProfile = () => {
               {/* Profile header */}
               <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
                 <div
-                  className="relative h-32 bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] sm:h-40"
-                  style={{
-                    backgroundImage:
-                      'radial-gradient(circle at 15% 30%, rgba(255,255,255,0.18) 0 2px, transparent 3px), radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0 2px, transparent 3px), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.15) 0 2px, transparent 3px), radial-gradient(circle at 85% 65%, rgba(255,255,255,0.18) 0 2px, transparent 3px), linear-gradient(to bottom right, #0F4C3A, #007a2e, #009639)',
-                  }}
-                />
+                  className="relative h-32 overflow-hidden bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] sm:h-40"
+                  style={
+                    bannerSrc
+                      ? undefined
+                      : {
+                        backgroundImage:
+                          'radial-gradient(circle at 15% 30%, rgba(255,255,255,0.18) 0 2px, transparent 3px), radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0 2px, transparent 3px), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.15) 0 2px, transparent 3px), radial-gradient(circle at 85% 65%, rgba(255,255,255,0.18) 0 2px, transparent 3px), linear-gradient(to bottom right, #0F4C3A, #007a2e, #009639)',
+                      }
+                  }
+                >
+                  {bannerSrc && <img src={bannerSrc} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+                  {isOwn && editing && (
+                    <>
+                      <input ref={bannerInputRef} type="file" accept="image/*" className="hidden"
+                        onChange={(e) => handleImagePick(e, 'banner')} />
+                      <button
+                        type="button"
+                        onClick={() => bannerInputRef.current?.click()}
+                        className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11.5px] font-semibold text-white backdrop-blur transition hover:bg-black/65"
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                        Change cover
+                      </button>
+                    </>
+                  )}
+                </div>
                 <div className="px-5 pb-5 sm:px-7">
                   <div className="-mt-10 flex flex-wrap items-end justify-between gap-3">
                     <div className="relative">
-                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white dark:bg-zinc-900 text-3xl font-extrabold text-[#009639] dark:text-emerald-300 shadow-lg ring-4 ring-white">
-                        {(person?.name || 'A').charAt(0).toUpperCase()}
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white text-3xl font-extrabold text-[#009639] shadow-lg ring-4 ring-white dark:bg-zinc-900 dark:text-emerald-300">
+                        {avatarSrc ? (
+                          <img src={avatarSrc} alt={person?.name || 'Profile'} className="h-full w-full object-cover" />
+                        ) : (
+                          (person?.name || 'A').charAt(0).toUpperCase()
+                        )}
                       </div>
-                      <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-[#009639]" title="Active" />
+                      {isOwn && editing ? (
+                        <>
+                          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden"
+                            onChange={(e) => handleImagePick(e, 'avatar')} />
+                          <button
+                            type="button"
+                            onClick={() => avatarInputRef.current?.click()}
+                            aria-label="Change profile picture"
+                            title="Change profile picture"
+                            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#009639] text-white shadow-md ring-2 ring-white transition hover:bg-[#007a2e] dark:ring-zinc-900"
+                          >
+                            <Camera className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-[#009639]" title="Active" />
+                      )}
                     </div>
                     {isOwn && (
                       <button
                         type="button"
-                        onClick={() => setEditing(!editing)}
+                        onClick={toggleEditing}
                         className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 px-3.5 py-1.5 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 transition hover:border-emerald-300 hover:text-[#007a2e]"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -371,7 +479,6 @@ const AlumniProfile = () => {
                         <input value={form.batch} onChange={(e) => setForm({ ...form, batch: e.target.value })} placeholder="Batch (e.g. 2015)" className={inputClass} />
                         <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Location" className={inputClass} />
                       </div>
-                      <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Bio" rows={3} className={`${inputClass} h-auto py-2.5`} />
                       <button
                         type="button"
                         onClick={saveProfile}
@@ -431,13 +538,12 @@ const AlumniProfile = () => {
                         type="button"
                         onClick={handleConnect}
                         disabled={connectState !== 'none' || connectLoading}
-                        className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-bold shadow-sm transition disabled:cursor-default ${
-                          connectState === 'connected'
+                        className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-bold shadow-sm transition disabled:cursor-default ${connectState === 'connected'
                             ? 'border border-[#009639] text-[#007a2e]'
                             : connectState === 'pending'
                               ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                               : 'bg-[#009639] text-white shadow-emerald-900/20 hover:bg-[#007a2e]'
-                        }`}
+                          }`}
                       >
                         {connectState === 'connected' ? (
                           <><Check className="h-4 w-4" /> Connected</>
@@ -489,9 +595,26 @@ const AlumniProfile = () => {
                   About
                 </h3>
                 {editing ? (
-                  <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={4} className={`${inputClass} mt-3 h-auto py-2.5`} />
+                  <div className="mt-3 space-y-2.5">
+                    <textarea
+                      value={form.bio}
+                      onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                      placeholder="Write something about yourself..."
+                      rows={5}
+                      className={`${inputClass} h-auto resize-y py-2.5 leading-relaxed`}
+                    />
+                    <button
+                      type="button"
+                      onClick={saveProfile}
+                      disabled={saving}
+                      className="flex items-center gap-1.5 rounded-xl bg-[#009639] px-5 py-2 text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50"
+                    >
+                      <Check className="h-4 w-4" />
+                      {saving ? 'Saving...' : 'Save Profile'}
+                    </button>
+                  </div>
                 ) : (
-                  <p className="mt-2.5 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+                  <p className="mt-2.5 whitespace-pre-line text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
                     {person?.bio || 'No bio yet.'}
                   </p>
                 )}
@@ -579,7 +702,7 @@ const AlumniProfile = () => {
                       <div className="grid grid-cols-3 gap-2">
                         <select value={expForm.startMonth} onChange={(e) => setExpForm({ ...expForm, startMonth: e.target.value })} className={inputClass}>
                           <option value="">Month</option>
-                          {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
                             <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
                           ))}
                         </select>
@@ -597,7 +720,7 @@ const AlumniProfile = () => {
                       <div className="grid grid-cols-3 gap-2">
                         <select value={expForm.endMonth} onChange={(e) => setExpForm({ ...expForm, endMonth: e.target.value })} disabled={expForm.current} className={inputClass}>
                           <option value="">Month</option>
-                          {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m, i) => (
+                          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
                             <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
                           ))}
                         </select>
@@ -629,9 +752,8 @@ const AlumniProfile = () => {
                         {i < (person?.employmentHistory || []).length - 1 && (
                           <span className="absolute left-[15px] top-9 h-[calc(100%-2rem)] w-0.5 rounded bg-emerald-100 dark:bg-emerald-900" />
                         )}
-                        <span className={`relative z-10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
-                          job.current ? 'bg-[#009639] text-white' : 'bg-emerald-50 text-[#009639]'
-                        }`}>
+                        <span className={`relative z-10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${job.current ? 'bg-[#009639] text-white' : 'bg-emerald-50 text-[#009639]'
+                          }`}>
                           <Briefcase className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800/70 p-3.5 transition hover:bg-emerald-50/50">
