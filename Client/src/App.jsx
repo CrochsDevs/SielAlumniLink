@@ -27,6 +27,7 @@ import AlumniSurveys from './pages/alumni/alumniSurveys';
 import AlumniSurveyAnswer from './pages/alumni/alumniSurveyAnswer';
 import StudentDashboard from './pages/student/studentDashboard';
 import StudentProfile from './pages/student/studentProfile';
+import StudentAccounts from './pages/student/studentAccounts';
 import StudentJourney from './pages/student/studentJourney';
 import StudentPortfolio from './pages/student/studentPortfolio';
 import StudentCareer from './pages/student/studentCareer';
@@ -292,6 +293,11 @@ function AppRoutes() {
       <Route path="/student/message" element={
         <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
           <StudentMessage />
+        </ProtectedRoute>
+      } />
+      <Route path="/student/accounts" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+          <StudentAccounts />
         </ProtectedRoute>
       } />
       {/* Legacy inbox links (sidebars) redirect per role */}
