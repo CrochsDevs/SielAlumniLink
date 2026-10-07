@@ -82,7 +82,7 @@ const AlumniProfile = () => {
   };
 
   useEffect(() => {
-    if (isOwn) return;
+    if (!id) return;
     setLoadingOther(true);
     setNotFound(false);
     api.get(`/users/${id}`)

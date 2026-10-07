@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, X, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
@@ -29,7 +29,7 @@ const AlumniRequests = () => {
       );
       const list = (usersRes.data.data || [])
         .filter((u) => u.email && u.email !== user?.email && !connectedEmails.has(u.email))
-        .slice(0, 6);
+        .slice(0, 8);
       setSuggestions(list);
     } catch {
       // ignore
@@ -56,6 +56,11 @@ const AlumniRequests = () => {
     }
   };
 
+  // Hide a suggestion tile (UI only)
+  const handleDismiss = (email) => {
+    setSuggestions((prev) => prev.filter((s) => s.email !== email));
+  };
+
   return (
     <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
@@ -63,7 +68,7 @@ const AlumniRequests = () => {
       <div className="lg:pl-64">
         <AlumniTopbar user={user} title="Requests" onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6">
+        <main className="mx-auto max-w-4xl space-y-3 p-4 sm:p-6">
           <RequestsHeader count={requests.length} />
           <RequestsList requests={requests} loading={loading} onRespond={respond} />
 
@@ -83,30 +88,63 @@ const AlumniRequests = () => {
             ) : suggestions.length === 0 ? (
               <p className="py-6 text-center text-[12.5px] text-zinc-400">No suggestions right now.</p>
             ) : (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                 {suggestions.map((person) => (
                   <div
                     key={person._id}
-                    className="flex items-center gap-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 p-3.5"
+                    className="relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                   >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
-                      {(person.name || 'A').charAt(0).toUpperCase()}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-bold text-zinc-900 dark:text-zinc-100">
+                    {/* Banner */}
+                    <div className="h-16 bg-gradient-to-br from-[#009639]/30 via-emerald-200/60 to-zinc-200 dark:from-[#009639]/40 dark:via-emerald-900/40 dark:to-zinc-800" />
+
+                    {/* Dismiss */}
+                    <button
+                      type="button"
+                      onClick={() => handleDismiss(person.email)}
+                      aria-label="Dismiss suggestion"
+                      className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-zinc-800/80 text-white transition hover:bg-zinc-900"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* Avatar */}
+                    <div className="-mt-10 flex justify-center">
+                      {person.avatar || person.profilePicture ? (
+                        <img
+                          src={person.avatar || person.profilePicture}
+                          alt={person.name || 'Alumni'}
+                          className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-[#009639]/10 dark:bg-emerald-900/50 text-2xl font-bold text-[#009639] dark:text-emerald-300">
+                          {(person.name || 'A').charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex flex-1 flex-col px-3 pb-3 pt-2 text-center">
+                      <p className="line-clamp-2 text-[13.5px] font-bold leading-tight text-zinc-900 dark:text-zinc-100">
                         {person.name || 'Alumni'}
                       </p>
-                      <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 line-clamp-2 min-h-[32px] text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">
                         {person.program || person.email}
                       </p>
+
+                      <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                        <GraduationCap className="h-3.5 w-3.5 shrink-0 text-[#009639]" />
+                        <span className="truncate">Central Luzon State University</span>
+                      </div>
+
                       <button
                         type="button"
                         disabled={connecting === person.email}
                         onClick={() => handleConnect(person.email)}
-                        className="mt-2 flex items-center gap-1 rounded-full bg-[#009639] px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50"
+                        className="mt-auto flex w-full items-center justify-center gap-1.5 rounded-full border border-[#009639] px-3 py-1.5 text-[12.5px] font-bold text-[#009639] transition hover:bg-[#009639]/10 disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-300 dark:hover:bg-emerald-400/10"
+                        style={{ marginTop: '0.75rem' }}
                       >
-                        <UserPlus className="h-3 w-3" />
-                        {connecting === person.email ? '...' : 'Connect'}
+                        <UserPlus className="h-3.5 w-3.5" />
+                        {connecting === person.email ? 'Sending...' : 'Connect'}
                       </button>
                     </div>
                   </div>

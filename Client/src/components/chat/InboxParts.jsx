@@ -1,10 +1,49 @@
 import { useEffect, useState } from 'react';
-import { Search, Send, ArrowLeft, MessageSquareOff, Users, Plus, Smile, Phone, Video, ImagePlus, Paperclip } from 'lucide-react';
+import { Search, Send, ArrowLeft, MessageSquareOff, Users, Plus, Check, Smile, Phone, Video, ImagePlus, Paperclip } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useChat } from '../../context/ChatContext';
+import { useAuth } from '../../context/useAuth';
+import api from '../../utils/axios';
 import { formatTime } from './messageFormat';
 import MessageBubble from './MessageBubble';
 import EmojiPicker from './EmojiPicker';
+
+// Loads only the people the current user is connected with
+const useConnectedPeople = (open) => {
+  const { user } = useAuth();
+  const [people, setPeople] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [connsRes, usersRes] = await Promise.all([
+          api.get('/connections/me'),
+          api.get('/users'),
+        ]);
+        const byEmail = new Map((usersRes.data.data || []).map((u) => [u.email, u]));
+        const seen = new Set();
+        const list = (connsRes.data.data || [])
+          // only accepted connections (adjust if your status field is named differently)
+          .filter((c) => !c.status || c.status === 'accepted')
+          .map((c) => (c.requesterEmail === user?.email ? c.recipientEmail : c.requesterEmail))
+          .filter((email) => email && !seen.has(email) && seen.add(email))
+          .map((email) => ({ email, name: byEmail.get(email)?.name || email }));
+        if (!cancelled) setPeople(list);
+      } catch {
+        if (!cancelled) setPeople([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, user?.email]);
+
+  return { people, loading };
+};
 
 const useInboxPage = () => {
   const {
@@ -17,7 +56,7 @@ const useInboxPage = () => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
-  const [groupEmails, setGroupEmails] = useState('');
+  const [groupEmails, setGroupEmails] = useState([]); // now an array
   const [groupSaving, setGroupSaving] = useState(false);
 
   useEffect(() => {
@@ -59,21 +98,25 @@ const useInboxPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const closeGroup = () => {
+    setGroupOpen(false);
+    setGroupEmails([]);
+    setGroupName('');
+  };
+
   const submitGroup = async (e) => {
     e.preventDefault();
-    const emails = groupEmails.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+    const emails = groupEmails;
     if (emails.length < 2) {
-      Swal.fire('Error', 'Invite at least 2 connected Sieles (3+ people total)', 'error');
+      Swal.fire('Error', 'Add at least 2 connected Sieles (3+ people total)', 'error');
       return;
     }
     setGroupSaving(true);
     const created = await createGroupChat(groupName.trim() || 'Group Chat', emails);
     setGroupSaving(false);
     if (created) {
-      setGroupName('');
-      setGroupEmails('');
-      setGroupOpen(false);
       const full = { _id: created._id, name: groupName.trim() || 'Group Chat', isGroup: true, initial: 'G' };
+      closeGroup();
       openChat(full);
       setActiveId(String(created._id));
     }
@@ -82,15 +125,98 @@ const useInboxPage = () => {
   return {
     activeId, setActiveId, draft, setDraft, query, setQuery, active, filtered, threads, send,
     showEmoji, setShowEmoji, groupOpen, setGroupOpen, groupName, setGroupName,
-    groupEmails, setGroupEmails, groupSaving, submitGroup,
+    groupEmails, setGroupEmails, groupSaving, submitGroup, closeGroup,
     editChatMessage, unsendChatMessage, sendFile,
   };
+};
+
+const GroupModal = ({
+  groupName, setGroupName, groupEmails, setGroupEmails,
+  groupSaving, submitGroup, onClose,
+}) => {
+  const { people, loading } = useConnectedPeople(true);
+
+  const toggle = (email) =>
+    setGroupEmails((prev) =>
+      prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]
+    );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
+          <Users className="h-4 w-4 text-[#009639]" />
+          New group chat
+        </h2>
+        <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
+          3 or more connects can chat together. Add at least 2 connected Sieles.
+        </p>
+        <form onSubmit={submitGroup} className="mt-4 space-y-2.5">
+          <input
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            placeholder="Group name (e.g. Batch 2019)"
+            className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none focus:border-[#009639]"
+          />
+
+          <div className="flex items-center justify-between px-1 pt-1">
+            <span className="text-[12px] font-bold text-zinc-700 dark:text-zinc-200">Your connections</span>
+            <span className="text-[11px] text-zinc-400">{groupEmails.length} selected</span>
+          </div>
+
+          <ul className="max-h-60 space-y-1 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-700 p-1.5">
+            {loading && (
+              <li className="py-6 text-center text-[12px] text-zinc-400">Loading connections...</li>
+            )}
+            {!loading && people.length === 0 && (
+              <li className="py-6 text-center text-[12px] text-zinc-400">No connections yet.</li>
+            )}
+            {people.map((p) => {
+              const added = groupEmails.includes(p.email);
+              return (
+                <li key={p.email} className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-[13px] font-bold text-[#009639] dark:text-emerald-300">
+                    {(p.name || 'A').charAt(0).toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-bold text-zinc-900 dark:text-zinc-100">{p.name}</span>
+                    <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">{p.email}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggle(p.email)}
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition ${added
+                        ? 'bg-[#009639] text-white hover:bg-[#007a2e]'
+                        : 'border border-[#009639] text-[#009639] hover:bg-[#009639]/10 dark:border-emerald-400 dark:text-emerald-300'
+                      }`}
+                  >
+                    {added ? <><Check className="h-3.5 w-3.5" /> Added</> : <><Plus className="h-3.5 w-3.5" /> Add</>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="h-10 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[13px] font-bold text-zinc-600 dark:text-zinc-300">
+              Cancel
+            </button>
+            <button type="submit" disabled={groupSaving || groupEmails.length < 2}
+              className="h-10 flex-1 rounded-xl bg-[#009639] text-[13px] font-bold text-white hover:bg-[#007a2e] disabled:opacity-50">
+              {groupSaving ? 'Creating...' : 'Create group'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 const ConvoList = ({
   filtered, activeId, setActiveId, query, setQuery,
   groupOpen, setGroupOpen, groupName, setGroupName,
-  groupEmails, setGroupEmails, groupSaving, submitGroup,
+  groupEmails, setGroupEmails, groupSaving, submitGroup, closeGroup,
 }) => (
   <div className="flex h-full flex-col bg-white dark:bg-zinc-900">
     <div className="border-b border-zinc-100 dark:border-zinc-800 p-3">
@@ -120,9 +246,8 @@ const ConvoList = ({
             <button
               type="button"
               onClick={() => setActiveId(String(c._id))}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
-                isActive ? 'bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-200/60 dark:ring-emerald-900' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
-              }`}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${isActive ? 'bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-200/60 dark:ring-emerald-900' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                }`}
             >
               <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
                 {c.isGroup ? <Users className="h-4 w-4" /> : c.initial}
@@ -158,42 +283,15 @@ const ConvoList = ({
     </ul>
 
     {groupOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setGroupOpen(false)}>
-        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
-            <Users className="h-4 w-4 text-[#009639]" />
-            New group chat
-          </h2>
-          <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
-            3 or more connects can chat together. Invite at least 2 connected Sieles.
-          </p>
-          <form onSubmit={submitGroup} className="mt-4 space-y-2.5">
-            <input
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Group name — e.g. Batch 2019"
-              className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none focus:border-[#009639]"
-            />
-            <textarea
-              value={groupEmails}
-              onChange={(e) => setGroupEmails(e.target.value)}
-              rows={3}
-              placeholder="Member emails, separated by commas"
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 py-2.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none focus:border-[#009639]"
-            />
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setGroupOpen(false)}
-                className="h-10 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[13px] font-bold text-zinc-600 dark:text-zinc-300">
-                Cancel
-              </button>
-              <button type="submit" disabled={groupSaving}
-                className="h-10 flex-1 rounded-xl bg-[#009639] text-[13px] font-bold text-white hover:bg-[#007a2e] disabled:opacity-60">
-                {groupSaving ? 'Creating...' : 'Create group'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+      <GroupModal
+        groupName={groupName}
+        setGroupName={setGroupName}
+        groupEmails={groupEmails}
+        setGroupEmails={setGroupEmails}
+        groupSaving={groupSaving}
+        submitGroup={submitGroup}
+        onClose={closeGroup}
+      />
     )}
   </div>
 );

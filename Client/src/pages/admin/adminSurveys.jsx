@@ -221,11 +221,10 @@ export default function AdminSurveys() {
             <button
               type="button"
               onClick={() => setActiveTab('questions')}
-              className={`flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-[13px] font-bold transition ${
-                activeTab === 'questions'
+              className={`flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-[13px] font-bold transition ${activeTab === 'questions'
                   ? 'bg-white dark:bg-zinc-900 text-[#009639] dark:text-emerald-300 border-b-2 border-[#009639]'
                   : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-              }`}
+                }`}
             >
               <FileText className="h-4 w-4" />
               Questions
@@ -233,11 +232,10 @@ export default function AdminSurveys() {
             <button
               type="button"
               onClick={() => setActiveTab('responses')}
-              className={`flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-[13px] font-bold transition ${
-                activeTab === 'responses'
+              className={`flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-[13px] font-bold transition ${activeTab === 'responses'
                   ? 'bg-white dark:bg-zinc-900 text-[#009639] dark:text-emerald-300 border-b-2 border-[#009639]'
                   : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-              }`}
+                }`}
             >
               <BarChart3 className="h-4 w-4" />
               Responses
@@ -304,9 +302,8 @@ export default function AdminSurveys() {
                               type="button"
                               onClick={() => toggleActive(survey)}
                               title={survey.isActive ? 'Hide survey' : 'Publish survey'}
-                              className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 transition ${
-                                survey.isActive ? 'bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60' : 'bg-zinc-100 text-zinc-400 ring-zinc-200'
-                              }`}
+                              className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 transition ${survey.isActive ? 'bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60' : 'bg-zinc-100 text-zinc-400 ring-zinc-200'
+                                }`}
                             >
                               {survey.isActive ? 'Active' : 'Draft'}
                             </button>
