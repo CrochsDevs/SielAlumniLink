@@ -60,11 +60,6 @@
 }
 
 @layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  /* Scrollbars are intentionally hidden for some components */
+  /* Removed global .no-scrollbar rule that was preventing chat messages from scrolling */
 }

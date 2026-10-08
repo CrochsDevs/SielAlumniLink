@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search, Send, ArrowLeft, MessageSquareOff, Users, Plus, Check, Smile, Phone, Video, ImagePlus, Paperclip } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useChat } from '../../context/ChatContext';
@@ -6,7 +6,7 @@ import { useAuth } from '../../context/useAuth';
 import api from '../../utils/axios';
 import { formatTime } from './messageFormat';
 import MessageBubble from './MessageBubble';
-import EmojiPicker from './EmojiPicker';
+import EmojiPicker from 'emoji-picker-react';
 
 // Loads only the people the current user is connected with
 const useConnectedPeople = (open) => {
@@ -164,7 +164,7 @@ const GroupModal = ({
             <span className="text-[11px] text-zinc-400">{groupEmails.length} selected</span>
           </div>
 
-          <ul className="max-h-60 space-y-1 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-700 p-1.5">
+          <ul className="max-h-60 space-y-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 dark:border-zinc-700 p-1.5">
             {loading && (
               <li className="py-6 text-center text-[12px] text-zinc-400">Loading connections...</li>
             )}
@@ -186,8 +186,8 @@ const GroupModal = ({
                     type="button"
                     onClick={() => toggle(p.email)}
                     className={`flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition ${added
-                        ? 'bg-[#009639] text-white hover:bg-[#007a2e]'
-                        : 'border border-[#009639] text-[#009639] hover:bg-[#009639]/10 dark:border-emerald-400 dark:text-emerald-300'
+                      ? 'bg-[#009639] text-white hover:bg-[#007a2e]'
+                      : 'border border-[#009639] text-[#009639] hover:bg-[#009639]/10 dark:border-emerald-400 dark:text-emerald-300'
                       }`}
                   >
                     {added ? <><Check className="h-3.5 w-3.5" /> Added</> : <><Plus className="h-3.5 w-3.5" /> Add</>}
@@ -218,8 +218,9 @@ const ConvoList = ({
   groupOpen, setGroupOpen, groupName, setGroupName,
   groupEmails, setGroupEmails, groupSaving, submitGroup, closeGroup,
 }) => (
-  <div className="flex h-full flex-col bg-white dark:bg-zinc-900">
-    <div className="border-b border-zinc-100 dark:border-zinc-800 p-3">
+  // min-h-0 + overflow-hidden: lets the list below shrink and scroll instead of growing the page
+  <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
+    <div className="shrink-0 border-b border-zinc-100 dark:border-zinc-800 p-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
         <input
@@ -238,7 +239,7 @@ const ConvoList = ({
         New group chat
       </button>
     </div>
-    <ul className="flex-1 overflow-y-auto p-1.5">
+    <ul className="min-h-0 max-h-[calc(100vh-16rem)] flex-1 overflow-y-auto overscroll-contain p-1.5">
       {filtered.map((c) => {
         const isActive = String(activeId) === String(c._id);
         return (
@@ -300,6 +301,32 @@ const ThreadPane = ({
   active, activeId, setActiveId, threads, draft, setDraft, send,
   showEmoji, setShowEmoji, editChatMessage, unsendChatMessage, sendFile,
 }) => {
+  const messages = threads[activeId] || [];
+  const scrollRef = useRef(null);
+  const emojiWrapRef = useRef(null);
+
+  // Keep the newest message in view when switching chats or when a message arrives.
+  // (Hooks must stay above the early return below.)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, activeId]);
+
+  // Close the emoji picker on outside click or Escape (emoji-picker-react has no onClose prop).
+  useEffect(() => {
+    if (!showEmoji) return undefined;
+    const onDown = (e) => {
+      if (emojiWrapRef.current && !emojiWrapRef.current.contains(e.target)) setShowEmoji(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setShowEmoji(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showEmoji, setShowEmoji]);
+
   if (!active) {
     return (
       <div className="hidden flex-1 flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-zinc-950/50 p-8 text-center md:flex">
@@ -313,10 +340,11 @@ const ThreadPane = ({
       </div>
     );
   }
-  const messages = threads[activeId] || [];
+
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-zinc-900">
-      <div className="flex items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
+    // min-h-0 + overflow-hidden: the messages area below becomes the scroll container
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
+      <div className="flex shrink-0 items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
         <button
           type="button"
           onClick={() => setActiveId(null)}
@@ -360,7 +388,10 @@ const ThreadPane = ({
         )}
       </div>
 
-      <div className="flex-1 space-y-2 overflow-y-auto bg-[#f4f6f4] dark:bg-zinc-950 p-4">
+      <div
+        ref={scrollRef}
+        className="min-h-0 max-h-[calc(100vh-21rem)] flex-1 space-y-2 overflow-y-auto overscroll-contain bg-[#f4f6f4] dark:bg-zinc-950 p-4"
+      >
         {messages.length === 0 && (
           <p className="py-8 text-center text-[12px] text-zinc-400 dark:text-zinc-500">
             No messages yet — say hello! 👋
@@ -378,21 +409,31 @@ const ThreadPane = ({
         ))}
       </div>
 
-      <form onSubmit={send} className="relative flex items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 p-3">
-        <button
-          type="button"
-          onClick={() => setShowEmoji(!showEmoji)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
-          aria-label="Add emoji"
-        >
-          <Smile className="h-4 w-4" />
-        </button>
-        {showEmoji && (
-          <EmojiPicker
-            onPick={(emoji) => setDraft((prev) => prev + emoji)}
-            onClose={() => setShowEmoji(false)}
-          />
-        )}
+      <form onSubmit={send} className="relative flex shrink-0 items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 p-3">
+        <div ref={emojiWrapRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowEmoji(!showEmoji)}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+            aria-label="Add emoji"
+            aria-expanded={showEmoji}
+          >
+            <Smile className="h-4 w-4" />
+          </button>
+          {showEmoji && (
+            // bottom-full = opens upward from the button, like Messenger/Facebook
+            <div className="absolute bottom-full left-0 z-30 mb-3 overflow-hidden rounded-2xl shadow-xl">
+              <EmojiPicker
+                onEmojiClick={(emojiData) => setDraft((prev) => prev + emojiData.emoji)}
+                width={320}
+                height={360}
+                theme="auto"
+                lazyLoadEmojis
+                previewConfig={{ showPreview: false }}
+              />
+            </div>
+          )}
+        </div>
         <label
           className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
           title="Send photo"
@@ -420,7 +461,7 @@ const ThreadPane = ({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={`Message ${active.isGroup ? 'group' : active.name.split(' ')[0]}...`}
-          className="h-10 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
+          className="h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
         />
         <button
           type="submit"

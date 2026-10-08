@@ -9,6 +9,7 @@ import CallManager from '../components/call/CallManager';
 export const ChatContext = createContext(null);
 
 const toInitial = (name, email) => (name || email || 'U').charAt(0).toUpperCase();
+const unreadCount = (value) => Math.max(0, Number(value) || 0);
 
 // Real messaging lives here at app root so chat windows survive
 // page navigation — they only close when the user presses X.
@@ -21,6 +22,8 @@ export const ChatProvider = ({ children }) => {
   myAuthIdRef.current = myAuthId;
 
   const [convos, setConvos] = useState([]);
+  const convosRef = useRef([]);
+  useEffect(() => { convosRef.current = convos; }, [convos]);
   const [openChats, setOpenChats] = useState([]);
   const [threads, setThreads] = useState({});
 
@@ -72,12 +75,15 @@ export const ChatProvider = ({ children }) => {
   }, [openChats, threads, myAuthId, storageKey]);
 
   const refreshConvos = useCallback(async () => {
-    if (!myAuthIdRef.current) return;
+    const authId = myAuthIdRef.current;
+    if (!authId) return;
     try {
       const res = await api.get('/conversations');
+      if (myAuthIdRef.current !== authId) return;
       setConvos(
         (res.data.data || []).map((c) => ({
           ...c,
+          unread: unreadCount(c.unread),
           initial: toInitial(c.name, c.email),
         }))
       );
@@ -100,7 +106,13 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     const socket = getSocket();
     const onNew = ({ conversationId, message }) => {
+      if (!myAuthIdRef.current) return;
       const from = String(message.senderAuthId) === String(myAuthIdRef.current) ? 'me' : 'them';
+      // A first message can arrive before this conversation is in our list.
+      // Fetch its name and server unread count so it also appears in the badge.
+      if (!convosRef.current.some((c) => String(c._id) === String(conversationId))) {
+        refreshConvos();
+      }
       setThreads((prev) => {
         const current = prev[conversationId] || [];
         // Skip socket echo of our own optimistic bubble.
@@ -121,7 +133,7 @@ export const ChatProvider = ({ children }) => {
                 ...c,
                 preview: message.text,
                 time: message.at,
-                unread: from === 'me' ? c.unread : (c.unread || 0) + 1,
+                unread: from === 'me' ? unreadCount(c.unread) : unreadCount(c.unread) + 1,
               }
             : c
         )
@@ -146,12 +158,15 @@ export const ChatProvider = ({ children }) => {
     socket.on('message:new', onNew);
     socket.on('message:edited', onEdited);
     socket.on('message:unsent', onUnsent);
+    // Restore the count after reconnecting, including messages sent while offline.
+    socket.on('connect', refreshConvos);
     return () => {
       socket.off('message:new', onNew);
       socket.off('message:edited', onEdited);
       socket.off('message:unsent', onUnsent);
+      socket.off('connect', refreshConvos);
     };
-  }, []);
+  }, [refreshConvos]);
 
   const loadThread = useCallback(async (convoId) => {
     if (!convoId || convoId === 'undefined') return;
@@ -269,7 +284,7 @@ export const ChatProvider = ({ children }) => {
     }
   }, [refreshConvos]);
 
-  const unreadTotal = convos.reduce((sum, c) => sum + (c.unread || 0), 0);
+  const unreadTotal = convos.reduce((sum, c) => sum + unreadCount(c.unread), 0);
 
   return (
     <ChatContext.Provider

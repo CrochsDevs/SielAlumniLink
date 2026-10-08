@@ -56,6 +56,7 @@ export const initSocket = (server) => {
     const authId = String(socket.user._id);
     // Personal room so the server can push to all of a user's tabs.
     socket.join(`user:${authId}`);
+    if (String(socket.user.role).toLowerCase() === 'admin') socket.join('role:admin');
     PresenceStore.markOnline(socket.user._id, socket.user.email);
 
     // Tell everyone (including the newcomer) who is online.
@@ -90,6 +91,14 @@ export const emitToUser = (authId, event, payload) => {
   if (io) {
     io.to(`user:${String(authId)}`).emit(event, payload);
   }
+};
+
+// Admin directory invalidations contain IDs only; clients reload through protected APIs.
+export const emitConnectionsChanged = (connection) => {
+  if (!io) return;
+  io.to('role:admin').emit('connections:changed', {
+    authIds: [connection.requesterAuthId, connection.recipientAuthId].filter(Boolean).map(String),
+  });
 };
 
 export default { initSocket, getIO, emitToUser };

@@ -1,4 +1,5 @@
 import { client } from '../../config/db.js';
+import { nameGrams } from '../search/search.names.js';
 
 const db = client.db('SielAlumni');
 const usersCollection = db.collection('users');
@@ -7,6 +8,7 @@ export const UserModel = {
   async create(userData) {
     const newUser = {
       ...userData,
+      searchNameGrams: nameGrams(userData.name),
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -55,6 +57,9 @@ export const UserModel = {
     } else {
       updateDoc = { $set: { ...updateData, updatedAt: new Date() } };
     }
+    if (updateDoc.$set.name !== undefined) {
+      updateDoc.$set.searchNameGrams = nameGrams(updateDoc.$set.name);
+    }
     const result = await usersCollection.updateOne(
       { _id: new ObjectId(id) },
       updateDoc
@@ -72,6 +77,7 @@ export const UserModel = {
     const userProfile = {
       authId: authUserId,
       ...profileData,
+      searchNameGrams: nameGrams(profileData.name),
       createdAt: new Date(),
       updatedAt: new Date()
     };

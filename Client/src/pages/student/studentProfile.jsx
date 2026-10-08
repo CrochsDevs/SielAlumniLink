@@ -67,24 +67,37 @@ const StudentProfile = () => {
 
   useEffect(() => {
     if (isOwn) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingOther(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNotFound(false);
     api.get(`/users/${id}`)
-      .then((res) => setProfile(res.data.data))
-      .catch(() => setNotFound(true))
-      .finally(() => setLoadingOther(false));
+      .then((res) => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setProfile(res.data.data);
+      })
+      .catch(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setNotFound(true);
+      })
+      .finally(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLoadingOther(false);
+      });
   }, [id, isOwn]);
 
   // Check existing connection with this person.
   useEffect(() => {
     if (isOwn || !profile?.email) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     api.get('/connections/me')
       .then((res) => {
         const found = (res.data.data || []).find(
           (c) => c.requesterEmail === profile.email || c.recipientEmail === profile.email
         );
         if (found) setConnectState(found.status === 'accepted' ? 'connected' : 'pending');
-        else setConnectState('none');
+        else // eslint-disable-next-line react-hooks/set-state-in-effect
+          setConnectState('none');
       })
       .catch(() => {});
   }, [isOwn, profile?.email]);

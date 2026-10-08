@@ -1,13 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 import { X, Minus, Send, Smile, Users, ImagePlus, Paperclip } from 'lucide-react';
 import MessageBubble from './MessageBubble';
-import EmojiPicker from './EmojiPicker';
+import EmojiPicker from 'emoji-picker-react';
 
 // Facebook-style floating chat dock — max 2 open windows side by side.
 const ChatWindow = ({ id, convo, messages, minimized, onClose, onToggleMin, onSend, onEdit, onUnsend }) => {
   const [draft, setDraft] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
+  const emojiWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!showEmoji) return;
+    const onPointerDown = (event) => {
+      if (!emojiWrapRef.current?.contains(event.target)) setShowEmoji(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setShowEmoji(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showEmoji]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -30,12 +47,12 @@ const ChatWindow = ({ id, convo, messages, minimized, onClose, onToggleMin, onSe
   };
 
   return (
-    <div className="flex w-72 flex-col overflow-hidden rounded-t-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl shadow-zinc-900/10">
+    <div className="relative flex w-72 flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl shadow-zinc-900/10">
       {/* Header */}
       <button
         type="button"
         onClick={onToggleMin}
-        className="flex w-full items-center gap-2 bg-white dark:bg-zinc-900 px-3 py-2 text-left shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+        className="flex w-full items-center gap-2 rounded-t-2xl bg-white dark:bg-zinc-900 px-3 py-2 text-left shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
       >
         <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[11px] font-bold text-[#009639]">
           {convo.isGroup ? <Users className="h-3.5 w-3.5" /> : convo.initial}
@@ -84,20 +101,29 @@ const ChatWindow = ({ id, convo, messages, minimized, onClose, onToggleMin, onSe
             ))}
           </div>
           <form onSubmit={submit} className="relative flex items-center gap-1 border-t border-zinc-100 dark:border-zinc-800 p-2">
-            <button
-              type="button"
-              onClick={() => setShowEmoji(!showEmoji)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
-              aria-label="Add emoji"
-            >
-              <Smile className="h-4 w-4" />
-            </button>
-            {showEmoji && (
-              <EmojiPicker
-                onPick={(emoji) => setDraft((prev) => prev + emoji)}
-                onClose={() => setShowEmoji(false)}
-              />
-            )}
+            <div ref={emojiWrapRef} className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowEmoji(value => !value)}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+                aria-label="Add emoji"
+                aria-expanded={showEmoji}
+              >
+                <Smile className="h-4 w-4" />
+              </button>
+              {showEmoji && (
+                <div className="absolute bottom-full left-0 z-50 mb-3 overflow-hidden rounded-2xl shadow-xl">
+                  <EmojiPicker
+                    onEmojiClick={emojiData => setDraft(previous => previous + emojiData.emoji)}
+                    width={272}
+                    height="min(360px, calc(100dvh - 100px))"
+                    theme="auto"
+                    lazyLoadEmojis
+                    previewConfig={{ showPreview: false }}
+                  />
+                </div>
+              )}
+            </div>
             <label
               className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
               title="Send photo"
@@ -125,7 +151,7 @@ const ChatWindow = ({ id, convo, messages, minimized, onClose, onToggleMin, onSe
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Write a message..."
-              className="h-9 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:bg-zinc-50 dark:focus:bg-zinc-700 focus:ring-2 focus:ring-[#009639]/20"
+              className="h-9 min-w-0 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:bg-zinc-50 dark:focus:bg-zinc-700 focus:ring-2 focus:ring-[#009639]/20"
             />
             <button
               type="submit"

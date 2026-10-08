@@ -2,27 +2,37 @@ import ConnectionModel from './connections.models.js';
 import AuthModel from '../auth/auth.models.js';
 import UserModel from '../users/users.models.js';
 import NotificationModel from '../notifications/notifications.models.js';
-import { emitToUser } from '../../realtime/socket.js';
+import { emitToUser, emitConnectionsChanged } from '../../realtime/socket.js';
 
 const STATUSES = ['pending', 'accepted', 'declined'];
 
 // Any logged-in user requests a connection (by recipient email).
 export const createConnection = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
+    const { email, recipientAuthId } = req.body;
+    if ((email !== undefined && typeof email !== 'string') ||
+        (recipientAuthId !== undefined && (typeof recipientAuthId !== 'string' || !/^[a-f\d]{24}$/i.test(recipientAuthId)))) {
+      return res.status(400).json({ success: false, message: 'Invalid connection recipient.' });
+    }
+    if ((!email || typeof email !== 'string') && (!recipientAuthId || typeof recipientAuthId !== 'string')) {
       return res.status(400).json({
         success: false,
         message: 'Please provide the recipient email'
       });
     }
 
-    const recipient = await AuthModel.findByEmail(email);
+    const recipient = recipientAuthId
+      ? await AuthModel.findById(recipientAuthId)
+      : await AuthModel.findByEmail(email);
     if (!recipient) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
+    }
+
+    if (String(req.user.role).toLowerCase() === 'student' && String(recipient.role).toLowerCase() === 'student') {
+      return res.status(403).json({ success: false, message: 'Students can connect with alumni, but not fellow students.' });
     }
 
     const connection = await ConnectionModel.request(
@@ -31,6 +41,7 @@ export const createConnection = async (req, res) => {
       recipient._id,
       recipient.email
     );
+    emitConnectionsChanged(connection);
 
     const requesterProfile = await UserModel.findByEmail(req.user.email);
     const requesterName = requesterProfile?.name || req.user.email;
@@ -138,8 +149,8 @@ export const updateConnection = async (req, res) => {
       });
     }
 
-    const updated = await ConnectionModel.updateStatus(req.params.id, status);
-    if (!updated) {
+    const existing = await ConnectionModel.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({
         success: false,
         message: 'Connection not found'
@@ -147,14 +158,18 @@ export const updateConnection = async (req, res) => {
     }
 
     const isParticipant =
-      String(updated.requesterAuthId) === String(req.user._id) ||
-      String(updated.recipientAuthId) === String(req.user._id);
+      String(existing.requesterAuthId) === String(req.user._id) ||
+      String(existing.recipientAuthId) === String(req.user._id);
     if (req.user.role !== 'admin' && !isParticipant) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: not part of this connection'
       });
     }
+
+    const updated = await ConnectionModel.updateStatus(req.params.id, status);
+    if (!updated) return res.status(404).json({ success: false, message: 'Connection not found' });
+    emitConnectionsChanged(updated);
 
     if (status === 'accepted' || status === 'declined') {
       const targetAuthId = String(updated.requesterAuthId) === String(req.user._id)
@@ -205,6 +220,8 @@ export const updateConnection = async (req, res) => {
 // Admin-only: remove a connection.
 export const deleteConnection = async (req, res) => {
   try {
+    const existing = await ConnectionModel.findById(req.params.id);
+    if (!existing) return res.status(404).json({ success: false, message: 'Connection not found' });
     const deleted = await ConnectionModel.deleteById(req.params.id);
     if (!deleted) {
       return res.status(404).json({
@@ -212,6 +229,7 @@ export const deleteConnection = async (req, res) => {
         message: 'Connection not found'
       });
     }
+    emitConnectionsChanged(existing);
     res.status(200).json({
       success: true,
       message: 'Connection removed successfully'

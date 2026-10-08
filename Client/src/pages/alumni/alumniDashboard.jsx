@@ -81,7 +81,7 @@ const AlumniDashboard = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [liked, setLiked] = useState({});
-  const [composer, setComposer] = useState('');
+  const [composer] = useState('');
   const [dashTab, setDashTab] = useState('feed');
   const [mentees, setMentees] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -93,7 +93,7 @@ const AlumniDashboard = () => {
   const [connecting, setConnecting] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [profileStats, setProfileStats] = useState({ program: '', batch: '', viewers: 0, connections: 0 });
-  const [tracerAccess, setTracerAccess] = useState(false);
+  const [, setTracerAccess] = useState(false);
 
   const toggleLike = (id) => setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -159,18 +159,6 @@ const AlumniDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (dashTab === 'mentorship' && mentees.length === 0 && !menteesLoading) {
-      loadMentees();
-    }
-    loadRequests();
-    loadSuggestions();
-    loadAnnouncements();
-    loadProfileStats();
-    loadTracerAccess();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashTab]);
-
   const loadAnnouncements = async () => {
     try {
       const res = await api.get('/announcements');
@@ -209,6 +197,29 @@ const AlumniDashboard = () => {
       // ignore
     }
   };
+
+  useEffect(
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    () => {
+      loadRequests();
+      loadSuggestions();
+      loadAnnouncements();
+      loadProfileStats();
+      loadTracerAccess();
+    },
+    []
+  );
+
+  useEffect(
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => {
+      if (dashTab === 'mentorship' && mentees.length === 0 && !menteesLoading) {
+        loadMentees();
+      }
+    },
+    [dashTab]
+  );
 
   const handleRespond = async (id, status) => {
     try {

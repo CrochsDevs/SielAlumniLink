@@ -19,20 +19,38 @@ export const useNotifications = () => {
       // stay silent — notifications are secondary
     }
   }, []);
+useEffect(() => {
+    let ignored = false;
 
-  useEffect(() => {
-    refresh();
-    const id = setInterval(refresh, 30000);
+    const load = async () => {
+      try {
+        const [listRes, countRes] = await Promise.all([
+          api.get('/notifications', { params: { limit: 20 } }),
+          api.get('/notifications/unread-count'),
+        ]);
+        if (!ignored) {
+          setItems(listRes.data.data || []);
+          setUnread(countRes.data.data?.count || 0);
+        }
+      } catch {
+        // stay silent — notifications are secondary
+      }
+    };
+
+    load();
+    const id = setInterval(() => load(), 30000);
 
     const socket = getSocket();
-    const onNotification = () => { refresh(); };
+    const onNotification = () => { load(); };
+
     socket.on('notification:new', onNotification);
 
     return () => {
       clearInterval(id);
       socket.off('notification:new', onNotification);
+      ignored = true;
     };
-  }, [refresh]);
+  }, []);
 
   const markRead = useCallback(async (id) => {
     setItems((prev) => prev.map((n) => (String(n._id) === String(id) ? { ...n, read: true } : n)));

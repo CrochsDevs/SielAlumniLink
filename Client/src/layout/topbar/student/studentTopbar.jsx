@@ -1,11 +1,10 @@
+import GlobalSearch from '../../../components/search/GlobalSearch';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   Home,
   ChevronRight,
-  Search,
-  X,
   MessageSquare,
   Bell,
   ChevronDown,
@@ -43,13 +42,11 @@ const StudentTopbar = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
   const { unreadTotal: chatUnread, convos, openChat } = useChat();
-  const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
   const chatRef = useRef(null);
@@ -59,15 +56,10 @@ const StudentTopbar = ({
     breadcrumbMap.find(([prefix]) => location.pathname.startsWith(prefix))?.[1] ||
     'Dashboard';
 
-  // Ctrl/Cmd+K opens search, Escape closes search + dropdown
+  // Escape closes header menus
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
       if (e.key === 'Escape') {
-        setSearchOpen(false);
         setDropdownOpen(false);
         setNotifOpen(false);
         setChatOpen(false);
@@ -77,9 +69,6 @@ const StudentTopbar = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
-  }, [searchOpen]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -119,8 +108,7 @@ const StudentTopbar = ({
         </button>
 
         {/* Breadcrumb */}
-        {!searchOpen && (
-          <nav aria-label="breadcrumb" className="hidden min-w-0 flex-1 sm:block">
+        <nav aria-label="breadcrumb" className="hidden min-w-0 flex-1 sm:block">
             <ol className="flex items-center gap-1.5 text-[12px]">
               <li className="flex items-center">
                 <Link
@@ -136,42 +124,9 @@ const StudentTopbar = ({
               </li>
               <li className="truncate text-[13px] font-bold text-white">{pageTitle}</li>
             </ol>
-          </nav>
-        )}
-        {searchOpen && <div className="min-w-0 flex-1" />}
+        </nav>
 
-        {/* Search */}
-        {searchOpen ? (
-          <div className="relative hidden sm:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder="Search..."
-              className="h-9 w-64 rounded-full border border-white/20 bg-white/15 pl-9 pr-9 text-[12.5px] text-white placeholder-white/50 outline-none transition focus:border-white/40 focus:bg-white/20"
-            />
-            <button
-              type="button"
-              onClick={() => setSearchOpen(false)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/60 hover:bg-white/10 hover:text-white"
-              aria-label="Close search"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className="hidden h-9 items-center gap-2 rounded-full bg-white/15 px-4 text-[12.5px] text-white/80 transition hover:bg-white/25 hover:text-white sm:flex"
-          >
-            <Search className="h-4 w-4" />
-            Search...
-            <kbd className="rounded border border-white/20 bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-white/70">
-              ⌘K
-            </kbd>
-          </button>
-        )}
+        <GlobalSearch />
 
         {/* Actions */}
         <div className="flex shrink-0 items-center gap-0.5">
@@ -184,7 +139,7 @@ const StudentTopbar = ({
             >
               <MessageSquare className="h-[18px] w-[18px]" />
               {(chatUnread > 0) && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
+                <span aria-label={`${chatUnread} unread messages`} aria-live="polite" className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
                   {chatUnread > 99 ? '99+' : chatUnread}
                 </span>
               )}

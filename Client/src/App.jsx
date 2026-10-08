@@ -1,8 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import { AuthProvider } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
 import { useAuth } from './context/useAuth';
+
 import AdminDashboard from './pages/admin/adminDashboard';
 import AdminUsers from './pages/admin/adminUsers';
 import AdminTracer from './pages/admin/adminTracer';
@@ -13,6 +15,7 @@ import AdminConnections from './pages/admin/adminConnections';
 import AdminAnnouncements from './pages/admin/adminAnnouncements';
 import AdminMessage from './pages/admin/adminMessage';
 import Settings from './pages/admin/Settings';
+
 import AlumniDashboard from './pages/alumni/alumniDashboard';
 import AlumniProfile from './pages/alumni/alumniProfile';
 import AlumniAccounts from './pages/alumni/alumniAccounts';
@@ -25,9 +28,10 @@ import AlumniTracer from './pages/alumni/alumniTracer';
 import AlumniRequests from './pages/alumni/alumniRequests';
 import AlumniSurveys from './pages/alumni/alumniSurveys';
 import AlumniSurveyAnswer from './pages/alumni/alumniSurveyAnswer';
+import SearchResults from './pages/search/SearchResults';
+
 import StudentDashboard from './pages/student/studentDashboard';
 import StudentProfile from './pages/student/studentProfile';
-import StudentAccounts from './pages/student/studentAccounts';
 import StudentJourney from './pages/student/studentJourney';
 import StudentPortfolio from './pages/student/studentPortfolio';
 import StudentCareer from './pages/student/studentCareer';
@@ -36,6 +40,8 @@ import StudentMentorship from './pages/student/studentMentorship';
 import StudentInternship from './pages/student/studentInternship';
 import StudentRequests from './pages/student/studentRequests';
 import StudentMessage from './pages/student/studentMessage';
+import StudentAccounts from './pages/student/studentAccounts';
+
 import Login from './auth/login';
 import Logout from './auth/logout';
 import Signup from './auth/signup';
@@ -46,7 +52,7 @@ import { Roles } from './utils/roles';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-white">
@@ -62,26 +68,22 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
-  
+
   if (user?.passwordSetupRequired) {
     return <Navigate to="/setup-password" replace />;
   }
 
-  // Role gate (UI only — API enforces via `authorize()`).
-  // Usage: <ProtectedRoute allowedRoles={[Roles.ADMIN]}>...</ProtectedRoute>
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
     return <Navigate to="/" replace />;
   }
-  
+
   return children;
 };
 
-// Role router: all login flows navigate to '/' — this single choke point
-// sends each role to its own landing without touching every auth page.
 const RoleIndex = () => {
   const { user } = useAuth();
 
@@ -96,8 +98,6 @@ const RoleIndex = () => {
   return <Navigate to="/alumni" replace />;
 };
 
-// Legacy '/inbox' links land here and bounce to the role's inbox.
-// Add per-role inbox pages later and point them here.
 const InboxRedirect = () => {
   const { user } = useAuth();
 
@@ -115,6 +115,11 @@ const InboxRedirect = () => {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={
+        <ProtectedRoute>
+          <RoleIndex />
+        </ProtectedRoute>
+      } />
       <Route path="/login" element={<Login />} />
       <Route path="/logout" element={
         <ProtectedRoute>
@@ -125,7 +130,8 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgetPassword />} />
       <Route path="/verify-magic-link" element={<MagicLinkVerification />} />
       <Route path="/setup-password" element={<SetupPassword />} />
-      <Route path="/" element={
+      <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+      <Route path="/students" element={
         <ProtectedRoute>
           <RoleIndex />
         </ProtectedRoute>
@@ -251,7 +257,7 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/student/profile/:id" element={
-        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}>
           <StudentProfile />
         </ProtectedRoute>
       } />
@@ -300,7 +306,6 @@ function AppRoutes() {
           <StudentAccounts />
         </ProtectedRoute>
       } />
-      {/* Legacy inbox links (sidebars) redirect per role */}
       <Route path="/inbox" element={
         <ProtectedRoute>
           <InboxRedirect />

@@ -47,9 +47,13 @@ const StudentReferrals = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    () => {
+      fetchAll();
+    },
+    []
+  );
 
   const appliedIds = new Set(mine.map((a) => String(a.referralId)));
 

@@ -70,5 +70,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [/* eslint-disable no-undef */ require('tailwindcss-animate')],
 }

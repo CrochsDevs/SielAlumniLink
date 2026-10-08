@@ -1,3 +1,4 @@
+import GlobalSearch from '../../../components/search/GlobalSearch';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -5,8 +6,6 @@ import {
   Home,
   ChevronRight,
   ChevronDown,
-  Search,
-  X,
   Calendar,
   Clock,
   MessageSquare,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../../../realtime/useNotifications';
 import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
+import { useChat } from '../../../context/ChatContext';
 const breadcrumbMap = [
   ['/admin/users', 'Users'],
   ['/admin/tracer', 'Tracer Study'],
@@ -33,7 +33,6 @@ const AdminTopbar = ({
   user,
   title,
   onMenuClick,
-  unreadMessages = 0,
   crumbLabel = 'Admin',
   crumbPath = '/admin',
   profilePath = '/admin/profile',
@@ -41,12 +40,11 @@ const AdminTopbar = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const { unreadTotal: unreadMessages } = useChat();
   const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
   const [now, setNow] = useState(new Date());
-  const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
 
@@ -55,15 +53,10 @@ const AdminTopbar = ({
     breadcrumbMap.find(([prefix]) => location.pathname.startsWith(prefix))?.[1] ||
     'Dashboard';
 
-  // Ctrl/Cmd+K opens search, Escape closes search + dropdown
+  // Escape closes header menus
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
       if (e.key === 'Escape') {
-        setSearchOpen(false);
         setDropdownOpen(false);
         setNotifOpen(false);
       }
@@ -72,9 +65,6 @@ const AdminTopbar = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
-  }, [searchOpen]);
 
   // Live clock
   useEffect(() => {
@@ -133,9 +123,8 @@ const AdminTopbar = ({
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Breadcrumb (hidden kapag searchOpen) */}
-          {!searchOpen && (
-            <nav aria-label="breadcrumb" className="hidden sm:flex min-w-0">
+          {/* Breadcrumb */}
+          <nav aria-label="breadcrumb" className="hidden sm:flex min-w-0">
               <ol className="flex items-center gap-1.5 text-[12px] text-zinc-500 dark:text-zinc-400 min-w-0">
                 <li className="flex items-center">
                   <Link
@@ -153,53 +142,22 @@ const AdminTopbar = ({
                   <span className="text-zinc-800 dark:text-zinc-100 font-semibold truncate">{pageTitle}</span>
                 </li>
               </ol>
-            </nav>
-          )}
+          </nav>
 
-          {/* Search input */}
-          {searchOpen && (
-            <div className="hidden sm:flex">
-              <div className="relative w-72">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pr-2 text-zinc-400 pointer-events-none z-10 bg-zinc-50/70 border-r border-zinc-200/60 rounded-l-lg">
-                  <Search className="w-4 h-4" />
-                </span>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full h-9 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 pl-[2.7rem] pr-12 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
-                />
-                <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <kbd className="inline-flex items-center px-1.5 py-0.5 rounded border border-zinc-200 bg-white text-[9px] font-medium text-zinc-500 leading-none">
-                    ESC
-                  </kbd>
-                </span>
-              </div>
-            </div>
-          )}
+          <GlobalSearch />
         </div>
 
         {/* RIGHT: date + time + actions + user dropdown */}
         <div className="flex items-center gap-0.5 shrink-0">
 
           {/* Live Date & Time chip */}
-          <div className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
+          <div className="hidden xl:flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800 text-[11px] text-zinc-600 dark:text-zinc-300 font-medium">
             <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <span className="truncate">{dateStr}</span>
             <span className="w-px h-3 bg-zinc-300"></span>
             <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
             <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-200">{timeStr}</span>
           </div>
-
-          {/* Search toggle */}
-          <button
-            type="button"
-            onClick={() => setSearchOpen(!searchOpen)}
-            className={`p-2 rounded-md transition-colors hidden md:inline-flex ${searchOpen ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
-            aria-label="Toggle search"
-          >
-            {searchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-          </button>
 
           {/* Messages */}
           <Link
@@ -209,7 +167,7 @@ const AdminTopbar = ({
           >
             <MessageSquare className="w-4 h-4" />
             {unreadMessages > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 ring-2 ring-white text-[9px] font-bold text-white flex items-center justify-center">
+              <span aria-label={`${unreadMessages} unread messages`} aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 ring-2 ring-white text-[9px] font-bold text-white flex items-center justify-center">
                 {unreadMessages > 99 ? '99+' : unreadMessages}
               </span>
             )}

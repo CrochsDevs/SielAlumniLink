@@ -1,11 +1,10 @@
+import GlobalSearch from '../../../components/search/GlobalSearch';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   Home,
   ChevronRight,
-  Search,
-  X,
   MessageSquare,
   Bell,
   ChevronDown,
@@ -34,32 +33,22 @@ const AlumniTopbar = ({
   user,
   title,
   onMenuClick,
-  unreadMessages = 0,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const { convos, openChat } = useChat();
+  const { convos, openChat, unreadTotal: totalUnread } = useChat();
   const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
-  const searchInputRef = useRef(null);
   const dropdownRef = useRef(null);
   const chatRef = useRef(null);
   const notifRef = useRef(null);
 
-  const totalUnread = convos.reduce((sum, c) => sum + c.unread, 0);
-
-  // Ctrl/Cmd+K opens search, Escape closes search + dropdown
+  // Escape closes header menus
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
       if (e.key === 'Escape') {
-        setSearchOpen(false);
         setDropdownOpen(false);
         setChatOpen(false);
         setNotifOpen(false);
@@ -69,9 +58,6 @@ const AlumniTopbar = ({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
-  }, [searchOpen]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -102,7 +88,7 @@ const AlumniTopbar = ({
   return (
     <div className="sticky top-3 z-10 px-4 sm:px-6">
       <header
-        className="flex h-16 items-center gap-3 rounded-2xl border border-emerald-900/10 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 px-3 shadow-lg shadow-emerald-900/5 backdrop-blur sm:px-4"
+        className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-900/10 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 px-3 py-3 shadow-lg shadow-emerald-900/5 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-4 sm:py-0"
         style={{ fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif" }}
       >
         {/* Mobile menu toggle */}
@@ -136,47 +122,8 @@ const AlumniTopbar = ({
           </ol>
         </nav>
 
-        {/* Mobile title (breadcrumb hidden on small screens) */}
-        <div className="min-w-0 flex-1 sm:hidden">
-          <h1 className="truncate text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {pageTitle}
-          </h1>
-        </div>
-
-        {/* Search pill */}
-        <div className="hidden md:block">
-          {searchOpen ? (
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search alumni, jobs..."
-                className="h-10 w-64 rounded-full border border-zinc-200 bg-zinc-50 pl-9 pr-9 text-[12.5px] text-zinc-800 placeholder-zinc-400 outline-none transition-all focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
-              />
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                aria-label="Close search"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="flex h-10 items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-[12.5px] text-zinc-400 transition hover:border-zinc-300 hover:text-zinc-600"
-            >
-              <Search className="h-4 w-4" />
-              Search...
-              <kbd className="rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[9px] font-semibold text-zinc-400">
-                ⌘K
-              </kbd>
-            </button>
-          )}
-        </div>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold dark:text-white sm:hidden">{pageTitle}</span>
+        <div className="order-last w-full sm:order-none sm:w-auto sm:min-w-0 sm:max-w-sm sm:flex-1"><GlobalSearch /></div>
 
         {/* Actions */}
         <div className="flex items-center gap-1">
@@ -188,9 +135,9 @@ const AlumniTopbar = ({
               aria-label="Chats"
             >
               <MessageSquare className="h-[18px] w-[18px]" />
-              {(unreadMessages > 0 || totalUnread > 0) && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
-                  {(unreadMessages || totalUnread) > 99 ? '99+' : unreadMessages || totalUnread}
+              {totalUnread > 0 && (
+                <span aria-label={`${totalUnread} unread messages`} aria-live="polite" className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                  {totalUnread > 99 ? '99+' : totalUnread}
                 </span>
               )}
             </button>
