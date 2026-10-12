@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { Search, Users, Plus, Check, Clock, MessageSquare, Eye } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
-import { useChat } from '../../context/ChatContext';
+import { useChat } from '../../context/useChat.js';
 import StudentSidebar from '../../layout/sidebar/student/studentSidebar';
 import StudentTopbar from '../../layout/topbar/student/studentTopbar';
 import api from '../../utils/axios';
@@ -101,7 +101,7 @@ const StudentMentorship = () => {
                 return (
                   <div key={m._id} className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white">
-                      {(m.name || 'A').charAt(0).toUpperCase()}
+                      {m.profilePicture ? <img src={m.profilePicture} alt={`${m.name || 'Alumni'} profile picture`} className="h-full w-full rounded-full object-cover" /> : (m.name || 'A').charAt(0).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13.5px] font-bold text-zinc-900">{m.name || 'Alumni'}</p>

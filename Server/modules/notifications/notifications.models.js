@@ -1,4 +1,5 @@
 import { client } from '../../config/db.js';
+import { ObjectId } from 'mongodb';
 
 const db = client.db('SielAlumni');
 const notificationsCollection = db.collection('notifications');
@@ -6,7 +7,7 @@ const notificationsCollection = db.collection('notifications');
 // Personal inbox per account. Broadcasts fan out one doc per recipient
 // (simple, correct at this scale; add cursors/queues if CAIS grows huge).
 export const NotificationModel = {
-  async broadcast({ title, body, link, audience, kind, excludeAuthId }) {
+  async broadcast({ title, body, link, audience, kind, excludeAuthId, actorAuthId }) {
     const filter = {};
     if (audience && audience !== 'all') {
       filter.role = audience === 'alumni' ? 'alumni' : audience === 'students' ? 'student' : audience;
@@ -35,6 +36,7 @@ export const NotificationModel = {
       body: body || '',
       link: link || null,
       kind: kind || 'general',
+      actorAuthId: actorAuthId ? String(actorAuthId) : null,
       read: false,
       createdAt: now,
     }));
@@ -42,7 +44,7 @@ export const NotificationModel = {
     return result.insertedCount;
   },
 
-  async notify({ recipientAuthId, recipientEmail, title, body, link, kind }) {
+  async notify({ recipientAuthId, recipientEmail, title, body, link, kind, actorAuthId }) {
     const doc = {
       recipientAuthId: String(recipientAuthId),
       recipientEmail: recipientEmail || '',
@@ -50,6 +52,7 @@ export const NotificationModel = {
       body: body || '',
       link: link || null,
       kind: kind || 'general',
+      actorAuthId: actorAuthId ? String(actorAuthId) : null,
       read: false,
       createdAt: new Date(),
     };
@@ -58,11 +61,40 @@ export const NotificationModel = {
   },
 
   async findMine(authId, limit = 20) {
-    return await notificationsCollection
+    const notifications = await notificationsCollection
       .find({ recipientAuthId: String(authId) })
       .sort({ createdAt: -1 })
       .limit(Math.min(Math.max(limit, 1), 100))
       .toArray();
+    const actorIds = [...new Set(notifications.map((notification) => notification.actorAuthId).filter(Boolean))];
+    const legacyNames = new Map();
+    notifications.forEach((notification) => {
+      if (!notification.actorAuthId && ['connection_request', 'connection_response'].includes(notification.kind)) {
+        const match = notification.body?.match(/^(.+) (?:wants to connect with you|accepted your connection request|declined your connection request)\.$/);
+        if (match) legacyNames.set(String(notification._id), match[1]);
+      }
+    });
+    const filters = [];
+    if (actorIds.length) {
+      const keys = actorIds.flatMap((id) => /^[0-9a-fA-F]{24}$/.test(String(id)) ? [String(id), new ObjectId(String(id))] : [String(id)]);
+      filters.push({ authId: { $in: keys } });
+    }
+    if (legacyNames.size) filters.push({ name: { $in: [...new Set(legacyNames.values())] } });
+    const profiles = filters.length ? await db.collection('users').find({ $or: filters }, {
+      projection: { _id: 1, authId: 1, name: 1, role: 1, profilePicture: 1 },
+    }).toArray() : [];
+    const byAuthId = new Map(profiles.map((profile) => [String(profile.authId), profile]));
+    const byName = new Map();
+    profiles.forEach((profile) => byName.set(profile.name, [...(byName.get(profile.name) || []), profile]));
+    return notifications.map((notification) => {
+      const candidates = byName.get(legacyNames.get(String(notification._id))) || [];
+      // Older connection notices have only a name; avoid attributing duplicate names.
+      const profile = notification.actorAuthId ? byAuthId.get(String(notification.actorAuthId)) : candidates.length === 1 ? candidates[0] : null;
+      return { ...notification, actor: profile ? {
+        _id: String(profile._id), authId: String(profile.authId), name: profile.name,
+        role: profile.role, profilePicture: profile.profilePicture || null,
+      } : null };
+    });
   },
 
   async unreadCount(authId) {

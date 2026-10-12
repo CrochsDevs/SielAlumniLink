@@ -57,6 +57,7 @@ export const createAnnouncement = async (req, res) => {
         audience: announcement.audience || 'all',
         kind: 'announcements',
         excludeAuthId: req.user._id,
+        actorAuthId: req.user._id,
       });
     }
     res.status(201).json({

@@ -1,4 +1,6 @@
 import GlobalSearch from '../../../components/search/GlobalSearch';
+import ChatAvatar from '../../../components/chat/ChatAvatar';
+import { formatTime } from '../../../components/chat/messageFormat';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../../../realtime/useNotifications';
 import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
-import { useChat } from '../../../context/ChatContext';
+import { useChat } from '../../../context/useChat.js';
 
 const breadcrumbMap = [
   ['/student/journey', 'Journey'],
@@ -46,10 +48,14 @@ const StudentTopbar = ({
   const [notifOpen, setNotifOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
-  const { unreadTotal: chatUnread, convos, openChat } = useChat();
+  const { unreadTotal: chatUnread, convos, openChat, refreshConvos } = useChat();
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
   const chatRef = useRef(null);
+
+  useEffect(() => {
+    if (chatOpen) refreshConvos();
+  }, [chatOpen, refreshConvos]);
 
   const pageTitle =
     title ||
@@ -133,9 +139,11 @@ const StudentTopbar = ({
           <div className="relative" ref={chatRef}>
             <button
               type="button"
-              onClick={() => setChatOpen(!chatOpen)}
+              onClick={() => setChatOpen((open) => !open)}
               className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
               aria-label="Chats"
+              aria-expanded={chatOpen}
+              aria-controls={chatOpen ? 'student-topbar-chats' : undefined}
             >
               <MessageSquare className="h-[18px] w-[18px]" />
               {(chatUnread > 0) && (
@@ -145,7 +153,7 @@ const StudentTopbar = ({
               )}
             </button>
             {chatOpen && (
-              <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20">
+              <div id="student-topbar-chats" className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20">
                 <div className="flex items-center justify-between px-4 py-3">
                   <p className="text-[14px] font-extrabold tracking-tight text-zinc-900">Chats</p>
                   <Link
@@ -165,7 +173,7 @@ const StudentTopbar = ({
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50"
                       >
                         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639]">
-                          {c.initial}
+                          <ChatAvatar convo={c} />
                           {c.unread > 0 && (
                             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
                               {c.unread}
@@ -176,7 +184,7 @@ const StudentTopbar = ({
                           <span className="block truncate text-[12.5px] font-bold text-zinc-800">{c.name}</span>
                           <span className="block truncate text-[11px] text-zinc-500">{c.preview}</span>
                         </span>
-                        <span className="shrink-0 text-[10px] text-zinc-400">{c.time}</span>
+                        <span className="shrink-0 text-[10px] text-zinc-400">{formatTime(c.time)}</span>
                       </button>
                     </li>
                   ))}
@@ -223,7 +231,7 @@ const StudentTopbar = ({
             className="flex items-center gap-1.5 rounded-full bg-white/15 py-1 pl-1 pr-2 transition hover:bg-white/25"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-extrabold text-[#007a2e]">
-              {(user?.name || 'S').charAt(0).toUpperCase()}
+              {user?.profilePicture ? <img src={user.profilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : (user?.name || 'S').charAt(0).toUpperCase()}
             </span>
             <ChevronDown
               className={`hidden h-3.5 w-3.5 text-white/70 transition-transform duration-200 sm:block ${dropdownOpen ? 'rotate-180' : ''}`}

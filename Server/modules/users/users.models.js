@@ -60,10 +60,21 @@ export const UserModel = {
     if (updateDoc.$set.name !== undefined) {
       updateDoc.$set.searchNameGrams = nameGrams(updateDoc.$set.name);
     }
-    const result = await usersCollection.updateOne(
-      { _id: new ObjectId(id) },
+      const filter = { _id: new ObjectId(id) };
+      const skillLimitError = () => Object.assign(new Error('You can add up to 10 skills only'), { code: 'SKILL_LIMIT_EXCEEDED' });
+      if (Array.isArray(updateDoc.$set.skills) && updateDoc.$set.skills.length > 10) throw skillLimitError();
+      const skillAddition = updateDoc.$addToSet?.skills ?? updateDoc.$push?.skills;
+      if (skillAddition !== undefined) {
+        const additions = typeof skillAddition === 'string' ? [skillAddition] : skillAddition.$each;
+        // Check the resulting array in the same database write, including concurrent requests.
+        const operation = updateDoc.$addToSet?.skills !== undefined ? '$setUnion' : '$concatArrays';
+        filter.$expr = { $lte: [{ $size: { [operation]: [{ $ifNull: ['$skills', []] }, { $literal: additions }] } }, 10] };
+      }
+      const result = await usersCollection.updateOne(
+        filter,
       updateDoc
     );
+      if (skillAddition !== undefined && result.matchedCount === 0) throw skillLimitError();
     return result.modifiedCount > 0;
   },
 

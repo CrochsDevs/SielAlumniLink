@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/useAuth';
 import StudentSidebar from '../../layout/sidebar/student/studentSidebar';
 import StudentTopbar from '../../layout/topbar/student/studentTopbar';
+import AlumniFeed from '../../components/feed/AlumniFeed';
 
 // TEMPORARY placeholder — lalagyan ng tunay na content kapag ready na.
 // TODO(student): build real student dashboard here.
@@ -25,9 +26,10 @@ const StudentDashboard = () => {
               Welcome, {user?.name?.split(' ')[0] || 'Student'}!
             </h1>
             <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-white/75">
-              Your academic journey hub is being prepared. Stay tuned.
+              Discover alumni updates, career opportunities, events, and success stories from your community.
             </p>
           </div>
+          <div className="mt-4"><AlumniFeed showComposer={false} /></div>
         </main>
       </div>
     </div>

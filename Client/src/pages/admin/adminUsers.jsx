@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 import { Search, Users as UsersIcon, GraduationCap, BookOpen, ScrollText, RefreshCw, Circle, DatabaseZap } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
@@ -43,7 +43,11 @@ export default function AdminUsers() {
   const [syncSummary, setSyncSummary] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
 
+  const usersPending = useRef(false);
+  const auditPending = useRef(false);
   const fetchUsers = useCallback(async () => {
+    if (usersPending.current) return;
+    usersPending.current = true;
     setLoading(true);
     try {
       const res = await api.get('/users');
@@ -52,10 +56,13 @@ export default function AdminUsers() {
       Swal.fire('Error', err.response?.data?.message || 'Failed to load users', 'error');
     } finally {
       setLoading(false);
+      usersPending.current = false;
     }
   }, []);
 
   const fetchAudit = useCallback(async () => {
+    if (auditPending.current) return;
+    auditPending.current = true;
     setAuditLoading(true);
     try {
       const res = await api.get('/activity', { params: { limit: 50 } });
@@ -64,6 +71,7 @@ export default function AdminUsers() {
       Swal.fire('Error', err.response?.data?.message || 'Failed to load audit logs', 'error');
     } finally {
       setAuditLoading(false);
+      auditPending.current = false;
     }
   }, []);
 
@@ -76,6 +84,7 @@ export default function AdminUsers() {
   // while the admin keeps this page open.
   useEffect(() => {
     const id = setInterval(() => {
+      if (document.hidden) return;
       fetchUsers();
       fetchAudit();
     }, 30000);

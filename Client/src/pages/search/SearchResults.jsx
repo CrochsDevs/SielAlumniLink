@@ -61,10 +61,9 @@ export default function SearchResults() {
   }, [query, category, sort, page, requestKey, revision]);
 
   useEffect(() => {
-    const refresh = () => setRevision(value => value + 1);
+    const refresh = () => { if (!document.hidden) setRevision(value => value + 1); };
     window.addEventListener('focus', refresh);
-    const interval = setInterval(refresh, 30000);
-    return () => { window.removeEventListener('focus', refresh); clearInterval(interval); };
+    return () => window.removeEventListener('focus', refresh);
   }, []);
 
   const update = changes => {

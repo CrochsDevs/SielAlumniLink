@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, Send, ArrowLeft, MessageSquareOff, Users, Plus, Check, Smile, Phone, Video, ImagePlus, Paperclip } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { useChat } from '../../context/ChatContext';
+import { useChat } from '../../context/useChat.js';
 import { useAuth } from '../../context/useAuth';
 import api from '../../utils/axios';
 import { formatTime } from './messageFormat';
 import MessageBubble from './MessageBubble';
 import EmojiPicker from 'emoji-picker-react';
+import ChatAvatar from './ChatAvatar';
 
 // Loads only the people the current user is connected with
 const useConnectedPeople = (open) => {
@@ -47,7 +48,7 @@ const useConnectedPeople = (open) => {
 
 const useInboxPage = () => {
   const {
-    convos, threads, loadThread, sendChat, refreshConvos,
+    convos, threads, loadThread, sendChat,
     editChatMessage, unsendChatMessage, createGroupChat, openChat,
   } = useChat();
   const [activeId, setActiveId] = useState(null);
@@ -58,10 +59,6 @@ const useInboxPage = () => {
   const [groupName, setGroupName] = useState('');
   const [groupEmails, setGroupEmails] = useState([]); // now an array
   const [groupSaving, setGroupSaving] = useState(false);
-
-  useEffect(() => {
-    refreshConvos();
-  }, [refreshConvos]);
 
   useEffect(() => {
     if (activeId) loadThread(activeId);
@@ -251,7 +248,7 @@ const ConvoList = ({
                 }`}
             >
               <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
-                {c.isGroup ? <Users className="h-4 w-4" /> : c.initial}
+                <ChatAvatar convo={c} />
                 {c.unread > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
                     {c.unread}
@@ -354,7 +351,7 @@ const ThreadPane = ({
           <ArrowLeft className="h-4 w-4" />
         </button>
         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
-          {active.isGroup ? <Users className="h-4 w-4" /> : active.initial}
+          <ChatAvatar convo={active} />
           <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-[#009639]" />
         </span>
         <span className="min-w-0 flex-1">

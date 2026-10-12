@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../../../realtime/useNotifications';
 import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
-import { useChat } from '../../../context/ChatContext';
+import { useChat } from '../../../context/useChat.js';
 const breadcrumbMap = [
   ['/admin/users', 'Users'],
   ['/admin/tracer', 'Tracer Study'],
@@ -208,7 +208,7 @@ const AdminTopbar = ({
               className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md cursor-pointer select-none hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             >
               <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100">
-                {(user?.name || 'A').charAt(0).toUpperCase()}
+                {user?.profilePicture ? <img src={user.profilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : (user?.name || 'A').charAt(0).toUpperCase()}
               </div>
               <div className="hidden sm:flex flex-col min-w-0 leading-tight text-left">
                 <span className="text-[12px] font-semibold text-zinc-800 truncate max-w-[140px]">
@@ -227,7 +227,7 @@ const AdminTopbar = ({
               <div className="absolute right-0 mt-1 w-60 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1 shadow-lg shadow-zinc-900/5 z-20">
                 <div className="flex items-center gap-2.5 px-2.5 py-2 border-b border-zinc-100 dark:border-zinc-800 mb-1">
                   <div className="h-9 w-9 rounded-full bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300 flex items-center justify-center text-[12px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:ring-emerald-900">
-                    {(user?.name || 'A').charAt(0).toUpperCase()}
+                    {user?.profilePicture ? <img src={user.profilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : (user?.name || 'A').charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">

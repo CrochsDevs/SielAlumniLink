@@ -1,8 +1,7 @@
-import React, { createContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { AuthContext } from './auth-context.js';
 import api from '../utils/axios';
 import { connectSocket, disconnectSocket } from '../realtime/socket';
-
-export const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -12,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const pendingMagicLinkVerification = useRef(null);
   const magicVerificationStarted = useRef(false);
   const authCheckVersion = useRef(0);
+  const chatOwnerId = user?.authId || user?._id;
 
   const checkAuth = useCallback(async () => {
     if (didCheckAuth.current || magicVerificationStarted.current) {
@@ -45,6 +45,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Initial session lookup updates state only after the API response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void checkAuth();
   }, [checkAuth]);
 
@@ -167,20 +169,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
+      ++authCheckVersion.current;
+      if (chatOwnerId) {
+        try {
+          localStorage.removeItem(`chatdock:${String(chatOwnerId)}`);
+        } catch {
+          // Storage access must not prevent a successful logout.
+        }
+      }
+      disconnectSocket();
       setUser(null);
     } catch (err) {
       console.error('Logout error:', err);
     }
-  };
+  }, [chatOwnerId]);
 
   // Re-fetch the current user (e.g. after editing own profile).
   const refreshUser = useCallback(async () => {
+    const checkVersion = authCheckVersion.current;
     try {
       const response = await api.get('/auth/me');
-      if (response.data.success) {
+      if (checkVersion === authCheckVersion.current && response.data.success) {
         setUser(response.data.data || null);
       }
     } catch {

@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext';
-import { ChatProvider } from './context/ChatContext';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { ChatProvider } from './context/ChatContext.jsx';
 import { useAuth } from './context/useAuth';
 
 import AdminDashboard from './pages/admin/adminDashboard';
@@ -29,6 +29,7 @@ import AlumniRequests from './pages/alumni/alumniRequests';
 import AlumniSurveys from './pages/alumni/alumniSurveys';
 import AlumniSurveyAnswer from './pages/alumni/alumniSurveyAnswer';
 import SearchResults from './pages/search/SearchResults';
+import FeedPage from './pages/FeedPage';
 
 import StudentDashboard from './pages/student/studentDashboard';
 import StudentProfile from './pages/student/studentProfile';
@@ -131,6 +132,7 @@ function AppRoutes() {
       <Route path="/verify-magic-link" element={<MagicLinkVerification />} />
       <Route path="/setup-password" element={<SetupPassword />} />
       <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+      <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
       <Route path="/students" element={
         <ProtectedRoute>
           <RoleIndex />

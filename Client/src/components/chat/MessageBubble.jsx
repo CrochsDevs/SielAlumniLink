@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import { Pencil, Trash2, Check, X, FileText, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const sharedPostId = (text) => {
+  const match = /^Shared a post: (https?:\/\/\S+)$/.exec(text || '');
+  if (!match) return null;
+  try {
+    const url = new URL(match[1]);
+    const id = url.searchParams.get('post');
+    return url.origin === window.location.origin && url.pathname === '/feed' && /^[a-f\d]{24}$/i.test(id || '') ? id : null;
+  } catch { return null; }
+};
 
 // Shared chat bubble: edited label, unsent tombstone,
 // hover actions (edit/unsend) for your own messages.
@@ -92,7 +103,7 @@ const MessageBubble = ({ msg, mine, convoId, onEdit, onUnsend }) => {
                   ? 'rounded-br-md bg-[#009639] text-white'
                   : 'rounded-bl-md border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100'
               }`}>
-                {msg.text}
+                {sharedPostId(msg.text) ? <Link to={`/feed?post=${sharedPostId(msg.text)}`} className="font-semibold underline">View shared post →</Link> : msg.text}
               </p>
             ) : null}
             {mine && msg._id && (

@@ -3,6 +3,8 @@ import AuthModel from '../auth/auth.models.js';
 import { fetchFromCAIS } from '../sync/cais.service.js';
 import Roles from '../../constant/roles.js';
 import bcrypt from 'bcryptjs';
+import { ConversationModel } from '../messages/messages.models.js';
+import { emitToUser } from '../../realtime/socket.js';
 
 const SYNCABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
@@ -464,11 +466,40 @@ export const updateMyProfile = async (req, res) => {
     if (batch !== undefined) updateData.batch = String(batch).trim();
     if (location !== undefined) updateData.location = String(location).trim();
     if (bio !== undefined) updateData.bio = String(bio).trim();
+    // Store Cloudinary URLs and asset IDs, never image buffers/base64 in MongoDB.
+    for (const [field, publicIdField, folder] of [
+      ['profilePicture', 'profilePicturePublicId', 'profiles'],
+      ['bannerImage', 'bannerImagePublicId', 'covers'],
+    ]) {
+      const value = req.body[field];
+      const publicId = req.body[publicIdField];
+      if (value === undefined && publicId === undefined) continue;
+      if (value !== undefined && value !== null) {
+        let valid = false;
+        try {
+          const url = new URL(value);
+          valid = typeof value === 'string' && value.length <= 2048 && url.protocol === 'https:' &&
+            url.hostname === 'res.cloudinary.com' && url.pathname.startsWith(`/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/`);
+        } catch { /* invalid URL */ }
+        if (!valid) return res.status(400).json({ success: false, message: `Invalid ${field} URL` });
+      }
+      if (publicId !== undefined && publicId !== null &&
+          (typeof publicId !== 'string' || publicId.length > 200 ||
+           !publicId.startsWith(`alumnilink/${folder}/${req.user._id}/`) || publicId.split('/').includes('..'))) {
+        return res.status(400).json({ success: false, message: `Invalid ${publicIdField}` });
+      }
+      if (value !== undefined) updateData[field] = value;
+      if (publicId !== undefined) updateData[publicIdField] = publicId;
+      if (value === null) updateData[publicIdField] = null;
+    }
     if (skills !== undefined) {
       if (!Array.isArray(skills)) {
         return res.status(400).json({ success: false, message: "Skills must be an array" });
       }
       updateData.skills = skills.map((s) => String(s).trim()).filter(Boolean);
+      if (updateData.skills.length > 10) {
+        return res.status(400).json({ success: false, message: 'You can add up to 10 skills only' });
+      }
     }
     if (employmentHistory !== undefined) updateData.employmentHistory = employmentHistory;
     if (education !== undefined) updateData.education = education;
@@ -484,6 +515,21 @@ export const updateMyProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: "Profile not found" });
     }
 
+    for (const [operator, fields] of Object.entries(mongoOps)) {
+      if (Object.keys(fields).some((field) => field.startsWith('skills.')) ||
+          (Object.hasOwn(fields, 'skills') && !['$push', '$addToSet', '$pull'].includes(operator))) {
+        return res.status(400).json({ success: false, message: 'Use the skills array to replace skills' });
+      }
+      if (['$push', '$addToSet'].includes(operator) && Object.hasOwn(fields, 'skills')) {
+        const value = fields.skills;
+        const additions = typeof value === 'string' ? [value] : value?.$each;
+        if (!Array.isArray(additions) || additions.some((skill) => typeof skill !== 'string' || !skill.trim())) {
+          return res.status(400).json({ success: false, message: 'Skills must be non-empty strings' });
+        }
+        mongoOps[operator] = { ...fields, skills: { $each: additions.map((skill) => skill.trim()) } };
+      }
+    }
+
     const hasUpdates = Object.keys(updateData).length > 0 || Object.keys(mongoOps).length > 0;
     if (!hasUpdates) {
       return res.status(400).json({ success: false, message: "Nothing to update" });
@@ -494,13 +540,33 @@ export const updateMyProfile = async (req, res) => {
     const updated = await UserModel.findById(String(profile._id));
     const { password, ...safeProfile } = updated;
 
+    if (updateData.profilePicture !== undefined || updateData.name !== undefined) {
+      try {
+        const conversations = await ConversationModel.findMine(req.user._id);
+        const recipients = new Set([String(req.user._id)]);
+        conversations.forEach((conversation) => {
+          (conversation.participants || []).forEach((participant) => {
+            if (participant.authId) recipients.add(String(participant.authId));
+          });
+        });
+        const payload = {
+          authId: String(req.user._id),
+          name: safeProfile.name,
+          profilePicture: safeProfile.profilePicture || null,
+        };
+        recipients.forEach((authId) => emitToUser(authId, 'profile:updated', payload));
+      } catch (error) {
+        console.error('[profile] Failed to deliver chat profile update', error);
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       data: { ...safeProfile, role: req.user.role }
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.code === 'SKILL_LIMIT_EXCEEDED' ? 400 : 500).json({
       success: false,
       message: error.message
     });

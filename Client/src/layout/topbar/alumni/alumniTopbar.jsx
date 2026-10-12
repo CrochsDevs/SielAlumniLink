@@ -1,4 +1,6 @@
 import GlobalSearch from '../../../components/search/GlobalSearch';
+import ChatAvatar from '../../../components/chat/ChatAvatar';
+import { formatTime } from '../../../components/chat/messageFormat';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../../../realtime/useNotifications';
 import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
-import { useChat } from '../../../context/ChatContext';
+import { useChat } from '../../../context/useChat.js';
 
 const breadcrumbMap = [
   ['/alumni/career', 'Career'],
@@ -39,11 +41,15 @@ const AlumniTopbar = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const { convos, openChat, unreadTotal: totalUnread } = useChat();
+  const { convos, openChat, refreshConvos, unreadTotal: totalUnread } = useChat();
   const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
   const dropdownRef = useRef(null);
   const chatRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    if (chatOpen) refreshConvos();
+  }, [chatOpen, refreshConvos]);
 
   // Escape closes header menus
   useEffect(() => {
@@ -130,9 +136,11 @@ const AlumniTopbar = ({
           <div className="relative" ref={chatRef}>
             <button
               type="button"
-              onClick={() => setChatOpen(!chatOpen)}
+              onClick={() => setChatOpen((open) => !open)}
               className={`relative rounded-full p-2.5 transition ${chatOpen ? 'bg-emerald-50 text-[#009639]' : 'text-zinc-500 hover:bg-emerald-50 hover:text-[#009639]'}`}
               aria-label="Chats"
+              aria-expanded={chatOpen}
+              aria-controls={chatOpen ? 'alumni-topbar-chats' : undefined}
             >
               <MessageSquare className="h-[18px] w-[18px]" />
               {totalUnread > 0 && (
@@ -143,7 +151,7 @@ const AlumniTopbar = ({
             </button>
 
             {chatOpen && (
-              <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-900/5 z-20">
+              <div id="alumni-topbar-chats" className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-900/5 z-20">
                 <div className="flex items-center justify-between px-4 py-3">
                   <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Chats</p>
                   <Link
@@ -163,7 +171,7 @@ const AlumniTopbar = ({
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
                       >
                         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639]">
-                          {c.initial}
+                          <ChatAvatar convo={c} />
                           {c.unread > 0 && (
                             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
                               {c.unread}
@@ -174,7 +182,7 @@ const AlumniTopbar = ({
                           <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">{c.name}</span>
                           <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">{c.preview}</span>
                         </span>
-                        <span className="shrink-0 text-[10px] text-zinc-400">{c.time}</span>
+                        <span className="shrink-0 text-[10px] text-zinc-400">{formatTime(c.time)}</span>
                       </button>
                     </li>
                   ))}
@@ -216,7 +224,7 @@ const AlumniTopbar = ({
             className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 pl-1 pr-2 transition hover:border-emerald-300 hover:shadow-sm"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#007a2e] to-[#009639] text-[11px] font-bold text-white">
-              {(user?.name || 'A').charAt(0).toUpperCase()}
+              {user?.profilePicture ? <img src={user.profilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : (user?.name || 'A').charAt(0).toUpperCase()}
             </span>
             <ChevronDown
               className={`hidden h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 sm:block ${dropdownOpen ? 'rotate-180' : ''}`}

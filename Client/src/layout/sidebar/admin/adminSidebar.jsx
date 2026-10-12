@@ -14,6 +14,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import clsuLogo from '../../../assets/logo/clsu_logo.png';
+import ProfileAvatar from '../../../components/profile/ProfileAvatar';
 
 const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: controlledSet }) => {
   const location = useLocation();
@@ -84,6 +85,10 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
               <Users className="w-4 h-4 shrink-0" />
               <span className="truncate">Users</span>
             </NavLink>
+            <NavLink to="/feed" className={navItemClass(isActive('/feed'))}>
+              <Megaphone className="w-4 h-4 shrink-0" />
+              <span className="truncate">Alumni Feed</span>
+            </NavLink>
 
             <NavLink to="/admin/tracer" className={navItemClass(isActive('/admin/tracer'))}>
               <ClipboardCheck className="w-4 h-4 shrink-0" />
@@ -137,7 +142,7 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
         <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
             <div className="h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300 flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:ring-emerald-900">
-              {(user?.name || 'A').charAt(0).toUpperCase()}
+              <ProfileAvatar user={user} fallback="A" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">

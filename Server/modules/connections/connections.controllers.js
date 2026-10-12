@@ -56,6 +56,7 @@ export const createConnection = async (req, res) => {
       body: `${requesterName} wants to connect with you.`,
       link: reqLink,
       kind: 'connection_request',
+      actorAuthId: req.user._id,
     });
 
     emitToUser(recipient._id, 'notification:new', {
@@ -87,9 +88,13 @@ export const listRequests = async (req, res) => {
       (c) => c.status === 'pending' && String(c.recipientAuthId) === String(req.user._id)
     );
     const enriched = await Promise.all(pending.map(async (c) => {
-      const profile = await UserModel.findByEmail(c.requesterEmail);
+      const profile = (c.requesterAuthId && await UserModel.findByAuthId(c.requesterAuthId))
+        || await UserModel.findByEmail(c.requesterEmail);
       return {
         _id: c._id,
+        profileId: profile?._id ? String(profile._id) : null,
+        profilePicture: profile?.profilePicture || null,
+        role: profile?.role || null,
         name: profile?.name || c.requesterEmail,
         email: c.requesterEmail,
         program: profile?.program || '',
@@ -194,6 +199,7 @@ export const updateConnection = async (req, res) => {
         body: notifBody,
         link: '/message',
         kind: 'connection_response',
+        actorAuthId: req.user._id,
       });
 
       emitToUser(targetAuthId, 'notification:new', {

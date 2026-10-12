@@ -96,6 +96,7 @@ export const emitToUser = (authId, event, payload) => {
 // Admin directory invalidations contain IDs only; clients reload through protected APIs.
 export const emitConnectionsChanged = (connection) => {
   if (!io) return;
+  io.emit('feed:changed');
   io.to('role:admin').emit('connections:changed', {
     authIds: [connection.requesterAuthId, connection.recipientAuthId].filter(Boolean).map(String),
   });

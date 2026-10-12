@@ -1,4 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ChatContext } from './chat-context.js';
 import Swal from 'sweetalert2';
 import api from '../utils/axios';
 import { getSocket } from '../realtime/socket';
@@ -6,13 +7,11 @@ import { useAuth } from './useAuth';
 import ChatDock from '../components/chat/ChatDock';
 import CallManager from '../components/call/CallManager';
 
-export const ChatContext = createContext(null);
-
 const toInitial = (name, email) => (name || email || 'U').charAt(0).toUpperCase();
 const unreadCount = (value) => Math.max(0, Number(value) || 0);
 
 // Real messaging lives here at app root so chat windows survive
-// page navigation — they only close when the user presses X.
+// page navigation. Logging out clears the windows and their saved cache.
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
   // Compare against the AUTH id (senderAuthId from the server is the
@@ -26,6 +25,14 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => { convosRef.current = convos; }, [convos]);
   const [openChats, setOpenChats] = useState([]);
   const [threads, setThreads] = useState({});
+  const pendingRequests = useRef(new Map());
+  const getChatData = useCallback((url) => {
+    const key = `${myAuthIdRef.current}:${url}`;
+    if (pendingRequests.current.has(key)) return pendingRequests.current.get(key);
+    const request = api.get(url).finally(() => pendingRequests.current.delete(key));
+    pendingRequests.current.set(key, request);
+    return request;
+  }, []);
 
   const storageKey = myAuthId ? `chatdock:${myAuthId}` : null;
 
@@ -52,13 +59,14 @@ export const ChatProvider = ({ children }) => {
     }
     ids.forEach(async (id) => {
       try {
-        const res = await api.get(`/conversations/${id}/messages`);
+        const res = await getChatData(`/conversations/${id}/messages`);
+        if (myAuthIdRef.current !== myAuthId) return;
         setThreads((prev) => ({ ...prev, [id]: res.data.data || [] }));
       } catch {
         // ignore
       }
     });
-  }, [myAuthId, storageKey]);
+  }, [myAuthId, storageKey, getChatData]);
 
   // Persist on every change.
   useEffect(() => {
@@ -78,7 +86,7 @@ export const ChatProvider = ({ children }) => {
     const authId = myAuthIdRef.current;
     if (!authId) return;
     try {
-      const res = await api.get('/conversations');
+      const res = await getChatData('/conversations');
       if (myAuthIdRef.current !== authId) return;
       setConvos(
         (res.data.data || []).map((c) => ({
@@ -90,7 +98,7 @@ export const ChatProvider = ({ children }) => {
     } catch {
       // stay silent — chat is secondary
     }
-  }, []);
+  }, [getChatData]);
 
   useEffect(() => {
     if (myAuthId) {
@@ -155,12 +163,22 @@ export const ChatProvider = ({ children }) => {
         ),
       }));
     };
+    const onProfileUpdated = ({ authId, name, profilePicture }) => {
+      if (!myAuthIdRef.current || !authId) return;
+      setConvos((prev) => prev.map((convo) =>
+        !convo.isGroup && String(convo.authId) === String(authId)
+          ? { ...convo, name, profilePicture, initial: toInitial(name, convo.email) }
+          : convo
+      ));
+    };
+    socket.on('profile:updated', onProfileUpdated);
     socket.on('message:new', onNew);
     socket.on('message:edited', onEdited);
     socket.on('message:unsent', onUnsent);
     // Restore the count after reconnecting, including messages sent while offline.
     socket.on('connect', refreshConvos);
     return () => {
+      socket.off('profile:updated', onProfileUpdated);
       socket.off('message:new', onNew);
       socket.off('message:edited', onEdited);
       socket.off('message:unsent', onUnsent);
@@ -170,15 +188,18 @@ export const ChatProvider = ({ children }) => {
 
   const loadThread = useCallback(async (convoId) => {
     if (!convoId || convoId === 'undefined') return;
+    const authId = myAuthIdRef.current;
+    if (!authId) return;
     try {
-      const res = await api.get(`/conversations/${convoId}/messages`);
+      const res = await getChatData(`/conversations/${convoId}/messages`);
+      if (myAuthIdRef.current !== authId) return;
       setThreads((prev) => ({ ...prev, [convoId]: res.data.data || [] }));
       // Incoming now read — clear badge locally.
       setConvos((prev) => prev.map((c) => (String(c._id) === String(convoId) ? { ...c, unread: 0 } : c)));
     } catch {
       // ignore
     }
-  }, []);
+  }, [getChatData]);
 
   // Open a chat window (max 2 — oldest gets replaced).
   const openChat = useCallback(
@@ -295,7 +316,10 @@ export const ChatProvider = ({ children }) => {
     >
       {children}
       <ChatDock
-        windows={openChats}
+        windows={openChats.map(window => ({
+          ...window,
+          convo: convos.find(convo => String(convo._id) === String(window.id)) || window.convo,
+        }))}
         threads={threads}
         onClose={closeChat}
         onToggleMin={toggleMinChat}
@@ -314,5 +338,3 @@ export const ChatProvider = ({ children }) => {
     </ChatContext.Provider>
   );
 };
-
-export const useChat = () => useContext(ChatContext);

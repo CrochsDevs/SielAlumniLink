@@ -9,6 +9,10 @@ export const getSocket = () => {
     socket = io('http://localhost:3002', {
       autoConnect: false,
       withCredentials: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 10000,
     });
   }
   return socket;
@@ -22,7 +26,5 @@ export const connectSocket = () => {
 };
 
 export const disconnectSocket = () => {
-  if (socket?.connected) {
-    socket.disconnect();
-  }
+  socket?.disconnect();
 };

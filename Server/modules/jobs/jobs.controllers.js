@@ -60,6 +60,7 @@ export const createJob = async (req, res) => {
         audience: 'all',
         kind: 'jobs',
         excludeAuthId: req.user._id,
+        actorAuthId: req.user._id,
       });
     }
     res.status(201).json({

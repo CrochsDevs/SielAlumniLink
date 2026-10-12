@@ -1,11 +1,13 @@
-// Relative timestamp for chat lists.
+// Today's chats show HH:mm; older chats show their age in days or weeks.
 export const formatTime = (iso) => {
   if (!iso) return '';
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const now = new Date();
+  // Compare local calendar dates so yesterday counts as 1d even near midnight.
+  const calendarDay = (value) => Date.UTC(value.getFullYear(), value.getMonth(), value.getDate());
+  const days = Math.floor((calendarDay(now) - calendarDay(date)) / 86400000);
+  if (days >= 7) return `${Math.floor(days / 7)}w`;
+  if (days >= 1) return `${days}d`;
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };

@@ -15,6 +15,8 @@ import messagesRoutes from '../modules/messages/messages.routes.js';
 import notificationsRoutes from '../modules/notifications/notifications.routes.js';
 import referralsRoutes from '../modules/referrals/referrals.routes.js';
 import searchRoutes from '../modules/search/search.routes.js';
+import uploadRoutes from '../routes/upload.routes.js';
+import feedRoutes from '../modules/feed/feed.routes.js';
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.use('/api/conversations', messagesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/referrals', referralsRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/feed', feedRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({

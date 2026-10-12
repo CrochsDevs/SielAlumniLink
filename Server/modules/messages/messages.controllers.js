@@ -32,6 +32,7 @@ const enrich = async (convo, myAuthId) => {
       name: convo.name || 'Group Chat',
       email: '',
       authId: '',
+      profilePicture: null,
       memberCount: (convo.participants || []).length,
       preview: convo.lastMessage?.text || '',
       time: convo.lastMessage?.at || convo.updatedAt,
@@ -39,7 +40,8 @@ const enrich = async (convo, myAuthId) => {
     };
   }
   const other = otherParticipant(convo, myAuthId);
-  const profile = other.email ? await UserModel.findByEmail(other.email) : null;
+  const profile = (other.authId ? await UserModel.findByAuthId(other.authId) : null) ||
+    (other.email ? await UserModel.findByEmail(other.email) : null);
   const unread = await MessageModel.unreadCount(convo._id, myAuthId);
   return {
     _id: convo._id,
@@ -47,6 +49,9 @@ const enrich = async (convo, myAuthId) => {
     name: profile?.name || other.email || 'Unknown',
     email: other.email || '',
     authId: other.authId || '',
+    profileId: profile?._id ? String(profile._id) : null,
+    role: profile?.role || null,
+    profilePicture: profile?.profilePicture || null,
     preview: convo.lastMessage?.text || '',
     time: convo.lastMessage?.at || convo.updatedAt,
     unread,

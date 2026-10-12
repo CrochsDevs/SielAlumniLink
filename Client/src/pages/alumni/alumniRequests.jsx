@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { UserPlus, X, GraduationCap } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ProfileAvatar from '../../components/profile/ProfileAvatar';
+import { profilePath } from '../../components/search/searchLinks';
 import { useAuth } from '../../context/useAuth';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
@@ -108,25 +111,17 @@ const AlumniRequests = () => {
                     </button>
 
                     {/* Avatar */}
-                    <div className="-mt-10 flex justify-center">
-                      {person.avatar || person.profilePicture ? (
-                        <img
-                          src={person.avatar || person.profilePicture}
-                          alt={person.name || 'Alumni'}
-                          className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-[#009639]/10 dark:bg-emerald-900/50 text-2xl font-bold text-[#009639] dark:text-emerald-300">
-                          {(person.name || 'A').charAt(0).toUpperCase()}
-                        </span>
-                      )}
+                    <div className="relative -mt-10 flex justify-center">
+                      <Link to={profilePath(person)} aria-label={`View ${person.name || 'Alumni'} profile`} className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-emerald-50 dark:bg-emerald-900/50 text-2xl font-bold text-[#009639] dark:text-emerald-300">
+                        <ProfileAvatar user={{ ...person, profilePicture: person.profilePicture || person.avatar }} fallback="A" />
+                      </Link>
                     </div>
 
                     {/* Info */}
                     <div className="flex flex-1 flex-col px-3 pb-3 pt-2 text-center">
-                      <p className="line-clamp-2 text-[13.5px] font-bold leading-tight text-zinc-900 dark:text-zinc-100">
+                      <Link to={profilePath(person)} className="line-clamp-2 text-[13.5px] font-bold leading-tight text-zinc-900 dark:text-zinc-100 hover:underline">
                         {person.name || 'Alumni'}
-                      </p>
+                      </Link>
                       <p className="mt-1 line-clamp-2 min-h-[32px] text-[11.5px] leading-snug text-zinc-500 dark:text-zinc-400">
                         {person.program || person.email}
                       </p>

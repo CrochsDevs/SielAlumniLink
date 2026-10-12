@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { Users, ShieldCheck, Bell, Moon, Sun, Monitor, Upload } from 'lucide-react';
+import { Users, ShieldCheck, Bell, Moon, Sun, Monitor } from 'lucide-react';
+import ProfilePhotoUpload from '../../components/profile/ProfilePhotoUpload';
 import { useAuth } from '../../context/useAuth';
 import { useNotifications } from '../../realtime/useNotifications';
 import { getTheme, setTheme } from '../../lib/theme';
@@ -204,24 +205,13 @@ export default function Settings() {
               <div className="flex items-center gap-4 px-5 pt-5">
                 <div className="relative">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-2xl font-extrabold text-[#009639] ring-2 ring-emerald-100">
-                    {(user?.name || 'A').charAt(0).toUpperCase()}
+                    {user?.profilePicture ? <img src={user.profilePicture} alt="Profile" className="h-full w-full rounded-full object-cover" /> : (user?.name || 'A').charAt(0).toUpperCase()}
                   </div>
-                  <span className="absolute -bottom-1 -right-1 rounded-full bg-zinc-900 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
-                    Soon
-                  </span>
                 </div>
                 <div>
-                  <button
-                    type="button"
-                    disabled
-                    title="Photo upload coming soon (Cloudinary)"
-                    className="flex h-9 items-center gap-1.5 cursor-not-allowed rounded-lg border border-zinc-200 px-4 text-[12.5px] font-semibold text-zinc-400 opacity-60"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Upload photo
-                  </button>
+                  <ProfilePhotoUpload />
                   <p className="mt-1 text-[10.5px] text-zinc-400">
-                    Photo upload coming soon — will use Cloudinary.
+                    Image files up to 10 MB.
                   </p>
                 </div>
               </div>
