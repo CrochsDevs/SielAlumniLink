@@ -365,7 +365,7 @@ export const graduateUser = async (req, res) => {
       await UserModel.updateById(String(profile._id), {
         role: Roles.ALUMNI,
         academicStatus: 'Graduated',
-        graduatedAt: new Date(),
+        graduatedAt: profile.graduatedAt || new Date(),
       });
     } else {
       await UserModel.createUserProfile(auth._id, {
@@ -516,6 +516,9 @@ export const updateMyProfile = async (req, res) => {
     }
 
     for (const [operator, fields] of Object.entries(mongoOps)) {
+      if (Object.keys(fields).some(field => ['_id', 'authId', 'role', 'email', 'academicStatus', 'graduatedAt', 'createdAt'].includes(field.split('.')[0]))) {
+        return res.status(403).json({ success: false, message: 'Account identity and graduation fields are managed by administrators' });
+      }
       if (Object.keys(fields).some((field) => field.startsWith('skills.')) ||
           (Object.hasOwn(fields, 'skills') && !['$push', '$addToSet', '$pull'].includes(operator))) {
         return res.status(400).json({ success: false, message: 'Use the skills array to replace skills' });

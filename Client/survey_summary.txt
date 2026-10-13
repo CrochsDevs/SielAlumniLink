@@ -1,1 +1,0 @@
-Responses tab was added to adminSurveys.jsx. When activeTab===responses, it displays survey responses in card format with question/answer pairs and respondent emails. ESLint parsing errors at line 371 and elsewhere need to be fixed for the file to pass validation.

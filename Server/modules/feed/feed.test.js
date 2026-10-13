@@ -16,6 +16,7 @@ const matches = (doc, filter) => Object.entries(filter).every(([key, expected]) 
   if (expected && typeof expected === 'object' && !(expected instanceof ObjectId) && !(expected instanceof Date)) {
     return Object.entries(expected).every(([op, value]) => {
       if (op === '$in') return value.some(v => equal(actual, v));
+      if (op === '$ne') return !equal(actual, value);
       if (op === '$lt') return String(actual) < String(value);
       if (op === '$exists') return (actual !== undefined) === value;
       throw new Error(`Unsupported operator ${op}`);
@@ -33,12 +34,19 @@ const memoryDb = () => {
   const collection = name => {
     if (!tables.has(name)) tables.set(name, []);
     const rows = tables.get(name);
-    const update = (filter, changes) => {
-      const doc = rows.find(r => matches(r, filter));
+    const update = (filter, changes, upsert = false) => {
+      let doc = rows.find(r => matches(r, filter));
+      if (!doc && upsert) { doc = { ...filter }; rows.push(doc); }
       if (!doc) return null;
       for (const [op, fields] of Object.entries(changes)) {
         for (const [field, value] of Object.entries(fields)) {
-          if (op === '$set') doc[field] = value;
+          if (op === '$set') {
+            const parts = field.split('.');
+            const key = parts.pop();
+            const parent = parts.reduce((current, part) => current[part] ??= {}, doc);
+            parent[key] = value;
+          }
+          if (op === '$push') (doc[field] ??= []).push(value);
           if (op === '$addToSet' && !(doc[field] || []).some(v => equal(v, value))) (doc[field] ??= []).push(value);
           if (op === '$pull') doc[field] = (doc[field] || []).filter(v => !equal(v, value));
         }
@@ -51,7 +59,7 @@ const memoryDb = () => {
       countDocuments: async filter => rows.filter(r => matches(r, filter)).length,
       insertOne: async doc => { doc._id ??= new ObjectId(); rows.push(doc); return { insertedId: doc._id }; },
       deleteOne: async filter => { const index = rows.findIndex(r => matches(r, filter)); if (index !== -1) rows.splice(index, 1); return { deletedCount: index === -1 ? 0 : 1 }; },
-      updateOne: async (filter, change) => ({ matchedCount: update(filter, change) ? 1 : 0 }),
+      updateOne: async (filter, change, options = {}) => ({ matchedCount: update(filter, change, options.upsert) ? 1 : 0 }),
       findOneAndUpdate: async (filter, change) => update(filter, change),
       aggregate: stages => {
         let result = rows.map(r => ({ ...r }));
@@ -71,8 +79,8 @@ const memoryDb = () => {
 
 const fixture = async () => {
   const db = memoryDb();
-  const people = ['author', 'friend', 'stranger', 'student'].map((name, i) => ({
-    _id: new ObjectId(), email: `${name}@example.test`, name, role: i === 3 ? 'student' : 'alumni',
+  const people = ['author', 'friend', 'stranger', 'student', 'admin'].map((name, i) => ({
+    _id: new ObjectId(), email: `${name}@example.test`, name, role: i === 4 ? 'admin' : i === 3 ? 'student' : 'alumni',
   }));
   for (const p of people) {
     await db.collection('auth').insertOne(p);
@@ -86,10 +94,112 @@ const fixture = async () => {
   const connection = await connect(people[0], people[1]);
   const invalidations = [];
   const feed = createFeedService(db, () => invalidations.push('changed'));
-  return { db, feed, author: people[0], friend: people[1], stranger: people[2], student: people[3], connect, connection, invalidations };
+  return { db, feed, author: people[0], friend: people[1], stranger: people[2], student: people[3], admin: people[4], connect, connection, invalidations };
 };
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
+
+test('only administrators can access moderation, restrictions, and private post review', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post({ audience: 'connections' }));
+  for (const user of [f.author, f.friend, f.stranger, f.student]) {
+    await rejects(f.feed.moderate(user, p._id, { action: 'block', enabled: true, reason: 'Test' }), 403);
+    await rejects(f.feed.restrictAuthor(user, f.friend._id, { enabled: true, reason: 'Test' }), 403);
+    await rejects(f.feed.listRestrictions(user), 403);
+    await rejects(f.feed.list(user, { moderation: 'all' }), 403);
+  }
+  assert.equal((await f.feed.get(f.admin, p._id)).body, p.body);
+  assert.equal((await f.feed.list(f.admin)).posts.length, 1);
+  assert.equal((await f.feed.list(f.stranger)).posts.length, 0);
+  await rejects(f.feed.moderate(f.admin, p._id, { action: 'block', enabled: true, reason: ' ' }), 400);
+  await rejects(f.feed.moderate(f.admin, p._id, { action: 'unknown', enabled: false }), 400);
+});
+
+test('blocking hides original posts, reposts, comments, and photos; restoring preserves privacy', async () => {
+  const f = await fixture();
+  const image = { _id: new ObjectId(), ownerAuthId: String(f.author._id), url: 'https://example.test/photo.jpg' };
+  await f.db.collection('feed_images').insertOne(image);
+  const p = await f.feed.create(f.author, post({ audience: 'connections', images: [{ id: String(image._id) }] }));
+  const repost = await f.feed.share(f.friend, p._id, { audience: 'connections' });
+  await f.feed.comment(f.friend, p._id, 'Comment before block');
+  const blocked = await f.feed.moderate(f.admin, p._id, { action: 'block', enabled: true, reason: 'Spam' });
+  assert.equal(blocked.moderation.blocked, true);
+  for (const user of [f.author, f.friend]) {
+    assert.equal((await f.feed.list(user)).posts.length, 0);
+    await rejects(f.feed.get(user, p._id), 404);
+    await rejects(f.feed.get(user, repost._id), 404);
+    await rejects(f.feed.listComments(user, p._id), 404);
+    await rejects(f.feed.getImage(user, p._id, image._id), 404);
+    await rejects(f.feed.setMembership(user, p._id, 'likedBy', true), 404);
+    await rejects(f.feed.share(user, p._id, {}), 404);
+    await rejects(f.feed.recipients(user, p._id), 404);
+  }
+  assert.equal((await f.feed.list(f.admin, { moderation: 'blocked' })).posts.length, 1);
+  assert.equal((await f.feed.getImage(f.admin, p._id, image._id)).url, image.url);
+  await f.feed.moderate(f.admin, p._id, { action: 'block', enabled: false });
+  assert.equal((await f.feed.list(f.friend)).posts.length, 2);
+  assert.equal((await f.feed.list(f.stranger)).posts.length, 0);
+  assert.equal((await f.feed.get(f.friend, p._id)).audience, 'connections');
+  const stored = await f.db.collection('feed_posts').findOne({ _id: p._id });
+  assert.equal(stored.moderationHistory.length, 2);
+  assert.equal(stored.moderationHistory[0].by, String(f.admin._id));
+  assert.ok(f.invalidations.length >= 5);
+});
+
+test('admin can delete another member’s private post and comment without granting other members deletion rights', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post({ audience: 'connections' }));
+  const c = await f.feed.comment(f.friend, p._id, 'A comment');
+  await rejects(f.feed.removeComment(f.author, p._id, c._id), 404);
+  assert.equal((await f.feed.listComments(f.admin, p._id)).comments[0].canDelete, true);
+  await f.feed.removeComment(f.admin, p._id, c._id);
+  assert.equal((await f.feed.listComments(f.friend, p._id)).comments.length, 0);
+  await rejects(f.feed.remove(f.friend, p._id), 403);
+  await f.feed.remove(f.admin, p._id);
+  await rejects(f.feed.get(f.admin, p._id), 404);
+  assert.equal((await f.db.collection('feed_posts').findOne({ _id: p._id })).deletedBy, String(f.admin._id));
+});
+
+test('turning comments off retains existing comments and can be reversed independently of blocking', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post());
+  await f.feed.comment(f.friend, p._id, 'Existing comment');
+  await Promise.all([
+    f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: true, reason: 'Pause discussion' }),
+    f.feed.moderate(f.admin, p._id, { action: 'block', enabled: true, reason: 'Review content' }),
+  ]);
+  assert.equal((await f.feed.get(f.admin, p._id)).commentsDisabled, true);
+  await f.feed.moderate(f.admin, p._id, { action: 'block', enabled: false });
+  await rejects(f.feed.comment(f.friend, p._id, 'New comment'), 403);
+  assert.equal((await f.feed.listComments(f.friend, p._id)).comments.length, 1);
+  await f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: false });
+  await f.feed.comment(f.friend, p._id, 'New comment');
+  assert.equal((await f.feed.get(f.friend, p._id)).commentsCount, 2);
+});
+
+test('restricted members cannot publish, repost, comment, like, RSVP, or upload photos; admins can restore participation', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.friend, post());
+  await f.feed.restrictAuthor(f.admin, f.author._id, { enabled: true, reason: 'Repeated spam' });
+  assert.deepEqual(await f.feed.status(f.author), { restricted: true, reason: 'Repeated spam' });
+  assert.equal((await f.feed.listRestrictions(f.admin))[0].author.authId, String(f.author._id));
+  assert.equal((await f.feed.get(f.author, p._id)).body, p.body);
+  await rejects(f.feed.create(f.author, post()), 403);
+  await rejects(f.feed.share(f.author, p._id, {}), 403);
+  await rejects(f.feed.comment(f.author, p._id, 'Spam'), 403);
+  await rejects(f.feed.setMembership(f.author, p._id, 'likedBy', true), 403);
+  await rejects(f.feed.setMembership(f.author, p._id, 'attending', true), 403);
+  const response = imageResponse();
+  let uploaded = false;
+  await createFeedImageUpload(f.db, async () => { uploaded = true; })({ user: f.author, file: { buffer: png } }, response);
+  assert.equal(response.statusCode, 403); assert.equal(uploaded, false);
+  await rejects(f.feed.restrictAuthor(f.admin, f.admin._id, { enabled: true, reason: 'Not allowed' }), 403);
+  await f.feed.restrictAuthor(f.admin, f.author._id, { enabled: false });
+  assert.equal((await f.feed.status(f.author)).restricted, false);
+  assert.equal((await f.feed.listRestrictions(f.admin)).length, 0);
+  await f.feed.create(f.author, post());
+  assert.equal((await f.db.collection('feed_restrictions').findOne({ _id: String(f.author._id) })).history.length, 2);
+});
 
 test('public posts are visible and interactive to nonconnections and students', async () => {
   const f = await fixture();

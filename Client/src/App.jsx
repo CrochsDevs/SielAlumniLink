@@ -11,6 +11,8 @@ import AdminTracer from './pages/admin/adminTracer';
 import AdminJobs from './pages/admin/adminJobs';
 import AdminSurveys from './pages/admin/adminSurveys';
 import AdminEvents from './pages/admin/adminEvents';
+import AdminCertificates from './pages/admin/adminCertificates';
+import AdminActivityAttendance from './pages/admin/adminActivityAttendance';
 import AdminConnections from './pages/admin/adminConnections';
 import AdminAnnouncements from './pages/admin/adminAnnouncements';
 import AdminMessage from './pages/admin/adminMessage';
@@ -21,9 +23,11 @@ import AlumniProfile from './pages/alumni/alumniProfile';
 import AlumniAccounts from './pages/alumni/alumniAccounts';
 import AlumniMessage from './pages/alumni/alumniMessage';
 import AlumniCareer from './pages/alumni/alumniCareer';
+import AlumniMentorship from './pages/alumni/alumniMentorship';
 import AlumniEmployment from './pages/alumni/alumniEmployment';
 import AlumniReferral from './pages/alumni/alumniReferral';
 import AlumniSuccess from './pages/alumni/alumniSuccess';
+import AlumniEvents from './pages/alumni/alumniEvents';
 import AlumniTracer from './pages/alumni/alumniTracer';
 import AlumniRequests from './pages/alumni/alumniRequests';
 import AlumniSurveys from './pages/alumni/alumniSurveys';
@@ -39,6 +43,11 @@ import StudentCareer from './pages/student/studentCareer';
 import StudentReferrals from './pages/student/studentReferrals';
 import StudentMentorship from './pages/student/studentMentorship';
 import StudentInternship from './pages/student/studentInternship';
+import StudentReadiness from './pages/student/studentReadiness';
+import StudentCompetency from './pages/student/studentCompetency';
+import StudentCertificates from './pages/student/studentCertificate';
+import StudentEvents from './pages/student/studentEvents';
+import MeetingRoom from './pages/meetings/MeetingRoom';
 import StudentRequests from './pages/student/studentRequests';
 import StudentMessage from './pages/student/studentMessage';
 import StudentAccounts from './pages/student/studentAccounts';
@@ -113,6 +122,11 @@ const InboxRedirect = () => {
   return <Navigate to="/alumni/message" replace />;
 };
 
+const ActivitiesIndex = () => {
+  const { user } = useAuth();
+  return user?.role === Roles.ADMIN ? <Navigate to="/admin/events" replace /> : <StudentEvents />;
+};
+
 function AppRoutes() {
   return (
     <Routes>
@@ -168,6 +182,11 @@ function AppRoutes() {
           <AdminSurveys />
         </ProtectedRoute>
       } />
+      <Route path="/admin/certificates" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><AdminCertificates /></ProtectedRoute>} />
+      <Route path="/admin/events/:eventId/attendance" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><AdminActivityAttendance /></ProtectedRoute>} />
+      <Route path="/activities" element={<ProtectedRoute><ActivitiesIndex /></ProtectedRoute>} />
+      <Route path="/meetings/:eventId" element={<ProtectedRoute allowedRoles={[Roles.ADMIN, Roles.STUDENT, Roles.ALUMNI]}><MeetingRoom /></ProtectedRoute>} />
+      <Route path="/student/events" element={<ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI]}><StudentEvents /></ProtectedRoute>} />
       <Route path="/admin/events" element={
         <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
           <AdminEvents />
@@ -213,6 +232,7 @@ function AppRoutes() {
           <AlumniMessage />
         </ProtectedRoute>
       } />
+      <Route path="/alumni/mentorship" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI]}><AlumniMentorship /></ProtectedRoute>} />
       <Route path="/alumni/career" element={
         <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
           <AlumniCareer />
@@ -226,6 +246,11 @@ function AppRoutes() {
       <Route path="/alumni/success" element={
         <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
           <AlumniSuccess />
+        </ProtectedRoute>
+      } />
+      <Route path="/alumni/events" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+          <AlumniEvents />
         </ProtectedRoute>
       } />
       <Route path="/alumni/tracer" element={
@@ -264,12 +289,12 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/student/journey" element={
-        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}>
           <StudentJourney />
         </ProtectedRoute>
       } />
       <Route path="/student/portfolio" element={
-        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}>
           <StudentPortfolio />
         </ProtectedRoute>
       } />
@@ -289,10 +314,15 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/student/internship" element={
-        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
+        <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}>
           <StudentInternship />
         </ProtectedRoute>
       } />
+      <Route path="/student/competency" element={<ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}><StudentCompetency /></ProtectedRoute>} />
+      <Route path="/student/readiness" element={<ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}><StudentReadiness /></ProtectedRoute>} />
+      <Route path="/student/certificate" element={<ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}><StudentCertificates /></ProtectedRoute>} />
+      <Route path="/alumni/journey" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}><StudentJourney /></ProtectedRoute>} />
+      <Route path="/alumni/readiness" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}><StudentReadiness /></ProtectedRoute>} />
       <Route path="/student/requests" element={
         <ProtectedRoute allowedRoles={[Roles.STUDENT, Roles.ADMIN]}>
           <StudentRequests />

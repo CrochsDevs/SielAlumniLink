@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import AuthModel from '../modules/auth/auth.models.js';
 import PresenceStore from './presence.store.js';
+import { initializeMeetings } from '../modules/meetings/meetings.socket.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -51,8 +52,10 @@ export const initSocket = (server) => {
   });
 
   io.use(authenticate);
+  const meetings = initializeMeetings(io);
 
   io.on('connection', (socket) => {
+    meetings.attach(socket);
     const authId = String(socket.user._id);
     // Personal room so the server can push to all of a user's tabs.
     socket.join(`user:${authId}`);

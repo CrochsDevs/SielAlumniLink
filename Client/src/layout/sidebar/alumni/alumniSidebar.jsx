@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  CalendarDays,
   Briefcase,
-  Building2,
-  Share2,
+  ClipboardList,
   Trophy,
   FileText,
   MessageSquare,
@@ -83,14 +83,15 @@ const AlumniSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contro
               <span className="truncate">Career</span>
             </NavLink>
 
-            <NavLink to="/alumni/referral" className={navItemClass(isActive('/alumni/referral'))}>
-              <Share2 className="w-4 h-4 shrink-0" />
-              <span className="truncate">Referral</span>
-            </NavLink>
+            <NavLink to="/alumni/mentorship" className={navItemClass(isActive('/alumni/mentorship'))}><ClipboardList className="w-4 h-4 shrink-0" /><span className="truncate">Mentorship</span></NavLink>
 
             <NavLink to="/alumni/success" className={navItemClass(isActive('/alumni/success'))}>
               <Trophy className="w-4 h-4 shrink-0" />
               <span className="truncate">Success Stories</span>
+            </NavLink>
+            <NavLink to="/alumni/events" className={navItemClass(isActive('/alumni/events'))}>
+              <CalendarDays className="w-4 h-4 shrink-0" />
+              <span className="truncate">Events</span>
             </NavLink>
 
             <NavLink to="/alumni/surveys" className={navItemClass(isActive('/alumni/surveys'))}>

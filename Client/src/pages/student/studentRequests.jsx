@@ -10,7 +10,7 @@ const StudentRequests = () => {
   const { requests, loading, respond } = useRequests();
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="student-page min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <StudentSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">

@@ -108,6 +108,8 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
 
           {/* Secondary group */}
           <nav className="space-y-0.5">
+            <NavLink to="/admin/certificates" className={navItemClass(isActive('/admin/certificates'))}><FileText className="w-4 h-4 shrink-0" /><span className="truncate">Certificates</span></NavLink>
+
             <NavLink to="/admin/events" className={navItemClass(isActive('/admin/events'))}>
               <Calendar className="w-4 h-4 shrink-0" />
               <span className="truncate">Calendar</span>

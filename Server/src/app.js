@@ -17,11 +17,15 @@ import referralsRoutes from '../modules/referrals/referrals.routes.js';
 import searchRoutes from '../modules/search/search.routes.js';
 import uploadRoutes from '../routes/upload.routes.js';
 import feedRoutes from '../modules/feed/feed.routes.js';
+import developmentRoutes from '../modules/development/development.routes.js';
+
+import certificateRoutes from '../modules/development/certificates.routes.js';
+import meetingRoutes from '../modules/meetings/meetings.routes.js';
 
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',  
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -47,6 +51,9 @@ app.use('/api/referrals', referralsRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/feed', feedRoutes);
+app.use('/api/development', developmentRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/meetings', meetingRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({

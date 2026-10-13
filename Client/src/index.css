@@ -63,3 +63,20 @@
   /* Scrollbars are intentionally hidden for some components */
   /* Removed global .no-scrollbar rule that was preventing chat messages from scrolling */
 }
+
+/* Shared heading scale for every student page. Resume typography is separate. */
+.student-page main :is(h1, h2, h3):not(:where(.portfolio-resume *, dialog *)) {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.student-page main h1:not(:where(.portfolio-resume *, dialog *)) {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.student-page main :is(h2, h3):not(:where(.portfolio-resume *, dialog *)) {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}

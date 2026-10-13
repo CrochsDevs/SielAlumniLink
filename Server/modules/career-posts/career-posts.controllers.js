@@ -39,13 +39,13 @@ export const getSavedPosts = async (req, res) => {
   }
 };
 
-// Alumni + admin post guides. Students read and save only.
+// Administrators post guides. Other roles read and save only.
 export const createPost = async (req, res) => {
   try {
-    if (!['admin', 'alumni'].includes(req.user.role)) {
+    if (req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Only alumni can post career guides'
+        message: 'Only administrators can post career guides'
       });
     }
     const { title, body, type, tags } = req.body;

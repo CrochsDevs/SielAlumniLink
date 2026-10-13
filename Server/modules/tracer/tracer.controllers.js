@@ -30,16 +30,18 @@ export const submitResponse = async (req, res) => {
       });
     }
 
+    const working = status === 'Employed' || status === 'Self-employed';
+    const hasDetails = working || status === 'Studying';
     const saved = await TracerModel.upsertByAuthId(req.user._id, {
       email: req.user.email,
       batch: String(batch).trim(),
       program: String(program).trim(),
       status,
-      company: (company || '').trim(),
-      position: (position || '').trim(),
-      salaryRange: (salaryRange || '').trim(),
-      employmentDate: employmentDate ? new Date(employmentDate) : null,
-      location: (location || '').trim(),
+      company: hasDetails ? (company || '').trim() : '',
+      position: hasDetails ? (position || '').trim() : '',
+      salaryRange: working ? (salaryRange || '').trim() : '',
+      employmentDate: working && employmentDate ? new Date(employmentDate) : null,
+      location: hasDetails ? (location || '').trim() : '',
     });
 
     res.status(200).json({

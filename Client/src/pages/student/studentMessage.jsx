@@ -14,13 +14,17 @@ const StudentMessage = () => {
   const [activeTab, setActiveTab] = useState('chats');
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="student-page min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <StudentSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
         <StudentTopbar user={user} title="Message" onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="mx-auto max-w-6xl p-4 sm:p-6">
+          <header className="mb-5 border-b border-zinc-200 pb-5 dark:border-zinc-800">
+            <h1>Messages</h1>
+            <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">Your conversations and connection requests.</p>
+          </header>
           <div className="flex border-b border-zinc-200 dark:border-zinc-800 mb-6">
             <button
               type="button"

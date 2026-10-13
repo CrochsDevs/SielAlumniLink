@@ -1,5 +1,18 @@
 import { ReferralModel, ReferralApplicationModel, REFERRAL_TYPES, APPLICATION_STATUSES } from './referrals.models.js';
 import UserModel from '../users/users.models.js';
+import { text, fail } from '../development/development.policy.js';
+
+const validateReferral = input => {
+  const type = input.type || 'job';
+  if (!REFERRAL_TYPES.includes(type)) fail(400, 'Choose a job, internship, or scholarship');
+  const link = text(input.link, 'Link', 2000);
+  if (link) {
+    let url; try { url = new URL(link); } catch { fail(400, 'Enter a valid link'); }
+    if (!['http:', 'https:'].includes(url.protocol)) fail(400, 'Links must start with http:// or https://');
+  }
+  return { title: text(input.title, 'Title', 200, true), description: text(input.description, 'Description', 10000),
+    organization: text(input.organization, 'Organization', 200), type, link };
+};
 
 // Any logged-in user browses active referrals.
 export const listReferrals = async (req, res) => {
@@ -11,7 +24,7 @@ export const listReferrals = async (req, res) => {
       message: 'Referrals fetched successfully'
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -29,7 +42,7 @@ export const getReferral = async (req, res) => {
     }
     res.status(200).json({ success: true, data: referral });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -45,7 +58,7 @@ export const createReferral = async (req, res) => {
         message: 'Only alumni can post referrals'
       });
     }
-    const { title, description, type, organization, link } = req.body;
+    const { title, description, type, organization, link } = validateReferral(req.body);
     if (!title) {
       return res.status(400).json({ success: false, message: 'Please provide a title' });
     }
@@ -71,7 +84,7 @@ export const createReferral = async (req, res) => {
       message: 'Referral posted successfully'
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -95,14 +108,15 @@ export const updateReferral = async (req, res) => {
         message: 'Forbidden: only the author can edit this referral'
       });
     }
-    const updated = await ReferralModel.updateById(req.params.id, req.body);
+    const valid = validateReferral({ ...referral, ...req.body });
+    const updated = await ReferralModel.updateById(req.params.id, { ...valid, ...(typeof req.body.isActive === 'boolean' ? { isActive: req.body.isActive } : {}) });
     res.status(200).json({
       success: true,
       data: updated,
       message: 'Referral updated successfully'
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -132,7 +146,7 @@ export const deleteReferral = async (req, res) => {
       message: 'Referral deleted successfully'
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -162,7 +176,7 @@ export const applyToReferral = async (req, res) => {
       applicantAuthId: req.user._id,
       email: req.user.email,
       name: profile?.name || '',
-      note: req.body.note,
+      note: text(req.body.note, 'Application note', 1000),
     });
 
     res.status(201).json({
@@ -171,7 +185,7 @@ export const applyToReferral = async (req, res) => {
       message: 'Application submitted successfully'
     });
   } catch (error) {
-    const status = error.message === 'You already applied to this opportunity' ? 409 : 500;
+    const status = error.message === 'You already applied to this opportunity' ? 409 : error.status || 500;
     res.status(status).json({
       success: false,
       message: error.message
@@ -199,7 +213,7 @@ export const listApplications = async (req, res) => {
     const applications = await ReferralApplicationModel.findByReferral(req.params.id);
     res.status(200).json({ success: true, data: applications });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -210,9 +224,13 @@ export const listApplications = async (req, res) => {
 export const listMyApplications = async (req, res) => {
   try {
     const applications = await ReferralApplicationModel.findMine(req.user._id);
-    res.status(200).json({ success: true, data: applications });
+    const enriched = await Promise.all(applications.map(async application => {
+      const referral = await ReferralModel.findById(application.referralId);
+      return { ...application, referralTitle: referral?.title || 'Removed opportunity', organization: referral?.organization || '', type: referral?.type || '' };
+    }));
+    res.status(200).json({ success: true, data: enriched });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -251,7 +269,7 @@ export const updateApplication = async (req, res) => {
       message: `Application ${status}`
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });

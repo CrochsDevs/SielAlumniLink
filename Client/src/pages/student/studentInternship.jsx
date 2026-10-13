@@ -1,115 +1,59 @@
-import { useState } from 'react';
-import { Briefcase, Building2, Clock, CheckCircle2, MapPin } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Briefcase, Clock3, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
-import StudentSidebar from '../../layout/sidebar/student/studentSidebar';
-import StudentTopbar from '../../layout/topbar/student/studentTopbar';
+import api from '../../utils/axios';
+import useDevelopment from '../../hooks/useDevelopment';
+import DevelopmentShell, { DevelopmentStatus, developmentButton as button, developmentCard as card, developmentInput as input } from '../../components/student/DevelopmentShell';
+import ProfileAvatar from '../../components/profile/ProfileAvatar';
+import { FeedDialog } from '../../components/feed/FeedComposer';
 
-// TEMPORARY content — papalitan ng totoong data mula sa API.
-// TODO(student): wire internship to backend endpoints.
-const PLACEMENTS = [
-  {
-    id: 1,
-    company: 'Tech Corp',
-    role: 'IT Intern',
-    location: 'Makati City • Hybrid',
-    slots: 5,
-    status: 'Open',
-  },
-  {
-    id: 2,
-    company: 'DataHub',
-    role: 'Data Intern',
-    location: 'Remote',
-    slots: 3,
-    status: 'Open',
-  },
-  {
-    id: 3,
-    company: 'CLSU ICTC',
-    role: 'Support Intern',
-    location: 'Muñoz, Nueva Ecija • On-site',
-    slots: 0,
-    status: 'Full',
-  },
-];
-
-const REQUIRED_HOURS = 486;
-const RENDERED_HOURS = 120;
-
-const StudentInternship = () => {
+const EMPTY = { company: '', supervisor: '', hoursCompleted: 0, requiredHours: 486, startDate: '', endDate: '', location: '', evaluation: '' };
+export default function StudentInternship() {
   const { user } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [applied, setApplied] = useState({});
-  const pct = Math.round((RENDERED_HOURS / REQUIRED_HOURS) * 100);
-
-  return (
-    <div className="min-h-screen bg-zinc-50">
-      <StudentSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
-
-      <div className="lg:pl-64">
-        <StudentTopbar user={user} title="Internship" onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="mx-auto max-w-4xl space-y-3 p-4 sm:p-6">
-          {/* Hours tracker */}
-          <section className="rounded-2xl border border-zinc-200 bg-white p-5">
-            <div className="flex items-center justify-between">
-              <h1 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 text-white">
-                  <Clock className="h-4 w-4" />
-                </span>
-                OJT Hours
-              </h1>
-              <p className="text-[13px] font-bold text-zinc-900">
-                {RENDERED_HOURS} <span className="font-medium text-zinc-400">/ {REQUIRED_HOURS} hrs</span>
-              </p>
-            </div>
-            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-zinc-100">
-              <div className="h-full rounded-full bg-zinc-900" style={{ width: `${pct}%` }} />
-            </div>
-            <p className="mt-2 text-[11.5px] text-zinc-500">{pct}% completed — keep going!</p>
-          </section>
-
-          {/* Partner placements */}
-          <section className="space-y-2.5">
-            <h2 className="flex items-center gap-2 px-1 text-[14px] font-extrabold text-zinc-900">
-              <Briefcase className="h-4 w-4" />
-              Partner Placements
-            </h2>
-            {PLACEMENTS.map((p) => (
-              <article key={p.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zinc-900 text-white">
-                  <Building2 className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-bold text-zinc-900">{p.role}</p>
-                  <p className="truncate text-[12px] text-zinc-500">{p.company}</p>
-                  <p className="flex items-center gap-1 text-[11px] text-zinc-400">
-                    <MapPin className="h-3 w-3" />
-                    {p.location} • {p.slots > 0 ? `${p.slots} slots` : 'No slots'}
-                  </p>
-                </div>
-                {applied[p.id] ? (
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-[#007a2e]">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Applied
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={p.slots === 0}
-                    onClick={() => setApplied((prev) => ({ ...prev, [p.id]: true }))}
-                    className="h-9 shrink-0 rounded-xl bg-zinc-900 px-4 text-[12px] font-bold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {p.slots === 0 ? 'Full' : 'Apply'}
-                  </button>
-                )}
-              </article>
-            ))}
-          </section>
-        </main>
-      </div>
+  const state = useDevelopment();
+  const [view, setView] = useState('records');
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [editor, setEditor] = useState(null);
+  const [form, setForm] = useState(EMPTY);
+  const [deleting, setDeleting] = useState(null);
+  const [opportunities, setOpportunities] = useState([]);
+  const [opportunityError, setOpportunityError] = useState('');
+  const [opportunityLoading, setOpportunityLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    Promise.all([api.get('/jobs'), api.get('/referrals')]).then(([jobs, referrals]) => {
+      if (!active) return;
+      setOpportunities([...jobs.data.data.filter(item => item.type === 'Internship').map(item => ({ ...item, source: 'University', target: '/student/career' })), ...referrals.data.data.filter(item => item.type === 'internship').map(item => ({ ...item, company: item.organization, description: item.description, source: 'Alumni referral', target: '/student/referrals' }))]);
+    }).catch(() => { if (active) setOpportunityError('Unable to load internship opportunities.'); }).finally(() => { if (active) setOpportunityLoading(false); });
+    return () => { active = false; };
+  }, []);
+  const records = state.data?.internships || [];
+  const total = records.reduce((sum, record) => sum + record.requiredHours, 0);
+  const completed = records.reduce((sum, record) => sum + record.hoursCompleted, 0);
+  const percent = total ? Math.round(completed / total * 100) : 0;
+  const filtered = records.filter(record => (filter === 'all' || (filter === 'completed') === record.completed) && `${record.company} ${record.supervisor} ${record.location}`.toLowerCase().includes(query.toLowerCase()));
+  const open = record => { setForm(record ? { ...EMPTY, ...record } : EMPTY); setEditor(record || {}); };
+  const set = (name, value) => setForm(previous => ({ ...previous, [name]: value }));
+  const save = async event => {
+    event.preventDefault();
+    const ok = await state.mutate(editor._id ? 'put' : 'post', editor._id ? `internships/${editor._id}` : 'internships', { ...form, hoursCompleted: Number(form.hoursCompleted), requiredHours: Number(form.requiredHours) });
+    if (ok) setEditor(null);
+  };
+  const field = (name, label, type = 'text', required = false) => <label className="block text-xs font-medium">{label}{required && ' *'}<input aria-label={label} type={type} value={form[name]} onChange={event => set(name, event.target.value)} required={required} maxLength={200} min={name === 'requiredHours' ? 1 : type === 'number' ? 0 : undefined} max={name === 'hoursCompleted' ? form.requiredHours : name === 'requiredHours' ? 10000 : undefined} step={type === 'number' ? '0.5' : undefined} className={input} /></label>;
+  return <DevelopmentShell title="Internship"><main className="mx-auto max-w-7xl p-3 sm:p-5">
+    <div className={`${card} mb-4 flex flex-wrap items-center justify-between gap-3`}><h1 className="flex items-center gap-2 text-base font-bold"><Briefcase size={20} className="text-[#009639]" />Internship Board</h1><nav aria-label="Internship views" className="flex gap-4">{[['records', 'My internships'], ['opportunities', 'Opportunities']].map(([id, label]) => <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)} className={`border-b-2 pb-2 text-xs font-semibold ${view === id ? 'border-[#009639] text-[#009639] dark:text-emerald-300' : 'border-transparent text-zinc-500 dark:text-zinc-400'}`}>{label}</button>)}</nav></div>
+    <div className="grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_220px]">
+      <aside className={`${card} order-2 md:order-none`}><div className="flex justify-between"><h2 className="text-sm font-semibold">Filter</h2><button type="button" onClick={() => { setFilter('all'); setQuery(''); }} className="text-xs text-red-600 dark:text-red-400">Clear all</button></div><h3 className="mb-3 mt-6 text-xs font-semibold">Internship status</h3><div className="space-y-3">{[['all', 'All records'], ['active', 'In progress'], ['completed', 'Completed']].map(([id, label]) => <label key={id} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"><input type="radio" name="internship-filter" value={id} checked={filter === id} onChange={() => { setFilter(id); setView('records'); }} className="accent-[#009639]" />{label}</label>)}</div><Link to="/student/readiness" className="mt-6 block text-xs font-semibold text-[#009639] dark:text-emerald-300">View readiness score</Link></aside>
+      <section className="order-1 min-w-0 space-y-3 md:order-none"><header className="rounded-lg bg-gradient-to-br from-[#007a2e] to-[#009639] p-5 text-white"><h2 className="text-xl font-semibold">Internship Tracking</h2><p className="mt-2 text-xs leading-6 text-white/90">Record your company, supervisor, completed hours, and evaluation. Build the bridge from academics to employment.</p><div className="mt-4 flex flex-wrap gap-2"><div className="relative min-w-0 flex-1 basis-40"><Search size={15} className="absolute left-3 top-3" /><input type="search" aria-label="Search internships" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search company or supervisor" className="h-10 w-full rounded-lg bg-white/20 pl-9 pr-3 text-xs text-white outline-none placeholder:text-white/75" /></div><button type="button" disabled={state.loading || !state.data} onClick={() => open(null)} className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/70 px-3 text-xs font-semibold disabled:opacity-50"><Plus size={15} />Add record</button></div></header>
+        <DevelopmentStatus state={state} />
+        {view === 'records' && !state.loading && <>{!filtered.length && <div className={`${card} text-center`}><Briefcase size={28} className="mx-auto text-zinc-400" /><h3 className="mt-3 text-sm font-semibold">{records.length ? 'No matching internships' : 'No internship records yet'}</h3><p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Add your placement to start tracking your hours.</p></div>}{filtered.map(record => <article key={record._id} className={card}><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white"><Briefcase size={20} /></span><div className="min-w-0 flex-1"><h3 className="break-words text-sm font-semibold">{record.company}</h3><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Supervisor: {record.supervisor}</p></div><button type="button" disabled={state.busy} onClick={() => open(record)} aria-label="Edit internship" className="p-2 text-zinc-500 dark:text-zinc-400"><Pencil size={16} /></button><button type="button" disabled={state.busy} onClick={() => setDeleting(record)} aria-label="Delete internship" className="p-2 text-zinc-500 hover:text-red-600 dark:text-zinc-400"><Trash2 size={16} /></button></div><div className="mt-4 flex flex-wrap justify-between gap-2 text-xs"><span className="text-zinc-500 dark:text-zinc-400">{record.location || 'Location not specified'} · {record.startDate}{record.endDate && ` to ${record.endDate}`}</span><span className="font-semibold">{record.hoursCompleted} / {record.requiredHours} hours</span></div><div role="progressbar" aria-label={`${record.company} hours`} aria-valuenow={record.hoursCompleted} aria-valuemax={record.requiredHours} aria-valuemin={0} className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><div className="h-full bg-[#009639]" style={{ width: `${record.hoursCompleted / record.requiredHours * 100}%` }} /></div><p className="mt-4 whitespace-pre-wrap break-words text-xs leading-6 text-zinc-600 dark:text-zinc-300"><strong>Evaluation: </strong>{record.evaluation || 'Not recorded yet'}</p><span className={`mt-3 inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold ${record.completed ? 'bg-emerald-50 text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300' : 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'}`}>{record.completed ? 'Completed' : 'In progress'} · Self-reported</span></article>)}</>}
+        {view === 'opportunities' && <>{opportunityError && <p role="alert" className={card}>{opportunityError} <button type="button" onClick={() => window.location.reload()} className="underline">Retry</button></p>}{opportunityLoading ? <p className={card}>Loading opportunities…</p> : !opportunities.length ? <p className={`${card} text-sm text-zinc-500 dark:text-zinc-400`}>No internship opportunities available yet.</p> : opportunities.filter(item => `${item.title} ${item.company}`.toLowerCase().includes(query.toLowerCase())).map(item => <article key={`${item.source}:${item._id}`} className={card}><h3 className="text-sm font-semibold">{item.title}</h3><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{item.company} · {item.source}</p><p className="mt-3 whitespace-pre-wrap text-xs leading-6 text-zinc-600 dark:text-zinc-300">{item.description}</p><Link to={item.target} className={`${button} mt-4`}>{item.source === 'Alumni referral' ? 'Apply through referrals' : 'View career board'}</Link></article>)}</>}
+      </section>
+      <aside className="order-3 grid gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1"><section className={`${card} text-center`}><span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950"><ProfileAvatar user={user} /></span><h2 className="mt-3 text-sm font-semibold">{user?.name}</h2><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{user?.program}</p></section><section className={card}><h2 className="flex items-center gap-2 text-sm font-semibold"><Clock3 size={18} className="text-[#009639]" />OJT Hours</h2><p className="mt-4 text-2xl font-bold">{completed}<span className="text-xs font-normal text-zinc-500 dark:text-zinc-400"> / {total} hrs</span></p><div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><div className="h-full bg-[#009639]" style={{ width: `${percent}%` }} /></div><p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{percent}% completed · {Math.max(0, total - completed)} hours remaining</p><p className="mt-4 text-xs">{records.filter(record => record.completed).length} completed placements</p></section><p className={`${card} text-xs leading-6 text-zinc-500 md:col-span-2 xl:col-span-1 dark:text-zinc-400`}>Records and evaluations are entered by you. Update them as you complete your internship; your journey and readiness score use these saved records.</p></aside>
     </div>
-  );
-};
-
-export default StudentInternship;
+    {editor && <FeedDialog title={editor._id ? 'Update internship' : 'Record internship'} busy={state.busy} onClose={() => setEditor(null)}><form onSubmit={save}><fieldset disabled={state.busy} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2">{field('company', 'Internship company', 'text', true)}{field('supervisor', 'Supervisor', 'text', true)}{field('hoursCompleted', 'Hours completed', 'number', true)}{field('requiredHours', 'Required hours', 'number', true)}{field('startDate', 'Start date', 'date', true)}{field('endDate', 'End date', 'date')}{field('location', 'Location')}</div><label className="block text-xs font-medium">Evaluation<textarea aria-label="Evaluation" value={form.evaluation} onChange={event => set('evaluation', event.target.value)} maxLength={3000} rows={4} className={`${input} !h-auto py-2`} /></label>{state.error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}<button type="submit" className={button}>{state.busy ? 'Saving…' : 'Save internship'}</button></fieldset></form></FeedDialog>}
+    {deleting && <FeedDialog title="Delete internship record?" busy={state.busy} onClose={() => setDeleting(null)}><p className="text-sm">Remove the saved record for {deleting.company}? Your readiness score will be recalculated.</p>{state.error && <p role="alert" className="mt-3 text-sm text-red-600">{state.error}</p>}<button type="button" disabled={state.busy} onClick={async () => { if (await state.mutate('delete', `internships/${deleting._id}`)) setDeleting(null); }} className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm text-white">Delete record</button></FeedDialog>}
+  </main></DevelopmentShell>;
+}

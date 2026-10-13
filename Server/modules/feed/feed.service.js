@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { canViewPost, fail, membershipUpdate, POST_TYPES, validateComment, validatePost } from './feed.policy.js';
+import { canViewPost, ensureFeedParticipation, fail, isFeedAdmin, membershipUpdate, POST_TYPES, validateComment, validateModeration, validatePost } from './feed.policy.js';
 
 const objectId = (value) => {
   if (!ObjectId.isValid(value)) fail(404, 'Post not found');
@@ -10,6 +10,13 @@ export const createFeedService = (db, changed = () => {}) => {
   const posts = db.collection('feed_posts');
   const comments = db.collection('feed_comments');
   const images = db.collection('feed_images');
+  const restrictions = db.collection('feed_restrictions');
+  const assertAdmin = user => { if (!isFeedAdmin(user)) fail(403, 'Only administrators can moderate the feed'); };
+  const canRead = (post, user, network) => isFeedAdmin(user) ? !!post && !post.deletedAt : canViewPost(post, user._id, network);
+  const status = async user => {
+    const restriction = await restrictions.findOne({ _id: String(user._id), blocked: true });
+    return { restricted: !isFeedAdmin(user) && !!restriction, reason: !isFeedAdmin(user) ? restriction?.reason || '' : '' };
+  };
 
   const connectedIds = async (user) => {
     const id = String(user._id);
@@ -28,10 +35,10 @@ export const createFeedService = (db, changed = () => {}) => {
   const readable = async (id, user, network) => {
     const post = await posts.findOne({ _id: objectId(id), deletedAt: null });
     const connected = network ?? await connectedIds(user);
-    if (!canViewPost(post, user._id, connected)) fail(404, 'Post not found or no longer available to you');
+    if (!canRead(post, user, connected)) fail(404, 'Post not found or no longer available to you');
     if (post.originalPostId) {
       const original = await posts.findOne({ _id: post.originalPostId, deletedAt: null });
-      if (!canViewPost(original, user._id, connected)) fail(404, 'Original post is no longer available to you');
+      if (!canRead(original, user, connected)) fail(404, 'Original post is no longer available to you');
     }
     return post;
   };
@@ -49,6 +56,7 @@ export const createFeedService = (db, changed = () => {}) => {
     const id = String(post.authorAuthId);
     if (!authors.has(id)) authors.set(id, author(id));
     const original = post.originalPostId ? await posts.findOne({ _id: post.originalPostId, deletedAt: null }) : null;
+    const restriction = isFeedAdmin(user) ? await restrictions.findOne({ _id: id, blocked: true }) : null;
     return {
       _id: post._id, author: await authors.get(id), type: post.type, title: post.title, body: post.body,
       audience: post.audience, details: post.details || {}, createdAt: post.createdAt, updatedAt: post.updatedAt,
@@ -56,9 +64,15 @@ export const createFeedService = (db, changed = () => {}) => {
         url: `/api/feed/${post._id}/images/${image.id}` })),
       likesCount: (post.likedBy || []).length, likedByMe: (post.likedBy || []).includes(String(user._id)),
       commentsCount: await comments.countDocuments({ postId: post._id, deletedAt: null }),
-      sharesCount: await posts.countDocuments({ originalPostId: post._id, deletedAt: null }),
+      sharesCount: await posts.countDocuments({ originalPostId: post._id, deletedAt: null, 'moderation.blocked': { $ne: true } }),
       attendingCount: (post.attending || []).length, attendingByMe: (post.attending || []).includes(String(user._id)),
       isMine: id === String(user._id), originalPost: original ? await serialize(original, user, authors) : null,
+      commentsDisabled: !!post.moderation?.commentsDisabled,
+      ...(isFeedAdmin(user) ? { moderation: {
+        blocked: !!post.moderation?.blocked, reason: post.moderation?.reason || '',
+        commentsDisabled: !!post.moderation?.commentsDisabled,
+        authorRestricted: !!restriction, authorRestrictionReason: restriction?.reason || '',
+      } } : {}),
     };
   };
 
@@ -66,7 +80,11 @@ export const createFeedService = (db, changed = () => {}) => {
     const network = await connectedIds(user);
     const accessible = [String(user._id), ...network];
     const visibility = { $or: [{ audience: 'public' }, { authorAuthId: { $in: accessible } }] };
-    const filter = { deletedAt: null, ...visibility };
+    if (query.moderation !== undefined && !isFeedAdmin(user)) fail(403, 'Only administrators can view moderated posts');
+    const mode = query.moderation || 'published';
+    if (!['published', 'blocked', 'all'].includes(mode)) fail(400, 'Invalid moderation filter');
+    const filter = { deletedAt: null, ...(isFeedAdmin(user) ? {} : visibility) };
+    if (mode !== 'all') filter['moderation.blocked'] = mode === 'blocked' ? true : { $ne: true };
     if (query.type && query.type !== 'all') {
       if (!POST_TYPES.includes(query.type)) fail(400, 'Invalid feed filter');
       filter.type = query.type;
@@ -80,7 +98,8 @@ export const createFeedService = (db, changed = () => {}) => {
       { $lookup: { from: 'feed_posts', localField: 'originalPostId', foreignField: '_id', as: 'original' } },
       { $match: { $or: [{ originalPostId: null }, { $and: [
         { 'original.0.deletedAt': null }, { 'original.0._id': { $exists: true } },
-        { $or: [{ 'original.0.audience': 'public' }, { 'original.0.authorAuthId': { $in: accessible } }] },
+        ...(isFeedAdmin(user) ? [] : [{ 'original.0.moderation.blocked': { $ne: true } },
+          { $or: [{ 'original.0.audience': 'public' }, { 'original.0.authorAuthId': { $in: accessible } }] }]),
       ] }] } },
       { $limit: limit + 1 }, { $project: { original: 0 } },
     ]).toArray();
@@ -91,6 +110,7 @@ export const createFeedService = (db, changed = () => {}) => {
   };
 
   const create = async (user, input) => {
+    await ensureFeedParticipation(db, user);
     if (!['alumni', 'admin'].includes(String(user.role).toLowerCase())) fail(403, 'Only alumni can publish feed posts');
     const data = validatePost(input);
     data.images = await Promise.all(data.images.map(async image => {
@@ -117,6 +137,7 @@ export const createFeedService = (db, changed = () => {}) => {
   };
 
   const setMembership = async (user, id, field, enabled) => {
+    await ensureFeedParticipation(db, user);
     if (typeof enabled !== 'boolean') fail(400, 'Provide a true or false action');
     const post = await readable(id, user);
     if (field === 'attending' && (post.type !== 'event' || post.originalPostId)) fail(400, 'RSVP on the original event post');
@@ -134,13 +155,15 @@ export const createFeedService = (db, changed = () => {}) => {
     const rows = await comments.find(filter).sort({ _id: -1 }).limit(31).toArray();
     return { comments: await Promise.all(rows.slice(0, 30).map(async c => ({
       _id: c._id, body: c.body, createdAt: c.createdAt, author: await author(c.authorAuthId),
-      isMine: String(c.authorAuthId) === String(user._id),
+      isMine: String(c.authorAuthId) === String(user._id), canDelete: isFeedAdmin(user) || String(c.authorAuthId) === String(user._id),
     }))), nextCursor: rows.length > 30 ? String(rows[29]._id) : null };
   };
 
   const comment = async (user, id, body) => {
+    await ensureFeedParticipation(db, user);
     const valid = validateComment(body);
     const post = await readable(id, user);
+    if (post.moderation?.commentsDisabled) fail(403, 'Comments are turned off for this post');
     const doc = { postId: post._id, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
     const result = await comments.insertOne(doc);
     changed();
@@ -150,12 +173,14 @@ export const createFeedService = (db, changed = () => {}) => {
   const removeComment = async (user, id, commentId) => {
     const post = await readable(id, user);
     const result = await comments.updateOne({ _id: objectId(commentId), postId: post._id,
-      authorAuthId: String(user._id), deletedAt: null }, { $set: { deletedAt: new Date() } });
+      ...(isFeedAdmin(user) ? {} : { authorAuthId: String(user._id) }), deletedAt: null },
+    { $set: { deletedAt: new Date(), deletedBy: String(user._id) } });
     if (!result.matchedCount) fail(404, 'Comment not found');
     changed();
   };
 
   const share = async (user, id, input) => {
+    await ensureFeedParticipation(db, user);
     if (!['alumni', 'admin'].includes(String(user.role).toLowerCase())) fail(403, 'Only alumni can repost');
     const source = await readable(id, user);
     const original = source.originalPostId ? await readable(source.originalPostId, user) : source;
@@ -173,8 +198,8 @@ export const createFeedService = (db, changed = () => {}) => {
 
   const remove = async (user, id) => {
     const post = await readable(id, user);
-    if (post.authorAuthId !== String(user._id) && user.role !== 'admin') fail(403, 'Only the author can delete this post');
-    await posts.updateOne({ _id: post._id }, { $set: { deletedAt: new Date() } });
+    if (post.authorAuthId !== String(user._id) && !isFeedAdmin(user)) fail(403, 'Only the author or an administrator can delete this post');
+    await posts.updateOne({ _id: post._id }, { $set: { deletedAt: new Date(), deletedBy: String(user._id) } });
     changed();
   };
 
@@ -191,7 +216,48 @@ export const createFeedService = (db, changed = () => {}) => {
     return people.filter(Boolean);
   };
 
-  return { list, create, get, getImage, readable, connectedIds, setMembership, listComments, comment, removeComment, share, remove, recipients };
+  const moderate = async (user, id, input) => {
+    assertAdmin(user);
+    if (!['block', 'comments'].includes(input.action)) fail(400, 'Invalid moderation action');
+    const { enabled, reason } = validateModeration(input);
+    const post = await posts.findOne({ _id: objectId(id), deletedAt: null });
+    if (!post) fail(404, 'Post not found');
+    const now = new Date();
+    const field = input.action === 'block' ? 'blocked' : 'commentsDisabled';
+    const updated = await posts.findOneAndUpdate({ _id: post._id, deletedAt: null }, {
+      $set: { [`moderation.${field}`]: enabled,
+        ...(input.action === 'block' ? { 'moderation.reason': enabled ? reason : '' } : {}),
+        'moderation.updatedAt': now, 'moderation.updatedBy': String(user._id), updatedAt: now },
+      $push: { moderationHistory: { action: input.action, enabled, reason, by: String(user._id), at: now } },
+    }, { returnDocument: 'after' });
+    if (!updated) fail(404, 'Post no longer available');
+    changed();
+    return serialize(updated, user);
+  };
+
+  const restrictAuthor = async (user, authId, input) => {
+    assertAdmin(user);
+    const { enabled, reason } = validateModeration(input);
+    const target = await db.collection('auth').findOne({ _id: objectId(authId) });
+    if (!target) fail(404, 'Member not found');
+    if (isFeedAdmin(target)) fail(403, 'Administrators cannot be restricted from the feed');
+    const now = new Date();
+    await restrictions.updateOne({ _id: String(target._id) }, {
+      $set: { blocked: enabled, reason: enabled ? reason : '', updatedBy: String(user._id), updatedAt: now },
+      $push: { history: { enabled, reason, by: String(user._id), at: now } },
+    }, { upsert: true });
+    changed();
+    return { authId: String(target._id), restricted: enabled };
+  };
+
+  const listRestrictions = async user => {
+    assertAdmin(user);
+    const rows = await restrictions.find({ blocked: true }).sort({ updatedAt: -1 }).limit(100).toArray();
+    return Promise.all(rows.map(async row => ({ author: await author(row._id), reason: row.reason, updatedAt: row.updatedAt })));
+  };
+
+  return { list, create, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
+    setMembership, listComments, comment, removeComment, share, remove, recipients };
 };
 
 export const ensureFeedIndexes = async (db) => {

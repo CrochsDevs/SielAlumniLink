@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createElement, useCallback, useEffect, useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
+import { Link } from 'react-router-dom';
 import {
   Search, Plus, Pencil, Trash2, Calendar, CalendarDays, CalendarPlus, Power, MapPin, Clock,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Bell, X,
@@ -17,7 +18,7 @@ const toInputValue = (iso) => {
   const d = new Date(iso);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
-const EMPTY_FORM = { title: '', description: '', location: '', startAt: '', endAt: '', isActive: true };
+const EMPTY_FORM = { title: '', description: '', location: '', startAt: '', endAt: '', isActive: true, activityType: 'event', deliveryMode: 'onsite', organizer: 'SielAlumni', registrationLimited: false, registrationOpensAt: '', registrationClosesAt: '' };
 
 const formatDate = (iso) => iso
   ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -139,7 +140,11 @@ function MiniCalendar({ value, onSelect, hasEvents, highlightWeek }) {
   const y = value.getFullYear();
   const m = value.getMonth();
   const [view, setView] = useState(() => new Date(y, m, 1));
-  useEffect(() => { setView(new Date(y, m, 1)); }, [y, m]);
+  const [selectedMonth, setSelectedMonth] = useState(`${y}-${m}`);
+  if (selectedMonth !== `${y}-${m}`) {
+    setSelectedMonth(`${y}-${m}`);
+    setView(new Date(y, m, 1));
+  }
 
   const days = monthGrid(view);
   const today = new Date();
@@ -354,7 +359,7 @@ export default function AdminEvents() {
     }
   }, []);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => { Promise.resolve().then(fetchEvents); }, [fetchEvents]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60000);
@@ -426,6 +431,12 @@ export default function AdminEvents() {
       startAt: toInputValue(event.startAt),
       endAt: toInputValue(event.endAt),
       isActive: event.isActive !== false,
+      activityType: event.activityType || 'event',
+      deliveryMode: event.deliveryMode || 'onsite',
+      organizer: event.organizer || 'SielAlumni',
+      registrationLimited: event.registrationLimited === true,
+      registrationOpensAt: toInputValue(event.registrationOpensAt),
+      registrationClosesAt: toInputValue(event.registrationClosesAt),
     });
     setModalOpen(true);
   };
@@ -438,7 +449,7 @@ export default function AdminEvents() {
     }
     setSaving(true);
     try {
-      const payload = { ...form, endAt: form.endAt || null };
+      const payload = { ...form, startAt: new Date(form.startAt).toISOString(), endAt: form.endAt ? new Date(form.endAt).toISOString() : null, registrationOpensAt: form.registrationLimited && form.registrationOpensAt ? new Date(form.registrationOpensAt).toISOString() : null, registrationClosesAt: form.registrationLimited && form.registrationClosesAt ? new Date(form.registrationClosesAt).toISOString() : null };
       if (editing) await api.put(`/events/${editing._id}`, payload);
       else await api.post('/events', payload);
       setModalOpen(false);
@@ -579,7 +590,7 @@ export default function AdminEvents() {
         ].map(({ label, value, icon: Icon }) => (
           <div key={label} className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
-              <Icon className="h-4 w-4" />
+              {createElement(Icon, { className: 'h-4 w-4' })}
             </span>
             <span className="flex-1 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300">{label}</span>
             <span className="text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">{value}</span>
@@ -886,7 +897,9 @@ export default function AdminEvents() {
                 )}
               </div>
 
-              <div className="mt-5 flex gap-2">
+              <Link to={`/admin/events/${selectedEvent._id}/attendance`} className="mt-5 inline-flex min-h-10 items-center rounded-lg border border-zinc-300 px-4 text-xs font-semibold text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">Registration &amp; attendance</Link>
+              <div className="mt-3 flex gap-2">
+                {selectedEvent.deliveryMode === 'online' && <Link to={`/meetings/${selectedEvent._id}`} className="flex-1 rounded-full border border-emerald-600 px-3 py-2.5 text-center text-[13px] font-bold text-emerald-600">Meeting &amp; attendance</Link>}
                 <button type="button"
                   onClick={() => { const ev = selectedEvent; setSelectedEvent(null); openEdit(ev); }}
                   className="flex-1 rounded-full bg-[#009639] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#007a2e]">
@@ -918,6 +931,12 @@ export default function AdminEvents() {
             </div>
 
             <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><label className={labelClass} htmlFor="ev-type">Activity type</label><select id="ev-type" value={form.activityType} onChange={e => setForm(f => ({ ...f, activityType: e.target.value }))} className={inputClass}><option value="event">Event</option><option value="training">Training</option><option value="seminar">Seminar</option></select></div>
+                <div><label className={labelClass} htmlFor="ev-mode">Participation</label><select id="ev-mode" value={form.deliveryMode} onChange={e => setForm(f => ({ ...f, deliveryMode: e.target.value }))} className={inputClass}><option value="onsite">On site</option><option value="online">Online · SielAlumni Meeting</option></select></div>
+              </div>
+              {form.deliveryMode === 'online' && <p className="rounded-lg bg-emerald-50 p-3 text-xs leading-6 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">An in-app meeting room will be available for this activity. Students register before joining. The room supports up to 8 people, including the host.</p>}
+              <div><label className={labelClass} htmlFor="ev-organizer">Organizer</label><input id="ev-organizer" maxLength={200} required value={form.organizer} onChange={e => setForm(f => ({ ...f, organizer: e.target.value }))} className={inputClass} /></div>
               <div>
                 <label className={labelClass} htmlFor="ev-title">Title</label>
                 <input id="ev-title" required className={inputClass} value={form.title}
@@ -936,7 +955,7 @@ export default function AdminEvents() {
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="ev-end">Ends</label>
-                  <input id="ev-end" type="datetime-local" className={inputClass} value={form.endAt} min={form.startAt || undefined}
+                  <input id="ev-end" type="datetime-local" required={form.deliveryMode === 'online'} className={inputClass} value={form.endAt} min={form.startAt || undefined}
                     onChange={(e) => setForm((f) => ({ ...f, endAt: e.target.value }))} />
                 </div>
               </div>
@@ -945,6 +964,11 @@ export default function AdminEvents() {
                 <textarea id="ev-desc" rows={3} value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[12.5px] text-zinc-900 outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100" />
+              </div>
+              <div className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+                <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200"><input id="ev-registration-limited" type="checkbox" checked={form.registrationLimited} onChange={e => setForm(f => ({ ...f, registrationLimited: e.target.checked }))} className="accent-[#009639]" />Set a registration period</label>
+                <p className="text-[11px] leading-5 text-zinc-500">Registration is required for online and on-site participation. {form.registrationLimited ? 'Choose when registration opens and closes.' : 'Without a custom period, registration opens when published and closes when the activity ends.'}</p>
+                {form.registrationLimited && <div className="grid gap-3 sm:grid-cols-2"><div><label className={labelClass} htmlFor="ev-registration-open">Opens (optional)</label><input id="ev-registration-open" type="datetime-local" value={form.registrationOpensAt} onChange={e => setForm(f => ({ ...f, registrationOpensAt: e.target.value }))} className={inputClass} /><p className="mt-1 text-[10px] text-zinc-500">Leave blank to open when published.</p></div><div><label className={labelClass} htmlFor="ev-registration-close">Closes *</label><input id="ev-registration-close" type="datetime-local" required value={form.registrationClosesAt} min={form.registrationOpensAt || undefined} max={form.endAt || form.startAt || undefined} onChange={e => setForm(f => ({ ...f, registrationClosesAt: e.target.value }))} className={inputClass} /></div></div>}
               </div>
               <label className="flex cursor-pointer items-center gap-2.5 text-[12.5px] font-semibold text-zinc-700 dark:text-zinc-200">
                 <input type="checkbox" checked={form.isActive} className="h-4 w-4 accent-[#009639]"

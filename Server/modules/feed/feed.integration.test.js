@@ -57,6 +57,35 @@ test('real MongoDB: atomic likes, protected reposts, pagination, comments, and s
     await feed.remove(author, privatePost._id);
     assert.equal((await feed.list(author)).posts.length, 1);
     assert.ok(invalidations >= 32);
+    const admin = { _id: new ObjectId(), email: 'moderator@example.test', role: 'admin', name: 'Moderator' };
+    await db.collection('auth').insertOne(admin);
+    const moderated = await feed.create(author, { body: 'Moderation test', audience: 'connections' });
+    const moderatedRepost = await feed.share(author, moderated._id, { audience: 'connections' });
+    assert.equal((await feed.get(admin, moderated._id)).body, 'Moderation test');
+    await Promise.all([
+      feed.moderate(admin, moderated._id, { action: 'block', enabled: true, reason: 'Spam' }),
+      feed.moderate(admin, moderated._id, { action: 'comments', enabled: true, reason: 'Review discussion' }),
+    ]);
+    const review = await feed.get(admin, moderated._id);
+    assert.equal(review.moderation.blocked, true);
+    assert.equal(review.commentsDisabled, true);
+    await assert.rejects(feed.get(author, moderatedRepost._id), error => error.status === 404);
+    assert.equal((await feed.list(admin, { moderation: 'blocked' })).posts.length, 1);
+    await feed.moderate(admin, moderated._id, { action: 'block', enabled: false });
+    assert.equal((await feed.get(author, moderated._id)).audience, 'connections');
+    await assert.rejects(feed.comment(author, moderated._id, 'Disabled'), error => error.status === 403);
+    await feed.moderate(admin, moderated._id, { action: 'comments', enabled: false });
+    const moderatedComment = await feed.comment(author, moderated._id, 'Allowed again');
+    await feed.removeComment(admin, moderated._id, moderatedComment._id);
+    assert.equal((await feed.listComments(author, moderated._id)).comments.length, 0);
+    await feed.restrictAuthor(admin, author._id, { enabled: true, reason: 'Repeated spam' });
+    assert.equal((await feed.status(author)).restricted, true);
+    await assert.rejects(feed.create(author, { body: 'Forbidden' }), error => error.status === 403);
+    assert.equal((await feed.listRestrictions(admin)).length, 1);
+    await feed.restrictAuthor(admin, author._id, { enabled: false });
+    assert.equal((await feed.status(author)).restricted, false);
+    await feed.remove(admin, moderated._id);
+    await assert.rejects(feed.get(admin, moderatedRepost._id), error => error.status === 404);
   } finally {
     // Only the exact isolated database created above is ever removed.
     if (/^SielAlumni_feed_test_[a-f0-9]{32}$/.test(scratchDbName)) {

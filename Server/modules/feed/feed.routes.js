@@ -21,11 +21,15 @@ const action = (handler, status = 200) => async (req, res) => {
 };
 
 router.use(protect);
+router.get('/status', action(req => feed.status(req.user)));
+router.get('/restrictions', action(req => feed.listRestrictions(req.user)));
+router.put('/restrictions/:authId', action(req => feed.restrictAuthor(req.user, req.params.authId, req.body)));
 router.get('/', action(req => feed.list(req.user, req.query)));
 router.post('/', action(req => feed.create(req.user, req.body), 201));
 router.get('/:id', action(req => feed.get(req.user, req.params.id)));
 router.get('/:id/images/:imageId', createFeedImageDownload(feed));
 router.delete('/:id', action(req => feed.remove(req.user, req.params.id)));
+router.put('/:id/moderation', action(req => feed.moderate(req.user, req.params.id, req.body)));
 router.put('/:id/like', action(req => feed.setMembership(req.user, req.params.id, 'likedBy', req.body.liked)));
 router.put('/:id/rsvp', action(req => feed.setMembership(req.user, req.params.id, 'attending', req.body.attending)));
 router.get('/:id/comments', action(req => feed.listComments(req.user, req.params.id, req.query.before)));

@@ -1,0 +1,7 @@
+.digital-certificate-print { display: none; }
+@media print {
+  html:has(.digital-certificate-print), body:has(.digital-certificate-print) { background: #fff !important; color-scheme: light; overflow: visible !important; height: auto !important; }
+  body:has(.digital-certificate-print) > *:not(.digital-certificate-print) { display: none !important; }
+  .digital-certificate-print { display: block !important; break-inside: avoid; }
+  .digital-certificate-print img { display: block; width: 100%; height: 187mm; object-fit: contain; }
+}

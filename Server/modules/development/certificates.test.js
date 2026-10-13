@@ -1,0 +1,99 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createCertificateService, validateParticipation } from './certificates.service.js';
+import { certificateSvg } from './certificates.template.js';
+
+const admin = { _id: 'cccccccccccccccccccccccc', role: 'admin' };
+const student = { _id: 'aaaaaaaaaaaaaaaaaaaaaaaa', role: 'student', email: 'student@example.test' };
+const stranger = { _id: 'bbbbbbbbbbbbbbbbbbbbbbbb', role: 'student', email: 'other@example.test' };
+const participation = { title: 'Career Seminar', date: '2025-02-15', organizer: 'SielAlumni', type: 'seminar', completed: true };
+function fixture() {
+  const buckets = new Map();
+  const bucket = name => { if (!buckets.has(name)) buckets.set(name, new Map()); return buckets.get(name); };
+  const matches = (record, query) => Object.entries(query).every(([key, value]) => key === '$or' ? value.some(part => matches(record, part)) : value?.$in ? value.$in.some(item => String(record[key]) === String(item)) : value && Object.hasOwn(value, '$exists') ? Object.hasOwn(record, key) === value.$exists : String(record[key]) === String(value));
+  const db = { collection(name) {
+    const records = bucket(name);
+    return {
+      findOne: async query => [...records.values()].find(record => matches(record, query)) || null,
+      find(query) {
+        let result = [...records.values()].filter(record => matches(record, query));
+        const cursor = { sort(order) { const [key, direction] = Object.entries(order)[0]; result.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * direction); return cursor; }, limit(count) { result = result.slice(0, count); return cursor; }, toArray: async () => result };
+        return cursor;
+      },
+      async insertOne(record) { if (records.has(String(record._id))) throw Object.assign(new Error('duplicate'), { code: 11000 }); records.set(String(record._id), { ...record }); return { insertedId: record._id }; },
+      async updateOne({ _id }, update, options = {}) { let record = records.get(String(_id)); if (!record && !options.upsert) return { matchedCount: 0 }; if (!record) { record = { _id, ...update.$setOnInsert }; records.set(String(_id), record); } Object.assign(record, update.$set); return { matchedCount: 1 }; },
+    };
+  } };
+  const seed = (name, doc) => bucket(name).set(String(doc._id), { ...doc });
+  for (const user of [student, stranger]) { seed('auth', user); seed('users', { _id: user._id, authId: user._id, email: user.email, name: user === student ? 'Alex & Santos' : 'Other Student' }); }
+  return { service: createCertificateService(db), seed, bucket };
+}
+
+test('participation requires confirmation, a supported activity, organizer and past date', () => {
+  assert.equal(validateParticipation(participation).type, 'seminar');
+  for (const changes of [{ completed: false }, { type: 'job' }, { date: '2099-01-01' }, { date: '2025-02-30' }, { organizer: '' }, { title: ' ' }]) assert.throws(() => validateParticipation({ ...participation, ...changes }), error => error.status === 400);
+});
+test('self-reported attendance does not automatically issue a certificate', async () => {
+  const { service, seed } = fixture();
+  seed('student_event_attendance', { _id: 'dddddddddddddddddddddddd', authId: student._id, title: participation.title, date: participation.date });
+  assert.equal((await service.listMine(student)).length, 0); assert.equal((await service.pending(admin)).length, 1);
+  await assert.rejects(service.confirm(student, 'dddddddddddddddddddddddd', participation), error => error.status === 403);
+});
+test('admin confirmation issues a certificate and removes attendance from the review queue', async () => {
+  const { service, seed } = fixture();
+  seed('student_event_attendance', { _id: 'dddddddddddddddddddddddd', authId: student._id, title: participation.title, date: participation.date });
+  const certificate = await service.confirm(admin, 'dddddddddddddddddddddddd', { ...participation, title: 'Forged title', studentAuthId: stranger._id });
+  assert.equal(certificate.title, participation.title); assert.equal(certificate.studentAuthId, student._id);
+  assert.equal(certificate.issuedBy, admin._id); assert.equal((await service.pending(admin)).length, 0);
+  assert.equal((await service.listMine(student)).length, 1);
+});
+test('events, training and seminars all generate certificates only through admin confirmation', async () => {
+  const { service } = fixture();
+  for (const type of ['event', 'training', 'seminar']) {
+    await assert.rejects(service.issue(student, student._id, { ...participation, type }), error => error.status === 403);
+    const certificate = await service.issue(admin, student._id, { ...participation, type, title: `${type} activity` });
+    assert.equal(certificate.activityType, type);
+  }
+  assert.equal((await service.listMine(student)).length, 3);
+});
+test('retries and concurrent confirmations create exactly one immutable certificate', async () => {
+  const { service } = fixture();
+  const results = await Promise.all(Array.from({ length: 15 }, () => service.issue(admin, student._id, participation)));
+  assert.equal(new Set(results.map(record => record._id)).size, 1); assert.equal((await service.listMine(student)).length, 1);
+  const again = await service.issue(admin, student._id, { ...participation, organizer: 'Changed organizer' });
+  assert.equal(again.organizer, participation.organizer);
+});
+test('scheduled activities must have ended and repeated issuance matches existing attendance', async () => {
+  const { service, seed } = fixture();
+  seed('events', { _id: 'eeeeeeeeeeeeeeeeeeeeeeee', title: participation.title, startAt: '2025-02-15T09:00:00+08:00', endAt: '2025-02-15T12:00:00+08:00' });
+  seed('event_registrations', { _id: 'registered', eventId: 'eeeeeeeeeeeeeeeeeeeeeeee', authId: student._id });
+  const first = await service.issue(admin, student._id, participation);
+  const scheduled = await service.issue(admin, student._id, { ...participation, eventId: 'eeeeeeeeeeeeeeeeeeeeeeee', title: 'Forged' });
+  assert.equal(first._id, scheduled._id);
+  seed('events', { _id: 'ffffffffffffffffffffffff', title: 'Future event', startAt: '2099-02-15T09:00:00Z' });
+  seed('event_registrations', { _id: 'future-registered', eventId: 'ffffffffffffffffffffffff', authId: student._id });
+  await assert.rejects(service.issue(admin, student._id, { ...participation, eventId: 'ffffffffffffffffffffffff' }), error => error.status === 400);
+});
+test('certificate access is limited to its owner and admins', async () => {
+  const { service } = fixture();
+  const certificate = await service.issue(admin, student._id, participation);
+  await assert.rejects(service.get(stranger, certificate._id), error => error.status === 403);
+  assert.equal((await service.get(student, certificate._id)).certificateNumber, certificate.certificateNumber);
+  assert.equal((await service.get(admin, certificate._id))._id, certificate._id);
+  assert.equal((await service.listMine(stranger)).length, 0);
+});
+test('scheduled certificate type and organizer come from the official activity', async () => {
+  const { service, seed } = fixture();
+  seed('events', { _id: 'eeeeeeeeeeeeeeeeeeeeeeee', title: 'Official Training', activityType: 'training', organizer: 'CLSU Career Development', startAt: '2025-02-15T09:00:00+08:00', endAt: '2025-02-15T12:00:00+08:00' });
+  await assert.rejects(service.issue(admin, student._id, { ...participation, eventId: 'eeeeeeeeeeeeeeeeeeeeeeee' }), error => error.status === 403);
+  seed('event_registrations', { _id: 'registered', eventId: 'eeeeeeeeeeeeeeeeeeeeeeee', authId: student._id });
+  const certificate = await service.issue(admin, student._id, { ...participation, eventId: 'eeeeeeeeeeeeeeeeeeeeeeee' });
+  assert.equal(certificate.activityType, 'training'); assert.equal(certificate.organizer, 'CLSU Career Development');
+});
+test('generated certificate preserves names and escapes markup in all participant data', async () => {
+  const { service } = fixture();
+  const certificate = await service.issue(admin, student._id, { ...participation, title: '<script>alert(1)</script> & training', organizer: 'Campus <Team>' });
+  const svg = certificateSvg(certificate);
+  assert.ok(svg.includes('Alex &amp; Santos')); assert.ok(svg.includes('&lt;script&gt;'));
+  assert.equal(svg.includes('<script>'), false); assert.ok(svg.includes(certificate.certificateNumber));
+});

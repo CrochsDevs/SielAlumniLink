@@ -1,8 +1,6 @@
 import { client } from '../../config/db.js';
+import { createHash } from 'node:crypto';
 
-const db = client.db('SielAlumni');
-const referralsCollection = db.collection('referrals');
-const applicationsCollection = db.collection('referral_applications');
 
 const toObjectId = async (id) => {
   const { ObjectId } = await import('mongodb');
@@ -12,7 +10,10 @@ const toObjectId = async (id) => {
 export const REFERRAL_TYPES = ['job', 'internship', 'scholarship'];
 export const APPLICATION_STATUSES = ['pending', 'reviewed', 'accepted', 'declined'];
 
-export const ReferralModel = {
+export const createReferralModels = db => {
+const referralsCollection = db.collection('referrals');
+const applicationsCollection = db.collection('referral_applications');
+const ReferralModel = {
   async findAll({ type, activeOnly = true } = {}) {
     const filter = {};
     if (activeOnly) filter.isActive = true;
@@ -78,7 +79,7 @@ export const ReferralModel = {
   },
 };
 
-export const ReferralApplicationModel = {
+const ReferralApplicationModel = {
   async apply({ referralId, applicantAuthId, email, name, note }) {
     const rid = await toObjectId(referralId);
     const aid = String(applicantAuthId);
@@ -87,7 +88,10 @@ export const ReferralApplicationModel = {
       throw new Error('You already applied to this opportunity');
     }
     const now = new Date();
+    const applicationId = createHash('sha256').update(JSON.stringify([String(rid), aid])).digest('hex').slice(0, 24);
+    const { ObjectId } = await import('mongodb');
     const doc = {
+      _id: new ObjectId(applicationId),
       referralId: rid,
       applicantAuthId: aid,
       email,
@@ -97,8 +101,8 @@ export const ReferralApplicationModel = {
       createdAt: now,
       updatedAt: now,
     };
-    const result = await applicationsCollection.insertOne(doc);
-    return { ...doc, _id: result.insertedId };
+    try { const result = await applicationsCollection.insertOne(doc); return { ...doc, _id: result.insertedId }; }
+    catch (error) { if (error.code === 11000) throw new Error('You already applied to this opportunity'); throw error; }
   },
 
   async findByReferral(referralId) {
@@ -142,4 +146,8 @@ export const ReferralApplicationModel = {
   },
 };
 
+return { ReferralModel, ReferralApplicationModel };
+};
+const { ReferralModel, ReferralApplicationModel } = createReferralModels(client.db('SielAlumni'));
+export { ReferralModel, ReferralApplicationModel };
 export default { ReferralModel, ReferralApplicationModel, REFERRAL_TYPES, APPLICATION_STATUSES };

@@ -23,6 +23,7 @@ const breadcrumbMap = [
   ['/alumni/employment', 'Employment'],
   ['/alumni/referral', 'Referral'],
   ['/alumni/success', 'Success Stories'],
+  ['/alumni/events', 'Events'],
   ['/alumni/surveys', 'Surveys'],
   ['/alumni/accounts', 'Accounts'],
   ['/alumni/profile', 'Profile'],

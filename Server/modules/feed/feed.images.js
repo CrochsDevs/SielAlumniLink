@@ -1,4 +1,4 @@
-import { fail } from './feed.policy.js';
+import { ensureFeedParticipation, fail } from './feed.policy.js';
 import { ObjectId } from 'mongodb';
 
 export const MAX_POST_IMAGES = 9;
@@ -16,6 +16,7 @@ export const imageFormat = (buffer) => {
 export const createFeedImageUpload = (db, uploadImage) => async (req, res) => {
   try {
     if (!['alumni', 'admin'].includes(String(req.user.role).toLowerCase())) fail(403, 'Only alumni can upload post images');
+    await ensureFeedParticipation(db, req.user);
     if (!req.file) fail(400, 'Choose an image to upload');
     if (req.file.buffer.length > MAX_IMAGE_BYTES) fail(400, 'Each image must be 10 MB or smaller');
     const format = imageFormat(req.file.buffer);

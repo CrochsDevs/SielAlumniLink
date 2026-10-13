@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import Swal from 'sweetalert2';
 import {
   UserRound, ShieldCheck, Lock, Mail, BadgeCheck, Palette, Sun, Moon, Monitor,
@@ -243,7 +243,7 @@ const StudentAccounts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
+    <div className="student-page min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
       <StudentSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">
@@ -311,7 +311,7 @@ const StudentAccounts = () => {
                                 : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
                               }`}
                           >
-                            <Icon className="h-4 w-4" />
+                            {createElement(Icon, { className: 'h-4 w-4' })}
                           </span>
                           <span className="min-w-0">
                             <span
@@ -426,7 +426,7 @@ const StudentAccounts = () => {
                             : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600'
                           }`}
                       >
-                        <Icon className="h-5 w-5" />
+                        {createElement(Icon, { className: 'h-5 w-5' })}
                         <span className="text-[12px] font-bold">{label}</span>
                       </button>
                     ))}

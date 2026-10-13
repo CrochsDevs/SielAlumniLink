@@ -467,7 +467,7 @@ const UserProfile = ({ profileRole = 'alumni' }) => {
   const inputClass = 'w-full h-10 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15';
 
   return (
-    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
+    <div className={`${isStudent ? 'student-page ' : ''}min-h-screen bg-[#f3f6f3] dark:bg-zinc-950`}>
       <Sidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
 
       <div className="lg:pl-64">

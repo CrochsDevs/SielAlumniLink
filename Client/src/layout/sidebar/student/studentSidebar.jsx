@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  CalendarDays,
   Route,
   FolderKanban,
   Briefcase,
@@ -11,7 +12,6 @@ import {
   BadgeCheck,
   BarChart3,
   MessageSquare,
-  UserPlus,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -109,6 +109,10 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
               <BadgeCheck className="w-4 h-4 shrink-0" />
               <span className="truncate">Certificate</span>
             </NavLink>
+            <NavLink to="/student/events" className={navItemClass(isActive('/student/events') || isActive('/activities'))}>
+              <CalendarDays className="w-4 h-4 shrink-0" />
+              <span className="truncate">Events</span>
+            </NavLink>
 
             <NavLink to="/student/readiness" className={navItemClass(isActive('/student/readiness'))}>
               <BarChart3 className="w-4 h-4 shrink-0" />
@@ -146,7 +150,7 @@ const StudentSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contr
         {/* User + Logout */}
         <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-            <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100">
+            <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:ring-emerald-900">
               <ProfileAvatar user={user} fallback="S" />
             </div>
             <div className="min-w-0 flex-1">

@@ -28,6 +28,12 @@ export const EventModel = {
       title: data.title,
       description: data.description || '',
       location: data.location || '',
+      activityType: data.activityType || 'event',
+      deliveryMode: data.deliveryMode || 'onsite',
+      organizer: data.organizer || 'SielAlumni',
+      registrationLimited: data.registrationLimited === true,
+      registrationOpensAt: data.registrationOpensAt ? new Date(data.registrationOpensAt) : null,
+      registrationClosesAt: data.registrationClosesAt ? new Date(data.registrationClosesAt) : null,
       startAt: data.startAt ? new Date(data.startAt) : now,
       endAt: data.endAt ? new Date(data.endAt) : null,
       isActive: data.isActive !== false,
@@ -43,11 +49,14 @@ export const EventModel = {
     try {
       const objectId = await toObjectId(id);
       const update = {};
-      ['title', 'description', 'location', 'isActive'].forEach((key) => {
+      ['title', 'description', 'location', 'isActive', 'activityType', 'deliveryMode', 'organizer', 'registrationLimited'].forEach((key) => {
         if (data[key] !== undefined) update[key] = data[key];
       });
       if (data.startAt !== undefined) update.startAt = data.startAt ? new Date(data.startAt) : null;
       if (data.endAt !== undefined) update.endAt = data.endAt ? new Date(data.endAt) : null;
+      for (const key of ['registrationOpensAt', 'registrationClosesAt']) {
+        if (data[key] !== undefined) update[key] = data[key] ? new Date(data[key]) : null;
+      }
       const result = await eventsCollection.updateOne(
         { _id: objectId },
         { $set: { ...update, updatedAt: new Date() } }

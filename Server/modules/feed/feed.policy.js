@@ -50,7 +50,21 @@ export const validatePost = (input) => {
   return { type, audience, title, body, details, images };
 };
 
-export const canViewPost = (post, authId, connectedIds) => !!post && !post.deletedAt && (
+export const isFeedAdmin = user => String(user?.role).toLowerCase() === 'admin';
+
+export const ensureFeedParticipation = async (db, user) => {
+  if (isFeedAdmin(user)) return;
+  const restriction = await db.collection('feed_restrictions').findOne({ _id: String(user._id), blocked: true });
+  if (restriction) fail(403, 'Your feed participation is restricted by an administrator. You can still read available posts.');
+};
+
+export const validateModeration = input => {
+  if (typeof input.enabled !== 'boolean') fail(400, 'Provide a true or false action');
+  const reason = text(input.reason, 'Moderation reason', 500, input.enabled);
+  return { enabled: input.enabled, reason };
+};
+
+export const canViewPost = (post, authId, connectedIds) => !!post && !post.deletedAt && !post.moderation?.blocked && (
   post.audience === 'public' || String(post.authorAuthId) === String(authId) ||
   connectedIds.map(String).includes(String(post.authorAuthId))
 );

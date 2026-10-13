@@ -153,13 +153,13 @@ const StudentTopbar = ({
               )}
             </button>
             {chatOpen && (
-              <div id="student-topbar-chats" className="absolute right-0 mt-2 w-80 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20">
+              <div id="student-topbar-chats" className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="flex items-center justify-between px-4 py-3">
-                  <p className="text-[14px] font-extrabold tracking-tight text-zinc-900">Chats</p>
+                  <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Chats</p>
                   <Link
                     to="/student/message"
                     onClick={() => setChatOpen(false)}
-                    className="text-[11.5px] font-semibold text-[#009639] hover:underline"
+                    className="text-[11.5px] font-semibold text-[#009639] hover:underline dark:text-emerald-300"
                   >
                     See all
                   </Link>
@@ -170,26 +170,26 @@ const StudentTopbar = ({
                       <button
                         type="button"
                         onClick={() => { openChat(c); setChatOpen(false); }}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50"
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
                       >
-                        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639]">
+                        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639] dark:text-emerald-300">
                           <ChatAvatar convo={c} />
                           {c.unread > 0 && (
-                            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
                               {c.unread}
                             </span>
                           )}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[12.5px] font-bold text-zinc-800">{c.name}</span>
-                          <span className="block truncate text-[11px] text-zinc-500">{c.preview}</span>
+                          <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">{c.name}</span>
+                          <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">{c.preview}</span>
                         </span>
-                        <span className="shrink-0 text-[10px] text-zinc-400">{formatTime(c.time)}</span>
+                        <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-400">{formatTime(c.time)}</span>
                       </button>
                     </li>
                   ))}
                   {convos.length === 0 && (
-                    <li className="px-4 py-6 text-center text-[12px] text-zinc-400">
+                    <li className="px-4 py-6 text-center text-[12px] text-zinc-500 dark:text-zinc-400">
                       No conversations yet.
                     </li>
                   )}
@@ -228,6 +228,8 @@ const StudentTopbar = ({
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
+            aria-label="Account menu"
+            aria-expanded={dropdownOpen}
             className="flex items-center gap-1.5 rounded-full bg-white/15 py-1 pl-1 pr-2 transition hover:bg-white/25"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-extrabold text-[#007a2e]">
