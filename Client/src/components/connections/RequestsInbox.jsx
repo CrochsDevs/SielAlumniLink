@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import Swal from 'sweetalert2';
-import { Check, X, UserPlus, Inbox } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ProfileAvatar from '../profile/ProfileAvatar';
-import { profilePath } from '../search/searchLinks';
-import api from '../../utils/axios';
-import { getSocket } from '../../realtime/socket';
+import { useCallback, useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import { Check, X, UserPlus, Inbox } from "lucide-react";
+import { Link } from "react-router-dom";
+import ProfileAvatar from "../profile/ProfileAvatar";
+import { profilePath } from "../search/searchLinks";
+import api from "../../utils/axios";
+import { getSocket } from "../../realtime/socket";
 
 // Shared invitations inbox: accept or decline connection requests.
 // Used by both alumni and student requests pages.
@@ -16,7 +16,7 @@ export const useRequests = () => {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/connections/requests');
+      const res = await api.get("/connections/requests");
       setRequests(res.data.data || []);
     } catch {
       // ignore
@@ -29,11 +29,13 @@ export const useRequests = () => {
     fetchRequests();
 
     const socket = getSocket();
-    const onNew = () => { fetchRequests(); };
-    socket.on('notification:new', onNew);
+    const onNew = () => {
+      fetchRequests();
+    };
+    socket.on("notification:new", onNew);
 
     return () => {
-      socket.off('notification:new', onNew);
+      socket.off("notification:new", onNew);
     };
   }, [fetchRequests]);
 
@@ -42,14 +44,21 @@ export const useRequests = () => {
       await api.put(`/connections/${id}`, { status });
       setRequests((prev) => prev.filter((r) => String(r._id) !== String(id)));
       Swal.fire({
-        title: status === 'accepted' ? 'Connected!' : 'Declined',
-        text: status === 'accepted' ? 'You can now chat with each other.' : undefined,
-        icon: status === 'accepted' ? 'success' : 'info',
+        title: status === "accepted" ? "Connected!" : "Declined",
+        text:
+          status === "accepted"
+            ? "You can now chat with each other."
+            : undefined,
+        icon: status === "accepted" ? "success" : "info",
         timer: 1500,
         showConfirmButton: false,
       });
     } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to respond', 'error');
+      Swal.fire(
+        "Error",
+        err.response?.data?.message || "Failed to respond",
+        "error",
+      );
     }
   };
 
@@ -71,8 +80,12 @@ const RequestsList = ({ requests, loading, onRespond }) => {
         <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300">
           <Inbox className="h-6 w-6" />
         </span>
-        <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">No pending invitations</p>
-        <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">New connect requests will appear here.</p>
+        <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">
+          No pending invitations
+        </p>
+        <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
+          New connect requests will appear here.
+        </p>
       </div>
     );
   }
@@ -80,43 +93,54 @@ const RequestsList = ({ requests, loading, onRespond }) => {
   return (
     <ul className="space-y-2.5">
       {requests.map((r) => {
-        const ProfileLink = r.profileId ? Link : 'span';
+        const ProfileLink = r.profileId ? Link : "span";
         const profileLinkProps = r.profileId
-          ? { to: profilePath({ _id: r.profileId, role: r.role }), 'aria-label': `View ${r.name || 'user'} profile` }
+          ? {
+              to: profilePath({ _id: r.profileId, role: r.role }),
+              "aria-label": `View ${r.name || "user"} profile`,
+            }
           : {};
         return (
-        <li
-          key={r._id}
-          className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4"
-        >
-          <ProfileLink {...profileLinkProps} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
-            <ProfileAvatar user={r} />
-          </ProfileLink>
-          <span className="min-w-0 flex-1">
-            <ProfileLink {...profileLinkProps} className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100 hover:underline">{r.name}</ProfileLink>
-            <span className="block truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">
-              {[r.program, r.email].filter(Boolean).join(' • ')}
+          <li
+            key={r._id}
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4"
+          >
+            <ProfileLink
+              {...profileLinkProps}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300"
+            >
+              <ProfileAvatar user={r} />
+            </ProfileLink>
+            <span className="min-w-0 flex-1">
+              <ProfileLink
+                {...profileLinkProps}
+                className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100 hover:underline"
+              >
+                {r.name}
+              </ProfileLink>
+              <span className="block truncate text-[11.5px] text-zinc-500 dark:text-zinc-400">
+                {[r.program, r.email].filter(Boolean).join(" • ")}
+              </span>
             </span>
-          </span>
-          <span className="flex shrink-0 gap-1.5">
-            <button
-              type="button"
-              onClick={() => onRespond(r._id, 'declined')}
-              className="flex h-9 items-center gap-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3.5 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              <X className="h-3.5 w-3.5" />
-              Ignore
-            </button>
-            <button
-              type="button"
-              onClick={() => onRespond(r._id, 'accepted')}
-              className="flex h-9 items-center gap-1 rounded-xl bg-[#009639] px-3.5 text-[12px] font-bold text-white transition hover:bg-[#007a2e]"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Accept
-            </button>
-          </span>
-        </li>
+            <span className="flex shrink-0 gap-1.5">
+              <button
+                type="button"
+                onClick={() => onRespond(r._id, "declined")}
+                className="flex h-9 items-center gap-1 rounded-xl border border-zinc-200 dark:border-zinc-700 px-3.5 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <X className="h-3.5 w-3.5" />
+                Ignore
+              </button>
+              <button
+                type="button"
+                onClick={() => onRespond(r._id, "accepted")}
+                className="flex h-9 items-center gap-1 rounded-xl bg-[#009639] px-3.5 text-[12px] font-bold text-white transition hover:bg-[#007a2e]"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Accept
+              </button>
+            </span>
+          </li>
         );
       })}
     </ul>

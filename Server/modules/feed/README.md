@@ -102,3 +102,23 @@ image-only publishing, gallery navigation, likes, and layouts at 320, 390, 768,
 failure/retry, block/restore, comments off/on, deleting comments, member
 restrictions/restoration, the alumni view, socket invalidation, and both themes
 at 320–1440 pixels using fixture responses.
+
+## Module 14: success stories
+
+The dedicated story gallery lives at `/alumni/success` and `/student/success`. `/stories?story=<postId>` opens the same reader using the signed-in user's layout. Students can read permitted stories; publishing remains alumni/admin-only. Existing feed restrictions, moderation, image authorization, and public/connections audiences apply.
+
+`GET /api/feed/stories` returns original success stories with the existing cursor pagination and visibility rules. It supports `topic` (`career_journey`, `achievement`, `advice`, or `all`), optional text `q` (max 200 characters), and `mine=true`. Filtering and keyword search run on the server across all stories, including unloaded pages. Older unstructured stories remain readable in All stories without guessing their category.
+
+Alumni publish through the existing `POST /api/feed` with `type: story`, title, audience, and optional `details.story` containing `topic`, `journey`, `achievements`, and `advice`. The sections are optional individually, but at least one must contain text. Each section permits up to 5000 characters; the combined canonical feed body must fit within 10000 characters. This preserves compatibility with the general feed and its moderation tools. The guided form supports one optional cover photo, while the reader supports all existing feed attachments.
+
+`Client/scripts/success-stories-browser-check.mjs` verifies gallery filters and pagination, publishing with a photo, failure/retry, duplicate submission protection, student reading, private-story denial, deep links, author deletion, restrictions, and responsive layouts using browser-only API fixtures.
+
+## Student dashboard
+
+`/student` offers All updates, Hiring, Referrals, Events, and Success stories. Tabs and search are retained in the URL (`tab` and `q`). All updates shows community feed posts only. Active job, referral, and university event listings appear in their respective Hiring, Referrals, and Events tabs alongside the selected community posts. Applications reuse the career and referral dialogs, including PDF resumes, persisted application status, and duplicate submission guards. University event registration uses the existing registration/meeting permissions; community event posts retain their separate RSVP action. Success stories open the shared story reader.
+
+The dashboard loads each listing source and the student's applications independently. A failed source shows its own retry action while other sources remain available; applying is disabled when existing application status cannot be checked. Listing data reloads on focus, manual refresh, and every minute while visible. Community posts also refresh through existing socket invalidations. Old feed requests are discarded when switching filters or accounts.
+
+`GET /api/feed` accepts optional `q` (text up to 200 characters). Search treats regular expression characters literally, filters before cursor pagination, and checks title, body, organization, location, and accessible original posts in reposts. Existing audience and moderation rules remain enforced. Post cards support comments, likes, share-link copying, sending to permitted connections, long-text expansion, and category-specific actions and empty states.
+
+`Client/scripts/student-dashboard-browser-check.mjs` uses API fixtures with local Vite on port 5173 and isolated headless Edge/Chrome on debugging port 9234. It exercises all dashboard tabs, applications, registration, RSVP, search/pagination, failure/retry, comments/likes, sharing/sending, story reading, persisted navigation, unavailable post links, and mobile/desktop layouts. Server tests cover real feed filtering and permissions; the isolated MongoDB integration test also checks search and repost visibility.

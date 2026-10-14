@@ -29,6 +29,8 @@ test('real MongoDB: atomic likes, protected reposts, pagination, comments, and s
     const feed = createFeedService(db, () => invalidations++);
     const publicPost = await feed.create(author, { body: 'Public milestone' });
     const privatePost = await feed.create(author, { body: 'Network update', audience: 'connections' });
+    assert.equal((await feed.list(stranger, { q: 'network' })).posts.length, 0);
+    assert.equal((await feed.list(stranger, { q: 'milestone' })).posts.length, 1);
     await Promise.all(Array.from({ length: 25 }, () => feed.setMembership(friend, publicPost._id, 'likedBy', true)));
     assert.equal((await feed.get(friend, publicPost._id)).likesCount, 1);
     await feed.setMembership(stranger, publicPost._id, 'likedBy', true);
@@ -37,6 +39,7 @@ test('real MongoDB: atomic likes, protected reposts, pagination, comments, and s
     assert.equal((await feed.get(friend, publicPost._id)).likesCount, 1);
     assert.equal((await feed.get(friend, publicPost._id)).likedByMe, false);
     const repost = await feed.share(friend, privatePost._id, { audience: 'connections', body: 'Great news!' });
+    assert.equal((await feed.list(friend, { q: 'Network update' })).posts.length, 2);
     assert.equal((await feed.get(author, repost._id)).originalPost.body, privatePost.body);
     assert.equal((await feed.list(stranger)).posts.length, 1);
     await assert.rejects(feed.get(stranger, repost._id), error => error.status === 404);

@@ -1,5 +1,10 @@
 export const POST_TYPES = ['update', 'referral', 'hiring', 'event', 'story'];
 export const AUDIENCES = ['public', 'connections'];
+export const STORY_TOPICS = ['career_journey', 'achievement', 'advice'];
+
+export const storyBody = story => [
+  ['Career journey', story.journey], ['Professional achievements', story.achievements], ['Advice for students', story.advice],
+].filter(([, content]) => content).map(([label, content]) => `${label}\n${content}`).join('\n\n');
 
 export const fail = (status, message) => {
   throw Object.assign(new Error(message), { status });
@@ -27,12 +32,20 @@ export const validatePost = (input) => {
     return { id: image.id.toLowerCase(), alt: text(image.alt, 'Image description', 300) };
   });
   if (new Set(images.map(image => image.id)).size !== images.length) fail(400, 'Remove duplicate image attachments');
-  const body = text(input.body, 'Post', 10000, type !== 'update' || images.length === 0);
+  let body = text(input.body, 'Post', 10000, !(type === 'story' && input.details?.story !== undefined) && (type !== 'update' || images.length === 0));
   const details = {
     organization: text(input.details?.organization, 'Organization', 200, ['referral', 'hiring'].includes(type)),
     location: text(input.details?.location, 'Location', 200, type === 'event'),
     link: text(input.details?.link, 'Link', 2000),
   };
+  if (type === 'story' && input.details?.story !== undefined) {
+    const story = input.details.story;
+    if (!story || typeof story !== 'object' || Array.isArray(story)) fail(400, 'Provide valid story sections');
+    if (!STORY_TOPICS.includes(story.topic)) fail(400, 'Choose Career Journey, Professional Achievement, or Advice');
+    details.story = { topic: story.topic, journey: text(story.journey, 'Career journey', 5000),
+      achievements: text(story.achievements, 'Professional achievements', 5000), advice: text(story.advice, 'Advice', 5000) };
+    body = text(storyBody(details.story), 'Story', 10000, true);
+  }
   if (details.link) {
     let url;
     try { url = new URL(details.link); } catch { fail(400, 'Enter a valid opportunity or registration link'); }

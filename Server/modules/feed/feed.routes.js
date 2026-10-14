@@ -22,6 +22,7 @@ const action = (handler, status = 200) => async (req, res) => {
 
 router.use(protect);
 router.get('/status', action(req => feed.status(req.user)));
+router.get('/stories', action(req => feed.listStories(req.user, req.query)));
 router.get('/restrictions', action(req => feed.listRestrictions(req.user)));
 router.put('/restrictions/:authId', action(req => feed.restrictAuthor(req.user, req.params.authId, req.body)));
 router.get('/', action(req => feed.list(req.user, req.query)));

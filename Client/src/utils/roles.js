@@ -1,7 +1,7 @@
 export const Roles = Object.freeze({
-  STUDENT: 'student',
-  ALUMNI: 'alumni',
-  ADMIN: 'admin',
+  STUDENT: "student",
+  ALUMNI: "alumni",
+  ADMIN: "admin",
 });
 
 export const hasRole = (user, ...allowedRoles) =>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -12,11 +12,15 @@ import {
   MessageSquare,
   Settings,
   LogOut,
-} from 'lucide-react';
-import clsuLogo from '../../../assets/logo/clsu_logo.png';
-import ProfileAvatar from '../../../components/profile/ProfileAvatar';
+} from "lucide-react";
+import clsuLogo from "../../../assets/logo/clsu_logo.png";
+import ProfileAvatar from "../../../components/profile/ProfileAvatar";
 
-const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: controlledSet }) => {
+const AdminSidebar = ({
+  user,
+  mobileOpen: controlledOpen,
+  setMobileOpen: controlledSet,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -26,18 +30,19 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
   const mobileOpen = controlledOpen ?? internalOpen;
   const setMobileOpen = controlledSet ?? setInternalOpen;
 
-  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
-  const isSettingsActive = location.pathname.startsWith('/admin/settings');
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
+  const isSettingsActive = location.pathname.startsWith("/admin/settings");
 
   const navItemClass = (active) =>
     `group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
       active
-        ? 'bg-[#009639]/10 text-[#009639] font-semibold dark:bg-[#009639]/20 dark:text-emerald-300'
-        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+        ? "bg-[#009639]/10 text-[#009639] font-semibold dark:bg-[#009639]/20 dark:text-emerald-300"
+        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
     }`;
 
   const handleLogout = () => {
-    navigate('/logout');
+    navigate("/logout");
   };
 
   return (
@@ -53,54 +58,78 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
       <aside
         id="sidebar"
         className={`fixed left-0 top-0 h-full w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 z-30 flex flex-col ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
-        style={{ fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif" }}
+        style={{
+          fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif",
+        }}
       >
         {/* Header / Brand */}
         <div className="px-4 pt-5 pb-5 border-b border-zinc-100 dark:border-zinc-800">
-          <Link to="/admin" className="flex flex-col items-center text-center group">
+          <Link
+            to="/admin"
+            className="flex flex-col items-center text-center group"
+          >
             <img
               src={clsuLogo}
               alt="CLSU"
               className="h-16 w-16 object-contain"
             />
             <div className="leading-tight mt-1">
-              <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">SielAlumni</p>
+              <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">
+                SielAlumni
+              </p>
             </div>
           </Link>
         </div>
 
         {/* Nav */}
         <div className="flex-1 overflow-y-auto px-2.5 pb-2 pt-6 space-y-0.5">
-
           {/* Primary group */}
           <nav className="space-y-0.5">
-            <NavLink to="/admin" end className={navItemClass(isActive('/admin/dashboard') || location.pathname === '/admin')}>
+            <NavLink
+              to="/admin"
+              end
+              className={navItemClass(
+                isActive("/admin/dashboard") || location.pathname === "/admin",
+              )}
+            >
               <LayoutDashboard className="w-4 h-4 shrink-0" />
               <span className="truncate">Dashboard</span>
             </NavLink>
 
-            <NavLink to="/admin/users" className={navItemClass(isActive('/admin/users'))}>
+            <NavLink
+              to="/admin/users"
+              className={navItemClass(isActive("/admin/users"))}
+            >
               <Users className="w-4 h-4 shrink-0" />
               <span className="truncate">Users</span>
             </NavLink>
-            <NavLink to="/feed" className={navItemClass(isActive('/feed'))}>
+            <NavLink to="/feed" className={navItemClass(isActive("/feed"))}>
               <Megaphone className="w-4 h-4 shrink-0" />
               <span className="truncate">Alumni Feed</span>
             </NavLink>
 
-            <NavLink to="/admin/tracer" className={navItemClass(isActive('/admin/tracer'))}>
+            <NavLink
+              to="/admin/tracer"
+              className={navItemClass(isActive("/admin/tracer"))}
+            >
               <ClipboardCheck className="w-4 h-4 shrink-0" />
               <span className="truncate">Tracer Study</span>
             </NavLink>
 
-            <NavLink to="/admin/jobs" className={navItemClass(isActive('/admin/jobs'))}>
+            <NavLink
+              to="/admin/jobs"
+              className={navItemClass(isActive("/admin/jobs"))}
+            >
               <Briefcase className="w-4 h-4 shrink-0" />
               <span className="truncate">Job Posts</span>
             </NavLink>
 
-            <NavLink to="/admin/surveys" className={navItemClass(isActive('/admin/surveys'))}>
+            <NavLink
+              to="/admin/surveys"
+              className={navItemClass(isActive("/admin/surveys"))}
+            >
               <FileText className="w-4 h-4 shrink-0" />
               <span className="truncate">Survey</span>
             </NavLink>
@@ -108,24 +137,42 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
 
           {/* Secondary group */}
           <nav className="space-y-0.5">
-            <NavLink to="/admin/certificates" className={navItemClass(isActive('/admin/certificates'))}><FileText className="w-4 h-4 shrink-0" /><span className="truncate">Certificates</span></NavLink>
+            <NavLink
+              to="/admin/certificates"
+              className={navItemClass(isActive("/admin/certificates"))}
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              <span className="truncate">Certificates</span>
+            </NavLink>
 
-            <NavLink to="/admin/events" className={navItemClass(isActive('/admin/events'))}>
+            <NavLink
+              to="/admin/events"
+              className={navItemClass(isActive("/admin/events"))}
+            >
               <Calendar className="w-4 h-4 shrink-0" />
               <span className="truncate">Calendar</span>
             </NavLink>
 
-            <NavLink to="/admin/connections" className={navItemClass(isActive('/admin/connections'))}>
+            <NavLink
+              to="/admin/connections"
+              className={navItemClass(isActive("/admin/connections"))}
+            >
               <Link2 className="w-4 h-4 shrink-0" />
               <span className="truncate">Connections</span>
             </NavLink>
 
-            <NavLink to="/admin/announcements" className={navItemClass(isActive('/admin/announcements'))}>
+            <NavLink
+              to="/admin/announcements"
+              className={navItemClass(isActive("/admin/announcements"))}
+            >
               <Megaphone className="w-4 h-4 shrink-0" />
               <span className="truncate">Announcements</span>
             </NavLink>
 
-            <NavLink to="/admin/message" className={navItemClass(isActive('/admin/message'))}>
+            <NavLink
+              to="/admin/message"
+              className={navItemClass(isActive("/admin/message"))}
+            >
               <MessageSquare className="w-4 h-4 shrink-0" />
               <span className="truncate">Message</span>
             </NavLink>
@@ -133,7 +180,10 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
 
           {/* Settings */}
           <div id="nav-settings-group">
-            <NavLink to="/admin/settings" className={navItemClass(isSettingsActive)}>
+            <NavLink
+              to="/admin/settings"
+              className={navItemClass(isSettingsActive)}
+            >
               <Settings className="w-4 h-4 shrink-0" />
               <span className="truncate">Settings</span>
             </NavLink>
@@ -148,10 +198,10 @@ const AdminSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: control
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">
-                {user?.name || 'Admin'}
+                {user?.name || "Admin"}
               </p>
               <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-tight mt-0.5">
-                {user?.email || 'admin@clsu.edu.ph'}
+                {user?.email || "admin@clsu.edu.ph"}
               </p>
             </div>
           </div>

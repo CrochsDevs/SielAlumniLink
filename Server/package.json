@@ -7,6 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "test:mentorship": "node --test --test-isolation=none modules/mentorship/mentorship.test.js modules/mentorship/matching.test.js",
     "test:employment": "node --test --test-isolation=none modules/employment/employment.test.js",
     "test:feed": "node --test modules/feed/feed.test.js",
     "test:feed:integration": "node --test modules/feed/feed.integration.test.js",

@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { AuthContext } from './auth-context.js';
-import api from '../utils/axios';
-import { connectSocket, disconnectSocket } from '../realtime/socket';
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { AuthContext } from "./auth-context.js";
+import api from "../utils/axios";
+import { connectSocket, disconnectSocket } from "../realtime/socket";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -22,8 +22,11 @@ export const AuthProvider = ({ children }) => {
     const checkVersion = ++authCheckVersion.current;
 
     try {
-      const response = await api.get('/auth/me');
-      if (checkVersion !== authCheckVersion.current || magicVerificationStarted.current) {
+      const response = await api.get("/auth/me");
+      if (
+        checkVersion !== authCheckVersion.current ||
+        magicVerificationStarted.current
+      ) {
         return;
       }
 
@@ -34,11 +37,17 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       }
     } catch {
-      if (checkVersion === authCheckVersion.current && !magicVerificationStarted.current) {
+      if (
+        checkVersion === authCheckVersion.current &&
+        !magicVerificationStarted.current
+      ) {
         setUser(null);
       }
     } finally {
-      if (checkVersion === authCheckVersion.current && !magicVerificationStarted.current) {
+      if (
+        checkVersion === authCheckVersion.current &&
+        !magicVerificationStarted.current
+      ) {
         setLoading(false);
       }
     }
@@ -62,15 +71,15 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     try {
       setError(null);
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post("/auth/login", { email, password });
       if (response.data.success) {
         setUser(response.data.data.user);
         return { success: true };
       }
 
-      return { success: false, error: response.data.message || 'Login failed' };
+      return { success: false, error: response.data.message || "Login failed" };
     } catch (err) {
-      const message = err.response?.data?.message || 'Login failed';
+      const message = err.response?.data?.message || "Login failed";
       setError(message);
       return { success: false, error: message };
     }
@@ -79,14 +88,18 @@ export const AuthProvider = ({ children }) => {
   const requestMagicLink = useCallback(async (email) => {
     try {
       setError(null);
-      const response = await api.post('/auth/magic-link/send', { email });
+      const response = await api.post("/auth/magic-link/send", { email });
       if (response.data.success) {
         return { success: true, message: response.data.message };
       }
 
-      return { success: false, error: response.data.message || 'Failed to send magic link' };
+      return {
+        success: false,
+        error: response.data.message || "Failed to send magic link",
+      };
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to send login link';
+      const message =
+        err.response?.data?.message || "Failed to send login link";
       setError(message);
       return { success: false, error: message };
     }
@@ -103,8 +116,8 @@ export const AuthProvider = ({ children }) => {
     const promise = (async () => {
       try {
         setError(null);
-        const response = await api.get('/auth/magic-link/verify', {
-          params: { token }
+        const response = await api.get("/auth/magic-link/verify", {
+          params: { token },
         });
         if (response.data.success) {
           const user = response.data.data?.user || null;
@@ -113,9 +126,13 @@ export const AuthProvider = ({ children }) => {
           return { success: true, user };
         }
 
-        return { success: false, error: response.data.message || 'Invalid or expired login link' };
+        return {
+          success: false,
+          error: response.data.message || "Invalid or expired login link",
+        };
       } catch (err) {
-        const message = err.response?.data?.message || 'Invalid or expired login link';
+        const message =
+          err.response?.data?.message || "Invalid or expired login link";
         setError(message);
         if (magicCheckVersion === authCheckVersion.current) {
           setLoading(false);
@@ -137,9 +154,9 @@ export const AuthProvider = ({ children }) => {
   const setupPassword = useCallback(async (newPassword, confirmPassword) => {
     try {
       setError(null);
-      const response = await api.post('/auth/password/setup', {
+      const response = await api.post("/auth/password/setup", {
         newPassword,
-        confirmPassword
+        confirmPassword,
       });
       if (response.data.success) {
         setUser(response.data.data.user);
@@ -147,9 +164,12 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
       }
 
-      return { success: false, error: response.data.message || 'Password setup failed' };
+      return {
+        success: false,
+        error: response.data.message || "Password setup failed",
+      };
     } catch (err) {
-      const message = err.response?.data?.message || 'Password setup failed';
+      const message = err.response?.data?.message || "Password setup failed";
       setError(message);
       return { success: false, error: message };
     }
@@ -158,20 +178,24 @@ export const AuthProvider = ({ children }) => {
   const signup = async (name, email, password) => {
     try {
       setError(null);
-      const response = await api.post('/auth/signup', { name, email, password });
+      const response = await api.post("/auth/signup", {
+        name,
+        email,
+        password,
+      });
       if (response.data.success) {
         setUser(response.data.data.user);
         return { success: true };
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
+      setError(err.response?.data?.message || "Signup failed");
       return { success: false, error: err.response?.data?.message };
     }
   };
 
   const logout = useCallback(async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
       ++authCheckVersion.current;
       if (chatOwnerId) {
         try {
@@ -183,7 +207,7 @@ export const AuthProvider = ({ children }) => {
       disconnectSocket();
       setUser(null);
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error("Logout error:", err);
     }
   }, [chatOwnerId]);
 
@@ -191,7 +215,7 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = useCallback(async () => {
     const checkVersion = authCheckVersion.current;
     try {
-      const response = await api.get('/auth/me');
+      const response = await api.get("/auth/me");
       if (checkVersion === authCheckVersion.current && response.data.success) {
         setUser(response.data.data || null);
       }
@@ -201,19 +225,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      error,
-      login,
-      requestMagicLink,
-      verifyMagicLink,
-      setupPassword,
-      signup,
-      logout,
-      refreshUser,
-      isAuthenticated: !!user
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        requestMagicLink,
+        verifyMagicLink,
+        setupPassword,
+        signup,
+        logout,
+        refreshUser,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

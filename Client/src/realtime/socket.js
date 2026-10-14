@@ -1,4 +1,4 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 // Singleton Socket.IO client. Auth rides the httpOnly `token` cookie,
 // so we connect with credentials and never handle the JWT in JS.
@@ -6,7 +6,7 @@ let socket = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3002', {
+    socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3002", {
       autoConnect: false,
       withCredentials: true,
       reconnectionAttempts: 5,

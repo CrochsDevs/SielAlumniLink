@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FileText, ChevronRight, CheckCircle2, ClipboardList } from 'lucide-react';
-import { useAuth } from '../../context/useAuth';
-import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
-import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
-import api from '../../utils/axios';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FileText,
+  ChevronRight,
+  CheckCircle2,
+  ClipboardList,
+} from "lucide-react";
+import { useAuth } from "../../context/useAuth";
+import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
+import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
+import api from "../../utils/axios";
 
 const AlumniSurveys = () => {
   const { user } = useAuth();
@@ -14,7 +19,8 @@ const AlumniSurveys = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/surveys')
+    api
+      .get("/surveys")
       .then((res) => setSurveys(res.data.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -22,10 +28,18 @@ const AlumniSurveys = () => {
 
   return (
     <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
-      <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
+      <AlumniSidebar
+        user={user}
+        mobileOpen={sidebarOpen}
+        setMobileOpen={setSidebarOpen}
+      />
 
       <div className="lg:pl-64">
-        <AlumniTopbar user={user} title="Surveys" onMenuClick={() => setSidebarOpen(true)} />
+        <AlumniTopbar
+          user={user}
+          title="Surveys"
+          onMenuClick={() => setSidebarOpen(true)}
+        />
 
         <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6">
           {loading ? (
@@ -37,8 +51,12 @@ const AlumniSurveys = () => {
               <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:text-emerald-300">
                 <ClipboardList className="h-6 w-6" />
               </span>
-              <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">No surveys right now</p>
-              <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">Check back later for new surveys.</p>
+              <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">
+                No surveys right now
+              </p>
+              <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
+                Check back later for new surveys.
+              </p>
             </div>
           ) : (
             surveys.map((survey) => (
@@ -53,9 +71,12 @@ const AlumniSurveys = () => {
                     <FileText className="h-5 w-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-bold text-zinc-900 dark:text-zinc-100">{survey.title}</span>
+                    <span className="block text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
+                      {survey.title}
+                    </span>
                     <span className="mt-0.5 block text-[12px] text-zinc-500 dark:text-zinc-400">
-                      {survey.description || `${survey.questions?.length || 0} questions`}
+                      {survey.description ||
+                        `${survey.questions?.length || 0} questions`}
                     </span>
                     <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#009639]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#007a2e] dark:text-emerald-300">
                       {survey.questions?.length || 0} questions

@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useAuth } from '../../context/useAuth';
-import AdminSidebar from '../../layout/sidebar/admin/adminSidebar';
-import AdminTopbar from '../../layout/topbar/alumni/adminTopbar';
+import { useState } from "react";
+import { useAuth } from "../../context/useAuth";
+import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
+import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -9,19 +9,28 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <AdminSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
+      <AdminSidebar
+        user={user}
+        mobileOpen={sidebarOpen}
+        setMobileOpen={setSidebarOpen}
+      />
 
       <div className="lg:pl-64">
-        <AdminTopbar user={user} title="Dashboard" onMenuClick={() => setSidebarOpen(true)} />
+        <AdminTopbar
+          user={user}
+          title="Dashboard"
+          onMenuClick={() => setSidebarOpen(true)}
+        />
 
         {/* Content */}
         <main className="p-4 sm:p-6">
           <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-sm">
             <h2 className="text-lg font-bold text-zinc-800 dark:text-zinc-100">
-              Welcome, {user?.name || 'Admin'}
+              Welcome, {user?.name || "Admin"}
             </h2>
             <p className="mt-1 text-[13px] text-zinc-500 dark:text-zinc-400">
-              This is the admin dashboard. Pick a section from the sidebar to manage the alumni network.
+              This is the admin dashboard. Pick a section from the sidebar to
+              manage the alumni network.
             </p>
           </div>
         </main>

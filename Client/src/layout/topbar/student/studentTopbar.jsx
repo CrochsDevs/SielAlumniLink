@@ -1,8 +1,8 @@
-import GlobalSearch from '../../../components/search/GlobalSearch';
-import ChatAvatar from '../../../components/chat/ChatAvatar';
-import { formatTime } from '../../../components/chat/messageFormat';
-import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import GlobalSearch from "../../../components/search/GlobalSearch";
+import ChatAvatar from "../../../components/chat/ChatAvatar";
+import { formatTime } from "../../../components/chat/messageFormat";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
   Home,
@@ -13,42 +13,51 @@ import {
   User,
   Settings,
   LogOut,
-} from 'lucide-react';
-import { useNotifications } from '../../../realtime/useNotifications';
-import NotificationDropdown from '../../../components/notifications/NotificationDropdown';
-import { useChat } from '../../../context/useChat.js';
+} from "lucide-react";
+import { useNotifications } from "../../../realtime/useNotifications";
+import NotificationDropdown from "../../../components/notifications/NotificationDropdown";
+import { useChat } from "../../../context/useChat.js";
 
 const breadcrumbMap = [
-  ['/student/journey', 'Journey'],
-  ['/student/portfolio', 'Portfolio'],
-  ['/student/internship', 'Internship'],
-  ['/student/internship', 'Internship'],
-  ['/student/mentorship', 'Mentorship'],
-  ['/student/competency', 'Competency'],
-  ['/student/certificate', 'Certificate'],
-  ['/student/readiness', 'Readiness'],
-  ['/student/career', 'Career'],
-  ['/student/referrals', 'Referrals'],
-  ['/student/requests', 'Requests'],
-  ['/student/accounts', 'Accounts'],
-  ['/student/profile', 'Profile'],
-  ['/student/message', 'Message'],
-  ['/student/message', 'Message'],
-  ['/inbox', 'Message'],
+  ["/student/journey", "Journey"],
+  ["/student/portfolio", "Portfolio"],
+  ["/student/internship", "Internship"],
+  ["/student/internship", "Internship"],
+  ["/student/mentorship", "Mentorship"],
+  ["/student/competency", "Competency"],
+  ["/student/certificate", "Certificate"],
+  ["/student/readiness", "Readiness"],
+  ["/student/career", "Career"],
+  ["/student/referrals", "Referrals"],
+  ["/student/success", "Success Stories"],
+  ["/stories", "Success Stories"],
+  ["/student/requests", "Requests"],
+  ["/student/accounts", "Accounts"],
+  ["/student/profile", "Profile"],
+  ["/student/message", "Message"],
+  ["/student/message", "Message"],
+  ["/inbox", "Message"],
 ];
 
-const StudentTopbar = ({
-  user,
-  title,
-  onMenuClick,
-}) => {
+const StudentTopbar = ({ user, title, onMenuClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const { items: notifs, unread: notifUnread, markRead: markNotifRead, markAllRead: markAllNotifsRead, refresh: refreshNotifs } = useNotifications();
-  const { unreadTotal: chatUnread, convos, openChat, refreshConvos } = useChat();
+  const {
+    items: notifs,
+    unread: notifUnread,
+    markRead: markNotifRead,
+    markAllRead: markAllNotifsRead,
+    refresh: refreshNotifs,
+  } = useNotifications();
+  const {
+    unreadTotal: chatUnread,
+    convos,
+    openChat,
+    refreshConvos,
+  } = useChat();
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
   const chatRef = useRef(null);
@@ -59,22 +68,23 @@ const StudentTopbar = ({
 
   const pageTitle =
     title ||
-    breadcrumbMap.find(([prefix]) => location.pathname.startsWith(prefix))?.[1] ||
-    'Dashboard';
+    breadcrumbMap.find(([prefix]) =>
+      location.pathname.startsWith(prefix),
+    )?.[1] ||
+    "Dashboard";
 
   // Escape closes header menus
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setDropdownOpen(false);
         setNotifOpen(false);
         setChatOpen(false);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
-
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -89,18 +99,20 @@ const StudentTopbar = ({
         setChatOpen(false);
       }
     };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
   const handleLogout = () => {
-    navigate('/logout');
+    navigate("/logout");
   };
 
   return (
     <nav
       className="sticky top-0 z-10 bg-gradient-to-r from-[#0F4C3A] via-[#007a2e] to-[#009639] shadow-md shadow-emerald-900/20"
-      style={{ fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif" }}
+      style={{
+        fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif",
+      }}
     >
       <div className="flex h-14 items-center gap-2 px-3 sm:px-4 lg:px-6">
         {/* Mobile menu toggle */}
@@ -115,21 +127,23 @@ const StudentTopbar = ({
 
         {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="hidden min-w-0 flex-1 sm:block">
-            <ol className="flex items-center gap-1.5 text-[12px]">
-              <li className="flex items-center">
-                <Link
-                  to="/student"
-                  className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 font-semibold text-white transition hover:bg-white/25"
-                >
-                  <Home className="h-3.5 w-3.5" />
-                  <span>Student</span>
-                </Link>
-              </li>
-              <li aria-hidden="true" className="text-white/40">
-                <ChevronRight className="h-3.5 w-3.5" />
-              </li>
-              <li className="truncate text-[13px] font-bold text-white">{pageTitle}</li>
-            </ol>
+          <ol className="flex items-center gap-1.5 text-[12px]">
+            <li className="flex items-center">
+              <Link
+                to="/student"
+                className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 font-semibold text-white transition hover:bg-white/25"
+              >
+                <Home className="h-3.5 w-3.5" />
+                <span>Student</span>
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-white/40">
+              <ChevronRight className="h-3.5 w-3.5" />
+            </li>
+            <li className="truncate text-[13px] font-bold text-white">
+              {pageTitle}
+            </li>
+          </ol>
         </nav>
 
         <GlobalSearch />
@@ -143,19 +157,28 @@ const StudentTopbar = ({
               className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
               aria-label="Chats"
               aria-expanded={chatOpen}
-              aria-controls={chatOpen ? 'student-topbar-chats' : undefined}
+              aria-controls={chatOpen ? "student-topbar-chats" : undefined}
             >
               <MessageSquare className="h-[18px] w-[18px]" />
-              {(chatUnread > 0) && (
-                <span aria-label={`${chatUnread} unread messages`} aria-live="polite" className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
-                  {chatUnread > 99 ? '99+' : chatUnread}
+              {chatUnread > 0 && (
+                <span
+                  aria-label={`${chatUnread} unread messages`}
+                  aria-live="polite"
+                  className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]"
+                >
+                  {chatUnread > 99 ? "99+" : chatUnread}
                 </span>
               )}
             </button>
             {chatOpen && (
-              <div id="student-topbar-chats" className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20 dark:border-zinc-700 dark:bg-zinc-900">
+              <div
+                id="student-topbar-chats"
+                className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl z-20 dark:border-zinc-700 dark:bg-zinc-900"
+              >
                 <div className="flex items-center justify-between px-4 py-3">
-                  <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Chats</p>
+                  <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+                    Chats
+                  </p>
                   <Link
                     to="/student/message"
                     onClick={() => setChatOpen(false)}
@@ -169,7 +192,10 @@ const StudentTopbar = ({
                     <li key={c._id}>
                       <button
                         type="button"
-                        onClick={() => { openChat(c); setChatOpen(false); }}
+                        onClick={() => {
+                          openChat(c);
+                          setChatOpen(false);
+                        }}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
                       >
                         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639] dark:text-emerald-300">
@@ -181,10 +207,16 @@ const StudentTopbar = ({
                           )}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">{c.name}</span>
-                          <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">{c.preview}</span>
+                          <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">
+                            {c.name}
+                          </span>
+                          <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                            {c.preview}
+                          </span>
                         </span>
-                        <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-400">{formatTime(c.time)}</span>
+                        <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-400">
+                          {formatTime(c.time)}
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -201,14 +233,17 @@ const StudentTopbar = ({
           <div className="relative" ref={notifRef}>
             <button
               type="button"
-              onClick={() => { setNotifOpen(!notifOpen); refreshNotifs(); }}
+              onClick={() => {
+                setNotifOpen(!notifOpen);
+                refreshNotifs();
+              }}
               className="relative rounded-full p-2 text-white/80 transition hover:bg-white/15 hover:text-white"
               aria-label="Notifications"
             >
               <Bell className="h-[18px] w-[18px]" />
               {notifUnread > 0 && (
                 <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-[#007a2e]">
-                  {notifUnread > 99 ? '99+' : notifUnread}
+                  {notifUnread > 99 ? "99+" : notifUnread}
                 </span>
               )}
             </button>
@@ -233,10 +268,18 @@ const StudentTopbar = ({
             className="flex items-center gap-1.5 rounded-full bg-white/15 py-1 pl-1 pr-2 transition hover:bg-white/25"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-extrabold text-[#007a2e]">
-              {user?.profilePicture ? <img src={user.profilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : (user?.name || 'S').charAt(0).toUpperCase()}
+              {user?.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt=""
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                (user?.name || "S").charAt(0).toUpperCase()
+              )}
             </span>
             <ChevronDown
-              className={`hidden h-3.5 w-3.5 text-white/70 transition-transform duration-200 sm:block ${dropdownOpen ? 'rotate-180' : ''}`}
+              className={`hidden h-3.5 w-3.5 text-white/70 transition-transform duration-200 sm:block ${dropdownOpen ? "rotate-180" : ""}`}
             />
           </button>
 
@@ -244,10 +287,10 @@ const StudentTopbar = ({
             <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl shadow-zinc-900/10 z-20">
               <div className="mb-1 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 px-3 py-2.5">
                 <p className="truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">
-                  {user?.name || 'Student'}
+                  {user?.name || "Student"}
                 </p>
                 <p className="truncate text-[10.5px] text-zinc-500 dark:text-zinc-400">
-                  {user?.email || 'student@clsu.edu.ph'}
+                  {user?.email || "student@clsu.edu.ph"}
                 </p>
               </div>
 

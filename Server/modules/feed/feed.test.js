@@ -19,6 +19,8 @@ const matches = (doc, filter) => Object.entries(filter).every(([key, expected]) 
       if (op === '$ne') return !equal(actual, value);
       if (op === '$lt') return String(actual) < String(value);
       if (op === '$exists') return (actual !== undefined) === value;
+      if (op === '$regex') return new RegExp(value, expected.$options || '').test(String(actual || ''));
+      if (op === '$options') return true;
       throw new Error(`Unsupported operator ${op}`);
     });
   }
@@ -98,6 +100,77 @@ const fixture = async () => {
 };
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
+
+test('student dashboard filters all five types, paginates search, and protects private or blocked posts', async () => {
+  const f = await fixture();
+  const inputs = [
+    { type: 'update', body: 'Community C++ update' },
+    { type: 'hiring', title: 'C++ developer', body: 'Build useful tools', details: { organization: 'Campus Labs' } },
+    { type: 'referral', title: 'Research referral', body: 'Join the team', details: { organization: 'Campus Labs' } },
+    { type: 'event', title: 'Career workshop', body: 'Career planning', details: { location: 'Campus Hall', startAt: '2027-01-01T08:00:00Z' } },
+    { type: 'story', title: 'From student to engineer', body: 'My C++ career journey' },
+  ];
+  const created = await Promise.all(inputs.map(input => f.feed.create(f.author, input)));
+  assert.equal((await f.feed.list(f.student, { type: 'all' })).posts.length, 5);
+  for (const type of ['hiring', 'referral', 'event', 'story']) {
+    const page = await f.feed.list(f.student, { type });
+    assert.equal(page.posts.length, 1); assert.equal(page.posts[0].type, type);
+  }
+  assert.equal((await f.feed.list(f.student, { q: 'campus' })).posts.length, 3);
+  const first = await f.feed.list(f.student, { q: 'C++', limit: 1 });
+  const second = await f.feed.list(f.student, { q: 'C++', limit: 1, before: first.nextCursor });
+  assert.equal(first.posts.length, 1); assert.ok(first.nextCursor);
+  assert.equal(second.posts.length, 1); assert.notEqual(String(first.posts[0]._id), String(second.posts[0]._id));
+  assert.equal((await f.feed.list(f.student, { type: 'referral', q: 'C++' })).posts.length, 0);
+  const privatePost = await f.feed.create(f.author, { type: 'hiring', title: 'Private C++ job', body: 'Private', audience: 'connections', details: { organization: 'Private Labs' } });
+  await f.feed.share(f.friend, privatePost._id, { audience: 'connections' });
+  await f.feed.moderate(f.admin, created[1]._id, { action: 'block', enabled: true, reason: 'Review' });
+  const visible = await f.feed.list(f.student, { q: 'C++' });
+  assert.equal(visible.posts.length, 2);
+  assert.ok(visible.posts.every(post => post.audience === 'public' && post.type !== 'hiring'));
+  const repost = await f.feed.share(f.friend, created[2]._id, { audience: 'public', body: 'An opportunity worth sharing' });
+  assert.ok((await f.feed.list(f.student, { q: 'Research referral' })).posts.some(post => String(post._id) === String(repost._id)));
+  for (const q of ['x'.repeat(201), ['text'], { $ne: '' }]) await rejects(f.feed.list(f.student, { q }), 400);
+});
+
+test('structured success stories preserve journey, achievements and advice with canonical feed content', async () => {
+  const f = await fixture();
+  const sections = { topic: 'career_journey', journey: 'I started as an intern.', achievements: 'Led a community software project.', advice: 'Build useful projects and ask for feedback.' };
+  const story = await f.feed.create(f.author, { type: 'story', title: 'A career in community technology', body: 'This text is replaced by the story sections', details: { story: sections } });
+  assert.deepEqual(story.details.story, sections);
+  assert.ok(story.body.includes('Career journey\nI started as an intern.'));
+  assert.ok(story.body.includes('Professional achievements\nLed a community software project.'));
+  assert.ok(story.body.includes('Advice for students\nBuild useful projects'));
+  assert.equal((await f.feed.get(f.student, story._id)).title, story.title);
+  await rejects(f.feed.create(f.student, { type: 'story', title: 'Student story', details: { story: sections } }), 403);
+});
+
+test('story gallery respects student visibility, author ownership, topics, keyword search and original posts', async () => {
+  const f = await fixture();
+  const visible = await f.feed.create(f.author, { type: 'story', title: 'Learning C++', details: { story: { topic: 'advice', advice: 'Practice C++ with useful projects.' } } });
+  await f.feed.create(f.author, post({ type: 'story', title: 'Private journey', audience: 'connections' }));
+  await f.feed.create(f.friend, { type: 'story', title: 'A professional milestone', details: { story: { topic: 'achievement', achievements: 'Earned a professional award.' } } });
+  await f.feed.create(f.author, post({ type: 'update' }));
+  await f.feed.share(f.friend, visible._id, { body: 'A useful story.', audience: 'public' });
+  const result = await f.feed.listStories(f.student);
+  assert.equal(result.posts.length, 2);
+  assert.ok(result.posts.every(story => story.type === 'story' && !story.originalPost));
+  assert.equal((await f.feed.listStories(f.student, { topic: 'advice', q: 'C++' })).posts[0].title, 'Learning C++');
+  assert.equal((await f.feed.listStories(f.author, { mine: 'true' })).posts.length, 2);
+  assert.equal((await f.feed.listStories(f.student, { mine: 'true' })).posts.length, 0);
+  await rejects(f.feed.listStories(f.student, { topic: 'invalid' }), 400);
+  await rejects(f.feed.listStories(f.student, { q: { $ne: '' } }), 400);
+});
+
+test('story sections validate content without weakening ordinary post validation', () => {
+  const data = { type: 'story', title: 'Advice', details: { story: { topic: 'advice', advice: 'Keep learning.' } } };
+  assert.equal(validatePost(data).body, 'Advice for students\nKeep learning.');
+  for (const story of [{ topic: 'invalid', advice: 'Text' }, { topic: 'advice' }, { topic: 'advice', advice: {} }, { topic: 'advice', advice: 'x'.repeat(5001) }, []]) {
+    assert.throws(() => validatePost({ ...data, details: { story } }), error => error.status === 400);
+  }
+  assert.throws(() => validatePost({ type: 'update', details: { story: {} } }), error => error.status === 400);
+  assert.equal(validatePost({ type: 'story', title: 'Legacy story', body: 'My career journey.' }).body, 'My career journey.');
+});
 
 test('only administrators can access moderation, restrictions, and private post review', async () => {
   const f = await fixture();

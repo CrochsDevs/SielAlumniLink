@@ -22,6 +22,7 @@ import developmentRoutes from '../modules/development/development.routes.js';
 import certificateRoutes from '../modules/development/certificates.routes.js';
 import meetingRoutes from '../modules/meetings/meetings.routes.js';
 import employmentRoutes from '../modules/employment/employment.routes.js';
+import mentorshipRoutes from '../modules/mentorship/mentorship.routes.js';
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/development', developmentRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/employment', employmentRoutes);
+app.use('/api/mentorship', mentorshipRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({

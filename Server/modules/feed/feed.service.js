@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { canViewPost, ensureFeedParticipation, fail, isFeedAdmin, membershipUpdate, POST_TYPES, validateComment, validateModeration, validatePost } from './feed.policy.js';
+import { canViewPost, ensureFeedParticipation, fail, isFeedAdmin, membershipUpdate, POST_TYPES, STORY_TOPICS, validateComment, validateModeration, validatePost } from './feed.policy.js';
 
 const objectId = (value) => {
   if (!ObjectId.isValid(value)) fail(404, 'Post not found');
@@ -76,7 +76,7 @@ export const createFeedService = (db, changed = () => {}) => {
     };
   };
 
-  const list = async (user, query = {}) => {
+  const list = async (user, query = {}, storyBoard = false) => {
     const network = await connectedIds(user);
     const accessible = [String(user._id), ...network];
     const visibility = { $or: [{ audience: 'public' }, { authorAuthId: { $in: accessible } }] };
@@ -88,6 +88,20 @@ export const createFeedService = (db, changed = () => {}) => {
     if (query.type && query.type !== 'all') {
       if (!POST_TYPES.includes(query.type)) fail(400, 'Invalid feed filter');
       filter.type = query.type;
+    }
+    let searchFilter = null;
+    if (query.q !== undefined) {
+      if (typeof query.q !== 'string' || query.q.length > 200) fail(400, 'Search must be text of up to 200 characters');
+      const search = query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (search) searchFilter = { $or: ['title', 'body', 'details.organization', 'details.location', 'original.0.title', 'original.0.body', 'original.0.details.organization', 'original.0.details.location'].map(field => ({ [field]: { $regex: search, $options: 'i' } })) };
+    }
+    if (storyBoard) {
+      filter.originalPostId = null;
+      if (query.topic && query.topic !== 'all') {
+        if (!STORY_TOPICS.includes(query.topic)) fail(400, 'Invalid story topic');
+        filter['details.story.topic'] = query.topic;
+      }
+      if (query.mine === 'true') filter.authorAuthId = String(user._id);
     }
     if (query.before) filter._id = { $lt: objectId(query.before) };
     const limit = Math.min(30, Math.max(1, Number(query.limit) || 15));
@@ -101,6 +115,7 @@ export const createFeedService = (db, changed = () => {}) => {
         ...(isFeedAdmin(user) ? [] : [{ 'original.0.moderation.blocked': { $ne: true } },
           { $or: [{ 'original.0.audience': 'public' }, { 'original.0.authorAuthId': { $in: accessible } }] }]),
       ] }] } },
+      ...(searchFilter ? [{ $match: searchFilter }] : []),
       { $limit: limit + 1 }, { $project: { original: 0 } },
     ]).toArray();
     const page = rows.slice(0, limit);
@@ -256,7 +271,7 @@ export const createFeedService = (db, changed = () => {}) => {
     return Promise.all(rows.map(async row => ({ author: await author(row._id), reason: row.reason, updatedAt: row.updatedAt })));
   };
 
-  return { list, create, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
+  return { list, listStories: (user, query = {}) => list(user, { ...query, type: 'story' }, true), create, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
     setMembership, listComments, comment, removeComment, share, remove, recipients };
 };
 
