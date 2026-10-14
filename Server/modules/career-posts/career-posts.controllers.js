@@ -1,6 +1,29 @@
 import CareerPostModel, { POST_TYPES } from './career-posts.models.js';
 import UserModel from '../users/users.models.js';
 
+function validateGuide(data, partial = false) {
+  for (const [field, limit] of [['title', 200], ['body', 10000]]) {
+    if (partial && data[field] === undefined) continue;
+    if (typeof data[field] !== 'string' || !data[field].trim() || data[field].length > limit) {
+      return `${field === 'title' ? 'Title' : 'Guide content'} is required and must be at most ${limit} characters`;
+    }
+  }
+  if (data.type !== undefined && !POST_TYPES.includes(data.type)) return `Type must be one of: ${POST_TYPES.join(', ')}`;
+  if (data.tags !== undefined && (!Array.isArray(data.tags) || data.tags.length > 20 || data.tags.some(tag => typeof tag !== 'string' || tag.length > 100))) {
+    return 'Tags must be an array of up to 20 strings (max 100 characters each)';
+  }
+  return null;
+}
+
+function guideData(body) {
+  const data = {};
+  for (const field of ['title', 'body', 'type', 'tags']) {
+    if (body[field] !== undefined) data[field] = body[field];
+  }
+  if (typeof data.tags === 'string') data.tags = data.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+  return data;
+}
+
 // Any logged-in user reads active posts (alumni guides + student career).
 export const listPosts = async (req, res) => {
   try {
@@ -39,27 +62,24 @@ export const getSavedPosts = async (req, res) => {
   }
 };
 
-// Administrators post guides. Other roles read and save only.
+// Alumni share career guidance; administrators can also publish and moderate.
 export const createPost = async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (!['admin', 'alumni'].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Only administrators can post career guides'
+        message: 'Only alumni and administrators can post career guides'
       });
     }
-    const { title, body, type, tags } = req.body;
-    if (!title) {
-      return res.status(400).json({ success: false, message: 'Please provide a title' });
-    }
-    if (type && !POST_TYPES.includes(type)) {
-      return res.status(400).json({ success: false, message: `Type must be one of: ${POST_TYPES.join(', ')}` });
-    }
+    const data = guideData(req.body);
+    const validationError = validateGuide(data);
+    if (validationError) return res.status(400).json({ success: false, message: validationError });
+    const { title, body, type, tags } = data;
 
     const profile = await UserModel.findByAuthId(req.user._id);
     const post = await CareerPostModel.create({
-      title,
-      body,
+      title: title.trim(),
+      body: body.trim(),
       type,
       tags: typeof tags === 'string' ? tags.split(',').map((t) => t.trim()).filter(Boolean) : tags,
       authorAuthId: req.user._id,
@@ -97,7 +117,12 @@ export const updatePost = async (req, res) => {
         message: 'Forbidden: only the author can edit this post'
       });
     }
-    const updated = await CareerPostModel.updateById(req.params.id, req.body);
+    const data = guideData(req.body);
+    const validationError = validateGuide(data, true);
+    if (validationError) return res.status(400).json({ success: false, message: validationError });
+    if (data.title !== undefined) data.title = data.title.trim();
+    if (data.body !== undefined) data.body = data.body.trim();
+    const updated = await CareerPostModel.updateById(req.params.id, data);
     res.status(200).json({
       success: true,
       data: updated,
@@ -141,7 +166,7 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// Toggle save (students track interests via saved resources).
+// Save resources to the signed-in user's collection.
 export const toggleSavePost = async (req, res) => {
   try {
     const result = await CareerPostModel.toggleSave(req.params.id, req.user._id);
