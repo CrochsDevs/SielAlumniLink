@@ -173,6 +173,8 @@ function AppRoutes() {
           <AdminTracer />
         </ProtectedRoute>
       } />
+      <Route path="/admin/employment" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><Navigate to="/admin/tracer?view=employment" replace /></ProtectedRoute>} />
+      <Route path="/alumni/employment" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}><AlumniEmployment /></ProtectedRoute>} />
       <Route path="/admin/jobs" element={
         <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
           <AdminJobs />

@@ -1,261 +1,82 @@
-import { useEffect, useState } from 'react';
-import Swal from 'sweetalert2';
-import { Building2, MapPin, CalendarDays, Plus, CheckCircle2, Trash2 } from 'lucide-react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { Building2, Briefcase, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
+import { FeedDialog } from '../../components/feed/FeedComposer';
 import api from '../../utils/axios';
 
-const AlumniEmployment = () => {
-  const { user } = useAuth();
+const STATUSES = ['Employed', 'Self-employed', 'Unemployed', 'Studying'];
+const INDUSTRIES = ['Agriculture', 'Business Services', 'Construction', 'Education', 'Engineering', 'Finance', 'Government', 'Healthcare', 'Hospitality', 'Information Technology', 'Manufacturing', 'Marketing', 'Retail', 'Transportation'];
+const emptyForm = { employmentStatus: '', currentCompany: '', position: '', industry: '', location: '', startDate: '' };
+const emptyPast = { company: '', position: '', industry: '', location: '', startDate: '', endDate: '' };
+const card = 'rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6';
+const input = 'mt-1.5 h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:[color-scheme:dark]';
+const button = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white hover:bg-[#007a2e] disabled:opacity-50';
+const monthLabel = value => /^\d{4}-\d{2}/.test(value || '') ? new Date(`${value.slice(0, 7)}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Date not provided';
+const fromState = state => ({ ...emptyForm, ...Object.fromEntries(Object.keys(emptyForm).map(key => [key, state[key] || ''])), employmentStatus: STATUSES.includes(state.employmentStatus) ? state.employmentStatus : '' });
+
+export default function AlumniEmployment() {
+  const { user, refreshUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [status, setStatus] = useState('Employed');
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [record, setRecord] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [past, setPast] = useState(emptyPast);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ position: '', company: '', location: '', startDate: '', endDate: '', current: false });
-
-  const inputClass =
-    'w-full h-10 px-3.5 rounded-xl border border-zinc-200 bg-white text-[13px] outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15';
-
-  const loadEmployment = async () => {
-    setLoading(true);
+  const [deleting, setDeleting] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const pending = useRef(false);
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
     try {
-      const res = await api.get(`/users/${user?._id || user?.authId}`);
-      const profile = res.data.data || {};
-      setStatus(profile.employmentStatus || 'Employed');
-      const jobs = profile.employmentHistory || [];
-      setHistory(jobs.map((job, i) => ({
-        id: job._id || i,
-        position: job.position || job.role || '',
-        company: job.company || '',
-        location: job.location || '',
-        period: job.period || (job.startDate ? `${job.startDate} — ${job.endDate || 'Present'}` : ''),
-        current: job.current || false,
-      })));
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadEmployment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      const { data } = await api.get('/employment/me');
+      setRecord(data.data); setForm(fromState(data.data));
+    } catch (err) { setError(err.response?.data?.message || 'Unable to load employment. Please retry.'); }
+    finally { setLoading(false); }
   }, []);
-
-  const saveStatus = async (e) => {
-    e.preventDefault();
-    setSaving(true);
+  useEffect(() => { void load(); }, [load]);
+  const mutate = async (task, success) => {
+    if (pending.current) return;
+    pending.current = true; setBusy(true); setError(''); setMessage('');
     try {
-      await api.put(`/users/${user?._id || user?.authId}`, { employmentStatus: status });
-      Swal.fire({ title: 'Saved', text: 'Employment status updated.', icon: 'success', timer: 1500, showConfirmButton: false });
-      loadEmployment();
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to save', 'error');
-    } finally {
-      setSaving(false);
-    }
+      const response = await task();
+      setRecord(response.data.data); setForm(fromState(response.data.data));
+      setShowAdd(false); setDeleting(null); setPast(emptyPast); setMessage(success);
+      await refreshUser();
+    } catch (err) { setError(err.response?.data?.message || 'Unable to save. Please try again.'); }
+    finally { pending.current = false; setBusy(false); }
   };
+  const working = form.employmentStatus === 'Employed' || form.employmentStatus === 'Self-employed';
+  const field = (name, label, values, setter, required = false, type = 'text') => <label className="block text-xs font-medium">{label}{required && ' *'}<input aria-label={label} type={type} value={values[name]} onChange={event => { setter(previous => ({ ...previous, [name]: event.target.value })); setMessage(''); }} required={required} maxLength={200} list={name === 'industry' ? 'employment-industries' : undefined} className={input} /></label>;
+  const history = (record?.employmentHistory || []).map((job, index) => ({ ...job, index })).sort((a, b) => Number(b.current) - Number(a.current) || (b.startDate || '').localeCompare(a.startDate || ''));
 
-  const addExperience = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const newJob = {
-        position: form.position,
-        company: form.company,
-        location: form.location,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        current: form.current,
-      };
-      await api.put(`/users/${user?._id || user?.authId}`, {
-        $push: { employmentHistory: newJob },
-      });
-      setShowAdd(false);
-      setForm({ position: '', company: '', location: '', startDate: '', endDate: '', current: false });
-      Swal.fire({ title: 'Added', text: 'Experience added.', icon: 'success', timer: 1500, showConfirmButton: false });
-      loadEmployment();
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to add experience', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const removeExperience = async (id) => {
-    try {
-      await api.put(`/users/${user?._id || user?.authId}`, {
-        $pull: { employmentHistory: { _id: id } },
-      });
-      Swal.fire({ title: 'Removed', icon: 'success', timer: 1500, showConfirmButton: false });
-      loadEmployment();
-    } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Failed to remove', 'error');
-    }
-  };
-
-  const current = history.find((h) => h.current);
-
-  return (
-    <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
-      <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
-
-      <div className="lg:pl-64">
-        <AlumniTopbar user={user} title="Employment" onMenuClick={() => setSidebarOpen(true)} />
-
-        <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6">
-          {/* Status card */}
-          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] p-6 text-white shadow-lg shadow-emerald-900/10 sm:p-7">
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                backgroundImage:
-                  'radial-gradient(circle at 85% 20%, rgba(255,255,255,0.25), transparent 40%)',
-              }}
-            />
-            <div className="relative flex flex-wrap items-center gap-4">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900/15 ring-1 ring-white/30">
-                <Building2 className="h-6 w-6" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-white/60">
-                  Current Status
-                </p>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  disabled={saving}
-                  className="mt-1 h-9 rounded-lg bg-white/10 px-3 text-[14px] font-bold text-white ring-1 ring-white/20 outline-none transition focus:ring-white/40 disabled:opacity-50 [&>option]:text-zinc-900"
-                >
-                  {['Employed', 'Self-employed', 'Unemployed', 'Studying'].map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-                {current && (
-                  <p className="mt-0.5 text-[12.5px] text-white/75">
-                    {current.position} at {current.company} • {current.location}
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={saveStatus}
-                disabled={saving}
-                className="flex items-center gap-1.5 rounded-xl bg-white dark:bg-zinc-900 px-4 py-2 text-[12.5px] font-bold text-[#007a2e] transition hover:bg-emerald-50 disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                {saving ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-
-
+  return <div className="min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
+    <div className="lg:pl-64"><AlumniTopbar user={user} title="Employment" onMenuClick={() => setSidebarOpen(true)} />
+      <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6">
+        <header className="rounded-2xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white"><div className="flex items-center gap-3"><Building2 size={25} /><h1 className="text-xl font-semibold">My employment</h1></div><p className="mt-2 text-sm leading-6 text-white/85">Keep your current role up to date and track your career journey.</p>{record && <p className="mt-4 text-sm font-semibold">{record.employmentStatus}{record.currentCompany && ` · ${record.position} at ${record.currentCompany}`}</p>}</header>
+        {error && <div role="alert" className={`${card} text-sm text-red-600 dark:text-red-400`}>{error} <button type="button" disabled={busy} onClick={load} className="font-semibold underline">Refresh</button></div>}
+        {message && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">{message}</p>}
+        {loading ? <p role="status" className={card}>Loading employment…</p> : record && <>
+          <section className={card}><h2 className="text-base font-semibold">Current employment</h2><p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">A new company or position adds a step to your history. Previous roles remain available below.</p>
+            <form onSubmit={event => { event.preventDefault(); void mutate(() => api.put('/employment/me', form), 'Employment updated.'); }} className="mt-4"><fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-xs font-medium sm:col-span-2">Employment status *<select aria-label="Employment status" required value={form.employmentStatus} onChange={event => { setForm(previous => ({ ...previous, employmentStatus: event.target.value })); setMessage(''); }} className={input}><option value="">Select your status</option>{STATUSES.map(status => <option key={status}>{status}</option>)}</select></label>
+              {working && <>{field('currentCompany', form.employmentStatus === 'Self-employed' ? 'Current company / business' : 'Current company', form, setForm, true)}{field('position', 'Position', form, setForm, true)}{field('industry', 'Industry', form, setForm, true)}{field('location', 'Location', form, setForm)}{field('startDate', 'Start month', form, setForm, true, 'month')}</>}
+              {!working && form.employmentStatus && <p className="text-xs leading-6 text-zinc-500 sm:col-span-2 dark:text-zinc-400">Saving this status ends any current role and preserves your work history.</p>}
+              <div className="sm:col-span-2"><button type="submit" className={button}>{busy ? 'Saving…' : 'Save employment'}</button>{record.employmentUpdatedAt && <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Last updated {new Date(record.employmentUpdatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>}</div>
+            </fieldset></form>
           </section>
-
-          {/* History */}
-          <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">Employment History</h2>
-                <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Your work experience</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAdd(!showAdd)}
-                className="flex items-center gap-1.5 rounded-xl bg-[#009639] px-4 py-2 text-[12.5px] font-bold text-white transition hover:bg-[#007a2e]"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Experience
-              </button>
-            </div>
-
-            {showAdd && (
-              <form onSubmit={addExperience} className="mt-4 grid gap-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 sm:grid-cols-2">
-                <input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })}
-                  placeholder="Position (e.g. HR Manager)" className={inputClass} required />
-                <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-                  placeholder="Company" className={inputClass} required />
-                <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  placeholder="Location" className={inputClass} />
-                <div className="flex items-center gap-2">
-                  <input type="month" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                    className={inputClass} />
-                  <input type="month" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                    disabled={form.current} className={inputClass} />
-                </div>
-                <label className="flex items-center gap-2 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300 sm:col-span-2">
-                  <input type="checkbox" checked={form.current} onChange={(e) => setForm({ ...form, current: e.target.checked })}
-                    className="h-4 w-4 rounded border-zinc-300 text-[#009639] focus:ring-[#009639]/30" />
-                  I currently work here
-                </label>
-                <button type="submit" disabled={saving}
-                  className="h-10 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50 sm:col-span-2">
-                  {saving ? 'Adding...' : 'Add Experience'}
-                </button>
-              </form>
-            )}
-
-            <ol className="mt-4 space-y-0">
-              {loading ? (
-                <li className="py-6 text-center text-[12.5px] text-zinc-400">Loading employment history...</li>
-              ) : history.length === 0 ? (
-                <li className="py-6 text-center text-[12.5px] text-zinc-400">No employment history yet. Click "Add Experience" to add one.</li>
-              ) : (
-                history.map((job, i) => (
-                  <li key={job.id} className="group relative flex gap-4 pb-6 last:pb-0">
-                    {i < history.length - 1 && (
-                      <span className="absolute left-[19px] top-11 h-[calc(100%-2.5rem)] w-0.5 rounded bg-emerald-100" />
-                    )}
-                    <span className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                      job.current ? 'bg-[#009639] text-white shadow-sm' : 'bg-emerald-50 text-[#009639]'
-                    }`}>
-                      <Building2 className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1 rounded-2xl bg-zinc-50 dark:bg-zinc-800/70 p-4 transition hover:bg-emerald-50/50">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
-                            {job.position}
-                            {job.current && (
-                              <span className="rounded-full bg-[#009639] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                                Current
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-[12px] font-medium text-zinc-600 dark:text-zinc-300">{job.company}</p>
-                          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-400 dark:text-zinc-500">
-                            <span className="flex items-center gap-1">
-                              <CalendarDays className="h-3 w-3" />
-                              {job.period}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {job.location}
-                            </span>
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeExperience(job.id)}
-                          className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
-                          aria-label="Remove experience"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                ))
-              )}
-            </ol>
+          <section className={card}><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-base font-semibold">Career progression</h2><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your current and previous roles</p></div><button type="button" disabled={busy} onClick={() => setShowAdd(true)} className={button}><Plus size={15} />Add past experience</button></div>
+            <ol className="mt-5 space-y-3">{!history.length && <li className="py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">No employment history yet.</li>}{history.map(job => <li key={job._id || job.index} className="flex gap-3 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/60"><Briefcase size={20} className="mt-1 shrink-0 text-[#009639]" /><div className="min-w-0 flex-1"><div className="flex flex-wrap gap-2"><h3 className="break-words text-sm font-semibold">{job.position || job.role}</h3>{job.current && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Current</span>}</div><p className="mt-1 break-words text-xs text-zinc-600 dark:text-zinc-300">{job.company}{job.industry && ` · ${job.industry}`}</p><p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{job.startDate ? `${monthLabel(job.startDate)} – ${job.current ? 'Present' : job.endDate ? monthLabel(job.endDate) : 'End date not provided'}` : job.period || 'Dates not provided'}{job.location && ` · ${job.location}`}</p></div>{!job.current && <button type="button" aria-label={`Remove ${job.position || job.role} at ${job.company}`} onClick={() => setDeleting(job)} disabled={busy} className="h-9 rounded-lg p-2 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"><Trash2 size={16} /></button>}</li>)}</ol>
           </section>
-        </main>
-      </div>
+        </>}
+        <datalist id="employment-industries">{INDUSTRIES.map(industry => <option key={industry} value={industry} />)}</datalist>
+      </main>
     </div>
-  );
-};
-
-export default AlumniEmployment;
+    {showAdd && <FeedDialog title="Add past experience" busy={busy} onClose={() => setShowAdd(false)}><form onSubmit={event => { event.preventDefault(); void mutate(() => api.post('/employment/history', past), 'Past experience added.'); }}><fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">{field('company', 'Company', past, setPast, true)}{field('position', 'Past position', past, setPast, true)}{field('industry', 'Past industry', past, setPast)}{field('location', 'Past location', past, setPast)}{field('startDate', 'Past start month', past, setPast, true, 'month')}{field('endDate', 'Past end month', past, setPast, true, 'month')}{error && <p role="alert" className="text-sm text-red-600 sm:col-span-2 dark:text-red-400">{error}</p>}<div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={() => setShowAdd(false)} className="rounded-lg border border-zinc-200 px-4 text-xs dark:border-zinc-700">Cancel</button><button type="submit" className={button}>{busy ? 'Saving…' : 'Add experience'}</button></div></fieldset></form></FeedDialog>}
+    {deleting && <FeedDialog title="Remove past experience?" busy={busy} onClose={() => setDeleting(null)}><p className="text-sm">Remove {deleting.position || deleting.role} at {deleting.company} from your career history?</p>{error && <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}<div className="mt-5 flex justify-end gap-2"><button type="button" disabled={busy} onClick={() => setDeleting(null)} className="rounded-lg border border-zinc-200 px-4 py-2 text-xs dark:border-zinc-700">Cancel</button><button type="button" disabled={busy} onClick={() => mutate(() => api.delete(`/employment/history/${deleting.index}`, { data: { revision: record.historyRevision } }), 'Experience removed.')} className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white">{busy ? 'Removing…' : 'Remove'}</button></div></FeedDialog>}
+  </div>;
+}

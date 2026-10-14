@@ -72,7 +72,7 @@ listeners.set('Fetch.requestPaused', async ({ requestId, request }) => {
 });
 const setValue = async (id, value, select = false) => evaluate(`(() => {
   const field = document.getElementById(${JSON.stringify(id)});
-  Object.getOwnPropertyDescriptor(${select ? 'HTMLSelectElement' : 'HTMLInputElement'}.prototype, 'value').set.call(field, ${JSON.stringify(value)});
+  Object.getOwnPropertyDescriptor(field.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : ${select ? 'HTMLSelectElement' : 'HTMLInputElement'}.prototype, 'value').set.call(field, ${JSON.stringify(value)});
   field.dispatchEvent(new Event('${select ? 'change' : 'input'}', { bubbles: true }));
 })()`);
 const next = async () => evaluate("document.querySelector('dialog[data-tracer-modal] button[type=submit]').click()");
@@ -107,6 +107,8 @@ try {
   await next(); await until("document.querySelector('#tracer-employmentDate')");
   await setValue('tracer-employmentDate', '2024-06');
   await setValue('tracer-location', 'Nueva Ecija');
+  await setValue('tracer-jobAlignment', 'directly_related', true);
+  await setValue('tracer-alignmentExplanation', 'I use programming and database skills to build web applications.');
   await evaluate("Array.from(document.querySelectorAll('[data-tracer-modal] button')).find(b => b.textContent.trim() === 'Previous').click()");
   await until("document.querySelector('#tracer-status')");
   assert.equal(await evaluate("document.querySelector('#tracer-status').value"), 'Employed', 'Previous must preserve answers');
@@ -115,15 +117,15 @@ try {
   for (const theme of ['light', 'dark']) await capture('job-details', 390, theme);
   await next(); await until("document.querySelector('[data-tracer-modal] dl')");
   assert.equal(saveRequests.length, 0, 'Only the review step may save');
-  assert.equal(await evaluate("document.querySelectorAll('[data-tracer-modal] dt').length"), 8);
+  assert.equal(await evaluate("document.querySelectorAll('[data-tracer-modal] dt').length"), 10);
   for (const width of [320, 390, 768, 1440]) await capture('review', width, 'dark');
   await next(); await until("document.querySelector('[data-tracer-modal]').textContent.includes('Save failed for test')");
   assert.equal(await evaluate("document.querySelector('[data-tracer-modal] [role=status]')?.textContent.includes('Thank you') || false"), false, 'Failure must not show success');
-  assert.equal(await evaluate("document.querySelectorAll('[data-tracer-modal] dt').length"), 8, 'Failed save must preserve review');
+  assert.equal(await evaluate("document.querySelectorAll('[data-tracer-modal] dt').length"), 10, 'Failed save must preserve review');
   await evaluate("(() => {const button=document.querySelector('[data-tracer-modal] button[type=submit]');button.click();button.click();})()");
   await until("document.querySelector('[data-tracer-modal] [role=status]')?.textContent.includes('Thank you')");
   assert.equal(saveRequests.length, 2, 'A double click must not submit twice');
-  assert.deepEqual(savedResponse, { batch: '2020', program: 'Bachelor of Science in Information Technology', status: 'Employed', company: 'Test Company', position: 'Web Developer', salaryRange: 'Prefer not to say', employmentDate: '2024-06', location: 'Nueva Ecija' });
+  assert.deepEqual(savedResponse, { batch: '2020', program: 'Bachelor of Science in Information Technology', status: 'Employed', company: 'Test Company', position: 'Web Developer', salaryRange: 'Prefer not to say', employmentDate: '2024-06', location: 'Nueva Ecija', jobAlignment: 'directly_related', alignmentExplanation: 'I use programming and database skills to build web applications.' });
   await capture('saved', 390, 'dark');
   await evaluate("Array.from(document.querySelectorAll('[data-tracer-modal] button')).find(b => b.textContent.trim() === 'Update my response').click()");
   await until("document.querySelector('#tracer-batch')");
@@ -146,6 +148,8 @@ try {
   await next(); await until("document.querySelector('#tracer-employmentDate')");
   assert.equal(await evaluate("document.querySelector('label[for=tracer-salaryRange]').textContent.includes('Income')"), true);
   await setValue('tracer-employmentDate', '2025-01');
+  await setValue('tracer-jobAlignment', 'partly_related', true);
+  await setValue('tracer-alignmentExplanation', 'I use some digital skills in freelance design work.');
   await next(); await until("document.querySelector('[data-tracer-modal] dl')");
   await next(); await until("document.querySelector('[data-tracer-modal] [role=status]')?.textContent.includes('Thank you')");
   assert.equal(savedResponse.status, 'Self-employed');
@@ -180,7 +184,7 @@ try {
   assert.equal(await evaluate("document.querySelector('#tracer-status').value"), 'Unemployed');
   await next(); await until("document.querySelector('[data-tracer-modal] dl')");
   await next(); await until("document.querySelector('[data-tracer-modal] [role=status]')?.textContent.includes('Thank you')");
-  assert.deepEqual(savedResponse, { batch: '2020', program: 'Bachelor of Science in Information Technology', status: 'Unemployed', company: '', position: '', salaryRange: '', employmentDate: '', location: '' });
+  assert.deepEqual(savedResponse, { batch: '2020', program: 'Bachelor of Science in Information Technology', status: 'Unemployed', company: '', position: '', salaryRange: '', employmentDate: '', location: '', jobAlignment: '', alignmentExplanation: '' });
   await send('Page.reload'); await until("document.querySelector('#tracer-batch')");
   await next(); await until("document.querySelector('#tracer-status')");
   assert.equal(await evaluate("document.querySelector('#tracer-status').value"), 'Unemployed');

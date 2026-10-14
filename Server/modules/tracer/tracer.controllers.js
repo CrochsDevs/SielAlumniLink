@@ -1,47 +1,22 @@
-import TracerModel, { TRACER_STATUSES } from './tracer.models.js';
-import ConnectionModel from '../connections/connections.models.js';
-import AuthModel from '../auth/auth.models.js';
+import TracerModel from './tracer.models.js';
+import { buildAlignmentReport, validateTracerResponse } from './tracer.alignment.js';
 
-// Check if current user has tracer access — any authenticated user.
+// Any authenticated user can open the tracer form.
 export const checkAccess = async (req, res) => {
   try {
     res.status(200).json({ success: true, data: { hasAccess: true } });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(error.status || 500).json({ success: false, message: error.message });
   }
 };
 
 // Any logged-in user submits/updates their OWN tracer response.
 export const submitResponse = async (req, res) => {
   try {
-    const { batch, program, status, company, position, salaryRange, employmentDate, location } = req.body;
-
-    if (!batch || !program || !status) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide batch, program and employment status'
-      });
-    }
-
-    if (!TRACER_STATUSES.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid status. Allowed: ${TRACER_STATUSES.join(', ')}`
-      });
-    }
-
-    const working = status === 'Employed' || status === 'Self-employed';
-    const hasDetails = working || status === 'Studying';
+    const validated = validateTracerResponse(req.body);
     const saved = await TracerModel.upsertByAuthId(req.user._id, {
+      ...validated,
       email: req.user.email,
-      batch: String(batch).trim(),
-      program: String(program).trim(),
-      status,
-      company: hasDetails ? (company || '').trim() : '',
-      position: hasDetails ? (position || '').trim() : '',
-      salaryRange: working ? (salaryRange || '').trim() : '',
-      employmentDate: working && employmentDate ? new Date(employmentDate) : null,
-      location: hasDetails ? (location || '').trim() : '',
     });
 
     res.status(200).json({
@@ -50,10 +25,19 @@ export const submitResponse = async (req, res) => {
       data: saved
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
+  }
+};
+
+export const getAlignmentReport = async (req, res) => {
+  try {
+    const responses = await TracerModel.findAlumniResponses();
+    res.status(200).json({ success: true, data: buildAlignmentReport(responses, req.query) });
+  } catch (error) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
   }
 };
 
@@ -66,7 +50,7 @@ export const getMyResponse = async (req, res) => {
       data: response,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -83,7 +67,7 @@ export const getResponses = async (req, res) => {
       message: 'Tracer responses fetched successfully'
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });

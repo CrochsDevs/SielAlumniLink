@@ -84,6 +84,7 @@ const AlumniSidebar = ({ user, mobileOpen: controlledOpen, setMobileOpen: contro
             </NavLink>
 
             <NavLink to="/alumni/mentorship" className={navItemClass(isActive('/alumni/mentorship'))}><ClipboardList className="w-4 h-4 shrink-0" /><span className="truncate">Mentorship</span></NavLink>
+            <NavLink to="/alumni/employment" className={navItemClass(isActive('/alumni/employment'))}><Briefcase className="w-4 h-4 shrink-0" /><span className="truncate">Employment</span></NavLink>
 
             <NavLink to="/alumni/success" className={navItemClass(isActive('/alumni/success'))}>
               <Trophy className="w-4 h-4 shrink-0" />
