@@ -12,7 +12,7 @@ export default function AlumniCareer() {
     <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
     <div className="lg:pl-64">
       <AlumniTopbar user={user} title="Career" onMenuClick={() => setSidebarOpen(true)} />
-      <CareerBoard referralContent={<ReferralBoard />} />
+      <CareerBoard referralContent={<ReferralBoard embedded />} />
     </div>
   </div>;
 }

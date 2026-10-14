@@ -8,11 +8,11 @@ export default function AlumniReferral() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  return <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
+  return <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
     <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
     <div className="lg:pl-64">
       <AlumniTopbar user={user} title="Referral" onMenuClick={() => setSidebarOpen(true)} />
-      <main className="p-4 sm:p-6">
+      <main className="mx-auto max-w-7xl p-4 sm:p-6">
         <ReferralBoard />
       </main>
     </div>
