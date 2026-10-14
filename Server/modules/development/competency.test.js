@@ -49,7 +49,7 @@ test('validation rejects invalid levels, lower targets, unknown keys and oversiz
   assert.deepEqual(validateCompetency('communication', { ...assessment, evidence: ' example ' }), { ...assessment, evidence: 'example' });
   for (const changes of [{ rating: 0 }, { rating: 5 }, { rating: '3' }, { rating: 2.5 }, { target: 1 }, { target: 5 }, { evidence: 'x'.repeat(2001) }, { goal: 'x'.repeat(1001) }]) assert.throws(() => validateCompetency('communication', { ...assessment, ...changes }), error => error.status === 400);
   assert.throws(() => validateCompetency('__proto__', assessment), error => error.status === 400);
-  for (const changes of [{ rating: 5 }, { feedback: ' ' }, { feedback: 'x'.repeat(2001) }]) assert.throws(() => validateMentorEvaluation('technical', { rating: 3, feedback: 'Good work', ...changes }), error => error.status === 400);
+  for (const changes of [{ rating: 5 }, { feedback: ' ' }, { feedback: 'x'.repeat(2001) }, { observedEvidence: 'x'.repeat(2001) }, { nextStep: 'x'.repeat(1001) }]) assert.throws(() => validateMentorEvaluation('technical', { rating: 3, feedback: 'Good work', ...changes }), error => error.status === 400);
 });
 test('self-assessments belong to the authenticated student and ignore body ownership fields', async () => {
   const { service } = fixture();
@@ -101,4 +101,21 @@ test('most recent mentor evaluation determines the gap; legacy self records are 
     { competencyKey: 'communication', rating: 3, updatedAt: '2026-02-01' },
   ]);
   assert.equal(result.assessedCount, 1); assert.equal(result.gaps[1].gap, 0); assert.equal(result.gaps[1].currentLevel, 3);
+});
+
+test('evaluations, observations, and next steps stay bound to each selected student even when body IDs are forged', async () => {
+  const { service, seed } = mentorship();
+  seed('connections', { _id: 'other-connection', requesterAuthId: other._id, recipientAuthId: mentor._id, status: 'accepted' });
+  await service.evaluate(mentor, student._id, 'technical', { rating: 2, feedback: 'Alex needs debugging practice.', observedEvidence: 'Reviewed the campus portal.', nextStep: 'Write a regression check.', studentAuthId: other._id, mentorAuthId: other._id });
+  await service.evaluate(mentor, other._id, 'technical', { rating: 4, feedback: 'Jamie explained the analysis clearly.', observedEvidence: 'Reviewed the spreadsheet model.', nextStep: 'Lead the next presentation.', studentAuthId: student._id });
+  const alex = await service.get(student), jamie = await service.get(other);
+  assert.equal(alex.mentorEvaluations.length, 1); assert.equal(jamie.mentorEvaluations.length, 1);
+  assert.equal(alex.mentorEvaluations[0].studentAuthId, student._id);
+  assert.equal(alex.mentorEvaluations[0].mentorAuthId, mentor._id);
+  assert.equal(alex.mentorEvaluations[0].nextStep, 'Write a regression check.');
+  assert.equal(jamie.mentorEvaluations[0].observedEvidence, 'Reviewed the spreadsheet model.');
+  assert.equal(jamie.mentorEvaluations[0].rating, 4);
+  await service.evaluate(mentor, student._id, 'technical', { rating: 3, feedback: 'Improved debugging.' });
+  assert.equal((await service.get(other)).mentorEvaluations[0].rating, 4);
+  assert.equal((await service.details(mentor, other._id)).student.authId, other._id);
 });

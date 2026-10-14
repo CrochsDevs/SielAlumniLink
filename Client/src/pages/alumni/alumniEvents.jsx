@@ -1,62 +1,104 @@
-import { useCallback, useEffect, useState } from 'react';
-import { CalendarDays, MapPin } from 'lucide-react';
+﻿import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CalendarDays, MapPin, Search, RefreshCw, Video, Clock, Building2 } from 'lucide-react';
 import ActivityAccess from '../../components/student/ActivityAccess';
+import EventCalendar from '../../components/events/EventCalendar';
+import { FeedDialog } from '../../components/feed/FeedComposer';
+import { activityLabel, activityStyle, eventDateTime } from '../../utils/eventCalendar';
 import { useAuth } from '../../context/useAuth';
 import AlumniSidebar from '../../layout/sidebar/alumni/alumniSidebar';
 import AlumniTopbar from '../../layout/topbar/alumni/alumniTopbar';
 import AlumniFeed from '../../components/feed/AlumniFeed';
 import api from '../../utils/axios';
 
-const formatDate = value => new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+const field = 'min-h-10 rounded-lg border border-zinc-200 bg-white text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 dark:border-zinc-700 dark:bg-zinc-900';
 
 export default function AlumniEvents() {
   const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState('upcoming');
-  const [asOf] = useState(() => Date.now());
-  const loadEvents = useCallback(async () => {
-    setLoading(true); setError('');
-    try { const res = await api.get('/events'); setEvents(res.data.data || []); }
+  const [tab, setTab] = useState('calendar');
+  const activeTab = params.has('post') ? 'community' : tab;
+  const changeTab = value => {
+    setTab(value);
+    if (value === 'calendar' && params.has('post')) {
+      const next = new URLSearchParams(params); next.delete('post'); setParams(next);
+    }
+  };
+  const [now, setNow] = useState(() => Date.now());
+  const [query, setQuery] = useState('');
+  const [type, setType] = useState('all');
+  const [participation, setParticipation] = useState('all');
+  const [mode, setMode] = useState('all');
+  const [selectedId, setSelectedId] = useState(null);
+  const loadEvents = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    try { const res = await api.get('/events'); setEvents(res.data.data || []); setError(''); setNow(Date.now()); }
     catch (err) { setError(err.response?.data?.message || 'Unable to load university events. Please try again.'); }
-    finally { setLoading(false); }
+    finally { if (!background) setLoading(false); }
   }, []);
-  useEffect(() => { Promise.resolve().then(loadEvents); }, [loadEvents]);
   useEffect(() => {
-    const timer = setInterval(() => { api.get('/events').then(response => setEvents(response.data.data || [])).catch(() => {}); }, 15000);
+    let cancelled = false;
+    Promise.resolve().then(() => { if (!cancelled) void loadEvents(); });
+    return () => { cancelled = true; };
+  }, [loadEvents]);
+  useEffect(() => {
+    const timer = setInterval(() => loadEvents(true), 15000);
     return () => clearInterval(timer);
-  }, []);
-  const visible = events.filter(event => {
-    const end = new Date(event.endAt || event.startAt).getTime();
-    return Number.isFinite(end) && (tab === 'upcoming' ? end >= asOf : end < asOf);
-  }).sort((a, b) => (new Date(a.startAt) - new Date(b.startAt)) * (tab === 'past' ? -1 : 1));
+  }, [loadEvents]);
+  const visible = events.filter(event => Number.isFinite(new Date(event.startAt).getTime()) && event.isActive !== false &&
+    (type === 'all' || (event.activityType || 'event') === type) &&
+    (mode === 'all' || event.deliveryMode === mode) &&
+    (participation !== 'registered' || !!event.registration) &&
+    [event.title, event.description, event.organizer, event.location].filter(Boolean).join(' ').toLowerCase().includes(query.trim().toLowerCase()));
+  const selected = events.find(event => event._id === selectedId);
+  const upcoming = events.filter(event => new Date(event.endAt || event.startAt).getTime() >= now && event.isActive !== false);
+  const filterActive = !!query || type !== 'all' || mode !== 'all' || participation !== 'all';
+  const clearFilters = () => { setQuery(''); setType('all'); setMode('all'); setParticipation('all'); };
 
-  return <div className="min-h-screen bg-[#f3f6f3] dark:bg-zinc-950">
+  return <div className="min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
     <AlumniSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
     <div className="lg:pl-64">
       <AlumniTopbar user={user} title="Events" onMenuClick={() => setSidebarOpen(true)} />
-      <main className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
-        <section className="rounded-2xl border border-emerald-900/10 bg-white p-5 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-          <h1 className="flex items-center gap-2 text-lg font-bold"><CalendarDays className="text-emerald-600" />University events</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Stay connected through university and alumni gatherings.</p>
-          <div className="my-4 flex gap-2" aria-label="Filter university events">
-            {['upcoming', 'past'].map(value => <button key={value} type="button" aria-pressed={tab === value} onClick={() => setTab(value)} className={`min-h-10 rounded-full px-4 text-sm font-semibold capitalize ${tab === value ? 'bg-emerald-600 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'}`}>{value}</button>)}
+      <main className="mx-auto max-w-[1500px] space-y-5 p-3 sm:p-6">
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div><h1 className="text-2xl font-semibold tracking-tight">Events & activities</h1><p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">Plan your next university event, training, or seminar.</p></div>
+          {activeTab === 'calendar' && <button type="button" disabled={loading} onClick={() => loadEvents()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Refresh</button>}
+        </header>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800">
+          <nav aria-label="Events workspace" className="flex gap-5">{[['calendar', 'University calendar'], ['community', 'Alumni community']].map(([id, label]) => <button key={id} type="button" aria-pressed={activeTab === id} onClick={() => changeTab(id)} className={`min-h-11 border-b-2 px-1 text-xs font-semibold ${activeTab === id ? 'border-[#009639] text-[#007a2e] dark:text-emerald-300' : 'border-transparent text-zinc-500'}`}>{label}</button>)}</nav>
+          {activeTab === 'calendar' && !loading && <p className="pb-2 text-xs text-zinc-500">{upcoming.length} upcoming <span className="mx-1 text-zinc-300">·</span> {upcoming.filter(event => event.registration).length} registered</p>}
+        </div>
+        {activeTab === 'calendar' ? <>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="relative min-w-[180px] flex-1"><Search size={16} className="absolute left-3 top-3 text-zinc-400" /><input type="search" aria-label="Search activities" placeholder="Search activities or organizers" value={query} onChange={event => setQuery(event.target.value)} className={`${field} w-full pl-9 pr-3`} /></label>
+            <select aria-label="Activity type" value={type} onChange={event => setType(event.target.value)} className={`${field} max-w-full px-3`}><option value="all">All activities</option><option value="event">Events</option><option value="training">Training</option><option value="seminar">Seminars</option></select>
+            <select aria-label="Delivery mode" value={mode} onChange={event => setMode(event.target.value)} className={`${field} max-w-full px-3`}><option value="all">Online & on-site</option><option value="online">Online</option><option value="onsite">On-site</option></select>
+            <select aria-label="Participation" value={participation} onChange={event => setParticipation(event.target.value)} className={`${field} max-w-full px-3`}><option value="all">All registrations</option><option value="registered">My registrations</option></select>
+            {filterActive && <button type="button" onClick={clearFilters} className="min-h-10 px-1 text-xs font-medium text-[#007a2e] hover:underline dark:text-emerald-300">Clear filters</button>}
           </div>
-          {error && <p role="alert" className="text-sm text-red-600">{error} <button onClick={loadEvents} className="font-semibold underline">Retry</button></p>}
-          {loading ? <p role="status" className="py-5 text-center text-sm text-zinc-500">Loading events…</p> : !error && !visible.length ? <p className="py-5 text-center text-sm text-zinc-500">No {tab} university events.</p> : <div className="space-y-3">
-            {visible.map(event => <article key={event._id} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
-              <h2 className="font-bold">{event.title}</h2>
-              <p className="mt-2 flex items-start gap-2 text-sm text-zinc-500"><CalendarDays size={16} className="mt-0.5 shrink-0" />{formatDate(event.startAt)}{event.endAt && ` – ${formatDate(event.endAt)}`}</p>
-              {event.location && <p className="mt-1 flex items-start gap-2 text-sm text-zinc-500"><MapPin size={16} className="mt-0.5 shrink-0" />{event.location}</p>}
-              {event.description && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed">{event.description}</p>}
-              <ActivityAccess event={event} onRegistered={updated => setEvents(list => list.map(item => item._id === updated._id ? updated : item))} />
-            </article>)}
-          </div>}
-        </section>
-        <section className="space-y-3"><h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Alumni events</h2><AlumniFeed onlyType="event" /></section>
+          {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error} <button type="button" onClick={() => loadEvents()} className="font-semibold underline">Retry</button></p>}
+          {loading && !events.length ? <div role="status" className="flex min-h-[460px] items-center justify-center rounded-xl border border-zinc-200 bg-white text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">Loading calendar…</div> : <>
+            {!error && !visible.length && <p role="status" className="rounded-lg border border-zinc-200 bg-white p-3 text-xs leading-6 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">{filterActive ? 'No activities match your filters. Clear filters to see all schedules.' : 'No university activities have been published yet. New activities will appear here.'}</p>}
+            <EventCalendar events={visible} now={now} onOpen={event => setSelectedId(event._id)} />
+          </>}
+        </> : <section className="mx-auto max-w-3xl space-y-4"><div><h2 className="text-sm font-semibold">From the alumni community</h2><p className="mt-1 text-xs leading-6 text-zinc-500">Discover gatherings and event updates shared by fellow alumni.</p></div><AlumniFeed onlyType="event" /></section>}
       </main>
+      {selected && <FeedDialog key={selected._id} title="Activity details" onClose={() => setSelectedId(null)}>
+        <div className="space-y-5">
+          <div><span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-semibold ${activityStyle(selected).card}`}><CalendarDays size={12} />{activityLabel(selected)}</span><h3 className="mt-3 break-words text-xl font-semibold leading-7">{selected.title}</h3></div>
+          <dl className="space-y-4 rounded-xl border border-zinc-200 p-4 text-sm dark:border-zinc-700">
+            <div className="flex gap-3"><Clock size={17} className="mt-0.5 shrink-0 text-zinc-400" /><div><dt className="text-[11px] text-zinc-500">Schedule · Philippine time</dt><dd className="mt-1 text-xs leading-6">{eventDateTime(selected.startAt)}{selected.endAt && <><br />to {eventDateTime(selected.endAt)}</>}</dd></div></div>
+            <div className="flex gap-3">{selected.deliveryMode === 'online' ? <Video size={17} className="mt-0.5 shrink-0 text-zinc-400" /> : <MapPin size={17} className="mt-0.5 shrink-0 text-zinc-400" />}<div><dt className="text-[11px] text-zinc-500">{selected.deliveryMode === 'online' ? 'Online activity' : 'On-site activity'}</dt><dd className="mt-1 break-words text-xs leading-6">{selected.deliveryMode === 'online' ? 'Join through the app when meeting access opens.' : selected.location || 'Register to view venue details.'}</dd></div></div>
+            {selected.organizer && <div className="flex gap-3"><Building2 size={17} className="mt-0.5 shrink-0 text-zinc-400" /><div><dt className="text-[11px] text-zinc-500">Organizer</dt><dd className="mt-1 text-xs">{selected.organizer}</dd></div></div>}
+          </dl>
+          {selected.description && <div><h4 className="text-xs font-semibold">About this activity</h4><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-zinc-600 dark:text-zinc-300">{selected.description}</p></div>}
+          <ActivityAccess event={selected} onRegistered={updated => setEvents(list => list.map(item => item._id === updated._id ? updated : item))} />
+        </div>
+      </FeedDialog>}
     </div>
   </div>;
 }

@@ -19,6 +19,7 @@ import NotificationDropdown from '../../../components/notifications/Notification
 import { useChat } from '../../../context/useChat.js';
 
 const breadcrumbMap = [
+  ['/alumni/mentorship', 'Mentorship'],
   ['/alumni/career', 'Career'],
   ['/alumni/employment', 'Employment'],
   ['/alumni/referral', 'Referral'],

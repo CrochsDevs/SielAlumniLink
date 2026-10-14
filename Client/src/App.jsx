@@ -24,6 +24,7 @@ import AlumniAccounts from './pages/alumni/alumniAccounts';
 import AlumniMessage from './pages/alumni/alumniMessage';
 import AlumniCareer from './pages/alumni/alumniCareer';
 import AlumniMentorship from './pages/alumni/alumniMentorship';
+import StudentEvaluation from './pages/alumni/studentEvaluation';
 import AlumniEmployment from './pages/alumni/alumniEmployment';
 import AlumniReferral from './pages/alumni/alumniReferral';
 import AlumniSuccess from './pages/alumni/alumniSuccess';
@@ -233,6 +234,7 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/alumni/mentorship" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI]}><AlumniMentorship /></ProtectedRoute>} />
+      <Route path="/alumni/mentorship/:studentId/evaluation" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI]}><StudentEvaluation /></ProtectedRoute>} />
       <Route path="/alumni/career" element={
         <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
           <AlumniCareer />

@@ -1,5 +1,23 @@
 # Student development modules
 
+Alumni evaluate individual connected students from
+`/alumni/mentorship/:studentId/evaluation`. The dashboard lists connected students
+and opens a separate page for each; it does not automatically select a student.
+The page identifies the student by name, program, and email, displays their
+self-assessments and portfolio evidence, and keeps mentor ratings separate.
+
+Mentor evaluation uses `PUT /api/development/mentees/:studentId/competencies/:key`
+with required `rating` (1–4) and `feedback` (up to 2,000 characters). Optional
+`observedEvidence` (up to 2,000 characters) and `nextStep` (up to 1,000 characters)
+record the reviewed work and a student-specific recommendation. New evaluation
+forms require an explicit rating; none is preselected. Students see these notes
+under the matching skill in their competency assessment.
+
+Only alumni with an accepted connection to the requested student can read or
+write evaluations. Student and mentor ownership comes from the route and current
+session, never IDs in the request body. One record per student, mentor, and skill
+is updated on retries; another student's evaluation remains independent.
+
 All routes use the authenticated account ID. Request bodies cannot select another
 student. Student, alumni, and admin accounts manage their own records; account
 conversion to alumni preserves records under the same account ID.

@@ -17,7 +17,7 @@ export function validateCompetency(key, input = {}) {
 export function validateMentorEvaluation(key, input = {}) {
   if (!COMPETENCY_FRAMEWORK.some(item => item.key === key)) fail(400, 'Unknown competency');
   if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 4) fail(400, 'Choose a skill level from 1 to 4');
-  return { rating: input.rating, feedback: text(input.feedback, 'Mentor feedback', 2000, true) };
+  return { rating: input.rating, feedback: text(input.feedback, 'Mentor feedback', 2000, true), observedEvidence: text(input.observedEvidence, 'Work reviewed', 2000), nextStep: text(input.nextStep, 'Recommended next step', 1000) };
 }
 
 export function competencySnapshot(record, evaluations = []) {

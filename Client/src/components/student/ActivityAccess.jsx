@@ -4,7 +4,7 @@ import { BadgeCheck, Video, Clock, MapPin } from 'lucide-react';
 import { FeedDialog } from '../feed/FeedComposer';
 import api from '../../utils/axios';
 
-const dateTime = value => new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+const dateTime = value => new Date(value).toLocaleString('en-US', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' });
 export default function ActivityAccess({ event, onRegistered }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [showPass, setShowPass] = useState(false);
   const posting = useRef(false);
