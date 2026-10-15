@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { Users, ShieldCheck, Bell, Moon, Sun, Monitor } from "lucide-react";
 import ProfilePhotoUpload from "../../components/profile/ProfilePhotoUpload";
 import { useAuth } from "../../context/useAuth";
@@ -88,7 +89,7 @@ export default function Settings() {
   const handleSaveMyInfo = async (e) => {
     e.preventDefault();
     if (!myName.trim() || !myEmail.trim()) {
-      Swal.fire("Error", "Please provide name and email", "error");
+      toast.error("Error", { description: "Please provide name and email" });
       return;
     }
     const emailChanged = myEmail.trim() !== user?.email;
@@ -114,28 +115,14 @@ export default function Settings() {
       });
       if (res.data.data?.emailChanged) {
         await logout();
-        Swal.fire(
-          "Email updated",
-          "Please log in again with your new email.",
-          "success",
-        );
+        toast.success("Email updated", { description: "Please log in again with your new email." });
         navigate("/login", { replace: true });
         return;
       }
       await refreshUser();
-      Swal.fire({
-        title: "Saved",
-        text: "Your personal information has been updated.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Saved", { description: "Your personal information has been updated." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update profile",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update profile" });
     } finally {
       setMyNameSaving(false);
     }
@@ -146,7 +133,7 @@ export default function Settings() {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (pwForm.newPassword !== pwForm.confirmPassword) {
-      Swal.fire("Error", "New passwords do not match", "error");
+      toast.error("Error", { description: "New passwords do not match" });
       return;
     }
     setPwLoading(true);
@@ -175,11 +162,7 @@ export default function Settings() {
         navigate("/login", { replace: true });
       }
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to change password",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to change password" });
     } finally {
       setPwLoading(false);
     }

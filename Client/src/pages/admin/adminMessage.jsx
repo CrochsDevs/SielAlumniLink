@@ -31,13 +31,13 @@ const AdminMessage = () => {
 
         <main className="mx-auto max-w-6xl p-4 sm:p-6">
           <div
-            className="grid overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
+            className="grid grid-cols-1 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
             style={{ height: "calc(100vh - 12rem)", minHeight: "480px" }}
           >
             <div className={`${activeId ? "hidden md:block" : "block"}`}>
               <ConvoList {...inbox} />
             </div>
-            <div className={`${activeId ? "block" : "hidden md:block"}`}>
+            <div className={`min-w-0 ${activeId ? "block" : "hidden md:block"}`}>
               <ThreadPane {...inbox} />
             </div>
           </div>

@@ -80,3 +80,56 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
+
+/* Shared student/alumni page frame. Print documents and dialogs keep their own layout. */
+@media screen {
+  .member-workspace[data-workspace-role="alumni"] {
+    --alumni-page-background: #edf2eb;
+    min-height: 100vh;
+    background: var(--alumni-page-background);
+  }
+  .dark .member-workspace[data-workspace-role="alumni"] {
+    --alumni-page-background: #0c1210;
+  }
+  .member-workspace[data-workspace-role="alumni"] > .min-h-screen {
+    background: var(--alumni-page-background);
+  }
+  .member-workspace main.workspace-page {
+    width: 100%;
+    max-width: 80rem;
+    min-width: 0;
+    margin-inline: auto;
+    padding: 1rem !important;
+  }
+  .member-workspace .workspace-page-header {
+    margin-bottom: 1.5rem !important;
+    padding: 0 0 1.25rem !important;
+    border: 0 !important;
+    border-bottom: 1px solid hsl(var(--border)) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: hsl(var(--foreground)) !important;
+    box-shadow: none !important;
+  }
+  .member-workspace main.workspace-page h1:not(:where(.portfolio-resume *, dialog *)) {
+    margin: 0;
+    font: 600 1.5rem/2rem ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+  .member-workspace .workspace-page-header h1 {
+    color: hsl(var(--foreground)) !important;
+  }
+  .member-workspace .workspace-page-header p:not(:where(button *, a *)) {
+    color: hsl(var(--muted-foreground)) !important;
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+  }
+  .member-workspace main.workspace-page :is(h2, h3):not(:where(.portfolio-resume *, dialog *)) {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  @media (min-width: 640px) {
+    .member-workspace main.workspace-page { padding: 1.5rem !important; }
+  }
+}

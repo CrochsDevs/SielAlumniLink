@@ -226,19 +226,19 @@ export default function ReferralBoard({ embedded = false }) {
       aria-label="Alumni referrals"
       className="space-y-5 text-zinc-900 dark:text-zinc-100"
     >
-      <header className={`${panel} relative overflow-hidden p-6 sm:p-8`}>
-        <div
+      <header className={`${panel} relative overflow-hidden p-6 sm:p-8 ${!embedded ? "workspace-page-header" : ""}`}>
+        {embedded && <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-20 -top-28 h-80 w-80 rounded-full bg-emerald-50 dark:bg-emerald-950/30"
-        />
+        />}
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div className="max-w-2xl">
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">
+            {embedded && <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">
               <Handshake size={14} />
               The alumni advantage
-            </p>
-            <Heading className="text-2xl font-semibold tracking-tight sm:!text-3xl">
-              {canPost
+            </p>}
+            <Heading className="text-2xl font-semibold tracking-tight">
+              {!embedded ? "Referrals" : canPost
                 ? "Open a door. Make a difference."
                 : "Your next opportunity starts here."}
             </Heading>

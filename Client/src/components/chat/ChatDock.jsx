@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { X, Minus, Send, Smile, ImagePlus, Paperclip } from "lucide-react";
 import ChatAvatar from "./ChatAvatar";
-import MessageBubble from "./MessageBubble";
+import MessageThread from "./MessageThread";
 import EmojiPicker from "emoji-picker-react";
 import { Link } from "react-router-dom";
 import { profilePath } from "../search/searchLinks";
@@ -104,11 +104,7 @@ const ChatWindow = ({
   const sendFile = (file, kind) => {
     if (!file) return;
     if (file.size > 1_500_000) {
-      Swal.fire(
-        "Error",
-        "File too large (max 1.5MB for now — Cloudinary coming soon)",
-        "error",
-      );
+      toast.error("Error", { description: "File too large (max 1.5MB for now — Cloudinary coming soon)" });
       return;
     }
     const reader = new FileReader();
@@ -214,17 +210,8 @@ const ChatWindow = ({
             }}
             className="h-[min(340px,calc(100dvh-140px))] overflow-y-auto bg-[#f8faf8] dark:bg-zinc-950 p-3"
           >
-            <div ref={messageContentRef} className="space-y-2">
-              {messages.map((m, i) => (
-                <MessageBubble
-                  key={m._id || i}
-                  msg={m}
-                  mine={m.from === "me"}
-                  convoId={id}
-                  onEdit={onEdit}
-                  onUnsend={onUnsend}
-                />
-              ))}
+            <div ref={messageContentRef}>
+              <MessageThread messages={messages} isGroup={convo.isGroup} convoId={id} onEdit={onEdit} onUnsend={onUnsend} />
             </div>
           </div>
           <form

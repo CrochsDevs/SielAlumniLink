@@ -168,8 +168,8 @@ export default function AlumniEmployment() {
           title="Employment"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6">
-          <header className="rounded-2xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white">
+        <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6 workspace-page">
+          <header className="rounded-2xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white workspace-page-header">
             <div className="flex items-center gap-3">
               <Building2 size={25} />
               <h1 className="text-xl font-semibold">My employment</h1>

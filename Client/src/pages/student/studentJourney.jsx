@@ -111,9 +111,8 @@ export default function StudentJourney() {
 
   return (
     <DevelopmentShell title="Journey">
-      <main className="mx-auto max-w-7xl p-3 text-[#1d2740] sm:p-6 dark:text-zinc-100">
-        <div className="overflow-hidden rounded-2xl border border-[#e4ecf4] bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e4ecf4] px-5 py-5 sm:px-7 dark:border-zinc-800">
+      <main className="mx-auto max-w-7xl p-3 text-[#1d2740] sm:p-6 dark:text-zinc-100 workspace-page">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e4ecf4] px-5 py-5 sm:px-7 dark:border-zinc-800 workspace-page-header">
             <div>
               <p className="text-xs text-slate-500 dark:text-zinc-400">
                 Student life{" "}
@@ -136,6 +135,8 @@ export default function StudentJourney() {
               Record milestone
             </button>
           </header>
+        <div className="overflow-hidden rounded-2xl border border-[#e4ecf4] bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+
           <DevelopmentStatus state={state} />
           <div
             role="tablist"

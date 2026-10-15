@@ -119,8 +119,8 @@ export default function AlumniEvents() {
           title="Events"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-[1500px] space-y-5 p-3 sm:p-6">
-          <header className="flex flex-wrap items-start justify-between gap-4">
+        <main className="mx-auto max-w-[1500px] space-y-5 p-3 sm:p-6 workspace-page">
+          <header className="flex flex-wrap items-start justify-between gap-4 workspace-page-header">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
                 Events & activities

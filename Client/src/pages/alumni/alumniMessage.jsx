@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/useAuth";
+import PageHeader from "../../components/ui/PageHeader";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import {
@@ -29,15 +30,16 @@ const AlumniMessage = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-6xl p-4 sm:p-6">
+        <main className="mx-auto max-w-6xl p-4 sm:p-6 workspace-page">
+          <PageHeader title="Messages" description="Keep your conversations with students and fellow alumni in one place." />
           <div
-            className="grid overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
+            className="grid grid-cols-1 overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
             style={{ height: "calc(100vh - 12rem)", minHeight: "480px" }}
           >
             <div className={`${activeId ? "hidden md:block" : "block"}`}>
               <ConvoList {...inbox} />
             </div>
-            <div className={`${activeId ? "block" : "hidden md:block"}`}>
+            <div className={`min-w-0 ${activeId ? "block" : "hidden md:block"}`}>
               <ThreadPane {...inbox} />
             </div>
           </div>

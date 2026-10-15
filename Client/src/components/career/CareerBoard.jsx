@@ -11,6 +11,10 @@ import {
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
+  MapPin,
+  Monitor,
+  ArrowUpRight,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
@@ -22,6 +26,10 @@ import {
 import ProfileAvatar from "../profile/ProfileAvatar";
 import DataPagination from "../ui/data-pagination";
 import { FeedDialog } from "../feed/FeedComposer";
+import PageHeader from "../ui/PageHeader";
+import CareerSearch from "./CareerSearch";
+import "./CareerBoard.css";
+import { CareerFilters, CareerFilterDrawer } from "./CareerFilters";
 
 const CATEGORIES = [
   { id: "job", label: "Jobs", icon: Briefcase, color: "bg-[#009639]" },
@@ -296,7 +304,19 @@ function Editor({ kind, item, onClose, onSaved }) {
   );
 }
 
-export default function CareerBoard({ referralContent = null }) {
+function PostDescription({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  const canExpand = text.length > 140 || text.split("\n").length > 2;
+  return (
+    <div className="mt-4">
+      <p className={`career-description whitespace-pre-wrap break-words text-sm leading-6 text-zinc-600 dark:text-zinc-300 ${canExpand && !expanded ? "line-clamp-3" : ""}`}>{text}</p>
+      {canExpand && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-2 text-xs font-semibold text-[#007a2e] underline-offset-4 hover:underline dark:text-emerald-300">{expanded ? "Show less" : "Read more"}</button>}
+    </div>
+  );
+}
+
+export default function CareerBoard({ referralContent = null, appearance = "default" }) {
+  const marketplace = appearance === "marketplace";
   const { user, refreshUser } = useAuth();
   const isAdmin = user?.role === "admin";
   const canPost = isAdmin || user?.role === "alumni";
@@ -306,6 +326,8 @@ export default function CareerBoard({ referralContent = null }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [view, setView] = useState("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const closeFilters = useCallback(() => setFiltersOpen(false), []);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [query, setQuery] = useState("");
@@ -462,7 +484,25 @@ export default function CareerBoard({ referralContent = null }) {
       (new Date(b.item.createdAt).getTime() || 0) -
       (new Date(a.item.createdAt).getTime() || 0),
   );
-  const filtered = rows.filter(
+  const opportunityView = view === "all" || view === "applied";
+  const guideView = view === "guides";
+  const viewRows = rows.filter((row) =>
+    opportunityView ? row.kind === "job" : guideView ? row.kind === "guide" : true,
+  );
+  const visibleCategories = CATEGORIES.filter((category) => {
+    const opportunity = category.id === "job" || category.id === "internship";
+    return opportunityView ? opportunity : guideView ? !opportunity : true;
+  });
+  const sourceOptions = [
+    ...(!guideView ? [["university", "University"]] : []),
+    ...(!opportunityView ? [["community", "Community"]] : []),
+  ];
+  const searchPlaceholder = guideView
+    ? "Search career guides, topics, or keywords"
+    : opportunityView
+      ? "Search jobs, companies, or keywords"
+      : "Search your resources";
+  const filtered = viewRows.filter(
     (row) =>
       categories.includes(row.category) &&
       sources.includes(row.source) &&
@@ -496,27 +536,56 @@ export default function CareerBoard({ referralContent = null }) {
     setQuery("");
     setTerm("");
   };
+  const selectView = (nextView) => {
+    setView(nextView);
+    clearFilters();
+    setFiltersOpen(false);
+  };
   const tabs = [
     { id: "all", label: "Opportunities" },
     ...(referralContent ? [{ id: "referrals", label: "Referrals" }] : []),
-    { id: "saved", label: "Saved" },
     { id: "guides", label: "Career Guides" },
+    { id: "saved", label: "Saved" },
     ...(canPost ? [{ id: "mine", label: "My Posts" }] : []),
     ...(!isAdmin ? [{ id: "applied", label: "Applied" }] : []),
     ...(user?.role === "student"
       ? [{ id: "interests", label: "My Interests" }]
       : []),
   ];
+  const renderFilters = (onClose) => (
+    <CareerFilters
+      categories={visibleCategories}
+      selectedCategories={categories}
+      sources={sourceOptions}
+      selectedSources={sources}
+      rows={viewRows}
+      categoryLabel={guideView ? "Guide type" : opportunityView ? "Opportunity type" : "Resource type"}
+      resultCount={filtered.length}
+      onCategoryChange={(id) => toggleFilter(setCategories, id)}
+      onSourceChange={(id) => toggleFilter(setSources, id)}
+      onClear={clearFilters}
+      onClose={onClose}
+    />
+  );
 
   return (
-    <main className="mx-auto max-w-7xl p-3 text-zinc-900 sm:p-5 dark:text-zinc-100">
+    <main className={`mx-auto max-w-7xl p-3 text-zinc-900 sm:p-5 dark:text-zinc-100 workspace-page ${marketplace ? "career-marketplace" : ""}`}>
+      {marketplace && <>
+        <PageHeader title="Career Board" description="Find opportunities, learn from alumni, and build what comes next.">
+          {canPost && <button type="button" onClick={() => setEditor({ kind: isAdmin && view !== "guides" ? "job" : "guide" })} className={primaryButton}><Plus size={16} />Share a career guide</button>}
+        </PageHeader>
+        {view !== "referrals" && <div className="career-search-row">
+          <CareerSearch value={query} onChange={setQuery} onSearch={(value) => { setTerm(value); setPage(1); }} placeholder={searchPlaceholder} />
+          <button type="button" className="career-filter-toggle" aria-haspopup="dialog" aria-expanded={filtersOpen} aria-controls="career-filter-drawer" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={18} />Filters</button>
+        </div>}
+      </>}
       <div
-        className={`${cardClass} mb-5 flex flex-wrap items-center justify-between gap-3 px-5 py-3`}
+        className={marketplace ? "career-board-navigation" : `${cardClass} mb-5 flex flex-wrap items-center justify-between gap-3 px-5 py-3 workspace-page-header`}
       >
-        <h1 className="flex items-center gap-2 text-base font-bold">
+        {!marketplace && <h1 className="flex items-center gap-2 text-base font-bold">
           <Briefcase size={20} className="text-[#009639]" />
           Career Board
-        </h1>
+        </h1>}
         <nav
           aria-label="Career board views"
           className="flex max-w-full gap-4 overflow-x-auto"
@@ -526,10 +595,7 @@ export default function CareerBoard({ referralContent = null }) {
               type="button"
               key={tab.id}
               aria-pressed={view === tab.id}
-              onClick={() => {
-                setView(tab.id);
-                setPage(1);
-              }}
+              onClick={() => selectView(tab.id)}
               className={`shrink-0 border-b-2 py-3 text-xs font-semibold ${view === tab.id ? "border-[#009639] text-[#009639] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
             >
               {tab.label}
@@ -540,11 +606,14 @@ export default function CareerBoard({ referralContent = null }) {
       {view === "referrals" && referralContent ? (
         referralContent
       ) : (
-        <div className="grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_220px]">
+        <div className="career-layout grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_220px]">
           <aside
-            className={`${cardClass} order-2 p-5 md:order-none md:sticky md:top-20`}
+            id="career-filters"
+            className={`${cardClass} career-filter-panel order-2 p-5 md:order-none md:sticky md:top-20 ${marketplace ? "hidden md:block" : ""}`}
             aria-label="Career filters"
           >
+            {marketplace ? renderFilters() : <>
+
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Filter</h2>
               <button
@@ -556,10 +625,10 @@ export default function CareerBoard({ referralContent = null }) {
               </button>
             </div>
             <h3 className="mb-4 mt-6 text-xs font-semibold">
-              Opportunity Type
+              {guideView ? "Guide type" : opportunityView ? "Opportunity type" : "Resource type"}
             </h3>
             <div className="space-y-3">
-              {CATEGORIES.map((category) => (
+              {visibleCategories.map((category) => (
                 <label
                   key={category.id}
                   className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
@@ -573,17 +642,14 @@ export default function CareerBoard({ referralContent = null }) {
                   />
                   {category.label}
                   <span className="ml-auto text-[10px] text-zinc-400">
-                    {rows.filter((row) => row.category === category.id).length}
+                    {viewRows.filter((row) => row.category === category.id).length}
                   </span>
                 </label>
               ))}
             </div>
             <h3 className="mb-4 mt-6 text-xs font-semibold">Posted by</h3>
             <div className="space-y-3">
-              {[
-                ["university", "University"],
-                ["community", "Community"],
-              ].map(([id, label]) => (
+              {sourceOptions.map(([id, label]) => (
                 <label
                   key={id}
                   className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
@@ -597,14 +663,19 @@ export default function CareerBoard({ referralContent = null }) {
                   />
                   {label}
                   <span className="ml-auto text-[10px] text-zinc-400">
-                    {rows.filter((row) => row.source === id).length}
+                    {viewRows.filter((row) => row.source === id).length}
                   </span>
                 </label>
               ))}
             </div>
+
+            </>}
           </aside>
-          <section className="order-1 min-w-0 space-y-3 md:order-none">
-            <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-[#007a2e] to-[#009639] p-5 text-white">
+          <section className="career-feed order-1 min-w-0 space-y-3 md:order-none">
+            {marketplace ? <header className="career-feed-heading">
+              <h2>{view === "saved" ? "Your saved resources" : view === "applied" ? "Your applications" : view === "mine" ? "Your career posts" : guideView ? "Career Guides" : "Opportunities for you"}</h2>
+              <p>{view === "all" ? "Explore jobs and internships from your university." : guideView ? "Career advice, industry insights, and roadmaps from your community." : "Search and filter to find what you need."}</p>
+            </header> : <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-[#007a2e] to-[#009639] p-5 text-white">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -right-8 -top-8 rotate-12 text-white/10"
@@ -612,11 +683,12 @@ export default function CareerBoard({ referralContent = null }) {
                 <Briefcase size={180} strokeWidth={1} />
               </div>
               <h2 className="relative text-xl font-semibold">
-                Career Opportunity Board
+                {guideView ? "Career Guides" : "Career Opportunity Board"}
               </h2>
               <p className="relative mt-2 max-w-lg text-xs leading-6 text-white/90">
-                Discover jobs, internships, and career guidance shared by the
-                university and your alumni community.
+                {guideView
+                  ? "Explore career advice, industry insights, and roadmaps shared by your community."
+                  : "Discover jobs and internships shared by the university. Find community advice in Career Guides."}
               </p>
               <form
                 onSubmit={(event) => {
@@ -636,7 +708,7 @@ export default function CareerBoard({ referralContent = null }) {
                     aria-label="Search career board"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search title, company or keyword"
+                    placeholder={searchPlaceholder}
                     className="h-10 w-full rounded-lg border border-white/20 bg-white/20 pl-9 pr-3 text-xs text-white outline-none placeholder:text-white/75 focus:bg-white/30"
                   />
                 </div>
@@ -661,7 +733,7 @@ export default function CareerBoard({ referralContent = null }) {
                   </button>
                 )}
               </form>
-            </header>
+            </header>}
             {error && (
               <div
                 role="alert"
@@ -762,7 +834,7 @@ export default function CareerBoard({ referralContent = null }) {
                           ? "No posts to show"
                           : view === "applied"
                             ? "No applications yet"
-                            : "No opportunities found"}
+                            : guideView ? "No career guides found" : "No opportunities found"}
                     </h3>
                     <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                       {view === "saved"
@@ -778,314 +850,349 @@ export default function CareerBoard({ referralContent = null }) {
                     CATEGORIES[0];
                   const canManage =
                     isAdmin || (kind === "guide" && canPost && row.mine);
+                  const controls = (
+                    <div className="career-card-actions flex gap-1.5">
+                      <IconControl
+                        label={
+                          row.saved ? "Unsave resource" : "Save resource"
+                        }
+                        onClick={() =>
+                          kind === "job"
+                            ? setSavedJobs((previous) => ({
+                                ...previous,
+                                [item._id]: !previous[item._id],
+                              }))
+                            : saveGuide(item)
+                        }
+                        icon={Bookmark}
+                        active={row.saved}
+                        disabled={busy !== null}
+                      />
+                      {canManage && (
+                        <>
+                          <IconControl
+                            label="Edit post"
+                            onClick={() => setEditor({ kind, item })}
+                            icon={Pencil}
+                            disabled={busy !== null}
+                          />
+                          {kind === "job" && (
+                            <IconControl
+                              label={
+                                item.isActive
+                                  ? "Hide opportunity"
+                                  : "Show opportunity"
+                              }
+                              onClick={() => toggleVisibility(item)}
+                              icon={item.isActive ? Eye : EyeOff}
+                              disabled={busy !== null}
+                            />
+                          )}
+                          <IconControl
+                            label="Delete post"
+                            onClick={() => setDeleting({ kind, item })}
+                            icon={Trash2}
+                            disabled={busy !== null}
+                          />
+                        </>
+                      )}
+                    </div>
+                  );
                   return (
                     <article
                       key={`${kind}:${item._id}`}
                       data-career-card={kind}
-                      className={`${cardClass} p-4 sm:p-5`}
+                      data-career-category={row.category}
+                      className={`${cardClass} career-listing p-4 sm:p-5`}
                     >
-                      <div className="flex flex-wrap items-start gap-3">
-                        <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${category.color}`}
-                        >
-                          {kind === "job"
-                            ? (item.company || "CLSU")
-                                .split(/\s+/)
-                                .slice(0, 2)
-                                .map((word) => word[0])
-                                .join("")
-                                .toUpperCase()
-                            : createElement(category.icon, { size: 19 })}
-                        </span>
-                        <div className="min-w-0 flex-1 basis-36">
-                          <h3 className="break-words text-sm font-semibold leading-5">
-                            {item.title}
-                          </h3>
-                          <p className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                            <span>
-                              {kind === "job"
-                                ? item.company
-                                : item.authorName ||
-                                  item.authorEmail ||
-                                  "Community"}
-                            </span>
-                            {item.location && <span>· {item.location}</span>}
-                            <span>
-                              · {kind === "job" ? "University" : "Community"}
-                            </span>
-                          </p>
-                        </div>
-                        <div className="flex gap-1.5">
-                          <IconControl
-                            label={
-                              row.saved ? "Unsave resource" : "Save resource"
-                            }
-                            onClick={() =>
-                              kind === "job"
-                                ? setSavedJobs((previous) => ({
-                                    ...previous,
-                                    [item._id]: !previous[item._id],
-                                  }))
-                                : saveGuide(item)
-                            }
-                            icon={Bookmark}
-                            active={row.saved}
-                            disabled={busy !== null}
-                          />
-                          {canManage && (
-                            <>
-                              <IconControl
-                                label="Edit post"
-                                onClick={() => setEditor({ kind, item })}
-                                icon={Pencil}
-                                disabled={busy !== null}
-                              />
-                              {kind === "job" && (
-                                <IconControl
-                                  label={
-                                    item.isActive
-                                      ? "Hide opportunity"
-                                      : "Show opportunity"
-                                  }
-                                  onClick={() => toggleVisibility(item)}
-                                  icon={item.isActive ? Eye : EyeOff}
-                                  disabled={busy !== null}
-                                />
-                              )}
-                              <IconControl
-                                label="Delete post"
-                                onClick={() => setDeleting({ kind, item })}
-                                icon={Trash2}
-                                disabled={busy !== null}
-                              />
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <p className="mt-4 whitespace-pre-wrap break-words text-xs leading-6 text-zinc-600 dark:text-zinc-300">
-                        {kind === "job"
-                          ? item.description || "No description provided."
-                          : item.body}
-                      </p>
-                      <footer className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="career-card-content">
+                        {marketplace && <div className="career-card-context">
+                          <div className="career-card-labels"><span className="career-category-badge">{category.label}</span>{item.createdAt && <time dateTime={item.createdAt}>Posted {formatDate(item.createdAt)}</time>}</div>
+                          {controls}
+                        </div>}
+                        <div className="career-card-header flex flex-wrap items-start gap-3">
                           <span
-                            className={`rounded-md px-2.5 py-1 text-[10px] font-semibold text-white ${category.color}`}
+                            className={`career-company-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${category.color}`}
                           >
-                            {category.label}
+                            {kind === "job"
+                              ? (item.company || "CLSU")
+                                  .split(/\s+/)
+                                  .slice(0, 2)
+                                  .map((word) => word[0])
+                                  .join("")
+                                  .toUpperCase()
+                              : createElement(category.icon, { size: 19 })}
                           </span>
-                          {kind === "job" && (
-                            <>
-                              <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                {item.type}
+                          <div className="min-w-0 flex-1 basis-36">
+                            <h3 className="break-words text-sm font-semibold leading-5">
+                              {marketplace && kind === "job" ? <button type="button" onClick={() => setSelectedJob(item._id)} className="text-left hover:underline underline-offset-4">{item.title}</button> : item.title}
+                            </h3>
+                            <p className="career-card-byline mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                              <span>
+                                {kind === "job"
+                                  ? item.company
+                                  : item.authorName ||
+                                    item.authorEmail ||
+                                    "Community"}
                               </span>
-                              <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                {item.mode}
-                              </span>
-                              {item.isActive === false && (
-                                <span className="rounded-md bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                                  Hidden
-                                </span>
-                              )}
-                            </>
-                          )}
-                          {(item.tags || []).map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+                              {!marketplace && item.location && <span>· {item.location}</span>}
+                              {!marketplace && <span>
+                                · {kind === "job" ? "University" : "Community"}
+                              </span>}
+                            </p>
+                          </div>
+                          {!marketplace && controls}
                         </div>
-                        <time
-                          dateTime={item.createdAt}
-                          className="text-[10px] text-zinc-500 dark:text-zinc-400"
-                        >
-                          {formatDate(item.createdAt)}
-                        </time>
-                      </footer>
-                      {kind === "job" &&
-                        (!isAdmin ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedJob(item._id)}
-                            className={`${primaryButton} mt-4`}
+                        {marketplace && kind === "job" && (
+                          <dl className="career-job-details">
+                            {[
+                              ["Location", item.location, MapPin],
+                              ["Employment type", item.type, Briefcase],
+                              ["Work mode", item.mode, Monitor],
+                            ].filter(([, value]) => value).map(([label, value, Icon]) => (
+                              <div key={label}>
+                                <dt className="sr-only">{label}</dt>
+                                <dd>{createElement(Icon, {size: 14, "aria-hidden": true})}{value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                        {marketplace ? <PostDescription text={(kind === "job" ? item.description || "No description provided." : item.body) || ""} /> : <p className="mt-4 whitespace-pre-wrap break-words text-xs leading-6 text-zinc-600 dark:text-zinc-300">
+                          {kind === "job"
+                            ? item.description || "No description provided."
+                            : item.body}
+                        </p>}
+                        {(!marketplace || item.tags?.length > 0 || item.isActive === false) && <footer className="career-card-tags mt-4 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {!marketplace && <span
+                              className={`rounded-md px-2.5 py-1 text-[10px] font-semibold text-white ${category.color}`}
+                            >
+                              {category.label}
+                            </span>}
+                            {kind === "job" && !marketplace && (
+                              <>
+                                <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                  {item.type}
+                                </span>
+                                <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                  {item.mode}
+                                </span>
+                                {item.isActive === false && (
+                                  <span className="rounded-md bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                    Hidden
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {marketplace && item.isActive === false && <span className="career-hidden-label">Hidden</span>}
+                            {(item.tags || []).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          {!marketplace && <time
+                            dateTime={item.createdAt}
+                            className="text-[10px] text-zinc-500 dark:text-zinc-400"
                           >
-                            {appliedJobs[item._id]
-                              ? "View application"
-                              : "Apply"}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setApplicantsJob(item)}
-                            className={`${primaryButton} mt-4`}
-                          >
-                            View applicants
-                          </button>
-                        ))}
-                    </article>
-                  );
-                })}
-                {filtered.length > 0 && (
-                  <div className={`${cardClass} overflow-hidden`}>
-                    <DataPagination
-                      page={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setPage}
-                      perPage={perPage}
-                      onPerPageChange={(value) => {
-                        setPerPage(value);
-                        setPage(1);
-                      }}
-                      totalItems={filtered.length}
-                      itemLabel="resources"
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </section>
-          <aside className="order-3 grid min-w-0 gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1 xl:sticky xl:top-20">
-            <section className={`${cardClass} p-5 text-center`}>
-              <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
-                <ProfileAvatar user={user} />
-              </span>
-              <h2 className="mt-3 break-words text-sm font-semibold">
-                {user?.name || "Member"}
-              </h2>
-              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                {[user?.program, user?.batch && `Batch ${user.batch}`]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              <span className="mt-3 inline-block rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-semibold capitalize text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                {user?.role}
-              </span>
-              {canPost && (
-                <button
-                  type="button"
-                  onClick={() => setEditor({ kind: "guide" })}
-                  className={`${primaryButton} mt-4 w-full`}
-                >
-                  Share a career guide
-                </button>
+                            {formatDate(item.createdAt)}
+                          </time>}
+                        </footer>}
+                        </div>
+                        {kind === "job" &&
+                          <div className={marketplace ? "career-card-bottom" : undefined}>
+                          {marketplace && <span className="career-card-source"><Building2 size={15} aria-hidden="true" />University opportunity</span>}
+                          {(!isAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedJob(item._id)}
+                              className={`${primaryButton} mt-4`}
+                            >
+                              {appliedJobs[item._id]
+                                ? "View application"
+                                : "Apply"}
+                              {marketplace && <ArrowUpRight size={16} aria-hidden="true" />}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setApplicantsJob(item)}
+                              className={`${primaryButton} mt-4`}
+                            >
+                              View applicants
+                            </button>
+                          ))}
+                          </div>}
+                      </article>
+                    );
+                  })}
+                  {filtered.length > 0 && (
+                    <div className={`${cardClass} overflow-hidden`}>
+                      <DataPagination
+                        page={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        perPage={perPage}
+                        onPerPageChange={(value) => {
+                          setPerPage(value);
+                          setPage(1);
+                        }}
+                        totalItems={filtered.length}
+                        itemLabel="resources"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </section>
-            <section className={`${cardClass} p-5`}>
-              <h2 className="mb-4 text-sm font-semibold">Board Summary</h2>
-              <dl className="space-y-3">
-                {CATEGORIES.map((category) => (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between gap-3 text-xs"
+            <aside className="career-member-panel order-3 grid min-w-0 gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1 xl:sticky xl:top-20">
+              <section className={`${cardClass} p-5 text-center`}>
+                <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
+                  <ProfileAvatar user={user} />
+                </span>
+                <h2 className="mt-3 break-words text-sm font-semibold">
+                  {user?.name || "Member"}
+                </h2>
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {[user?.program, user?.batch && `Batch ${user.batch}`]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                <span className="mt-3 inline-block rounded-full bg-zinc-100 px-3 py-1 text-[10px] font-semibold capitalize text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  {user?.role}
+                </span>
+                {canPost && (
+                  <button
+                    type="button"
+                    onClick={() => setEditor({ kind: "guide" })}
+                    className={`${primaryButton} mt-4 w-full`}
                   >
-                    <dt className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
-                      <span
-                        className={`h-2 w-2 rounded-sm ${category.color}`}
-                      />
-                      {category.label}
-                    </dt>
-                    <dd className="font-semibold">
-                      {
-                        rows.filter((row) => row.category === category.id)
-                          .length
-                      }
-                    </dd>
-                  </div>
-                ))}
-                {isAdmin && (
-                  <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-xs dark:border-zinc-800">
-                    <dt className="text-zinc-500 dark:text-zinc-400">
-                      Hidden opportunities
-                    </dt>
-                    <dd className="font-semibold">
-                      {jobs.filter((job) => job.isActive === false).length}
-                    </dd>
-                  </div>
+                    Share a career guide
+                  </button>
                 )}
-              </dl>
-            </section>
-            <p
-              className={`${cardClass} p-4 text-[11px] leading-6 text-zinc-500 md:col-span-2 xl:col-span-1 dark:text-zinc-400`}
-            >
-              {isAdmin
-                ? "Create, edit, hide, or delete university job posts. You can also manage career guides shared by the community."
-                : user?.role === "alumni"
-                  ? "Share career advice, industry insights, and roadmaps. Manage your guides in My Posts, or share opportunities through Referrals."
-                  : "Explore opportunities, save useful guides, and update your career interests."}
-            </p>
-          </aside>
-        </div>
+              </section>
+              <section className={`${cardClass} p-5`}>
+                <h2 className="mb-4 text-sm font-semibold">{guideView ? "Guides at a glance" : opportunityView ? "Opportunities at a glance" : "Board Summary"}</h2>
+                <dl className="space-y-3">
+                  {visibleCategories.map((category) => (
+                    <div
+                      key={category.id}
+                      className="flex items-center justify-between gap-3 text-xs"
+                    >
+                      <dt className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
+                        <span
+                          className={`h-2 w-2 rounded-sm ${category.color}`}
+                        />
+                        {category.label}
+                      </dt>
+                      <dd className="font-semibold">
+                        {
+                          viewRows.filter((row) => row.category === category.id)
+                            .length
+                        }
+                      </dd>
+                    </div>
+                  ))}
+                  {isAdmin && !guideView && (
+                    <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-xs dark:border-zinc-800">
+                      <dt className="text-zinc-500 dark:text-zinc-400">
+                        Hidden opportunities
+                      </dt>
+                      <dd className="font-semibold">
+                        {jobs.filter((job) => job.isActive === false).length}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+              <p
+                className={`${cardClass} p-4 text-[11px] leading-6 text-zinc-500 md:col-span-2 xl:col-span-1 dark:text-zinc-400`}
+              >
+                {isAdmin
+                  ? "Create, edit, hide, or delete university job posts. You can also manage career guides shared by the community."
+                  : user?.role === "alumni"
+                    ? "Share career advice, industry insights, and roadmaps. Manage your guides in My Posts, or share opportunities through Referrals."
+                    : "Explore opportunities, save useful guides, and update your career interests."}
+              </p>
+            </aside>
+          </div>
+        )}
+      {marketplace && filtersOpen && (
+        <CareerFilterDrawer onClose={closeFilters}>{renderFilters(closeFilters)}</CareerFilterDrawer>
       )}
       {selectedJob && (
-        <JobApplicationDialog
-          key={selectedJob}
-          jobId={selectedJob}
-          user={user}
-          application={appliedJobs[selectedJob]}
-          onApplied={(application) =>
-            setAppliedJobs((previous) => ({
-              ...previous,
-              [application.jobId]: application,
-            }))
-          }
-          onClose={() => setSelectedJob(null)}
-        />
-      )}
-      {applicantsJob && (
-        <JobApplicantsDialog
-          job={applicantsJob}
-          onClose={() => setApplicantsJob(null)}
-        />
-      )}
-      {editor && (
-        <Editor
-          key={`${editor.kind}:${editor.item?._id || "new"}`}
-          kind={editor.kind}
-          item={editor.item}
-          onClose={() => setEditor(null)}
-          onSaved={load}
-        />
-      )}
-      {deleting && (
-        <FeedDialog
-          title="Delete this post?"
-          busy={busy === "delete"}
-          onClose={() => setDeleting(null)}
-        >
-          <p className="text-sm">
-            “{deleting.item.title}” will be removed from the board.
-          </p>
-          {error && (
-            <p
-              role="alert"
-              className="mt-3 text-sm text-red-600 dark:text-red-400"
-            >
-              {error}
+          <JobApplicationDialog
+            key={selectedJob}
+            jobId={selectedJob}
+            user={user}
+            application={appliedJobs[selectedJob]}
+            onApplied={(application) =>
+              setAppliedJobs((previous) => ({
+                ...previous,
+                [application.jobId]: application,
+              }))
+            }
+            onClose={() => setSelectedJob(null)}
+          />
+        )}
+        {applicantsJob && (
+          <JobApplicantsDialog
+            job={applicantsJob}
+            onClose={() => setApplicantsJob(null)}
+          />
+        )}
+        {editor && (
+          <Editor
+            key={`${editor.kind}:${editor.item?._id || "new"}`}
+            kind={editor.kind}
+            item={editor.item}
+            onClose={() => setEditor(null)}
+            onSaved={() => {
+              if (editor.kind === "guide" && !editor.item) selectView("guides");
+              load();
+            }}
+          />
+        )}
+        {deleting && (
+          <FeedDialog
+            title="Delete this post?"
+            busy={busy === "delete"}
+            onClose={() => setDeleting(null)}
+          >
+            <p className="text-sm">
+              “{deleting.item.title}” will be removed from the board.
             </p>
-          )}
-          <div className="mt-5 flex justify-end gap-2">
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => setDeleting(null)}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-xs dark:border-zinc-700"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={remove}
-              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white"
-            >
-              {busy === "delete" ? "Deleting…" : "Delete post"}
-            </button>
-          </div>
-        </FeedDialog>
-      )}
-    </main>
-  );
-}
+            {error && (
+              <p
+                role="alert"
+                className="mt-3 text-sm text-red-600 dark:text-red-400"
+              >
+                {error}
+              </p>
+            )}
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => setDeleting(null)}
+                className="rounded-lg border border-zinc-200 px-4 py-2 text-xs dark:border-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={remove}
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white"
+              >
+                {busy === "delete" ? "Deleting…" : "Delete post"}
+              </button>
+            </div>
+          </FeedDialog>
+        )}
+      </main>
+    );
+  }

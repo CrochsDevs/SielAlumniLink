@@ -16,6 +16,12 @@ import {
 } from "lucide-react";
 import "./PortfolioResume.css";
 import { validResumeTheme } from "../../utils/resumeThemes";
+import { resumeLinks, websiteUrl } from "../../utils/resumeContact";
+
+function ResumeWebsite({ link }) {
+  const href = websiteUrl(link.url);
+  return href ? <a href={href} target="_blank" rel="noopener noreferrer">{link.url}</a> : <span>{link.url}</span>;
+}
 
 const date = (value) => {
   if (!value) return "";
@@ -103,10 +109,9 @@ function ProfessionalResume({
 }) {
   const contacts = [
     [Phone, user?.contactNumber],
-    [Mail, user?.email],
+    [Mail, user?.contactEmail ?? user?.email],
     [MapPin, user?.location],
-    [Link, user?.linkedin],
-    [Globe, user?.github],
+    ...resumeLinks(user).map(link => [link.type === 'linkedin' ? Link : Globe, <ResumeWebsite link={link} />]),
   ].filter(([, value]) => value);
   const lists = [
     ["certifications", "Certifications", BadgeCheck],
@@ -304,6 +309,8 @@ export default function PortfolioResume({
       : [];
   const employment = user?.employmentHistory || [];
   const projects = portfolio.projects || [];
+  const contactText = [user?.location, user?.contactNumber, user?.contactEmail ?? user?.email].filter(Boolean);
+  const links = resumeLinks(user);
   const headline =
     user?.professionalTitle ||
     employment.find((item) => item.current)?.position ||
@@ -362,16 +369,16 @@ export default function PortfolioResume({
           {headline && <p className="resume-program">{headline}</p>}
           {portrait ? (
             <>
-              {(user?.contactNumber || user?.email) && (
+              {(user?.contactNumber || (user?.contactEmail ?? user?.email)) && (
                 <div className="resume-contact-band">
                   {user?.contactNumber && (
                     <span>
                       <strong>Phone</strong> {user.contactNumber}
                     </span>
                   )}
-                  {user?.email && (
+                  {(user?.contactEmail ?? user?.email) && (
                     <span>
-                      <strong>Email</strong> {user.email}
+                      <strong>Email</strong> {user.contactEmail ?? user.email}
                     </span>
                   )}
                 </div>
@@ -381,20 +388,12 @@ export default function PortfolioResume({
                   {user.location}
                 </p>
               )}
-              {user?.linkedin && (
-                <p className="resume-contact">{user.linkedin}</p>
-              )}
+              {resumeLinks(user).map((link, index) => <p className="resume-contact" key={index}><ResumeWebsite link={link} /></p>)}
             </>
           ) : (
             <p className="resume-contact">
-              {[
-                user?.location,
-                user?.contactNumber,
-                user?.email,
-                user?.linkedin,
-              ]
-                .filter(Boolean)
-                .join(" | ")}
+              {contactText.join(" | ")}
+              {links.map((link, index) => <span key={index}>{contactText.length || index ? ' | ' : ''}<ResumeWebsite link={link} /></span>)}
             </p>
           )}
         </div>

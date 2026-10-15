@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChatContext } from "./chat-context.js";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import api from "../utils/axios";
 import { getSocket } from "../realtime/socket";
 import { useAuth } from "./useAuth";
@@ -309,11 +309,7 @@ export const ChatProvider = ({ children }) => {
         openChat(convo);
         return true;
       } catch (err) {
-        Swal.fire(
-          "Error",
-          err.response?.data?.message || "Cannot open chat",
-          "error",
-        );
+        toast.error("Error", { description: err.response?.data?.message || "Cannot open chat" });
         return false;
       }
     },
@@ -369,11 +365,7 @@ export const ChatProvider = ({ children }) => {
       try {
         await api.put(`/conversations/messages/${msgId}`, { text });
       } catch (err) {
-        Swal.fire(
-          "Error",
-          err.response?.data?.message || "Cannot edit message",
-          "error",
-        );
+        toast.error("Error", { description: err.response?.data?.message || "Cannot edit message" });
         loadThread(convoId);
       }
     },
@@ -393,11 +385,7 @@ export const ChatProvider = ({ children }) => {
       try {
         await api.delete(`/conversations/messages/${msgId}`);
       } catch (err) {
-        Swal.fire(
-          "Error",
-          err.response?.data?.message || "Cannot unsend message",
-          "error",
-        );
+        toast.error("Error", { description: err.response?.data?.message || "Cannot unsend message" });
         loadThread(convoId);
       }
     },
@@ -411,11 +399,7 @@ export const ChatProvider = ({ children }) => {
         await refreshConvos();
         return res.data.data;
       } catch (err) {
-        Swal.fire(
-          "Error",
-          err.response?.data?.message || "Cannot create group",
-          "error",
-        );
+        toast.error("Error", { description: err.response?.data?.message || "Cannot create group" });
         return null;
       }
     },

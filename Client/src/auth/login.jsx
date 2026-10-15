@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { gooeyToast as toast } from 'goey-toast';
 import { useAuth } from '../context/useAuth';
 import clsuLogo from '../assets/logo/clsu_logo.png';
 
-const errorToast = (message) => Swal.fire({
-  toast: true,
-  position: 'top',
-  icon: 'error',
-  title: message,
-  showConfirmButton: false,
-  timer: 3500,
-  timerProgressBar: true,
-  customClass: { popup: 'mt-4' },
-});
+const errorToast = (message) => toast.error(message);
 
 const Login = () => {
   const navigate = useNavigate();

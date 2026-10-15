@@ -208,8 +208,8 @@ export default function SearchResults() {
           title="Search"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-5xl space-y-5 px-4 py-7 sm:px-6">
-          <div>
+        <main className="mx-auto max-w-5xl space-y-5 px-4 py-7 sm:px-6 workspace-page">
+          <div className="workspace-page-header">
             <p className="mb-1 text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
               Your AlumniLink community
             </p>

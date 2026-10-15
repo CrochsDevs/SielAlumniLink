@@ -1,11 +1,11 @@
+import PageHeader from "../../components/ui/PageHeader";
 import { createElement, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   UserRound,
   ShieldCheck,
   Lock,
   Mail,
-  BadgeCheck,
   Palette,
   Sun,
   Moon,
@@ -262,26 +262,16 @@ const StudentAccounts = () => {
   const handleSaveName = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      Swal.fire("Error", "Please enter your name", "error");
+      toast.error("Error", { description: "Please enter your name" });
       return;
     }
     setSaving(true);
     try {
       await api.put("/users/me", { name: name.trim() });
       await refreshUser();
-      Swal.fire({
-        title: "Saved",
-        text: "Your profile has been updated.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Saved", { description: "Your profile has been updated." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update profile",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update profile" });
     } finally {
       setSaving(false);
     }
@@ -290,20 +280,16 @@ const StudentAccounts = () => {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (pwForm.newPassword !== pwForm.confirmPassword) {
-      Swal.fire("Error", "New passwords do not match", "error");
+      toast.error("Error", { description: "New passwords do not match" });
       return;
     }
     setPwLoading(true);
     try {
       const res = await api.post("/auth/password/change", pwForm);
-      Swal.fire("Success", res.data.message, "success");
+      toast.success("Success", { description: res.data.message });
       setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to change password",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to change password" });
     } finally {
       setPwLoading(false);
     }
@@ -324,39 +310,14 @@ const StudentAccounts = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-5xl p-4 sm:p-6">
+        <main className="mx-auto max-w-5xl p-4 sm:p-6 workspace-page">
           {/* Page header */}
-          <div className="relative mb-5 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] p-6 text-white shadow-lg shadow-emerald-900/10 sm:p-7">
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 85% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 70% 85%, rgba(255,255,255,0.12), transparent 35%)",
-              }}
-            />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl font-extrabold text-white ring-1 ring-white/30 backdrop-blur">
-                {(user?.name || "A").charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-xl">
-                  {user?.name || "Account Settings"}
-                </h1>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-white/85">
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{user?.email}</span>
-                  </span>
-                  {user?.role && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ring-1 ring-white/30">
-                      <BadgeCheck className="h-3 w-3" />
-                      {user.role}
-                    </span>
-                  )}
-                </div>
-              </div>
+          <PageHeader title="Account settings" description="Manage your profile, security, and preferences.">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-semibold text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">{(user?.name || "A").charAt(0).toUpperCase()}</span>
+              <div className="min-w-0"><p className="truncate text-sm font-semibold">{user?.name}</p><p className="break-all text-xs">{user?.email} &middot; {user?.role}</p></div>
             </div>
-          </div>
+          </PageHeader>
 
           <div className="flex flex-col items-start gap-5 md:flex-row">
             {/* Sub-sidebar */}

@@ -129,9 +129,9 @@ export default function StudentInternship() {
   );
   return (
     <DevelopmentShell title="Internship">
-      <main className="mx-auto max-w-7xl p-3 sm:p-5">
+      <main className="mx-auto max-w-7xl p-3 sm:p-5 workspace-page">
         <div
-          className={`${card} mb-4 flex flex-wrap items-center justify-between gap-3`}
+          className={(`${card} mb-4 flex flex-wrap items-center justify-between gap-3`) + " workspace-page-header"}
         >
           <h1 className="flex items-center gap-2 text-base font-bold">
             <Briefcase size={20} className="text-[#009639]" />

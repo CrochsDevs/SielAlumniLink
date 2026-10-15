@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   MessageSquare,
   ClipboardCheck,
@@ -123,11 +123,7 @@ const AlumniDashboard = () => {
         .catch(() => ({ data: { data: [] } }));
       setPendingCount((pending.data.data || []).length);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load mentees",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load mentees" });
     } finally {
       setMenteesLoading(false);
     }
@@ -247,25 +243,14 @@ const AlumniDashboard = () => {
       await api.put(`/connections/${id}`, { status });
       setRequests((prev) => prev.filter((r) => String(r._id) !== String(id)));
       setPendingCount((prev) => Math.max(0, prev - 1));
-      Swal.fire({
-        title: status === "accepted" ? "Connected!" : "Declined",
-        text:
-          status === "accepted"
+      toast.info(status === "accepted" ? "Connected!" : "Declined", { description: status === "accepted"
             ? "You can now chat with each other."
-            : undefined,
-        icon: status === "accepted" ? "success" : "info",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+            : undefined });
       loadSuggestions();
       loadProfileStats();
       if (dashTab === "mentorship") loadMentees();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to respond",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to respond" });
     }
   };
 
@@ -279,19 +264,10 @@ const AlumniDashboard = () => {
         : { email: person.email };
       await api.post("/connections", recipient);
       setSuggestions((prev) => prev.filter((s) => s._id !== person._id));
-      Swal.fire({
-        title: "Request sent",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Request sent");
     } catch (err) {
       if (err.response?.status === 409) await loadSuggestions();
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to send request",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to send request" });
     } finally {
       connectPending.current = false;
       setConnecting(null);
@@ -313,7 +289,11 @@ const AlumniDashboard = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px]">
+        <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] workspace-page">
+          <header className="workspace-page-header col-span-full">
+            <h1>Dashboard</h1>
+            <p className="mt-2">Stay connected with your alumni community.</p>
+          </header>
           {/* LEFT: Sieles ID card */}
           <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
             <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">

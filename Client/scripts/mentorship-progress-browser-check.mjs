@@ -171,7 +171,8 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
           await new Promise((resolve) => setTimeout(resolve, 100));
           const next = {
             goalKey: key,
-            status: input.status,
+            status: user.role === 'student' ? old?.confirmedByAuthId ? 'completed' : input.note?.trim() ? 'in_progress' : 'not_started' : input.status,
+            confirmedByAuthId: old?.confirmedByAuthId || (user.role === 'alumni' && input.status === 'completed' ? user.authId : null),
             note: input.note,
             revision: input.revision + 1,
             updatedAt: new Date().toISOString(),
@@ -269,12 +270,12 @@ try {
   await photo("student-progress-desktop", 1440, false);
   await photo("student-progress-mobile-dark", 390, true);
   await photo("student-progress-small-mobile", 320, false);
-  await fill("Status for Resume Building", "in_progress");
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Status for Resume Building"]')===null`), true);
   await fill(
     "Note for Resume Building",
     "Drafted my resume and collected project examples.",
   );
-  await click("Save progress", goal("resume_building"));
+  await click("Save activity", goal("resume_building"));
   await until(
     `${goal("resume_building")}.querySelector('[role="alert"]')?.textContent.includes('Fixture progress save failed')`,
   );
@@ -295,7 +296,7 @@ try {
   assert.equal(saved.get(connections[0]._id)[0].status, "in_progress");
   await fill("Select mentorship connection", connections[1]._id);
   await until(
-    `document.querySelector('[aria-label="Status for Resume Building"]').value==='not_started'`,
+    `${goal("resume_building")}.textContent.includes('Not Started')`,
   );
   assert.equal(
     await evaluate(
@@ -305,14 +306,14 @@ try {
   );
   await fill("Select mentorship connection", connections[0]._id);
   await until(
-    `document.querySelector('[aria-label="Status for Resume Building"]').value==='in_progress'`,
+    `${goal("resume_building")}.textContent.includes('In Progress')`,
   );
   await navigate("/student/mentorship");
   assert.equal(
     await evaluate(
-      `document.querySelector('[aria-label="Status for Resume Building"]').value`,
+      `${goal("resume_building")}.textContent.includes('In Progress')`,
     ),
-    "in_progress",
+    true,
   );
   user = mentor;
   await navigate("/alumni/mentorship");
@@ -331,7 +332,7 @@ try {
     ["career_planning", "Career Planning"],
   ]) {
     await fill("Status for " + title, "completed");
-    await click("Save progress", goal(key));
+    await click("Save mentor review", goal(key));
     await until(
       `document.body.textContent.includes('${title} progress saved.')`,
     );
@@ -355,11 +356,11 @@ try {
       `${goal("resume_building")}.textContent.includes('Jamie Reyes')`,
     ),
   );
-  await fill("Status for Resume Building", "in_progress");
+  await fill("Note for Resume Building", "Added a follow-up reflection.");
   saved
     .get(connections[0]._id)
     .find((item) => item.goalKey === "resume_building").revision++;
-  await click("Save progress", goal("resume_building"));
+  await click("Save activity", goal("resume_building"));
   await until(
     `${goal("resume_building")}.textContent.includes('mentorship partner')`,
   );

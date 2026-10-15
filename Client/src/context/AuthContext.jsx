@@ -3,6 +3,17 @@ import { AuthContext } from "./auth-context.js";
 import api from "../utils/axios";
 import { connectSocket, disconnectSocket } from "../realtime/socket";
 
+const authErrorMessage = (err, fallback) => {
+  if (err.response?.data?.message) return err.response.data.message;
+  if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
+    return "The sign-in request timed out. Please try again.";
+  }
+  if (!err.response) {
+    return "Cannot reach the sign-in server. Check your connection and make sure the backend is running.";
+  }
+  return fallback;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,15 +82,18 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (email, password) => {
     try {
       setError(null);
-      const response = await api.post("/auth/login", { email, password });
+      const response = await api.post("/auth/login", { email: email.trim(), password });
       if (response.data.success) {
+        // A slower initial /auth/me response must not clear this new session.
+        ++authCheckVersion.current;
         setUser(response.data.data.user);
+        setLoading(false);
         return { success: true };
       }
 
       return { success: false, error: response.data.message || "Login failed" };
     } catch (err) {
-      const message = err.response?.data?.message || "Login failed";
+      const message = authErrorMessage(err, "Login failed");
       setError(message);
       return { success: false, error: message };
     }
@@ -88,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   const requestMagicLink = useCallback(async (email) => {
     try {
       setError(null);
-      const response = await api.post("/auth/magic-link/send", { email });
+      const response = await api.post("/auth/magic-link/send", { email: email.trim() });
       if (response.data.success) {
         return { success: true, message: response.data.message };
       }
@@ -98,8 +112,7 @@ export const AuthProvider = ({ children }) => {
         error: response.data.message || "Failed to send magic link",
       };
     } catch (err) {
-      const message =
-        err.response?.data?.message || "Failed to send login link";
+      const message = authErrorMessage(err, "Failed to send login link");
       setError(message);
       return { success: false, error: message };
     }
@@ -184,7 +197,9 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       if (response.data.success) {
+        ++authCheckVersion.current;
         setUser(response.data.data.user);
+        setLoading(false);
         return { success: true };
       }
     } catch (err) {

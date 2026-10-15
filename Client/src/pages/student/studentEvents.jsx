@@ -43,8 +43,8 @@ export default function StudentEvents() {
   );
   return (
     <DevelopmentShell title="Events">
-      <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6">
-        <header className="border-b border-zinc-200 pb-5 dark:border-zinc-800">
+      <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6 workspace-page">
+        <header className="border-b border-zinc-200 pb-5 dark:border-zinc-800 workspace-page-header">
           <h1>Events &amp; learning</h1>
           <p className="mt-2 text-sm leading-6 text-zinc-500">
             Find events, training, and seminars. Join online sessions directly

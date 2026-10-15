@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   Search,
   Plus,
@@ -38,11 +39,7 @@ export default function AdminAnnouncements() {
       const res = await api.get("/announcements", { params: { all: "true" } });
       setItems(res.data.data || []);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load announcements",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load announcements" });
     } finally {
       setLoading(false);
     }
@@ -95,18 +92,9 @@ export default function AdminAnnouncements() {
       }
       setModalOpen(false);
       fetchItems();
-      Swal.fire({
-        title: "Saved",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Saved");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to save announcement",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to save announcement" });
     } finally {
       setSaving(false);
     }
@@ -127,18 +115,9 @@ export default function AdminAnnouncements() {
     try {
       await api.delete(`/announcements/${item._id}`);
       fetchItems();
-      Swal.fire({
-        title: "Deleted",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Deleted");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to delete announcement",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to delete announcement" });
     }
   };
 
@@ -147,11 +126,7 @@ export default function AdminAnnouncements() {
       await api.put(`/announcements/${item._id}`, { isActive: !item.isActive });
       fetchItems();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update announcement",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update announcement" });
     }
   };
 

@@ -364,8 +364,8 @@ export default function AlumniTracer() {
           title="Tracer Study"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-3xl p-4 sm:p-6">
-          <section className="rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm sm:p-8 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+        <main className="mx-auto max-w-3xl p-4 sm:p-6 workspace-page">
+          <section className="rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm sm:p-8 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 workspace-page-header">
             <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#009639]/10 text-[#009639] dark:text-[#009639]">
               <ClipboardCheck size={26} />
             </span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { UserPlus, X, GraduationCap } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProfileAvatar from "../../components/profile/ProfileAvatar";
@@ -59,18 +59,9 @@ const AlumniRequests = () => {
     try {
       await api.post("/connections", { email });
       setSuggestions((prev) => prev.filter((s) => s.email !== email));
-      Swal.fire({
-        title: "Request sent",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Request sent");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to send request",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to send request" });
     } finally {
       setConnecting(null);
     }
@@ -96,7 +87,7 @@ const AlumniRequests = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-4xl space-y-3 p-4 sm:p-6">
+        <main className="mx-auto max-w-4xl space-y-3 p-4 sm:p-6 workspace-page">
           <RequestsHeader count={requests.length} />
           <RequestsList
             requests={requests}

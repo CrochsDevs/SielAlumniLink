@@ -27,6 +27,7 @@ import MeetingClient from "../../realtime/MeetingClient";
 import api from "../../utils/axios";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 import CertificatePreview from "../../components/student/CertificatePreview";
+import { Bubble, BubbleContent, BubbleGroup } from "../../components/ui/bubble";
 
 function VideoTile({ peer, stream, local = false }) {
   const video = useRef(null);
@@ -406,8 +407,9 @@ export default function MeetingRoom() {
                       Messages are visible to everyone in this session.
                     </p>
                   )}
+                  <BubbleGroup>
                   {state.messages.map((message) => (
-                    <article key={message.id}>
+                    <Bubble key={message.id} align={message.id.startsWith(`${self.id}:`) ? 'end' : 'start'} variant="secondary" className={message.id.startsWith(`${self.id}:`) ? '[&>[data-slot=bubble-content]]:bg-[#009639] [&>[data-slot=bubble-content]]:text-white' : '[&>[data-slot=bubble-content]]:bg-zinc-800 [&>[data-slot=bubble-content]]:text-zinc-100'}>
                       <p className="text-[10px] font-semibold text-zinc-400">
                         {message.name}{" "}
                         <span className="ml-1 font-normal text-zinc-600">
@@ -417,11 +419,12 @@ export default function MeetingRoom() {
                           })}
                         </span>
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-6">
+                      <BubbleContent>
                         {message.text}
-                      </p>
-                    </article>
+                      </BubbleContent>
+                    </Bubble>
                   ))}
+                  </BubbleGroup>
                   <div ref={chatEnd} />
                 </div>
                 <form

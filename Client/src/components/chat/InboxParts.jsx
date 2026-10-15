@@ -13,12 +13,12 @@ import {
   ImagePlus,
   Paperclip,
 } from "lucide-react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { useChat } from "../../context/useChat.js";
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
 import { formatTime } from "./messageFormat";
-import MessageBubble from "./MessageBubble";
+import MessageThread from "./MessageThread";
 import EmojiPicker from "emoji-picker-react";
 import ChatAvatar from "./ChatAvatar";
 
@@ -108,11 +108,7 @@ const useInboxPage = () => {
   const sendFile = (file, kind) => {
     if (!file || !activeId) return;
     if (file.size > 1_500_000) {
-      Swal.fire(
-        "Error",
-        "File too large (max 1.5MB for now — Cloudinary coming soon)",
-        "error",
-      );
+      toast.error("Error", { description: "File too large (max 1.5MB for now — Cloudinary coming soon)" });
       return;
     }
     const reader = new FileReader();
@@ -136,11 +132,7 @@ const useInboxPage = () => {
     e.preventDefault();
     const emails = groupEmails;
     if (emails.length < 2) {
-      Swal.fire(
-        "Error",
-        "Add at least 2 connected Sieles (3+ people total)",
-        "error",
-      );
+      toast.error("Error", { description: "Add at least 2 connected Sieles (3+ people total)" });
       return;
     }
     setGroupSaving(true);
@@ -485,7 +477,7 @@ const ThreadPane = ({
 
   return (
     // min-h-0 + overflow-hidden: the messages area below becomes the scroll container
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
       <div className="flex shrink-0 items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
         <button
           type="button"
@@ -549,16 +541,7 @@ const ThreadPane = ({
             No messages yet — say hello! 👋
           </p>
         )}
-        {messages.map((m) => (
-          <MessageBubble
-            key={m._id || `${m.from}-${m.text}`}
-            msg={m}
-            mine={m.from === "me"}
-            convoId={activeId}
-            onEdit={editChatMessage}
-            onUnsend={unsendChatMessage}
-          />
-        ))}
+        <MessageThread messages={messages} isGroup={active.isGroup} convoId={activeId} onEdit={editChatMessage} onUnsend={unsendChatMessage} />
       </div>
 
       <form

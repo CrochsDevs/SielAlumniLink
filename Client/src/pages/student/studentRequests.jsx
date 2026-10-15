@@ -27,7 +27,7 @@ const StudentRequests = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6">
+        <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6 workspace-page">
           <RequestsHeader count={requests.length} />
           <RequestsList
             requests={requests}

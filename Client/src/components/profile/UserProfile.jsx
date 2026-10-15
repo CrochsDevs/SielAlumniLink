@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   BadgeCheck,
   MapPin,
@@ -237,19 +238,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
     try {
       await api.post("/connections", { email: profile.email });
       setConnectState("pending");
-      Swal.fire({
-        title: "Request sent",
-        text: "They will be notified.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Request sent", { description: "They will be notified." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to send request",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to send request" });
     } finally {
       setConnectLoading(false);
     }
@@ -258,11 +249,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const saveProfile = async () => {
     if (savePending.current || skillPending.current || saving) return;
     if (!form.name.trim()) {
-      Swal.fire(
-        "Missing name",
-        "Please enter your full name before saving.",
-        "warning",
-      );
+      toast.warning("Missing name", { description: "Please enter your full name before saving." });
       return;
     }
     savePending.current = true;
@@ -303,19 +290,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       clearPendingImages();
       setEditing(false);
       await refreshUser();
-      Swal.fire({
-        title: "Saved",
-        text: "Profile updated.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Saved", { description: "Profile updated." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to save",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to save" });
     } finally {
       savePending.current = false;
       setSaving(false);
@@ -325,27 +302,15 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const addExperience = async () => {
     if (saving) return;
     if (!expForm.position.trim() || !expForm.company.trim()) {
-      Swal.fire(
-        "Missing details",
-        "Please enter a position and company.",
-        "warning",
-      );
+      toast.warning("Missing details", { description: "Please enter a position and company." });
       return;
     }
     if (!expForm.startDate || (!expForm.current && !expForm.endDate)) {
-      Swal.fire(
-        "Missing date",
-        'Please select a start date and an end date, or check "I currently work here".',
-        "warning",
-      );
+      toast.warning("Missing date", { description: 'Please select a start date and an end date, or check "I currently work here".' });
       return;
     }
     if (!expForm.current && expForm.endDate < expForm.startDate) {
-      Swal.fire(
-        "Invalid dates",
-        "End date must be on or after the start date.",
-        "warning",
-      );
+      toast.warning("Invalid dates", { description: "End date must be on or after the start date." });
       return;
     }
     setSaving(true);
@@ -372,19 +337,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
         endDate: "",
         current: false,
       });
-      Swal.fire({
-        title: "Added",
-        text: "Experience added.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Added", { description: "Experience added." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to add",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to add" });
     } finally {
       setSaving(false);
     }
@@ -419,11 +374,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
           : entries.findIndex(matches);
       if (target < 0) {
         setForm((prev) => ({ ...prev, [field]: entries }));
-        Swal.fire(
-          "Entry unavailable",
-          "This entry has already been removed or changed. Please review the updated list.",
-          "info",
-        );
+        toast.info("Entry unavailable", { description: "This entry has already been removed or changed. Please review the updated list." });
         return;
       }
       entries.splice(target, 1);
@@ -435,18 +386,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       if (field === "employmentHistory") setEditingExp(null);
       else setEditingEdu(null);
       await refreshUser();
-      Swal.fire({
-        title: `${label === "experience" ? "Experience" : "Education"} deleted`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success(`${label === "experience" ? "Experience" : "Education"} deleted`);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to remove",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to remove" });
     } finally {
       deletionPending.current = false;
       setSaving(false);
@@ -458,11 +400,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const addEducation = async () => {
     if (saving) return;
     if (!eduForm.school.trim() || !eduForm.degree.trim()) {
-      Swal.fire(
-        "Missing details",
-        "Please enter a school and degree.",
-        "warning",
-      );
+      toast.warning("Missing details", { description: "Please enter a school and degree." });
       return;
     }
     setSaving(true);
@@ -477,19 +415,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       await refreshUser();
       setShowAddEdu(false);
       setEduForm({ school: "", degree: "", year: "", location: "" });
-      Swal.fire({
-        title: "Added",
-        text: "Education added.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Added", { description: "Education added." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to add",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to add" });
     } finally {
       setSaving(false);
     }
@@ -501,30 +429,18 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const updateExperience = async (index) => {
     if (saving) return;
     if (!editExpForm.position.trim() || !editExpForm.company.trim()) {
-      Swal.fire(
-        "Missing details",
-        "Please enter a position and company.",
-        "warning",
-      );
+      toast.warning("Missing details", { description: "Please enter a position and company." });
       return;
     }
     if (
       !editExpForm.startDate ||
       (!editExpForm.current && !editExpForm.endDate)
     ) {
-      Swal.fire(
-        "Missing date",
-        'Please select a start date and an end date, or check "I currently work here".',
-        "warning",
-      );
+      toast.warning("Missing date", { description: 'Please select a start date and an end date, or check "I currently work here".' });
       return;
     }
     if (!editExpForm.current && editExpForm.endDate < editExpForm.startDate) {
-      Swal.fire(
-        "Invalid dates",
-        "End date must be on or after the start date.",
-        "warning",
-      );
+      toast.warning("Invalid dates", { description: "End date must be on or after the start date." });
       return;
     }
     setSaving(true);
@@ -546,19 +462,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       }));
       await refreshUser();
       setEditingExp(null);
-      Swal.fire({
-        title: "Updated",
-        text: "Experience updated.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Updated", { description: "Experience updated." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update" });
     } finally {
       setSaving(false);
     }
@@ -567,11 +473,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const updateEducation = async (index) => {
     if (saving) return;
     if (!editEduForm.school.trim() || !editEduForm.degree.trim()) {
-      Swal.fire(
-        "Missing details",
-        "Please enter a school and degree.",
-        "warning",
-      );
+      toast.warning("Missing details", { description: "Please enter a school and degree." });
       return;
     }
     setSaving(true);
@@ -586,19 +488,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       }));
       await refreshUser();
       setEditingEdu(null);
-      Swal.fire({
-        title: "Updated",
-        text: "Education updated.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Updated", { description: "Education updated." });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update" });
     } finally {
       setSaving(false);
     }
@@ -626,11 +518,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       setNewSkill("");
       return true;
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to add skill",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to add skill" });
       return false;
     } finally {
       skillPending.current = false;
@@ -648,11 +536,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
         skills: prev.skills.filter((s) => s !== skill),
       }));
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to remove skill",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to remove skill" });
     }
   };
 
@@ -682,7 +566,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       if (kind === "avatar") setProfilePicture(preview);
       else setBannerImage(preview);
     } catch (err) {
-      Swal.fire("Error", err.message || "Failed to load image", "error");
+      toast.error("Error", { description: err.message || "Failed to load image" });
     }
   };
 
@@ -738,7 +622,11 @@ const UserProfile = ({ profileRole = "alumni" }) => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6">
+        <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6 workspace-page">
+          <header className="workspace-page-header">
+            <h1>Profile</h1>
+            <p className="mt-2">{isOwn ? "Manage your profile and the experience you share with the community." : "Get to know this member of the community."}</p>
+          </header>
           {!isOwn && (
             <button
               type="button"

@@ -645,12 +645,22 @@ function AppRoutes() {
   );
 }
 
+function MemberPages() {
+  const { user } = useAuth();
+  const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
+  return (
+    <div className={isMember ? "member-workspace" : undefined} data-workspace-role={isMember ? user.role : undefined}>
+      <AppRoutes />
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <ChatProvider>
-          <AppRoutes />
+          <MemberPages />
         </ChatProvider>
       </AuthProvider>
     </Router>

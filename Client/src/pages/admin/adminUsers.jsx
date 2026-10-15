@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   Search,
   Users as UsersIcon,
@@ -71,11 +71,7 @@ export default function AdminUsers() {
       const res = await api.get("/users");
       setUsers(res.data.data || []);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load users",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load users" });
     } finally {
       setLoading(false);
       usersPending.current = false;
@@ -90,11 +86,7 @@ export default function AdminUsers() {
       const res = await api.get("/activity", { params: { limit: 50 } });
       setAudit(res.data.data || []);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load audit logs",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load audit logs" });
     } finally {
       setAuditLoading(false);
       auditPending.current = false;
@@ -147,12 +139,8 @@ export default function AdminUsers() {
       setSyncSummary(res.data.data);
       fetchUsers();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message ||
-          "CAIS sync failed. Check CAIS_API_URL in Server/.env",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message ||
+          "CAIS sync failed. Check CAIS_API_URL in Server/.env" });
     } finally {
       setSyncLoading(false);
     }

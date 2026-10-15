@@ -36,10 +36,21 @@ export function createMentorshipService(db) {
     return { authId: String(account._id), name: profile?.name || account.email, email: account.email, program: profile?.program || '', profilePicture: profile?.profilePicture || null };
   };
   const snapshot = async pair => {
-    const [records, student, mentor] = await Promise.all([
+    const [records, student, mentor, profile, portfolio, preferences] = await Promise.all([
       goals.find({ connectionId: String(pair.connection._id) }).toArray(), participant(pair.student), participant(pair.mentor),
+      db.collection('users').findOne({ authId: { $in: ids(pair.student._id) } }),
+      db.collection('student_portfolios').findOne({ _id: String(pair.student._id) }),
+      db.collection('mentor_match_preferences').findOne({ _id: String(pair.student._id) }),
     ]);
-    return { connectionId: String(pair.connection._id), student, mentor, connectedAt: pair.connection.createdAt || null, ...goalSnapshot(records) };
+    const activities = { resume_building: [], career_planning: [] };
+    if (profile?.bio?.trim()) activities.resume_building.push({ label: 'Resume summary saved in Portfolio', recordedAt: profile.updatedAt || null, href: '/student/portfolio' });
+    if (['skills', 'projects', 'research', 'certifications', 'seminars', 'awards'].some(key => Array.isArray(portfolio?.[key] ?? profile?.[key]) && (portfolio?.[key] ?? profile?.[key]).length)) {
+      activities.resume_building.push({ label: 'Skills or experience saved in Portfolio', recordedAt: portfolio?.updatedAt || profile?.updatedAt || null, href: '/student/portfolio' });
+    }
+    if (preferences?.careerGoals?.trim()) activities.career_planning.push({ label: 'Career goals saved in AI Mentor Matching', recordedAt: preferences.updatedAt || null });
+    const interests = preferences?.interests ?? profile?.interests;
+    if (Array.isArray(interests) && interests.some(value => typeof value === 'string' && value.trim())) activities.career_planning.push({ label: 'Career interests saved', recordedAt: preferences?.updatedAt || profile?.updatedAt || null });
+    return { connectionId: String(pair.connection._id), trackingMode: 'activity-with-mentor-review', student, mentor, connectedAt: pair.connection.createdAt || null, ...goalSnapshot(records, activities) };
   };
   return {
     async list(user) {
@@ -59,14 +70,21 @@ export function createMentorshipService(db) {
       const current = await goals.findOne({ _id });
       const revision = current?.revision || 0;
       if (validated.revision !== revision) fail(409, 'This goal was updated by your mentorship partner. Refresh and try again.');
+      const previouslyConfirmed = current?.status === 'completed' && !!(current.confirmedByAuthId || current.updatedByRole === 'alumni');
+      if (user.role === 'student' && validated.status === 'completed' && !previouslyConfirmed) fail(403, 'Only your mentor can confirm a goal as Completed. Save your activity note for review.');
+      if (user.role === 'student' && previouslyConfirmed && validated.status !== 'completed') fail(403, 'Only your mentor can reopen a completed goal.');
       const actor = await participant(user);
       const now = new Date();
+      // Students log activities; only mentors change review/completion status.
+      const status = user.role === 'alumni' ? validated.status : previouslyConfirmed ? 'completed' : current?.status === 'in_progress' ? 'in_progress' : 'not_started';
+      const confirmed = status === 'completed' && (user.role === 'alumni' || previouslyConfirmed);
       const update = {
         connectionId: String(pair.connection._id), goalKey: key,
         studentAuthId: String(pair.student._id), mentorAuthId: String(pair.mentor._id),
-        status: validated.status, note: validated.note ?? current?.note ?? '',
-        startedAt: validated.status === 'not_started' ? null : current?.startedAt || now,
-        completedAt: validated.status === 'completed' ? current?.completedAt || now : null,
+        status, note: validated.note ?? current?.note ?? '',
+        startedAt: status === 'not_started' && !(validated.note ?? current?.note)?.trim() ? null : current?.startedAt || now,
+        completedAt: confirmed ? current?.completedAt || now : null,
+        confirmedByAuthId: confirmed ? current?.confirmedByAuthId || (previouslyConfirmed ? current.updatedByAuthId : String(user._id)) : null,
         updatedAt: now, updatedByAuthId: String(user._id), updatedByName: actor.name, updatedByRole: user.role,
       };
       try {

@@ -14,12 +14,23 @@ export function validateGoal(key, input) {
   return { status: input.status, ...(input.note !== undefined ? { note: input.note.trim() } : {}), revision: input.revision };
 }
 
-export function goalSnapshot(records = []) {
+export function goalSnapshot(records = [], activities = {}) {
   const goals = MENTORSHIP_GOALS.map(goal => {
     const record = records.find(item => item.goalKey === goal.key);
-    return { ...goal, status: record?.status || 'not_started', note: record?.note || '', revision: record?.revision || 0,
+    const activitySources = [...(activities[goal.key] || [])];
+    if (record?.note?.trim()) activitySources.push({
+      label: goal.key === 'interview_preparation' ? 'Practice activity recorded in this mentorship' : 'Activity note saved in this mentorship',
+      recordedAt: record.updatedAt || null,
+    });
+    const mentorConfirmed = record?.status === 'completed' && !!(record.confirmedByAuthId || record.updatedByRole === 'alumni');
+    let status = record?.status || 'not_started';
+    if (status === 'completed' && !mentorConfirmed) status = 'in_progress';
+    if (status === 'not_started' && activitySources.length) status = 'in_progress';
+    return { ...goal, status, activitySources, mentorConfirmed,
+      note: record?.note || '', revision: record?.revision || 0,
       updatedAt: record?.updatedAt || null, updatedByName: record?.updatedByName || '', updatedByRole: record?.updatedByRole || '',
-      startedAt: record?.startedAt || null, completedAt: record?.completedAt || null };
+      startedAt: record?.startedAt || activitySources.find(source => source.recordedAt)?.recordedAt || null,
+      completedAt: mentorConfirmed ? record?.completedAt || null : null };
   });
   const completed = goals.filter(goal => goal.status === 'completed').length;
   return { goals, summary: { total: goals.length, completed, inProgress: goals.filter(goal => goal.status === 'in_progress').length,

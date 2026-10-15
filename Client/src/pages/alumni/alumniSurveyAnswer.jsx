@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { ArrowLeft, CheckCircle2, Send } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
@@ -40,26 +40,16 @@ const AlumniSurveyAnswer = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (answers.some((a) => !a.trim())) {
-      Swal.fire("Error", "Please answer all questions", "error");
+      toast.error("Error", { description: "Please answer all questions" });
       return;
     }
     setSaving(true);
     try {
       await api.post(`/surveys/${id}/answers`, { answers });
-      Swal.fire({
-        title: "Thank you!",
-        text: "Your response has been recorded.",
-        icon: "success",
-        timer: 1800,
-        showConfirmButton: false,
-      });
+      toast.success("Thank you!", { description: "Your response has been recorded." });
       navigate("/alumni/surveys");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to submit",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to submit" });
     } finally {
       setSaving(false);
     }
@@ -80,7 +70,7 @@ const AlumniSurveyAnswer = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-2xl p-4 sm:p-6">
+        <main className="mx-auto max-w-2xl p-4 sm:p-6 workspace-page">
           <button
             type="button"
             onClick={() => navigate("/alumni/surveys")}
@@ -99,8 +89,8 @@ const AlumniSurveyAnswer = () => {
               Survey not found.
             </p>
           ) : (
-            <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-5 py-5 sm:px-6">
+            <section className="space-y-5">
+              <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-5 py-5 sm:px-6 workspace-page-header">
                 <h1 className="text-[16px] font-extrabold text-white">
                   {survey.title}
                 </h1>
@@ -117,7 +107,7 @@ const AlumniSurveyAnswer = () => {
                 )}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
+              <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
                 {(survey.questions || []).map((q, i) => (
                   <div key={i}>
                     <label className="mb-1.5 block text-[13px] font-bold text-zinc-800 dark:text-zinc-100">

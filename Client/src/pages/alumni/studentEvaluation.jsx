@@ -167,7 +167,7 @@ function StudentEvaluationWorkspace({ studentId }) {
           title="Student evaluation"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6">
+        <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6 workspace-page">
           <Link
             to="/alumni/mentorship"
             className="inline-flex items-center gap-2 text-xs text-zinc-500"
@@ -175,7 +175,7 @@ function StudentEvaluationWorkspace({ studentId }) {
             <ArrowLeft size={14} />
             Back to my students
           </Link>
-          <header className="border-b border-zinc-200 pb-5 dark:border-zinc-800">
+          <header className="border-b border-zinc-200 pb-5 dark:border-zinc-800 workspace-page-header">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[#007a2e] dark:text-emerald-300">
               Student evaluation
             </p>

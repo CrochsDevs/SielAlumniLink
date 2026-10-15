@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { createElement } from "react";
 import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   Search,
   Plus,
@@ -58,11 +59,7 @@ export default function AdminSurveys() {
       const res = await api.get("/surveys", { params: { all: "true" } });
       setSurveys(res.data.data || []);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load surveys",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load surveys" });
     } finally {
       setLoading(false);
     }
@@ -174,7 +171,7 @@ export default function AdminSurveys() {
     e.preventDefault();
     const questions = form.questions.filter((q) => q.text.trim());
     if (questions.length === 0) {
-      Swal.fire("Error", "Add at least one question", "error");
+      toast.error("Error", { description: "Add at least one question" });
       return;
     }
     setSaving(true);
@@ -186,18 +183,9 @@ export default function AdminSurveys() {
       }
       setModalOpen(false);
       fetchSurveys();
-      Swal.fire({
-        title: "Saved",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Saved");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to save survey",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to save survey" });
     } finally {
       setSaving(false);
     }
@@ -218,18 +206,9 @@ export default function AdminSurveys() {
     try {
       await api.delete(`/surveys/${survey._id}`);
       fetchSurveys();
-      Swal.fire({
-        title: "Deleted",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Deleted");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to delete survey",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to delete survey" });
     }
   };
 
@@ -238,11 +217,7 @@ export default function AdminSurveys() {
       await api.put(`/surveys/${survey._id}`, { isActive: !survey.isActive });
       fetchSurveys();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update survey",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update survey" });
     }
   };
 
@@ -257,11 +232,7 @@ export default function AdminSurveys() {
       const res = await api.get(`/surveys/${survey._id}/results`);
       setResults(res.data.data.responses || []);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load results",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load results" });
       setResultsFor(null);
     } finally {
       setResultsLoading(false);

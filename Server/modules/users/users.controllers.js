@@ -5,6 +5,7 @@ import Roles from '../../constant/roles.js';
 import bcrypt from 'bcryptjs';
 import { ConversationModel } from '../messages/messages.models.js';
 import { emitToUser } from '../../realtime/socket.js';
+import { contactUpdates } from './profile-contact.js';
 
 const SYNCABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
@@ -447,7 +448,12 @@ export const updateMyProfile = async (req, res) => {
   try {
     const { name, program, batch, location, bio, skills, employmentHistory, education, interests } = req.body;
 
-    const updateData = {};
+    let updateData;
+    try {
+      updateData = contactUpdates(req.body);
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
 
     // Handle MongoDB operators ($push, $addToSet, $pull, etc.)
     const mongoOps = {};

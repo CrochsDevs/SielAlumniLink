@@ -468,9 +468,29 @@
 }
 
 @media print {
+  @page resume-professional {
+    size: A4;
+    margin: 0;
+  }
   .student-resume-print .resume-theme--professional {
+    page: resume-professional;
+    position: relative;
+    z-index: 0;
     grid-template-columns: minmax(0, 29%) minmax(0, 1fr);
-    min-height: 260mm;
+    min-height: 297mm;
+    background: transparent;
+  }
+  /* A fixed print background repeats on every page, including short final pages. */
+  .student-resume-print .resume-theme--professional::before {
+    content: "";
+    position: fixed;
+    /* Cover fractional-pixel rounding at the A4 bottom edge. */
+    inset: 0 auto -1px 0;
+    width: 29%;
+    background: #293e4e;
+    z-index: -1;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
   .resume-theme--professional .resume-sidebar {
     print-color-adjust: exact;

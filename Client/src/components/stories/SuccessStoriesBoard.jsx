@@ -4,10 +4,8 @@ import {
   ArrowRight,
   BookOpen,
   PenLine,
-  Quote,
   RefreshCw,
   Search,
-  Sparkles,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { getSocket } from "../../realtime/socket";
@@ -220,50 +218,7 @@ export default function SuccessStoriesBoard() {
       aria-label="Alumni success stories"
       className="space-y-6 font-sans text-zinc-900 [&_dialog]:font-sans dark:text-zinc-100"
     >
-      <header className={`${card} overflow-hidden p-6 sm:p-8`}>
-        <div className="grid items-center gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div>
-            <p className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#007a2e] dark:text-emerald-300">
-              <Sparkles size={15} />
-              From campus to career
-            </p>
-            <h1 className="mt-4 max-w-xl !text-3xl font-semibold leading-tight tracking-tight sm:!text-4xl">
-              Real journeys.
-              <br />
-              Possibilities for your future.
-            </h1>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-zinc-500 dark:text-zinc-400">
-              Discover the paths our alumni have taken, the milestones they have
-              reached, and the lessons they want to pass on.
-            </p>
-            {canPublish && (
-              <button
-                type="button"
-                disabled={restricted}
-                onClick={() => setComposerOpen(true)}
-                className={`${primaryButton} mt-5`}
-              >
-                <PenLine size={16} />
-                Share your story
-              </button>
-            )}
-          </div>
-          <aside className="relative overflow-hidden rounded-2xl bg-[#064d37] p-6 text-white">
-            <Quote size={32} className="text-emerald-300/70" />
-            <p className="relative mt-4 text-xl font-medium leading-8">
-              Every experience has a lesson worth sharing.
-            </p>
-            <p className="relative mt-3 text-xs leading-6 text-emerald-100/75">
-              First jobs. Meaningful achievements. Advice for the next
-              generation.
-            </p>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full border-[24px] border-white/5"
-            />
-          </aside>
-        </div>
-      </header>
+      <header className="workspace-page-header flex flex-wrap items-start justify-between gap-4"><div><h1>Success stories</h1><p className="mt-2 max-w-2xl">Discover alumni journeys, milestones, and lessons for your future.</p></div>{canPublish && <button type="button" disabled={restricted} onClick={() => setComposerOpen(true)} className={primaryButton}><PenLine size={16} />Share your story</button>}</header>
       {notice && (
         <p
           role="status"

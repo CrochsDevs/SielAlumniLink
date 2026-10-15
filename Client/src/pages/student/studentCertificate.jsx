@@ -31,8 +31,8 @@ export default function StudentCertificates() {
   );
   return (
     <DevelopmentShell title="Certificate">
-      <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6">
-        <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
+      <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6 workspace-page">
+        <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 workspace-page-header">
           <div>
             <h1>Digital certificates</h1>
             <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">

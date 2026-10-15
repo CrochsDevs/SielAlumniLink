@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -530,11 +531,7 @@ export default function AdminEvents() {
       const res = await api.get("/events", { params: { all: "true" } });
       setEvents(res.data.data || []);
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to load events",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to load events" });
     } finally {
       setLoading(false);
     }
@@ -660,11 +657,7 @@ export default function AdminEvents() {
       form.startAt &&
       new Date(form.endAt) < new Date(form.startAt)
     ) {
-      Swal.fire(
-        "Check the dates",
-        "The end time must be after the start time.",
-        "warning",
-      );
+      toast.warning("Check the dates", { description: "The end time must be after the start time." });
       return;
     }
     setSaving(true);
@@ -686,18 +679,9 @@ export default function AdminEvents() {
       else await api.post("/events", payload);
       setModalOpen(false);
       fetchEvents();
-      Swal.fire({
-        title: "Saved",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Saved");
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to save event",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to save event" });
     } finally {
       setSaving(false);
     }
@@ -719,19 +703,10 @@ export default function AdminEvents() {
     try {
       await api.delete(`/events/${event._id}`);
       fetchEvents();
-      Swal.fire({
-        title: "Deleted",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      toast.success("Deleted");
       return true;
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to delete event",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to delete event" });
       return false;
     }
   };
@@ -741,11 +716,7 @@ export default function AdminEvents() {
       await api.put(`/events/${event._id}`, { isActive: !event.isActive });
       fetchEvents();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to update event",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to update event" });
     }
   };
 

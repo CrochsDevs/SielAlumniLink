@@ -9,7 +9,7 @@ export default function AlumniCareer() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950">
+    <div className="alumni-career-page min-h-screen">
       <AlumniSidebar
         user={user}
         mobileOpen={sidebarOpen}
@@ -21,7 +21,7 @@ export default function AlumniCareer() {
           title="Career"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <CareerBoard referralContent={<ReferralBoard embedded />} />
+        <CareerBoard appearance="marketplace" referralContent={<ReferralBoard embedded />} />
       </div>
     </div>
   );

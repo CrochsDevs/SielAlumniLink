@@ -16,7 +16,11 @@ const source = (
     "utf8",
   )
 )
-  .replace("import './PortfolioResume.css';", "")
+  .replace(/import ["']\.\/PortfolioResume\.css["'];?/, "")
+  .replace(
+    "../../utils/resumeContact",
+    new URL("../src/utils/resumeContact.js", import.meta.url).href,
+  )
   .replace(
     "../../utils/resumeThemes",
     new URL("../src/utils/resumeThemes.js", import.meta.url).href,
@@ -57,6 +61,12 @@ const portfolio = {
 const user = {
   name: "Alex Santos",
   email: "alex@example.test",
+  contactEmail: "contact@example.test",
+  profileLinks: [
+    { type: "website", url: "https://alex.example.test/work" },
+    { type: "github", url: "https://github.com/alex" },
+    { type: "github", url: "https://github.com/alex/project" },
+  ],
   program: "BS Information Technology",
   profilePicture: "https://example.test/profile-photo.jpg",
   bio: "Student developer.",
@@ -74,6 +84,10 @@ for (const theme of RESUME_THEMES) {
     createElement(Resume, { user, portfolio, theme: theme.id }),
   );
   assert.ok(html.includes(`data-resume-theme="${theme.id}"`));
+  assert.ok(html.includes('contact@example.test'));
+  assert.ok(!html.includes('alex@example.test'));
+  assert.ok(html.includes('href="https://alex.example.test/work"'));
+  assert.ok(html.includes('href="https://github.com/alex/project"'));
   assert.equal(
     html.includes('class="resume-photo"'),
     ["modern", "professional"].includes(theme.id),
@@ -112,7 +126,7 @@ for (const theme of RESUME_THEMES) {
   assert.ok(html.includes('class="resume-skills"'));
   for (const content of [
     "Alex Santos",
-    "alex@example.test",
+    "contact@example.test",
     "Jan 2026 - Present",
     "Accessible &lt;portal&gt;",
     "Credential",

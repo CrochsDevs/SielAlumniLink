@@ -38,7 +38,7 @@ export default function SuccessStoriesPage() {
           title="Success Stories"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-7xl p-4 sm:p-6">
+        <main className="mx-auto max-w-7xl p-4 sm:p-6 workspace-page">
           <SuccessStoriesBoard />
         </main>
       </div>

@@ -21,7 +21,7 @@ export default function AlumniReferral() {
           title="Referral"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-7xl p-4 sm:p-6">
+        <main className="mx-auto max-w-7xl p-4 sm:p-6 workspace-page">
           <ReferralBoard />
         </main>
       </div>

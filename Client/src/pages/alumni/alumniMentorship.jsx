@@ -86,8 +86,8 @@ export default function AlumniMentorship() {
           title="Mentorship"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6">
-          <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800">
+        <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6 workspace-page">
+          <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800 workspace-page-header">
             <div>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-[#007a2e] dark:text-emerald-300">
                 Alumni mentor

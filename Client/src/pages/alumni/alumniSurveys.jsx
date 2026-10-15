@@ -10,6 +10,7 @@ import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import api from "../../utils/axios";
+import PageHeader from "../../components/ui/PageHeader";
 
 const AlumniSurveys = () => {
   const { user } = useAuth();
@@ -41,7 +42,8 @@ const AlumniSurveys = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6">
+        <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6 workspace-page">
+          <PageHeader title="Surveys" description="Share your experience and help improve the alumni community." />
           {loading ? (
             <p className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Loading surveys...

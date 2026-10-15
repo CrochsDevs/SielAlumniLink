@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { Check, X, UserPlus, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProfileAvatar from "../profile/ProfileAvatar";
@@ -43,22 +43,11 @@ export const useRequests = () => {
     try {
       await api.put(`/connections/${id}`, { status });
       setRequests((prev) => prev.filter((r) => String(r._id) !== String(id)));
-      Swal.fire({
-        title: status === "accepted" ? "Connected!" : "Declined",
-        text:
-          status === "accepted"
+      toast.info(status === "accepted" ? "Connected!" : "Declined", { description: status === "accepted"
             ? "You can now chat with each other."
-            : undefined,
-        icon: status === "accepted" ? "success" : "info",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+            : undefined });
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Failed to respond",
-        "error",
-      );
+      toast.error("Error", { description: err.response?.data?.message || "Failed to respond" });
     }
   };
 
@@ -148,7 +137,7 @@ const RequestsList = ({ requests, loading, onRespond }) => {
 };
 
 export const RequestsHeader = ({ count }) => (
-  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+  <div className="workspace-page-header rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
     <h1 className="flex items-center gap-2 text-[16px] font-extrabold text-zinc-900 dark:text-zinc-100">
       <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#009639]/10 dark:bg-[#009639]/20 text-[#009639] dark:text-emerald-300">
         <UserPlus className="h-4 w-4" />

@@ -13,8 +13,8 @@ export default function StudentReadiness() {
   const readiness = state.data?.readiness;
   return (
     <DevelopmentShell title="Employment Readiness">
-      <main className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
-        <header className="rounded-xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white">
+      <main className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6 workspace-page">
+        <header className="rounded-xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white workspace-page-header">
           <h1 className="flex items-center gap-2 text-xl font-bold">
             <BarChart3 size={24} />
             Employment Readiness Score

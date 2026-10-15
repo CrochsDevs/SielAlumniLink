@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import { Upload } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
@@ -31,12 +31,7 @@ export default function ProfilePhotoUpload({ kind = "profile" }) {
             },
       );
       await refreshUser();
-      Swal.fire({
-        title: isCover ? "Banner updated" : "Photo updated",
-        icon: "success",
-        timer: 1200,
-        showConfirmButton: false,
-      });
+      toast.success(isCover ? "Banner updated" : "Photo updated");
     } catch (err) {
       setError(
         err.response?.data?.message ||

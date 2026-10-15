@@ -27,6 +27,7 @@ import ProfileAvatar from "../../components/profile/ProfileAvatar";
 import PortfolioResume from "../../components/student/PortfolioResume";
 import ResumeThemePicker from "../../components/student/ResumeThemePicker";
 import ResumePreview from "../../components/student/ResumePreview";
+import PortfolioContactDetails from "../../components/student/PortfolioContactDetails";
 import { readResumeTheme, validResumeTheme } from "../../utils/resumeThemes";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 
@@ -117,10 +118,14 @@ export default function StudentPortfolio() {
   const [savedAbout, setSavedAbout] = useState(null);
   const aboutPending = useRef(false);
   const accountId = user?.authId || user?._id;
-  const resumeUser =
+  const [savedContact, setSavedContact] = useState(null);
+  const aboutUser =
     savedAbout?.accountId === accountId && savedAbout.sourceBio === user?.bio
       ? { ...user, bio: savedAbout.bio }
       : user;
+  const resumeUser = savedContact?.accountId === accountId
+    ? { ...aboutUser, ...savedContact.details }
+    : aboutUser;
   const openAbout = () => {
     setAboutDraft(resumeUser?.bio || "");
     setAboutError("");
@@ -254,9 +259,9 @@ export default function StudentPortfolio() {
 
   return (
     <DevelopmentShell title="Portfolio">
-      <main className="mx-auto max-w-7xl space-y-5 p-3 sm:p-6">
+      <main className="mx-auto max-w-7xl space-y-5 p-3 sm:p-6 workspace-page">
         <DevelopmentStatus state={state} />
-        <header className="border-b border-zinc-200 pb-5 pt-1 dark:border-zinc-800">
+        <header className="border-b border-zinc-200 pb-5 pt-1 dark:border-zinc-800 workspace-page-header">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -406,6 +411,12 @@ export default function StudentPortfolio() {
                     </p>
                   )}
                 </section>
+                <PortfolioContactDetails
+                  user={resumeUser}
+                  disabled={disabled}
+                  onSaved={details => setSavedContact({ accountId, details })}
+                  refreshUser={refreshUser}
+                />
                 {SECTIONS.map((section) => (
                   <section
                     id={section.key}
@@ -528,10 +539,10 @@ export default function StudentPortfolio() {
                   </p>
                 </div>
               </div>
-              {user?.email && (
+              {(resumeUser?.contactEmail ?? resumeUser?.email) && (
                 <p className="mt-4 flex items-start gap-2 break-all text-[11px] text-zinc-500 dark:text-zinc-400">
                   <Mail size={13} className="mt-0.5 shrink-0" />
-                  {user.email}
+                  {resumeUser.contactEmail ?? resumeUser.email}
                 </p>
               )}
               <Link
@@ -569,6 +580,18 @@ export default function StudentPortfolio() {
               <h2 className="mb-3 text-xs font-semibold">
                 Portfolio checklist
               </h2>
+              <a
+                href="#contact-details"
+                onClick={event => {
+                  event.preventDefault();
+                  setView('edit');
+                  requestAnimationFrame(() => document.getElementById('contact-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+                }}
+                className="flex items-center justify-between rounded-lg py-2 text-xs text-zinc-500 dark:text-zinc-400"
+              >
+                Contact &amp; links
+                <Plus size={14} />
+              </a>
               <a
                 href="#about"
                 onClick={(event) => {

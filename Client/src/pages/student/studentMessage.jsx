@@ -35,8 +35,8 @@ const StudentMessage = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-6xl p-4 sm:p-6">
-          <header className="mb-5 border-b border-zinc-200 pb-5 dark:border-zinc-800">
+        <main className="mx-auto max-w-6xl p-4 sm:p-6 workspace-page">
+          <header className="mb-5 border-b border-zinc-200 pb-5 dark:border-zinc-800 workspace-page-header">
             <h1>Messages</h1>
             <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
               Your conversations and connection requests.
@@ -60,9 +60,11 @@ const StudentMessage = () => {
           </div>
 
           {activeTab === "chats" && (
-            <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-              <ConvoList {...inbox} />
-              <div className={`${activeId ? "block" : "hidden md:block"}`}>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-[300px_minmax(0,1fr)]">
+              <div className={`min-w-0 ${activeId ? "hidden md:block" : "block"}`}>
+                <ConvoList {...inbox} />
+              </div>
+              <div className={`min-w-0 ${activeId ? "block" : "hidden md:block"}`}>
                 <ThreadPane {...inbox} />
               </div>
             </div>

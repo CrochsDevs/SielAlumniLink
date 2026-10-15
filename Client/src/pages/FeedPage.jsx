@@ -43,7 +43,8 @@ export default function FeedPage() {
           title: "Alumni Feed",
           onMenuClick: () => setSidebarOpen(true),
         })}
-        <main className="mx-auto grid max-w-7xl gap-4 p-3 text-zinc-900 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] dark:text-zinc-100">
+        <main className="mx-auto grid max-w-7xl gap-4 p-3 text-zinc-900 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] dark:text-zinc-100 workspace-page">
+          <header className="workspace-page-header col-span-full"><h1>Community feed</h1><p className="mt-2">Updates, conversations, and opportunities from your community.</p></header>
           <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start">
             <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
               <div className="h-16 bg-gradient-to-r from-[#0F4C3A] to-[#009639]" />

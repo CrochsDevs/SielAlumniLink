@@ -1,5 +1,5 @@
 import { createElement, useEffect, useMemo, useState } from "react";
-import Swal from "sweetalert2";
+import { gooeyToast as toast } from 'goey-toast';
 import {
   Search,
   ClipboardCheck,
@@ -94,11 +94,7 @@ export default function TracerResponses() {
         setResponses((tracerRes.data.data || []).map(normalizeTracerDetails));
       })
       .catch((err) =>
-        Swal.fire(
-          "Error",
-          err.response?.data?.message || "Failed to load tracer responses",
-          "error",
-        ),
+        toast.error("Error", { description: err.response?.data?.message || "Failed to load tracer responses" }),
       )
       .finally(() => setLoading(false));
   }, []);
