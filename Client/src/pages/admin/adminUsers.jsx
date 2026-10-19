@@ -1,3 +1,4 @@
+import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
 import {
@@ -224,7 +225,8 @@ export default function AdminUsers() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+        <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+          <PageHeader title="Users" description="Manage community members and review account activity." />
           {/* Stat cards */}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
             {[

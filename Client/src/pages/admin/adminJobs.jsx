@@ -8,7 +8,7 @@ export default function AdminCareer() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950">
+    <div className="alumni-career-page min-h-screen">
       <AdminSidebar
         user={user}
         mobileOpen={sidebarOpen}
@@ -20,7 +20,7 @@ export default function AdminCareer() {
           title="Job Posts"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <CareerBoard />
+        <CareerBoard appearance="marketplace" />
       </div>
     </div>
   );

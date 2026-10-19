@@ -1,4 +1,5 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import PageHeader from "../../components/ui/PageHeader";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { gooeyToast as toast } from 'goey-toast';
 import {
@@ -247,7 +248,8 @@ export default function AdminSurveys() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+        <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+          <PageHeader title="Surveys" description="Create surveys and review responses from your community." />
           {/* Stat cards */}
           <div className="grid grid-cols-3 gap-3">
             {[

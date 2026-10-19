@@ -4,6 +4,7 @@ import { CheckCircle2, Compass, FileUser, MessageCircle, RefreshCw, Target, Arro
 import { useAuth } from '../../context/useAuth';
 import ProfileAvatar from '../profile/ProfileAvatar';
 import api from '../../utils/axios';
+import MentorProgressWorkspace from './MentorProgressWorkspace';
 const STATUSES = [{
   key: 'not_started',
   label: 'Not Started',
@@ -95,7 +96,7 @@ function GoalCard({
             setStatus(event.target.value);
             setError('');
           }} className={input}>{STATUSES.map(item => <option key={item.key} value={item.key} disabled={item.key === 'not_started' && !!goal.activitySources?.length}>{item.label}</option>)}</select><span className="mt-2 block text-xs font-normal text-zinc-500">Mark Completed after reviewing your student's work.</span></label>}
-      <label className="block text-xs font-semibold">{goal.key === 'interview_preparation' ? 'What did you practice?' : 'What have you worked on?'}<textarea aria-label={`Note for ${goal.title}`} value={note} onChange={event => setNote(event.target.value)} rows={3} maxLength={1000} placeholder={goal.key === 'interview_preparation' ? 'For example: practiced STAR answers and explaining my latest project.' : 'Share a short update or ask your mentor for feedback.'} className={`${input} py-3 leading-6`} /></label>
+      <label className="block text-xs font-semibold">{isMentor ? 'Review notes & feedback' : goal.key === 'interview_preparation' ? 'What did you practice?' : 'What have you worked on?'}<textarea aria-label={`Note for ${goal.title}`} value={note} onChange={event => setNote(event.target.value)} rows={3} maxLength={1000} placeholder={isMentor ? 'Share feedback and next steps for this mentee.' : goal.key === 'interview_preparation' ? 'For example: practiced STAR answers and explaining my latest project.' : 'Share a short update or ask your mentor for feedback.'} className={`${input} py-3 leading-6`} /></label>
       {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex flex-wrap items-center gap-3"><button type="submit" disabled={!changed || busy} className={button}>{busy ? 'Saving…' : isMentor ? 'Save mentor review' : 'Save activity'}</button><button type="button" onClick={() => {
             setNote(goal.note);
@@ -121,8 +122,10 @@ export default function MentorshipProgressTracker({
   const [message, setMessage] = useState("");
   const generation = useRef(0);
   const dirtyGoals = useRef(new Set());
+  const [dirty, setDirty] = useState(false);
   const onDirty = useCallback((key, dirty) => {
     if (dirty) dirtyGoals.current.add(key);else dirtyGoals.current.delete(key);
+    setDirty(dirtyGoals.current.size > 0);
   }, []);
   const load = useCallback(async (silent = false) => {
     const request = ++generation.current;
@@ -163,13 +166,13 @@ export default function MentorshipProgressTracker({
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Target size={21} className="text-[#009639]" />
-            {user?.role === 'alumni' ? 'Your student’s progress' : 'Your mentorship progress'}
+            {user?.role === 'alumni' ? 'Mentee progress' : 'Your mentorship progress'}
           </h2>
           <p className="mt-2 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-            Work on three goals, share your activity, and get feedback from your mentor.
+            {user?.role === 'alumni' ? 'See every mentee at a glance, review their activity, and guide their next steps.' : 'Work on three goals, share your activity, and get feedback from your mentor.'}
           </p>
         </div>
-        <button type="button" disabled={loading} onClick={() => load()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+        <button type="button" disabled={loading || dirty} onClick={() => load()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
           <RefreshCw size={14} />
           Refresh progress
         </button>
@@ -195,7 +198,7 @@ export default function MentorshipProgressTracker({
             {user?.role === "alumni" ? "Your students will appear here once you accept their connection requests." : "Connect with an alumni mentor. Once your request is accepted, you can track resume building, interview preparation, and career planning together."}
           </p>
           {onFindMentors && <button type="button" onClick={onFindMentors} className={`${button} mt-5`}>Find a mentor<ArrowRight size={15} /></button>}
-        </div> : !error && selected && <>
+        </div> : !error && selected && user?.role === 'alumni' ? <MentorProgressWorkspace trackers={trackers} initialPartnerAuthId={initialPartnerAuthId} dirty={dirty} onSelect={() => setMessage('')} renderGoals={tracker => tracker.goals.map(goal => <GoalCard key={`${tracker.connectionId}:${goal.key}:${goal.revision}:${goal.status}`} goal={goal} connectionId={tracker.connectionId} onSaved={onSaved} isMentor onDirty={onDirty} />)} /> : !error && selected && <>
             <div className={`${card} flex flex-wrap items-center justify-between gap-4 p-5`}>
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950">

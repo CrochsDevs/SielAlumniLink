@@ -83,15 +83,15 @@
 
 /* Shared student/alumni page frame. Print documents and dialogs keep their own layout. */
 @media screen {
-  .member-workspace[data-workspace-role="alumni"] {
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
     --alumni-page-background: #edf2eb;
     min-height: 100vh;
     background: var(--alumni-page-background);
   }
-  .dark .member-workspace[data-workspace-role="alumni"] {
+  .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
     --alumni-page-background: #0c1210;
   }
-  .member-workspace[data-workspace-role="alumni"] > .min-h-screen {
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) > .min-h-screen {
     background: var(--alumni-page-background);
   }
   .member-workspace main.workspace-page {
@@ -131,5 +131,77 @@
   }
   @media (min-width: 640px) {
     .member-workspace main.workspace-page { padding: 1.5rem !important; }
+  }
+}
+
+/* Alumni surfaces share the Career palette; cards remain distinct from controls. */
+@media screen {
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
+    --alumni-card: #f5faf1;
+    --alumni-card-border: #d4dfd1;
+    --alumni-secondary: #f5f0e3;
+    --alumni-secondary-border: #e6dfcf;
+    --alumni-tab: #dfe9dc;
+    --alumni-heading: #101b14;
+    --alumni-card-shadow: 0 3px 14px rgb(24 59 35 / 4%);
+  }
+  .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
+    --alumni-card: #181f1a;
+    --alumni-card-border: #303b33;
+    --alumni-secondary: #24231c;
+    --alumni-secondary-border: #3b3a2d;
+    --alumni-tab: #202e24;
+    --alumni-heading: #f4f4f5;
+    --alumni-card-shadow: 0 3px 14px rgb(0 0 0 / 12%);
+  }
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) main.workspace-page:not(.career-marketplace) {
+    & :is(section, article, aside, div, p).bg-white.border:not(:where(dialog *, [role="dialog"] *, .workspace-page-header)) {
+      background-color: var(--alumni-card);
+      border-color: var(--alumni-card-border);
+      border-radius: 18px;
+      box-shadow: var(--alumni-card-shadow);
+    }
+    & :is(aside.bg-white.border, aside > .bg-white.border):not(:where(dialog *, [role="dialog"] *)) {
+      background-color: var(--alumni-secondary);
+      border-color: var(--alumni-secondary-border);
+    }
+    & .workspace-page-header {
+      border-bottom-color: var(--alumni-card-border) !important;
+    }
+    & .workspace-page-header h1 {
+      color: var(--alumni-heading) !important;
+      font-weight: 700;
+    }
+    & .alumni-section-tabs {
+      gap: 8px;
+      padding: 6px;
+      border-radius: 14px;
+      background: var(--alumni-tab);
+    }
+    & .alumni-section-tabs button {
+      min-height: 40px;
+      padding-inline: 14px;
+      border: 0;
+      border-radius: 10px;
+    }
+    & .alumni-section-tabs button[aria-pressed="true"] {
+      background: #145238;
+      color: #fff;
+      box-shadow: 0 2px 5px rgb(20 82 56 / 12%);
+    }
+    & .alumni-section-tabs button[aria-pressed="true"] span {
+      background: rgb(255 255 255 / 15%);
+      color: #fff;
+    }
+    & .alumni-survey-card {
+      background: var(--alumni-card);
+      border-color: var(--alumni-card-border);
+      border-radius: 18px;
+      box-shadow: var(--alumni-card-shadow);
+    }
+    & .alumni-survey-card:hover {
+      border-color: #8ca987;
+      box-shadow: 0 6px 20px rgb(24 59 35 / 8%);
+    }
   }
 }

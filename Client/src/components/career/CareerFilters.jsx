@@ -69,7 +69,7 @@ export function CareerFilters({
             ))}
           </div>
         </fieldset>
-        <fieldset>
+        <fieldset data-filter-group="sources">
           <legend>Posted by</legend>
           <div className="space-y-1">
             {sources.map(([id, label]) => (

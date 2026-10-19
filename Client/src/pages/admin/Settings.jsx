@@ -1,3 +1,4 @@
+import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -186,7 +187,8 @@ export default function Settings() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="p-4 sm:p-6">
+        <main className="workspace-page p-4 sm:p-6">
+          <PageHeader title="Account settings" description="Manage your profile, account preferences, and security." />
           <div className="flex flex-col md:flex-row gap-5 items-start">
             {/* Sub-sidebar */}
             <aside className="w-full md:w-60 shrink-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-2">

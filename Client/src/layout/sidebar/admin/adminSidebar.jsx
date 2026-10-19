@@ -35,10 +35,10 @@ const AdminSidebar = ({
   const isSettingsActive = location.pathname.startsWith("/admin/settings");
 
   const navItemClass = (active) =>
-    `group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+    `group flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-colors ${
       active
-        ? "bg-[#009639]/10 text-[#009639] font-semibold dark:bg-[#009639]/20 dark:text-emerald-300"
-        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        ? "bg-[#145238] text-white font-semibold shadow-sm dark:bg-[#306b45]"
+        : "text-zinc-700 hover:bg-[#dce8d3] hover:text-zinc-900 font-medium dark:text-zinc-300 dark:hover:bg-[#263d2b] dark:hover:text-zinc-100"
     }`;
 
   const handleLogout = () => {
@@ -57,7 +57,7 @@ const AdminSidebar = ({
 
       <aside
         id="sidebar"
-        className={`fixed left-0 top-0 h-full w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transform transition-transform duration-300 z-30 flex flex-col ${
+        className={`admin-sidebar fixed left-0 top-0 h-full w-64 bg-[#f8faf6] dark:bg-[#16231b] border-r border-[#dce4d8] dark:border-[#304535] shadow-[4px_0_20px_rgba(24,59,35,0.06)] transform transition-transform duration-300 z-30 flex flex-col ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
         style={{
@@ -65,7 +65,7 @@ const AdminSidebar = ({
         }}
       >
         {/* Header / Brand */}
-        <div className="px-4 pt-5 pb-5 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="px-4 pt-5 pb-5 border-b border-[#dce4d8] dark:border-[#304535] bg-[#f1f5ed] dark:bg-[#1c3022]">
           <Link
             to="/admin"
             className="flex flex-col items-center text-center group"
@@ -77,7 +77,7 @@ const AdminSidebar = ({
             />
             <div className="leading-tight mt-1">
               <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">
-                SielAlumni
+                Siel<span className="text-[#009639]">Alumni</span>
               </p>
             </div>
           </Link>

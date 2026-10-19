@@ -123,6 +123,9 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
         message: responseCode === 503 ? "Reports unavailable" : "",
       }),
     ).toString("base64"),
+  }).catch(error => {
+    // React can abort a request during effect cleanup before the fixture replies.
+    if (!error.message.includes('Invalid InterceptionId')) throw error;
   });
 });
 const click = (text) =>

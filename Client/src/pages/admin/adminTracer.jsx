@@ -40,8 +40,8 @@ export default function AdminTracer() {
           title="Tracer Study"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
-          <header className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <main className="workspace-page mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
+          <header className="workspace-page-header rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <h1 className="text-xl font-semibold">Tracer Study</h1>
             <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
               Track how graduates use their programs in their work, including

@@ -649,7 +649,7 @@ function MemberPages() {
   const { user } = useAuth();
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
-    <div className={isMember ? "member-workspace" : undefined} data-workspace-role={isMember ? user.role : undefined}>
+    <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
       <AppRoutes />
     </div>
   );

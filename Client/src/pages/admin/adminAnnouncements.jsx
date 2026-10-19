@@ -1,3 +1,4 @@
+import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { gooeyToast as toast } from 'goey-toast';
@@ -148,7 +149,8 @@ export default function AdminAnnouncements() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+        <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+          <PageHeader title="Announcements" description="Share updates and manage announcements for your community." />
           {/* Stat cards */}
           <div className="grid grid-cols-2 gap-3">
             {[

@@ -19,6 +19,16 @@ import NotificationDropdown from "../../components/notifications/NotificationDro
 import { useChat } from "../../context/useChat.js";
 
 const breadcrumbMap = [
+  ["/admin/users", "Users"],
+  ["/admin/tracer", "Tracer Study"],
+  ["/admin/jobs", "Job Posts"],
+  ["/admin/surveys", "Survey"],
+  ["/admin/certificates", "Certificates"],
+  ["/admin/events", "Calendar"],
+  ["/admin/connections", "Connections"],
+  ["/admin/announcements", "Announcements"],
+  ["/admin/settings", "Account"],
+  ["/admin/message", "Message"],
   ["/alumni/mentorship","Mentorship"],
   ["/alumni/career","Career"],
   ["/alumni/employment","Employment"],
@@ -48,9 +58,9 @@ const breadcrumbMap = [
   ["/student/message","Message"],
 ];
 
-const MemberTopbar = ({ user, title, onMenuClick, memberRole }) => {
-  const roleLabel = memberRole === "student" ? "Student" : "Alumni";
-  const homePath = `/${memberRole}`;
+const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbPath, profilePath, settingsPath }) => {
+  const roleLabel = crumbLabel || { student: "Student", alumni: "Alumni", admin: "Admin" }[memberRole];
+  const homePath = crumbPath || `/${memberRole}`;
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -315,7 +325,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole }) => {
               </div>
 
               <Link
-                to={`${homePath}/profile`}
+                to={profilePath || `${homePath}/profile`}
                 onClick={() => setDropdownOpen(false)}
                 className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
@@ -323,7 +333,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole }) => {
                 Profile
               </Link>
               <Link
-                to={`${homePath}/accounts`}
+                to={settingsPath || `${homePath}/accounts`}
                 onClick={() => setDropdownOpen(false)}
                 className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >

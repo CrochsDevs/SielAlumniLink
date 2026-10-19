@@ -29,7 +29,7 @@ const AdminMessage = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-6xl p-4 sm:p-6">
+        <main className="workspace-page mx-auto max-w-6xl p-4 sm:p-6">
           <div
             className="grid grid-cols-1 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
             style={{ height: "calc(100vh - 12rem)", minHeight: "480px" }}

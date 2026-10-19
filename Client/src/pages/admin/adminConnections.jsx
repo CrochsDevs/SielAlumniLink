@@ -198,8 +198,8 @@ export default function AdminConnections() {
           title="Connections"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
+        <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+          <div className="workspace-page-header flex items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                 Community connections

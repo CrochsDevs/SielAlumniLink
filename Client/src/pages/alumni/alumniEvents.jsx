@@ -144,8 +144,8 @@ export default function AlumniEvents() {
               </button>
             )}
           </header>
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800">
-            <nav aria-label="Events workspace" className="flex gap-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <nav aria-label="Events workspace" className="alumni-section-tabs flex max-w-full overflow-x-auto">
               {[
                 ["calendar", "University calendar"],
                 ["community", "Alumni community"],

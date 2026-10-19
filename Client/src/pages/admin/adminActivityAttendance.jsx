@@ -83,7 +83,7 @@ export default function AdminActivityAttendance() {
           title="Registration & attendance"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="mx-auto max-w-5xl space-y-5 p-3 sm:p-6">
+        <main className="workspace-page mx-auto max-w-5xl space-y-5 p-3 sm:p-6">
           <Link
             to="/admin/events"
             className="inline-flex items-center gap-2 text-xs text-zinc-500"
@@ -91,7 +91,7 @@ export default function AdminActivityAttendance() {
             <ArrowLeft size={14} />
             Back to calendar
           </Link>
-          <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800">
+          <header className="workspace-page-header flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
                 {event?.title || "Registration & attendance"}

@@ -30,6 +30,7 @@ import {
 import { useAuth } from "../../context/useAuth";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
+import PageHeader from "../../components/ui/PageHeader";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
 
@@ -1242,7 +1243,8 @@ export default function AdminEvents() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto grid max-w-[1500px] gap-4 p-4 sm:p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <main className="workspace-page mx-auto grid max-w-[1500px] gap-4 p-4 sm:p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="order-first xl:col-span-2"><PageHeader title="Calendar" description="Manage community events, schedules, and reminders." /></div>
           {/* left rail */}
           <aside className="order-2 space-y-4 xl:order-1">
             <MiniCalendar

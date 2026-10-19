@@ -572,7 +572,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
     <main className={`mx-auto max-w-7xl p-3 text-zinc-900 sm:p-5 dark:text-zinc-100 workspace-page ${marketplace ? "career-marketplace" : ""}`}>
       {marketplace && <>
         <PageHeader title="Career Board" description="Find opportunities, learn from alumni, and build what comes next.">
-          {canPost && <button type="button" onClick={() => setEditor({ kind: isAdmin && view !== "guides" ? "job" : "guide" })} className={primaryButton}><Plus size={16} />Share a career guide</button>}
+          {canPost && <button type="button" onClick={() => setEditor({ kind: isAdmin && view !== "guides" ? "job" : "guide" })} className={primaryButton}><Plus size={16} />{isAdmin && view !== "guides" ? 'Post an opportunity' : 'Share a career guide'}</button>}
         </PageHeader>
         {view !== "referrals" && <div className="career-search-row">
           <CareerSearch value={query} onChange={setQuery} onSearch={(value) => { setTerm(value); setPage(1); }} placeholder={searchPlaceholder} />
@@ -925,7 +925,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                           </span>
                           <div className="min-w-0 flex-1 basis-36">
                             <h3 className="break-words text-sm font-semibold leading-5">
-                              {marketplace && kind === "job" ? <button type="button" onClick={() => setSelectedJob(item._id)} className="text-left hover:underline underline-offset-4">{item.title}</button> : item.title}
+                              {marketplace && kind === "job" && !isAdmin ? <button type="button" onClick={() => setSelectedJob(item._id)} className="text-left hover:underline underline-offset-4">{item.title}</button> : item.title}
                             </h3>
                             <p className="career-card-byline mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                               <span>

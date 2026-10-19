@@ -66,7 +66,7 @@ const AlumniSurveys = () => {
                 key={survey._id}
                 type="button"
                 onClick={() => navigate(`/alumni/surveys/${survey._id}`)}
-                className="group w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 text-left shadow-sm transition hover:shadow-md"
+                className="alumni-survey-card group w-full rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 text-left shadow-sm transition hover:shadow-md"
               >
                 <div className="flex items-start gap-3.5">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#009639]/10 text-[#009639] dark:text-emerald-300">

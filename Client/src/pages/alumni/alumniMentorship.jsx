@@ -116,13 +116,13 @@ export default function AlumniMentorship() {
               </button>
             </p>
           )}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <nav
               aria-label="Mentor workspace"
-              className="flex max-w-full gap-5 overflow-x-auto"
+              className="alumni-section-tabs flex max-w-full overflow-x-auto"
             >
               {[
-                ["students", "My mentee"],
+                ["students", "My mentees"],
                 ["evaluations", "Skill evaluations"],
                 ["progress", "Progress tracker"],
               ].map(([id, label]) => (

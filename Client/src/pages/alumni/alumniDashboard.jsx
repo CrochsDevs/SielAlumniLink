@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import {
   MessageSquare,
   ClipboardCheck,
@@ -123,7 +123,9 @@ const AlumniDashboard = () => {
         .catch(() => ({ data: { data: [] } }));
       setPendingCount((pending.data.data || []).length);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load mentees" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to load mentees",
+      });
     } finally {
       setMenteesLoading(false);
     }
@@ -243,14 +245,19 @@ const AlumniDashboard = () => {
       await api.put(`/connections/${id}`, { status });
       setRequests((prev) => prev.filter((r) => String(r._id) !== String(id)));
       setPendingCount((prev) => Math.max(0, prev - 1));
-      toast.info(status === "accepted" ? "Connected!" : "Declined", { description: status === "accepted"
+      toast.info(status === "accepted" ? "Connected!" : "Declined", {
+        description:
+          status === "accepted"
             ? "You can now chat with each other."
-            : undefined });
+            : undefined,
+      });
       loadSuggestions();
       loadProfileStats();
       if (dashTab === "mentorship") loadMentees();
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to respond" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to respond",
+      });
     }
   };
 
@@ -267,7 +274,9 @@ const AlumniDashboard = () => {
       toast.success("Request sent");
     } catch (err) {
       if (err.response?.status === 409) await loadSuggestions();
-      toast.error("Error", { description: err.response?.data?.message || "Failed to send request" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to send request",
+      });
     } finally {
       connectPending.current = false;
       setConnecting(null);
@@ -290,10 +299,6 @@ const AlumniDashboard = () => {
         />
 
         <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] workspace-page">
-          <header className="workspace-page-header col-span-full">
-            <h1>Dashboard</h1>
-            <p className="mt-2">Stay connected with your alumni community.</p>
-          </header>
           {/* LEFT: Sieles ID card */}
           <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
             <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
