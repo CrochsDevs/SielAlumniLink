@@ -1,4 +1,4 @@
-﻿import { createElement, useEffect, useState } from "react";
+import { createElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, ClipboardCheck, Briefcase, FileText, Calendar,
@@ -7,6 +7,8 @@ import {
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
 import ProfileAvatar from "../../../components/profile/ProfileAvatar";
 import "./adminSidebar.css";
+
+let sidebarScrollTop = 0;
 
 const menuGroups = [
   { label: "Overview", items: [
@@ -31,6 +33,10 @@ const menuGroups = [
 export default function AdminSidebar({ user, mobileOpen: controlledOpen, setMobileOpen: controlledSet }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const scrollRef = useRef(null);
+  useLayoutEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = sidebarScrollTop;
+  }, []);
   const [internalOpen, setInternalOpen] = useState(false);
   const mobileOpen = controlledOpen ?? internalOpen;
   const setMobileOpen = controlledSet ?? setInternalOpen;
@@ -54,16 +60,16 @@ export default function AdminSidebar({ user, mobileOpen: controlledOpen, setMobi
         </Link>
         <button type="button" className="admin-sidebar-close lg:hidden" aria-label="Close sidebar" onClick={() => setMobileOpen(false)}><X size={16} /></button>
       </div>
-      <div className="admin-sidebar-scroll">
+      <div className="admin-sidebar-scroll" ref={scrollRef} onScroll={event => { sidebarScrollTop = event.currentTarget.scrollTop; }}>
         {menuGroups.map(group => <nav key={group.label} aria-label={group.label} className="admin-menu-group">
           <p className="admin-menu-label">{group.label}</p>
-          {group.items.map(item => <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setMobileOpen(false)} className={({ isActive }) => `admin-menu-item ${isActive || (item.to === "/admin" && location.pathname === "/admin/dashboard") ? "is-active" : ""}`}>
+          {group.items.map(item => <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setMobileOpen(false)} className={({ isActive }) => `admin-menu-item ${isActive || (item.to === "/admin" && location.pathname === "/admin/dashboard") ? "is-active !bg-[#009639] !border-[#009639] !text-white" : ""}`}>
             {createElement(item.icon, { size: 16, strokeWidth: 1.7, "aria-hidden": true })}<span>{item.label}</span>
           </NavLink>)}
         </nav>)}
       </div>
       <div className="admin-sidebar-bottom">
-        <NavLink to="/admin/settings" onClick={() => setMobileOpen(false)} className={({ isActive }) => `admin-menu-item ${isActive ? "is-active" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></NavLink>
+        <NavLink to="/admin/settings" onClick={() => setMobileOpen(false)} className={({ isActive }) => `admin-menu-item ${isActive ? "is-active !bg-[#009639] !border-[#009639] !text-white" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></NavLink>
         <div className="admin-sidebar-account">
           <Link to="/admin/settings" className="admin-account-link" onClick={() => setMobileOpen(false)} aria-label="Account settings">
             <span className="admin-account-avatar"><ProfileAvatar user={user} fallback="A" /></span>

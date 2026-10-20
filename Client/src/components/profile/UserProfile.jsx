@@ -603,7 +603,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const Topbar = isStudent ? StudentTopbar : AlumniTopbar;
 
   const inputClass =
-    "w-full h-10 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15";
+    "w-full h-10 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
 
   return (
     <div
@@ -631,7 +631,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400 transition hover:text-[#007a2e]"
+              className="flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400 transition hover:text-brand"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -639,9 +639,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
           )}
 
           {!isOwn && loadingOther ? (
-            <div className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
+            <div className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
               <svg
-                className="mx-auto h-8 w-8 animate-spin text-[#009639] dark:text-emerald-300"
+                className="mx-auto h-8 w-8 animate-spin text-brand dark:text-brand"
                 viewBox="0 0 24 24"
               >
                 <circle
@@ -664,7 +664,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
               </p>
             </div>
           ) : !isOwn && (notFound || !profile) ? (
-            <div className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
+            <div className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
               <p className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
                 Profile not found
               </p>
@@ -675,15 +675,15 @@ const UserProfile = ({ profileRole = "alumni" }) => {
           ) : (
             <>
               {/* Profile header */}
-              <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
+              <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
                 <div
-                  className="relative h-32 overflow-hidden bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] sm:h-40"
+                  className="relative h-32 overflow-hidden bg-gradient-to-br from-brand via-brand to-brand sm:h-40"
                   style={
                     bannerSrc
                       ? undefined
                       : {
                           backgroundImage:
-                            "radial-gradient(circle at 15% 30%, rgba(255,255,255,0.18) 0 2px, transparent 3px), radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0 2px, transparent 3px), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.15) 0 2px, transparent 3px), radial-gradient(circle at 85% 65%, rgba(255,255,255,0.18) 0 2px, transparent 3px), linear-gradient(to bottom right, #0F4C3A, #007a2e, #009639)",
+                            "radial-gradient(circle at 15% 30%, rgba(255,255,255,0.18) 0 2px, transparent 3px), radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0 2px, transparent 3px), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.15) 0 2px, transparent 3px), radial-gradient(circle at 85% 65%, rgba(255,255,255,0.18) 0 2px, transparent 3px), linear-gradient(to bottom right, #0F4C3A, #009639, #009639)",
                         }
                   }
                 >
@@ -719,7 +719,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                 <div className="px-5 pb-5 sm:px-7">
                   <div className="-mt-10 flex flex-wrap items-end justify-between gap-3">
                     <div className="relative">
-                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white text-3xl font-extrabold text-[#009639] shadow-lg ring-4 ring-white dark:bg-zinc-900 dark:text-emerald-300">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white text-3xl font-extrabold text-brand shadow-lg ring-4 ring-white dark:bg-zinc-900 dark:text-brand">
                         {avatarSrc ? (
                           <img
                             src={avatarSrc}
@@ -745,14 +745,14 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                             onClick={() => avatarInputRef.current?.click()}
                             aria-label="Change profile picture"
                             title="Change profile picture"
-                            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#009639] text-white shadow-md ring-2 ring-white transition hover:bg-[#007a2e] dark:ring-zinc-900"
+                            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white shadow-md ring-2 ring-white transition hover:bg-brand dark:ring-zinc-900"
                           >
                             <Camera className="h-4 w-4" />
                           </button>
                         </>
                       ) : (
                         <span
-                          className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-[#009639]"
+                          className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-brand"
                           title="Active"
                         />
                       )}
@@ -761,7 +761,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       <button
                         type="button"
                         onClick={toggleEditing}
-                        className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 px-3.5 py-1.5 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 transition hover:border-emerald-300 hover:text-[#007a2e]"
+                        className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 px-3.5 py-1.5 text-[12px] font-semibold text-zinc-600 dark:text-zinc-300 transition hover:border-emerald-300 hover:text-brand"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                         {editing ? "Cancel" : "Edit profile"}
@@ -809,7 +809,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                         type="button"
                         onClick={saveProfile}
                         disabled={saving}
-                        className="flex items-center gap-1.5 rounded-xl bg-[#009639] px-5 py-2 text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-xl bg-brand px-5 py-2 text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-50"
                       >
                         <Check className="h-4 w-4" />
                         {saving ? "Saving..." : "Save Profile"}
@@ -819,7 +819,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                     <>
                       <h2 className="mt-3 flex items-center gap-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                         {person?.name || profileLabel}
-                        <BadgeCheck className="h-5 w-5 shrink-0 text-[#009639] dark:text-emerald-300" />
+                        <BadgeCheck className="h-5 w-5 shrink-0 text-brand dark:text-brand" />
                       </h2>
                       <p className="text-[13.5px] font-medium text-zinc-600 dark:text-zinc-300">
                         {person?.program}
@@ -845,13 +845,13 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e]"
+                        className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand"
                       >
                         Edit profile
                       </button>
                       <button
                         type="button"
-                        className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e]"
+                        className="flex items-center gap-1.5 rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand"
                       >
                         <Share2 className="h-4 w-4" />
                         Share profile
@@ -867,10 +867,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                         disabled={connectState !== "none" || connectLoading}
                         className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-bold shadow-sm transition disabled:cursor-default ${
                           connectState === "connected"
-                            ? "border border-[#009639] text-[#007a2e]"
+                            ? "border border-brand text-brand"
                             : connectState === "pending"
                               ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-                              : "bg-[#009639] text-white shadow-emerald-900/20 hover:bg-[#007a2e]"
+                              : "bg-brand text-white shadow-emerald-900/20 hover:bg-brand"
                         }`}
                       >
                         {connectState === "connected" ? (
@@ -894,7 +894,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                           onClick={() =>
                             profile?.email && openChatByEmail(profile.email)
                           }
-                          className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e]"
+                          className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand"
                         >
                           Message
                         </button>
@@ -928,7 +928,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                         key={label}
                         className="flex items-center justify-center gap-2.5 px-2 py-3.5"
                       >
-                        <span className="hidden h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 text-[#009639] dark:text-emerald-300 shadow-sm sm:flex">
+                        <span className="hidden h-9 w-9 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 text-brand dark:text-brand shadow-sm sm:flex">
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="text-center sm:text-left">
@@ -946,9 +946,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
               </section>
 
               {/* About */}
-              <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+              <section className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
                 <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand dark:text-brand">
                     <Sparkles className="h-3.5 w-3.5" />
                   </span>
                   About
@@ -968,7 +968,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       type="button"
                       onClick={saveProfile}
                       disabled={saving}
-                      className="flex items-center gap-1.5 rounded-xl bg-[#009639] px-5 py-2 text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50"
+                      className="flex items-center gap-1.5 rounded-xl bg-brand px-5 py-2 text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-50"
                     >
                       <Check className="h-4 w-4" />
                       {saving ? "Saving..." : "Save Profile"}
@@ -990,7 +990,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       (skill) => (
                         <span
                           key={skill}
-                          className="group flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-3 py-1 text-[11px] font-semibold text-[#007a2e] dark:text-emerald-300 ring-1 ring-emerald-100 dark:ring-emerald-900"
+                          className="group flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-3 py-1 text-[11px] font-semibold text-brand dark:text-brand ring-1 ring-emerald-100 dark:ring-brand"
                         >
                           {skill}
                           {editing && (
@@ -998,7 +998,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                               type="button"
                               aria-label={`Remove ${skill}`}
                               onClick={() => removeSkill(skill)}
-                              className="text-[#007a2e] hover:text-red-600"
+                              className="text-brand hover:text-red-600"
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -1021,10 +1021,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
               </section>
 
               {/* Experience timeline */}
-              <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+              <section className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand dark:text-brand">
                       <Briefcase className="h-3.5 w-3.5" />
                     </span>
                     Experience
@@ -1034,7 +1034,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       <button
                         type="button"
                         onClick={() => setShowAddExp(!showAddExp)}
-                        className="flex items-center gap-1 rounded-full bg-[#009639] px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#007a2e]"
+                        className="flex items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-brand"
                       >
                         <Plus className="h-3 w-3" />
                         Add
@@ -1119,7 +1119,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                         onChange={(e) =>
                           setExpForm({ ...expForm, current: e.target.checked })
                         }
-                        className="h-4 w-4 rounded border-zinc-300 text-[#009639] focus:ring-[#009639]/30"
+                        className="h-4 w-4 rounded border-zinc-300 text-brand focus:ring-brand/30"
                       />
                       I currently work here
                     </label>
@@ -1127,7 +1127,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       type="button"
                       onClick={addExperience}
                       disabled={saving}
-                      className="h-10 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50 sm:col-span-2"
+                      className="h-10 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-50 sm:col-span-2"
                     >
                       {saving ? "Adding..." : "Add Experience"}
                     </button>
@@ -1151,8 +1151,8 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                         <span
                           className={`relative z-10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
                             job.current
-                              ? "bg-[#009639] text-white"
-                              : "bg-emerald-50 text-[#009639]"
+                              ? "bg-brand text-white"
+                              : "bg-emerald-50 text-brand"
                           }`}
                         >
                           <Briefcase className="h-3.5 w-3.5" />
@@ -1163,7 +1163,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                               <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
                                 {job.position || job.role}
                                 {job.current && (
-                                  <span className="rounded-full bg-[#009639] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                                  <span className="rounded-full bg-brand px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                                     Current
                                   </span>
                                 )}
@@ -1306,7 +1306,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                                       current: e.target.checked,
                                     })
                                   }
-                                  className="h-4 w-4 rounded border-zinc-300 text-[#009639]"
+                                  className="h-4 w-4 rounded border-zinc-300 text-brand"
                                 />
                                 I currently work here
                               </label>
@@ -1314,7 +1314,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                                 type="button"
                                 onClick={() => updateExperience(i)}
                                 disabled={saving}
-                                className="h-10 rounded-xl bg-[#009639] text-[13px] font-bold text-white hover:bg-[#007a2e] disabled:opacity-50"
+                                className="h-10 rounded-xl bg-brand text-[13px] font-bold text-white hover:bg-brand disabled:opacity-50"
                               >
                                 {saving ? "Saving..." : "Save Changes"}
                               </button>
@@ -1336,10 +1336,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
               </section>
 
               {/* Education */}
-              <section className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
+              <section className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-5 shadow-sm sm:p-6">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand dark:text-brand">
                       <GraduationCap className="h-3.5 w-3.5" />
                     </span>
                     Education
@@ -1349,7 +1349,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       <button
                         type="button"
                         onClick={() => setShowAddEdu(!showAddEdu)}
-                        className="flex items-center gap-1 rounded-full bg-[#009639] px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#007a2e]"
+                        className="flex items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-brand"
                       >
                         <Plus className="h-3 w-3" />
                         Add
@@ -1406,7 +1406,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       type="button"
                       onClick={addEducation}
                       disabled={saving}
-                      className="h-10 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50 sm:col-span-2"
+                      className="h-10 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-50 sm:col-span-2"
                     >
                       {saving ? "Adding..." : "Add Education"}
                     </button>
@@ -1422,9 +1422,9 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                     (person?.education || []).map((edu, i) => (
                       <div
                         key={i}
-                        className="group flex flex-wrap items-center gap-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-white dark:from-zinc-800 dark:to-zinc-900 p-4 ring-1 ring-emerald-100 dark:ring-emerald-900"
+                        className="group flex flex-wrap items-center gap-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-white dark:from-zinc-800 dark:to-zinc-900 p-4 ring-1 ring-emerald-100 dark:ring-brand"
                       >
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#009639] text-white shadow-sm">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-sm">
                           <GraduationCap className="h-5 w-5" />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -1522,7 +1522,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                               type="button"
                               onClick={() => updateEducation(i)}
                               disabled={saving}
-                              className="h-10 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50 sm:col-span-2"
+                              className="h-10 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-50 sm:col-span-2"
                             >
                               {saving ? "Saving..." : "Save Changes"}
                             </button>

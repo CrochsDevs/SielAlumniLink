@@ -14,7 +14,7 @@ const card =
   "admin-panel";
 const button = "admin-button admin-button-primary";
 const input =
-  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
+  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900";
 const today = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 export default function AdminCertificates() {
@@ -224,7 +224,7 @@ export default function AdminCertificates() {
           )}
           <Link
             to="/admin/events"
-            className="inline-block text-xs font-medium text-[#009639]"
+            className="inline-block text-xs font-medium text-brand"
           >
             Open event calendar
           </Link>
@@ -364,7 +364,7 @@ export default function AdminCertificates() {
                       onChange={(event) =>
                         setForm({ ...form, completed: event.target.checked })
                       }
-                      className="mt-1 accent-[#009639]"
+                      className="mt-1 accent-brand"
                     />
                     I confirm that this student's participation is complete.
                   </label>

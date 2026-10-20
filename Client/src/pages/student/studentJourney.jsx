@@ -57,7 +57,7 @@ const STATUS_LABELS = {
   upcoming: "Upcoming",
 };
 const accentButton =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#009639]/25 bg-[#009639]/5 px-3 text-xs font-semibold text-[#007a2e] transition hover:bg-[#009639]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] dark:text-emerald-300";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-brand/25 bg-brand/5 px-3 text-xs font-semibold text-brand transition hover:bg-brand/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] dark:text-brand";
 
 export default function StudentJourney() {
   const { user } = useAuth();
@@ -129,7 +129,7 @@ export default function StudentJourney() {
               type="button"
               disabled={state.loading || !state.data || state.busy}
               onClick={() => setRecordOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full bg-[#009639]/10 px-3 py-1.5 text-xs font-semibold text-[#007a2e] dark:text-emerald-300"
+              className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand dark:text-brand"
             >
               <GraduationCap size={15} />
               Record milestone
@@ -154,7 +154,7 @@ export default function StudentJourney() {
                 aria-controls={`journey-panel-${tab.id}`}
                 tabIndex={activeTab === tab.id ? 0 : -1}
                 onClick={() => selectTab(tab.id)}
-                className={`flex h-12 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#009639] sm:text-[13px] ${activeTab === tab.id ? "border-[#009639] font-bold text-[#007a2e] dark:text-emerald-300" : "border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100"}`}
+                className={`flex h-12 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:text-[13px] ${activeTab === tab.id ? "border-brand font-bold text-brand dark:text-brand" : "border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100"}`}
               >
                 {createElement(tab.icon, { size: 16 })}
                 {tab.label}
@@ -167,7 +167,7 @@ export default function StudentJourney() {
               role="tabpanel"
               aria-labelledby={`journey-tab-${activeTab}`}
               tabIndex={0}
-              className="min-h-[470px] rounded-xl border border-[#e4ecf4] bg-white outline-none focus-visible:ring-2 focus-visible:ring-[#009639] dark:border-zinc-800 dark:bg-zinc-900"
+              className="min-h-[470px] rounded-xl border border-[#e4ecf4] bg-white outline-none focus-visible:ring-2 focus-visible:ring-brand dark:border-zinc-800 dark:bg-zinc-900"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e4ecf4] px-5 py-5 sm:px-6 dark:border-zinc-800">
                 <div>
@@ -209,11 +209,11 @@ export default function StudentJourney() {
                     </span>
                     <span className="flex flex-wrap items-center gap-3">
                       <span className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full bg-[#009639]" />
+                        <span className="h-2 w-2 rounded-full bg-brand" />
                         Completed
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full border-2 border-[#009639]" />
+                        <span className="h-2 w-2 rounded-full border-2 border-brand" />
                         In progress
                       </span>
                       <span className="flex items-center gap-1.5">
@@ -228,7 +228,7 @@ export default function StudentJourney() {
                     role="region"
                     aria-label="Student milestones timeline"
                     tabIndex={0}
-                    className="overflow-x-auto px-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#009639]"
+                    className="overflow-x-auto px-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
                   >
                     <div
                       className="relative pb-5 pt-6"
@@ -244,7 +244,7 @@ export default function StudentJourney() {
                         }}
                       >
                         <div
-                          className="h-full rounded-full bg-[#009639]"
+                          className="h-full rounded-full bg-brand"
                           style={{
                             width: `${(currentIndex < 0 ? (doneCount > 0 ? 1 : 0) : currentIndex / Math.max(1, milestones.length - 1)) * 100}%`,
                           }}
@@ -270,7 +270,7 @@ export default function StudentJourney() {
                             className="min-w-0 px-3 text-center"
                           >
                             <p
-                              className={`h-6 text-[17px] font-bold ${milestone.state !== "upcoming" ? "text-[#009639] dark:text-emerald-400" : "text-slate-400 dark:text-zinc-500"}`}
+                              className={`h-6 text-[17px] font-bold ${milestone.state !== "upcoming" ? "text-brand dark:text-brand" : "text-slate-400 dark:text-zinc-500"}`}
                             >
                               {milestone.date
                                 ? new Date(
@@ -292,7 +292,7 @@ export default function StudentJourney() {
                                   selectedIndex === index ? null : index,
                                 )
                               }
-                              className={`relative mx-auto mb-4 mt-4 flex h-12 w-12 items-center justify-center rounded-full border-4 shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#009639] ${milestone.state === "done" ? "border-white bg-[#009639] text-white dark:border-zinc-900" : milestone.state === "current" ? "border-[#009639] bg-white text-[#009639] dark:bg-zinc-900 dark:text-emerald-400" : "border-[#e9f1f9] bg-white text-slate-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500"}`}
+                              className={`relative mx-auto mb-4 mt-4 flex h-12 w-12 items-center justify-center rounded-full border-4 shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#009639] ${milestone.state === "done" ? "border-white bg-brand text-white dark:border-zinc-900" : milestone.state === "current" ? "border-brand bg-white text-brand dark:bg-zinc-900 dark:text-brand" : "border-[#e9f1f9] bg-white text-slate-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500"}`}
                             >
                               {index === 0 ? (
                                 <Rocket size={21} strokeWidth={1.8} />
@@ -315,7 +315,7 @@ export default function StudentJourney() {
                               {milestone.desc}
                             </p>
                             <p
-                              className={`mt-3 text-[10px] font-semibold ${milestone.state !== "upcoming" ? "text-[#007a2e] dark:text-emerald-300" : "text-slate-400 dark:text-zinc-500"}`}
+                              className={`mt-3 text-[10px] font-semibold ${milestone.state !== "upcoming" ? "text-brand dark:text-brand" : "text-slate-400 dark:text-zinc-500"}`}
                             >
                               {STATUS_LABELS[milestone.state]}
                             </p>
@@ -328,7 +328,7 @@ export default function StudentJourney() {
                     <div
                       data-journey-selected
                       role="status"
-                      className="mx-5 mt-3 rounded-xl border border-[#009639]/20 bg-[#009639]/5 p-4 sm:mx-6"
+                      className="mx-5 mt-3 rounded-xl border border-brand/20 bg-brand/5 p-4 sm:mx-6"
                     >
                       <p className="text-sm font-bold">{selected.title}</p>
                       <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-zinc-300">
@@ -342,7 +342,7 @@ export default function StudentJourney() {
                   )}
                   <div className="mx-5 mt-5 border-t border-[#e4ecf4] pb-6 pt-5 sm:mx-6 dark:border-zinc-800">
                     <p className="flex items-center justify-center gap-2 text-sm font-bold">
-                      <Clock3 size={20} className="text-[#009639]" />
+                      <Clock3 size={20} className="text-brand" />
                       Remaining: {remaining} milestones
                     </p>
                     <p className="mt-2 text-center text-xs text-slate-500 dark:text-zinc-400">
@@ -461,7 +461,7 @@ export default function StudentJourney() {
                       <span className="font-semibold">
                         Milestones completed
                       </span>
-                      <span className="font-bold text-[#009639] dark:text-emerald-400">
+                      <span className="font-bold text-brand dark:text-brand">
                         {progress}%
                       </span>
                     </div>
@@ -474,7 +474,7 @@ export default function StudentJourney() {
                       className="mt-3 h-2 overflow-hidden rounded-full bg-[#e6eff8] dark:bg-zinc-700"
                     >
                       <div
-                        className="h-full rounded-full bg-[#009639]"
+                        className="h-full rounded-full bg-brand"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -493,7 +493,7 @@ export default function StudentJourney() {
                         key={m.title}
                         className="rounded-xl border border-[#e4ecf4] p-4 dark:border-zinc-700"
                       >
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#007a2e] dark:text-emerald-300">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-brand dark:text-brand">
                           {STATUS_LABELS[m.state]}
                         </span>
                         <h3 className="mt-2 text-sm font-bold">{m.title}</h3>
@@ -515,7 +515,7 @@ export default function StudentJourney() {
               )}
               {activeTab === "documents" && (
                 <div className="flex min-h-80 flex-col items-center justify-center px-5 py-8 text-center">
-                  <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f1fb] text-[#009639] dark:bg-zinc-800">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#e8f1fb] text-brand dark:bg-zinc-800">
                     <FileText size={28} strokeWidth={1.5} />
                   </span>
                   <h3 className="mt-4 text-base font-bold">
@@ -540,9 +540,9 @@ export default function StudentJourney() {
                     <Link
                       key={resource.path}
                       to={resource.path}
-                      className="flex items-center gap-4 rounded-xl border border-[#e4ecf4] p-4 transition hover:border-[#009639]/40 hover:bg-[#009639]/5 dark:border-zinc-700"
+                      className="flex items-center gap-4 rounded-xl border border-[#e4ecf4] p-4 transition hover:border-brand/40 hover:bg-brand/5 dark:border-zinc-700"
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#009639]/10 text-[#009639]">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
                         {createElement(resource.icon, { size: 20 })}
                       </span>
                       <div className="min-w-0 flex-1">

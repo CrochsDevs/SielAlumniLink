@@ -95,7 +95,7 @@ export default function StudentDashboard() {
                 className: "shrink-0 text-zinc-400",
               })}
               <div className="min-w-0 flex-1">
-                <span className="block text-xs font-semibold group-hover:text-[#007a2e] dark:group-hover:text-emerald-300">
+                <span className="block text-xs font-semibold group-hover:text-brand dark:group-hover:text-brand">
                   {label}
                 </span>
                 <span className="mt-1 block text-[11px] leading-5 text-zinc-500 dark:text-zinc-400">
@@ -128,7 +128,7 @@ export default function StudentDashboard() {
               </div>
               <Link
                 to="/student/accounts"
-                className="mt-4 inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-[#007a2e] dark:text-zinc-400 dark:hover:text-emerald-300"
+                className="mt-4 inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand"
               >
                 Manage profile
                 <ArrowUpRight size={12} />
@@ -142,7 +142,7 @@ export default function StudentDashboard() {
                 <h2 className="text-sm font-semibold">Your progress</h2>
                 <Link
                   to="/student/journey"
-                  className="text-[11px] text-zinc-500 hover:text-[#007a2e] dark:text-zinc-400"
+                  className="text-[11px] text-zinc-500 hover:text-brand dark:text-zinc-400"
                 >
                   View journey
                 </Link>
@@ -189,7 +189,7 @@ export default function StudentDashboard() {
                         className="mt-3 h-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                       >
                         <div
-                          className="h-full bg-[#009639]"
+                          className="h-full bg-brand"
                           style={{ width: `${(portfolioSections / 6) * 100}%` }}
                         />
                       </div>
@@ -234,7 +234,7 @@ export default function StudentDashboard() {
                   <Link
                     key={to}
                     to={to}
-                    className="flex items-center justify-between gap-3 py-3 text-xs text-zinc-500 hover:text-[#007a2e] dark:text-zinc-400 dark:hover:text-emerald-300"
+                    className="flex items-center justify-between gap-3 py-3 text-xs text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand"
                   >
                     {label}
                     <ChevronRight size={13} />

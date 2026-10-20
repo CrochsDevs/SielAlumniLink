@@ -25,7 +25,7 @@ const tabs = [
 const card =
   "rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900";
 const action =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-3 text-xs font-semibold text-white hover:bg-[#007a2e] disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white hover:bg-brand disabled:opacity-50";
 const date = (value) =>
   new Date(value).toLocaleString("en-US", {
     timeZone: "Asia/Manila",
@@ -152,7 +152,7 @@ function DashboardListings({ filter, query, refreshKey }) {
               data-dashboard-listing={source}
               className={`${card} flex min-w-0 flex-col gap-3`}
             >
-              <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[#007a2e] dark:text-emerald-300">
+              <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-brand dark:text-brand">
                 {source === "jobs" ? (
                   <Briefcase size={14} />
                 ) : source === "referrals" ? (
@@ -199,7 +199,7 @@ function DashboardListings({ filter, query, refreshKey }) {
               {source === "events" ? (
                 <>
                   <details className="text-xs text-zinc-500">
-                    <summary className="cursor-pointer font-semibold text-[#007a2e] dark:text-emerald-300">
+                    <summary className="cursor-pointer font-semibold text-brand dark:text-brand">
                       Event details
                     </summary>
                     <p className="mt-2 whitespace-pre-wrap break-words leading-6">
@@ -221,7 +221,7 @@ function DashboardListings({ filter, query, refreshKey }) {
               ) : (
                 <div className="mt-auto space-y-2 pt-2">
                   {application && (
-                    <p className="text-xs font-medium capitalize text-[#007a2e] dark:text-emerald-300">
+                    <p className="text-xs font-medium capitalize text-brand dark:text-brand">
                       Application: {application.status || "pending"}
                     </p>
                   )}
@@ -256,7 +256,7 @@ function DashboardListings({ filter, query, refreshKey }) {
           Show more listings
         </button>
       )}
-      <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-medium text-[#007a2e] dark:text-emerald-300">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-medium text-brand dark:text-brand">
         {selectedSources.map((source) => (
           <Link
             key={source}
@@ -351,7 +351,7 @@ export default function DashboardUpdates() {
             type="button"
             aria-pressed={filter === value}
             onClick={() => updateParams("tab", value)}
-            className={`min-h-10 border-b-2 pb-3 pt-1 text-xs font-medium transition ${filter === value ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"}`}
+            className={`min-h-10 border-b-2 pb-3 pt-1 text-xs font-medium transition ${filter === value ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"}`}
           >
             {label}
           </button>
@@ -370,14 +370,14 @@ export default function DashboardUpdates() {
             maxLength={200}
             onChange={(event) => updateParams("q", event.target.value)}
             placeholder="Search updates, opportunities, and events"
-            className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-[#009639] focus:ring-2 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-900"
+            className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-700 dark:bg-zinc-900"
           />
         </label>
         {query && (
           <button
             type="button"
             onClick={() => updateParams("q", "")}
-            className="min-h-10 px-2 text-xs text-[#007a2e] dark:text-emerald-300"
+            className="min-h-10 px-2 text-xs text-brand dark:text-brand"
           >
             Clear search
           </button>
@@ -397,7 +397,7 @@ export default function DashboardUpdates() {
         {filter === "story" && (
           <Link
             to="/student/success"
-            className="inline-flex min-h-9 items-center gap-1 text-xs text-[#007a2e] dark:text-emerald-300"
+            className="inline-flex min-h-9 items-center gap-1 text-xs text-brand dark:text-brand"
           >
             Browse story gallery
             <ArrowUpRight size={12} />

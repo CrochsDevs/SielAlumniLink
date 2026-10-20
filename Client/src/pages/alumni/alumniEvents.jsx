@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   CalendarDays,
@@ -24,7 +24,7 @@ import AlumniFeed from "../../components/feed/AlumniFeed";
 import api from "../../utils/axios";
 
 const field =
-  "min-h-10 rounded-lg border border-zinc-200 bg-white text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 dark:border-zinc-700 dark:bg-zinc-900";
+  "min-h-10 rounded-lg border border-zinc-200 bg-white text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900";
 
 export default function AlumniEvents() {
   const { user } = useAuth();
@@ -155,7 +155,7 @@ export default function AlumniEvents() {
                   type="button"
                   aria-pressed={activeTab === id}
                   onClick={() => changeTab(id)}
-                  className={`min-h-11 border-b-2 px-1 text-xs font-semibold ${activeTab === id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500"}`}
+                  className={`min-h-11 border-b-2 px-1 text-xs font-semibold ${activeTab === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500"}`}
                 >
                   {label}
                 </button>
@@ -221,7 +221,7 @@ export default function AlumniEvents() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="min-h-10 px-1 text-xs font-medium text-[#007a2e] hover:underline dark:text-emerald-300"
+                    className="min-h-10 px-1 text-xs font-medium text-brand hover:underline dark:text-brand"
                   >
                     Clear filters
                   </button>

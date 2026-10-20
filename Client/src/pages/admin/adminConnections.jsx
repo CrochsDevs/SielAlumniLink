@@ -122,7 +122,7 @@ function ConnectionDetails({ member, onClose }) {
         ) : error ? (
           <div role="alert">
             <p>{error}</p>
-            <button onClick={refresh} className="mt-2 text-emerald-700">
+            <button onClick={refresh} className="mt-2 text-brand">
               Try again
             </button>
           </div>
@@ -141,7 +141,7 @@ function ConnectionDetails({ member, onClose }) {
                 {person.profileId ? (
                   <Link
                     to={profileUrl(person)}
-                    className="shrink-0 rounded-full bg-[#009639] px-4 py-2 text-xs font-bold text-white"
+                    className="shrink-0 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white"
                   >
                     View
                   </Link>
@@ -215,7 +215,7 @@ export default function AdminConnections() {
                   }}
                   placeholder="Search by name or email..."
                   aria-label="Search connections"
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                 />
               </div>
               <AdminTabs label="Filter connections by role" value={roleFilter} onChange={value => { setRoleFilter(value); setPage(1); }} items={FILTERS.map(filter => ({ id: filter, label: filter.charAt(0).toUpperCase() + filter.slice(1) }))} />
@@ -227,7 +227,7 @@ export default function AdminConnections() {
             ) : error ? (
               <div role="alert" className="p-6 text-sm text-zinc-500">
                 <p>{error}</p>
-                <button onClick={refresh} className="mt-2 text-emerald-700">
+                <button onClick={refresh} className="mt-2 text-brand">
                   Try again
                 </button>
               </div>
@@ -261,7 +261,7 @@ export default function AdminConnections() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4 capitalize text-emerald-700 dark:text-emerald-400">
+                        <td className="px-5 py-4 capitalize text-brand dark:text-brand">
                           {member.role}
                         </td>
                         <td className="px-5 py-4 font-semibold text-zinc-700 dark:text-zinc-200">
@@ -272,7 +272,7 @@ export default function AdminConnections() {
                             type="button"
                             aria-label={`View connections of ${member.email}`}
                             onClick={() => setSelectedMember(member)}
-                            className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                            className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-brand dark:bg-emerald-950 dark:text-brand"
                           >
                             <Eye className="h-4 w-4" />
                             Connections

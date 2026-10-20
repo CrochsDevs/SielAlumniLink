@@ -134,7 +134,7 @@ export default function AdminAnnouncements() {
   };
 
   const inputClass =
-    "w-full h-10 px-3 rounded-xl border border-zinc-200 bg-white text-[12.5px] outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15";
+    "w-full h-10 px-3 rounded-xl border border-zinc-200 bg-white text-[12.5px] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -172,7 +172,7 @@ export default function AdminAnnouncements() {
                     setPage(1);
                   }}
                   placeholder="Search announcements..."
-                  className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
+                  className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/15"
                 />
               </div>
               <AdminButton onClick={openAdd}><Plus size={15} />New Announcement</AdminButton>
@@ -222,7 +222,7 @@ export default function AdminAnnouncements() {
                             title={item.isActive ? "Unpublish" : "Publish"}
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 transition ${
                               item.isActive
-                                ? "bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60"
+                                ? "bg-brand/10 text-brand ring-emerald-200/60"
                                 : "bg-zinc-100 text-zinc-400 ring-zinc-200"
                             }`}
                           >
@@ -251,7 +251,7 @@ export default function AdminAnnouncements() {
                             <button
                               type="button"
                               onClick={() => openEdit(item)}
-                              className="rounded-lg p-2 text-zinc-300 dark:text-zinc-500 transition hover:bg-emerald-50 hover:text-[#009639] dark:text-emerald-300"
+                              className="rounded-lg p-2 text-zinc-300 dark:text-zinc-500 transition hover:bg-emerald-50 hover:text-brand dark:text-brand"
                               aria-label="Edit announcement"
                             >
                               <Pencil className="h-4 w-4" />
@@ -271,7 +271,7 @@ export default function AdminAnnouncements() {
                     {paged.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-5 py-10 text-center">
-                          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:text-emerald-300">
+                          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:text-brand">
                             <EmptyIcon className="h-6 w-6" />
                           </span>
                           <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
@@ -343,7 +343,7 @@ export default function AdminAnnouncements() {
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
                   rows={4}
                   placeholder="Announcement details..."
-                  className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-[12.5px] outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                  className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-[12.5px] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
                 />
               </div>
               <div>
@@ -371,7 +371,7 @@ export default function AdminAnnouncements() {
                   onChange={(e) =>
                     setForm({ ...form, isActive: e.target.checked })
                   }
-                  className="h-4 w-4 accent-[#009639]"
+                  className="h-4 w-4 accent-brand"
                 />
                 Published
               </label>
@@ -386,7 +386,7 @@ export default function AdminAnnouncements() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="h-10 flex-1 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-60"
+                  className="h-10 flex-1 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-60"
                 >
                   {saving ? "Saving..." : editing ? "Save changes" : "Publish"}
                 </button>

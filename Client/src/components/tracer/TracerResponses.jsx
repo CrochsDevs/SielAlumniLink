@@ -21,7 +21,7 @@ import {
 
 const STATUS_STYLE = {
   Employed:
-    "bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60 dark:bg-emerald-950 dark:text-emerald-300 dark:ring-emerald-800",
+    "bg-brand/10 text-brand ring-emerald-200/60 dark:bg-emerald-950 dark:text-brand dark:ring-brand",
   "Self-employed":
     "bg-blue-50 text-blue-600 ring-blue-200/60 dark:bg-blue-950 dark:text-blue-300 dark:ring-blue-800",
   Unemployed:
@@ -219,7 +219,7 @@ export default function TracerResponses() {
               }}
               aria-label="Search tracer responses"
               placeholder="Search email, batch, program, or details..."
-              className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-[#009639]/15"
+              className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-800 focus:ring-2 focus:ring-brand/15"
             />
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -230,7 +230,7 @@ export default function TracerResponses() {
                 setStatusFilter(event.target.value);
                 setPage(1);
               }}
-              className="h-10 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:[color-scheme:dark] sm:flex-none"
+              className="h-10 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:[color-scheme:dark] sm:flex-none"
             >
               {FILTERS.map((status) => (
                 <option key={status} value={status}>
@@ -298,7 +298,7 @@ export default function TracerResponses() {
                   >
                     <td className="md:sticky md:left-0 z-10 border-r border-zinc-200 bg-white px-4 py-4 group-hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:group-hover:bg-zinc-800">
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[12px] font-bold text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[12px] font-bold text-brand dark:bg-emerald-950 dark:text-brand">
                           {(r.email || "U").charAt(0).toUpperCase()}
                         </span>
                         <span className="min-w-0">
@@ -347,7 +347,7 @@ export default function TracerResponses() {
                 <tr>
                   <td colSpan={TABLE_COLUMNS.length} className="px-4 py-10">
                     <div className="sticky left-0 w-[min(480px,85vw)] text-center">
-                      <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
+                      <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
                         <ClipboardList className="h-6 w-6" />
                       </span>
                       <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">

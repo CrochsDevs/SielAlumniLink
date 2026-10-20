@@ -46,7 +46,7 @@ function VideoTile({ peer, stream, local = false }) {
   }, [stream]);
   return (
     <div
-      className={`relative aspect-video min-w-0 overflow-hidden rounded-xl border bg-zinc-900 ${peer.sharing ? "border-emerald-500" : "border-zinc-800"}`}
+      className={`relative aspect-video min-w-0 overflow-hidden rounded-xl border bg-zinc-900 ${peer.sharing ? "border-brand" : "border-zinc-800"}`}
       data-meeting-peer={peer.id || "self"}
     >
       <video
@@ -224,7 +224,7 @@ export default function MeetingRoom() {
             <ArrowLeft size={20} />
           </Link>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-brand">
               SielAlumni Meetings
             </p>
             <h1 className="mt-1 break-words text-lg font-semibold">
@@ -234,7 +234,7 @@ export default function MeetingRoom() {
         </div>
         <div className="flex items-center gap-3 text-xs text-zinc-400">
           <span
-            className={`h-2 w-2 rounded-full ${state.joined ? "bg-emerald-400" : "bg-zinc-500"}`}
+            className={`h-2 w-2 rounded-full ${state.joined ? "bg-brand" : "bg-zinc-500"}`}
           />
           {state.joined
             ? `Live · ${everyone.length}/${details?.capacity || 8}`
@@ -263,7 +263,7 @@ export default function MeetingRoom() {
       ) : !event ? (
         <p className="p-12 text-center text-zinc-400">
           Meeting unavailable.{" "}
-          <Link to="/activities" className="ml-2 text-emerald-400 underline">
+          <Link to="/activities" className="ml-2 text-brand underline">
             Back to Events
           </Link>
         </p>
@@ -349,7 +349,7 @@ export default function MeetingRoom() {
                           (!host && details.meeting?.state !== "active")
                         }
                         onClick={() => controller.join(host).then(load)}
-                        className="min-h-11 rounded-lg bg-emerald-600 px-5 text-sm font-semibold disabled:opacity-40"
+                        className="min-h-11 rounded-lg bg-brand px-5 text-sm font-semibold disabled:opacity-40"
                       >
                         {state.busy
                           ? "Joining..."
@@ -365,7 +365,7 @@ export default function MeetingRoom() {
                       </button>
                     )}
                     {details.registration && (
-                      <span className="self-center text-xs text-emerald-400">
+                      <span className="self-center text-xs text-brand">
                         Registered
                       </span>
                     )}
@@ -409,7 +409,7 @@ export default function MeetingRoom() {
                   )}
                   <BubbleGroup>
                   {state.messages.map((message) => (
-                    <Bubble key={message.id} align={message.id.startsWith(`${self.id}:`) ? 'end' : 'start'} variant="secondary" className={message.id.startsWith(`${self.id}:`) ? '[&>[data-slot=bubble-content]]:bg-[#009639] [&>[data-slot=bubble-content]]:text-white' : '[&>[data-slot=bubble-content]]:bg-zinc-800 [&>[data-slot=bubble-content]]:text-zinc-100'}>
+                    <Bubble key={message.id} align={message.id.startsWith(`${self.id}:`) ? 'end' : 'start'} variant="secondary" className={message.id.startsWith(`${self.id}:`) ? '[&>[data-slot=bubble-content]]:bg-brand [&>[data-slot=bubble-content]]:text-white' : '[&>[data-slot=bubble-content]]:bg-zinc-800 [&>[data-slot=bubble-content]]:text-zinc-100'}>
                       <p className="text-[10px] font-semibold text-zinc-400">
                         {message.name}{" "}
                         <span className="ml-1 font-normal text-zinc-600">
@@ -438,14 +438,14 @@ export default function MeetingRoom() {
                       value={draft}
                       onChange={(event) => setDraft(event.target.value)}
                       placeholder="Message everyone"
-                      className="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-xs outline-none focus:border-emerald-500"
+                      className="h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 text-xs outline-none focus:border-brand"
                     />
                   </label>
                   <button
                     type="submit"
                     aria-label="Send message"
                     disabled={sending || !draft.trim()}
-                    className="rounded-lg bg-emerald-600 px-3 disabled:opacity-40"
+                    className="rounded-lg bg-brand px-3 disabled:opacity-40"
                   >
                     <Send size={16} />
                   </button>
@@ -477,7 +477,7 @@ export default function MeetingRoom() {
                         : "Registered · No recorded attendance"}
                     </p>
                     {person.certificateId ? (
-                      <p className="mt-2 text-xs text-emerald-400">
+                      <p className="mt-2 text-xs text-brand">
                         Certificate issued
                       </p>
                     ) : (
@@ -566,7 +566,7 @@ export default function MeetingRoom() {
             aria-label={state.sharing ? "Stop sharing" : "Share screen"}
             aria-pressed={state.sharing}
             onClick={() => controller.share()}
-            className={`${smallButton} ${state.sharing ? "border-emerald-500 text-emerald-300" : ""}`}
+            className={`${smallButton} ${state.sharing ? "border-brand text-brand" : ""}`}
           >
             <MonitorUp size={18} />
             <span className="hidden sm:inline">

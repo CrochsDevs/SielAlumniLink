@@ -171,7 +171,7 @@ export default function AdminActivityAttendance() {
                         <p className="mt-2 text-[11px] text-zinc-500">
                           Registered {time(person.registeredAt)}
                         </p>
-                        <p className="mt-1 text-[11px] font-medium text-[#007a2e] dark:text-emerald-300">
+                        <p className="mt-1 text-[11px] font-medium text-brand dark:text-brand">
                           {online
                             ? person.attendedSeconds > 0
                               ? `${Math.floor(person.attendedSeconds / 60)}m ${person.attendedSeconds % 60}s recorded`
@@ -182,7 +182,7 @@ export default function AdminActivityAttendance() {
                         </p>
                       </div>
                       {person.certificateId ? (
-                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-[#009639]">
+                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-brand">
                           <BadgeCheck size={16} />
                           Certificate issued
                         </span>
@@ -210,7 +210,7 @@ export default function AdminActivityAttendance() {
                                 : !person.onsiteCheckedInAt || !event.hasEnded)
                             }
                             onClick={() => submit(person, "certificate")}
-                            className="min-h-10 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white disabled:opacity-40"
+                            className="min-h-10 rounded-lg bg-brand px-4 text-xs font-semibold text-white disabled:opacity-40"
                           >
                             {busy === person.authId
                               ? "Saving..."

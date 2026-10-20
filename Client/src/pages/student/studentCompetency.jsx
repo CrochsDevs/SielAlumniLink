@@ -46,9 +46,9 @@ const CATEGORIES = [
 const card =
   "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
 const field =
-  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/10 dark:border-zinc-700 dark:bg-zinc-900";
+  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900";
 const formatDate = (value) =>
   value
     ? new Date(value).toLocaleDateString("en-PH", {
@@ -204,7 +204,7 @@ export default function StudentCompetency() {
                     type="button"
                     aria-pressed={category === id}
                     onClick={() => setCategory(id)}
-                    className={`shrink-0 border-b-2 pb-3 text-xs font-medium ${category === id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
+                    className={`shrink-0 border-b-2 pb-3 text-xs font-medium ${category === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
                   >
                     {label}
                   </button>
@@ -222,7 +222,7 @@ export default function StudentCompetency() {
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search competencies"
-                    className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900"
+                    className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900"
                   />
                 </label>
                 <label>
@@ -254,7 +254,7 @@ export default function StudentCompetency() {
                     <button
                       type="button"
                       onClick={resetFilters}
-                      className="text-[11px] font-medium text-[#007a2e] dark:text-emerald-300"
+                      className="text-[11px] font-medium text-brand dark:text-brand"
                     >
                       Clear filters
                     </button>
@@ -306,7 +306,7 @@ export default function StudentCompetency() {
                           </p>
                         </div>
                         <span
-                          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${assessment?.rating >= 3 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"}`}
+                          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${assessment?.rating >= 3 ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"}`}
                         >
                           {assessment
                             ? LEVELS[assessment.rating - 1].label
@@ -331,7 +331,7 @@ export default function StudentCompetency() {
                             {LEVELS.map((level) => (
                               <span
                                 key={level.value}
-                                className={`h-1.5 flex-1 rounded-full ${level.value <= (assessment?.rating || 0) ? "bg-[#009639]" : "bg-zinc-100 dark:bg-zinc-800"}`}
+                                className={`h-1.5 flex-1 rounded-full ${level.value <= (assessment?.rating || 0) ? "bg-brand" : "bg-zinc-100 dark:bg-zinc-800"}`}
                               />
                             ))}
                           </div>
@@ -524,7 +524,7 @@ export default function StudentCompetency() {
               </div>
               <Link
                 to="/student/portfolio"
-                className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4 text-[11px] font-medium text-[#007a2e] dark:border-zinc-800 dark:text-emerald-300"
+                className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4 text-[11px] font-medium text-brand dark:border-zinc-800 dark:text-brand"
               >
                 Open portfolio
                 <ChevronRight size={13} />
@@ -558,7 +558,7 @@ export default function StudentCompetency() {
                     {LEVELS.map((level) => (
                       <label
                         key={level.value}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${draft.rating === level.value ? "border-[#009639] bg-emerald-50/50 dark:bg-emerald-950/20" : "border-zinc-200 dark:border-zinc-700"}`}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${draft.rating === level.value ? "border-brand bg-emerald-50/50 dark:bg-emerald-950/20" : "border-zinc-200 dark:border-zinc-700"}`}
                       >
                         <input
                           type="radio"
@@ -572,7 +572,7 @@ export default function StudentCompetency() {
                               target: Math.max(previous.target, level.value),
                             }))
                           }
-                          className="mt-0.5 accent-[#009639]"
+                          className="mt-0.5 accent-brand"
                         />
                         <span>
                           <span className="block text-xs font-semibold">

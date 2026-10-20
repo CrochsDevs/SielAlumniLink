@@ -10,7 +10,7 @@ import api from "../../utils/axios";
 import MentorshipProgressTracker from "../../components/mentorship/MentorshipProgressTracker";
 import MentorMatching from "../../components/mentorship/MentorMatching";
 const card = "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
-const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-50";
+const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
 function MentorBanner({
   src
 }) {
@@ -131,7 +131,7 @@ export default function StudentMentorship() {
               <input type="search" value={query} onChange={event => {
             setQuery(event.target.value);
             setPage(1);
-          }} placeholder="Search name, program, or skill" className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-xs text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
+          }} placeholder="Search name, program, or skill" className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-xs text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
             </label>}
         </header>
         <nav aria-label="Student mentorship workspace" className="grid grid-cols-3 gap-1 rounded-2xl border border-zinc-200 bg-white p-1.5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -144,7 +144,7 @@ export default function StudentMentorship() {
             setProgram('');
             setPage(1);
           }
-        }} className={`flex min-h-16 min-w-0 items-center justify-center gap-3 rounded-xl px-2 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:justify-start sm:px-4 ${(id === 'matching' ? workspace === 'matching' || workspace === 'mentors' && view === 'all' : workspace === id && (id !== 'mentors' || view !== 'all')) ? "bg-emerald-50 text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}>
+        }} className={`flex min-h-16 min-w-0 items-center justify-center gap-3 rounded-xl px-2 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:justify-start sm:px-4 ${(id === 'matching' ? workspace === 'matching' || workspace === 'mentors' && view === 'all' : workspace === id && (id !== 'mentors' || view !== 'all')) ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}>
               <Icon size={21} className="hidden shrink-0 sm:block" />
               <span><span className="block text-xs font-semibold sm:text-sm">{label}</span><span className="mt-1 hidden text-xs font-normal text-zinc-500 lg:block dark:text-zinc-400">{description}</span></span>
             </button>)}
@@ -166,13 +166,13 @@ export default function StudentMentorship() {
         setWorkspace('matching');
       }} /> : <div className="space-y-5">
             <section className="min-w-0 space-y-4" aria-label="Alumni mentors">
-              <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">{view === 'all' ? 'Explore all mentors' : view === 'connected' ? 'Your mentors' : 'Your connection requests'}</h2><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{view === 'connected' ? 'Start a conversation or continue working on your goals.' : 'Explore an alumni profile before sending a connection request.'}</p></div><button type="button" onClick={() => setWorkspace('matching')} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#007a2e] dark:text-emerald-300">{view === 'all' ? 'Back to recommendations' : 'Find another mentor'}<ArrowRight size={15} /></button></div>
+              <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">{view === 'all' ? 'Explore all mentors' : view === 'connected' ? 'Your mentors' : 'Your connection requests'}</h2><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{view === 'connected' ? 'Start a conversation or continue working on your goals.' : 'Explore an alumni profile before sending a connection request.'}</p></div><button type="button" onClick={() => setWorkspace('matching')} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand dark:text-brand">{view === 'all' ? 'Back to recommendations' : 'Find another mentor'}<ArrowRight size={15} /></button></div>
               <div className={`${card} flex flex-wrap items-center justify-between gap-3 px-4 py-3`}>
                 <nav aria-label="Mentor views" className="flex max-w-full gap-4 overflow-x-auto">
                   {[["all", "All mentors", mentors.length], ["connected", "Connected", connected], ["pending", "Requests", requested]].map(([id, label, count]) => <button key={id} type="button" aria-pressed={view === id} onClick={() => {
                 setView(id);
                 setPage(1);
-              }} className={`flex shrink-0 items-center gap-2 border-b-2 py-2 text-xs font-semibold ${view === id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}>
+              }} className={`flex shrink-0 items-center gap-2 border-b-2 py-2 text-xs font-semibold ${view === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}>
                       {label}
                       <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
                         {count}
@@ -185,7 +185,7 @@ export default function StudentMentorship() {
                   <select value={program} onChange={event => {
                 setProgram(event.target.value);
                 setPage(1);
-              }} className="h-9 min-w-0 max-w-[230px] rounded-lg border border-zinc-200 bg-zinc-50 px-2 text-[11px] text-zinc-600 outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              }} className="h-9 min-w-0 max-w-[230px] rounded-lg border border-zinc-200 bg-zinc-50 px-2 text-[11px] text-zinc-600 outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                     <option value="">All programs</option>
                     {programs.map(value => <option key={value}>{value}</option>)}
                   </select>
@@ -200,12 +200,12 @@ export default function StudentMentorship() {
                     Refresh mentors
                   </button>
                 </div>}
-              {notice && <p role="status" className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+              {notice && <p role="status" className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-brand dark:border-brand dark:bg-emerald-950 dark:text-emerald-200">
                   <Check size={16} className="mt-0.5 shrink-0" />
                   {notice}
                 </p>}
               {loading ? <div role="status" className={`${card} flex items-center justify-center gap-3 p-12 text-sm text-zinc-500`}>
-                  <LoaderCircle size={20} className="animate-spin text-[#009639]" />
+                  <LoaderCircle size={20} className="animate-spin text-brand" />
                   Finding alumni...
                 </div> : <>
                   <div className="flex items-center justify-between gap-2 px-1">
@@ -214,12 +214,12 @@ export default function StudentMentorship() {
                       {filtered.length === 1 ? "alumnus" : "alumni"}
                       {view === "connected" ? " connected with you" : view === "pending" ? " with pending requests" : " to explore"}
                     </p>
-                    {(query || program) && <button type="button" onClick={reset} className="text-[11px] font-medium text-[#007a2e] dark:text-emerald-300">
+                    {(query || program) && <button type="button" onClick={reset} className="text-[11px] font-medium text-brand dark:text-brand">
                         Clear filters
                       </button>}
                   </div>
                   {!filtered.length && <div className={`${card} p-10 text-center`}>
-                      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950">
+                      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                         <Users size={26} />
                       </span>
                       <h2 className="mt-4 text-sm font-semibold">
@@ -238,15 +238,15 @@ export default function StudentMentorship() {
                 const status = states[mentor.email] || "none";
                 const currentJob = mentor.employmentHistory?.find(job => job.current);
                 const headline = currentJob ? [currentJob.position, currentJob.company].filter(Boolean).join(" at ") : mentor.program || "CLSU alumni";
-                const connectButton = "inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full border border-[#009639] px-4 text-xs font-semibold text-[#007a2e] transition hover:bg-emerald-50 hover:ring-1 hover:ring-[#009639] disabled:opacity-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-950";
+                const connectButton = "inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full border border-brand px-4 text-xs font-semibold text-brand transition hover:bg-emerald-50 hover:ring-1 hover:ring-brand disabled:opacity-50 dark:border-brand dark:text-brand dark:hover:bg-emerald-950";
                 return <article key={mentor._id} className={`${card} flex min-w-0 flex-col overflow-hidden transition hover:border-zinc-300 hover:shadow-md dark:hover:border-zinc-600`}>
                           <MentorBanner src={mentor.bannerImage} />
                           <div className="relative flex flex-1 flex-col items-center px-3 pb-3 text-center">
-                            <button type="button" aria-label={`View ${mentor.name || "alumni"} profile`} onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="-mt-8 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-emerald-50 text-xl font-semibold text-[#009639] ring-1 ring-zinc-100 transition hover:ring-emerald-400 focus-visible:outline-none focus-visible:ring-2 dark:border-zinc-900 dark:bg-emerald-950 dark:text-emerald-300 dark:ring-zinc-800">
+                            <button type="button" aria-label={`View ${mentor.name || "alumni"} profile`} onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="-mt-8 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-emerald-50 text-xl font-semibold text-brand ring-1 ring-zinc-100 transition hover:ring-brand focus-visible:outline-none focus-visible:ring-2 dark:border-zinc-900 dark:bg-emerald-950 dark:text-brand dark:ring-zinc-800">
                               <ProfileAvatar user={mentor} fallback="A" />
                             </button>
                             <h2 className="mt-2 w-full break-words text-sm font-semibold tracking-tight">
-                              <button type="button" onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="max-w-full hover:text-[#007a2e] hover:underline dark:hover:text-emerald-300">
+                              <button type="button" onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="max-w-full hover:text-brand hover:underline dark:hover:text-brand">
                                 {mentor.name || "Alumni"}
                               </button>
                             </h2>
@@ -258,19 +258,19 @@ export default function StudentMentorship() {
                                 {mentor.location}
                               </p>}
                             <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                              <GraduationCap size={14} className="shrink-0 text-[#009639] dark:text-emerald-400" />
+                              <GraduationCap size={14} className="shrink-0 text-brand dark:text-brand" />
                               CLSU alumni
                               {mentor.batch && ` | Batch ${mentor.batch}`}
                             </p>
                             <div className="mt-auto w-full pt-3">
-                              {status !== "none" && <p className={`mb-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-medium ${status === "connected" ? "text-[#007a2e] dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}`}>
+                              {status !== "none" && <p className={`mb-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-medium ${status === "connected" ? "text-brand dark:text-brand" : "text-amber-700 dark:text-amber-300"}`}>
                                   {status === "connected" ? <Check size={12} /> : <Clock size={12} />}
                                   {status === "connected" ? "Connected" : status === "incoming" ? "Wants to connect" : "Request sent"}
                                 </p>}
                               {status === 'connected' && <button type="button" onClick={() => {
                         setProgressPartner(mentor.authId || '');
                         setWorkspace('progress');
-                      }} className="mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#009639] px-3 text-xs font-semibold text-white"><Target size={15} />View progress</button>}
+                      }} className="mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white"><Target size={15} />View progress</button>}
                               {status === "connected" ? <button type="button" onClick={() => message(mentor)} className={connectButton}>
                                   <MessageSquare size={15} />
                                   Message
@@ -283,7 +283,7 @@ export default function StudentMentorship() {
                                   {sending === mentor.email ? <LoaderCircle size={15} className="animate-spin" /> : <Plus size={16} />}
                                   {sending === mentor.email ? "Sending..." : "Connect"}
                                 </button>}
-                              <button type="button" onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="mt-1 inline-flex min-h-7 items-center justify-center gap-1 px-2 text-[11px] font-medium text-zinc-500 hover:text-[#007a2e] dark:text-zinc-400 dark:hover:text-emerald-300">
+                              <button type="button" onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="mt-1 inline-flex min-h-7 items-center justify-center gap-1 px-2 text-[11px] font-medium text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand">
                                 View profile
                                 <ArrowUpRight size={12} />
                               </button>

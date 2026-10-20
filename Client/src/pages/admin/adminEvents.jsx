@@ -125,9 +125,9 @@ const PALETTE = [
     bar: "bg-violet-400",
   },
   {
-    card: "bg-emerald-100 text-emerald-950 dark:bg-emerald-400/20 dark:text-emerald-50",
-    dot: "bg-emerald-500",
-    bar: "bg-emerald-500",
+    card: "bg-emerald-100 text-emerald-950 dark:bg-brand/20 dark:text-emerald-50",
+    dot: "bg-brand",
+    bar: "bg-brand",
   },
   {
     card: "bg-amber-100 text-amber-950 dark:bg-amber-400/20 dark:text-amber-50",
@@ -150,7 +150,7 @@ const colorFor = (event) => {
 };
 
 const inputClass =
-  "w-full h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15";
+  "w-full h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 const VIEWS = [
   { key: "day", label: "Daily" },
@@ -293,7 +293,7 @@ function MiniCalendar({ value, onSelect, hasEvents, highlightWeek }) {
           return (
             <div
               key={day.toISOString()}
-              className={`flex justify-center py-0.5 ${inWeek ? "bg-emerald-100/70 dark:bg-emerald-400/10" : ""} ${inWeek && day.getDay() === 0 ? "rounded-l-full" : ""} ${inWeek && day.getDay() === 6 ? "rounded-r-full" : ""}`}
+              className={`flex justify-center py-0.5 ${inWeek ? "bg-emerald-100/70 dark:bg-brand/10" : ""} ${inWeek && day.getDay() === 0 ? "rounded-l-full" : ""} ${inWeek && day.getDay() === 6 ? "rounded-r-full" : ""}`}
             >
               <button
                 type="button"
@@ -301,9 +301,9 @@ function MiniCalendar({ value, onSelect, hasEvents, highlightWeek }) {
                 aria-label={day.toDateString()}
                 className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#009639] ${
                   selected
-                    ? "bg-[#009639] text-white"
+                    ? "bg-brand text-white"
                     : isToday
-                      ? "text-[#009639] ring-1 ring-[#009639]"
+                      ? "text-brand ring-1 ring-brand"
                       : inMonth
                         ? "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
                         : "text-zinc-300 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:bg-zinc-800"
@@ -312,7 +312,7 @@ function MiniCalendar({ value, onSelect, hasEvents, highlightWeek }) {
                 {day.getDate()}
                 {hasEvents(day) && (
                   <span
-                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${selected ? "bg-white" : "bg-[#009639]"}`}
+                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${selected ? "bg-white" : "bg-brand"}`}
                   />
                 )}
               </button>
@@ -386,7 +386,7 @@ function TimeGrid({ days, eventsOnDay, onOpen, onCreate, onPickDay, now }) {
                 disabled={single}
                 className={`rounded-2xl py-3 text-center transition ${
                   isToday
-                    ? "bg-emerald-50 text-[#007a2e] dark:bg-emerald-400/10 dark:text-emerald-300"
+                    ? "bg-emerald-50 text-brand dark:bg-brand/10 dark:text-brand"
                     : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
                 } ${single ? "cursor-default" : "hover:brightness-95"}`}
               >
@@ -420,7 +420,7 @@ function TimeGrid({ days, eventsOnDay, onOpen, onCreate, onPickDay, now }) {
             return (
               <div
                 key={day.toISOString()}
-                className={`relative cursor-cell rounded-xl ${isToday ? "bg-emerald-50/50 dark:bg-emerald-400/5" : ""}`}
+                className={`relative cursor-cell rounded-xl ${isToday ? "bg-emerald-50/50 dark:bg-brand/5" : ""}`}
                 style={{ height: bodyH }}
                 title="Click to add an event"
                 onClick={(e) => {
@@ -837,7 +837,7 @@ export default function AdminEvents() {
             <input
               type="checkbox"
               checked={filters[key]}
-              className="h-4 w-4 rounded accent-[#009639]"
+              className="h-4 w-4 rounded accent-brand"
               onChange={(e) => {
                 setFilters((f) => ({ ...f, [key]: e.target.checked }));
                 setPage(1);
@@ -877,7 +877,7 @@ export default function AdminEvents() {
           <button
             type="button"
             onClick={goToday}
-            className="ml-1 rounded-full px-3 py-1 text-[12px] font-bold text-[#009639] transition hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-zinc-800"
+            className="ml-1 rounded-full px-3 py-1 text-[12px] font-bold text-brand transition hover:bg-emerald-50 dark:text-brand dark:hover:bg-zinc-800"
           >
             Today
           </button>
@@ -945,17 +945,17 @@ export default function AdminEvents() {
                       setCurrentDate(startOfDay(day));
                     }
                   }}
-                  className={`group relative flex min-h-[62px] cursor-pointer flex-col gap-1 p-1 outline-none transition focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-[#009639] sm:min-h-[112px] sm:p-1.5 ${
+                  className={`group relative flex min-h-[62px] cursor-pointer flex-col gap-1 p-1 outline-none transition focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-brand sm:min-h-[112px] sm:p-1.5 ${
                     inMonth
                       ? "bg-white hover:bg-emerald-50/60 dark:bg-zinc-900 dark:hover:bg-zinc-800/70"
                       : "bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-                  } ${selected ? "z-[1] ring-2 ring-inset ring-[#009639]" : ""}`}
+                  } ${selected ? "z-[1] ring-2 ring-inset ring-brand" : ""}`}
                 >
                   <div className="flex items-center justify-between">
                     <span
                       className={`flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold ${
                         isToday
-                          ? "bg-[#009639] text-white"
+                          ? "bg-brand text-white"
                           : inMonth
                             ? "text-zinc-800 dark:text-zinc-100"
                             : "text-zinc-300 dark:text-zinc-600"
@@ -970,7 +970,7 @@ export default function AdminEvents() {
                         e.stopPropagation();
                         openAddForDay(day);
                       }}
-                      className="hidden h-5 w-5 items-center justify-center rounded-md text-zinc-400 opacity-0 transition hover:bg-[#009639]/10 hover:text-[#009639] focus-visible:opacity-100 group-hover:opacity-100 sm:flex"
+                      className="hidden h-5 w-5 items-center justify-center rounded-md text-zinc-400 opacity-0 transition hover:bg-brand/10 hover:text-brand focus-visible:opacity-100 group-hover:opacity-100 sm:flex"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -1018,7 +1018,7 @@ export default function AdminEvents() {
               setPage(1);
             }}
             placeholder="Search events..."
-            className="h-10 w-full rounded-full border border-zinc-200 bg-zinc-50 pl-10 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15 dark:border-zinc-700 dark:bg-zinc-800"
+            className="h-10 w-full rounded-full border border-zinc-200 bg-zinc-50 pl-10 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/15 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
       </div>
@@ -1053,7 +1053,7 @@ export default function AdminEvents() {
                         <button
                           type="button"
                           onClick={() => setSelectedEvent(event)}
-                          className="text-left font-semibold text-zinc-800 hover:text-[#009639] dark:text-zinc-100"
+                          className="text-left font-semibold text-zinc-800 hover:text-brand dark:text-zinc-100"
                         >
                           {event.title}
                         </button>
@@ -1082,7 +1082,7 @@ export default function AdminEvents() {
                       title={event.isActive ? "Hide event" : "Publish event"}
                       className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold ring-1 transition ${
                         event.isActive
-                          ? "bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60 dark:text-emerald-300"
+                          ? "bg-brand/10 text-brand ring-emerald-200/60 dark:text-brand"
                           : "bg-zinc-100 text-zinc-400 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700"
                       }`}
                     >
@@ -1095,7 +1095,7 @@ export default function AdminEvents() {
                         type="button"
                         onClick={() => openEdit(event)}
                         aria-label="Edit event"
-                        className="rounded-full p-2 text-zinc-300 transition hover:bg-emerald-50 hover:text-[#009639] dark:text-zinc-500 dark:hover:bg-zinc-800"
+                        className="rounded-full p-2 text-zinc-300 transition hover:bg-emerald-50 hover:text-brand dark:text-zinc-500 dark:hover:bg-zinc-800"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -1114,7 +1114,7 @@ export default function AdminEvents() {
               {paged.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-5 py-10 text-center">
-                    <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:bg-zinc-800 dark:text-emerald-300">
+                    <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand">
                       <CalendarPlus className="h-6 w-6" />
                     </span>
                     <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
@@ -1239,7 +1239,7 @@ export default function AdminEvents() {
                   <span
                     className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-[10.5px] font-bold ${
                       !isDraft(selectedEvent)
-                        ? "bg-[#009639]/10 text-[#007a2e] dark:text-emerald-300"
+                        ? "bg-brand/10 text-brand dark:text-brand"
                         : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
                     }`}
                   >
@@ -1294,7 +1294,7 @@ export default function AdminEvents() {
                 {selectedEvent.deliveryMode === "online" && (
                   <Link
                     to={`/meetings/${selectedEvent._id}`}
-                    className="flex-1 rounded-full border border-emerald-600 px-3 py-2.5 text-center text-[13px] font-bold text-emerald-600"
+                    className="flex-1 rounded-full border border-brand px-3 py-2.5 text-center text-[13px] font-bold text-brand"
                   >
                     Meeting &amp; attendance
                   </Link>
@@ -1306,7 +1306,7 @@ export default function AdminEvents() {
                     setSelectedEvent(null);
                     openEdit(ev);
                   }}
-                  className="flex-1 rounded-full bg-[#009639] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#007a2e]"
+                  className="flex-1 rounded-full bg-brand py-2.5 text-[13px] font-bold text-white transition hover:bg-brand"
                 >
                   Edit
                 </button>
@@ -1391,7 +1391,7 @@ export default function AdminEvents() {
                 </div>
               </div>
               {form.deliveryMode === "online" && (
-                <p className="rounded-lg bg-emerald-50 p-3 text-xs leading-6 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                <p className="rounded-lg bg-emerald-50 p-3 text-xs leading-6 text-brand dark:bg-emerald-950 dark:text-brand">
                   An in-app meeting room will be available for this activity.
                   Students register before joining. The room supports up to 8
                   people, including the host.
@@ -1485,7 +1485,7 @@ export default function AdminEvents() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, description: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[12.5px] text-zinc-900 outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[12.5px] text-zinc-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
               <div className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
@@ -1500,7 +1500,7 @@ export default function AdminEvents() {
                         registrationLimited: e.target.checked,
                       }))
                     }
-                    className="accent-[#009639]"
+                    className="accent-brand"
                   />
                   Set a registration period
                 </label>
@@ -1565,7 +1565,7 @@ export default function AdminEvents() {
                 <input
                   type="checkbox"
                   checked={form.isActive}
-                  className="h-4 w-4 accent-[#009639]"
+                  className="h-4 w-4 accent-brand"
                   onChange={(e) =>
                     setForm((f) => ({ ...f, isActive: e.target.checked }))
                   }
@@ -1585,7 +1585,7 @@ export default function AdminEvents() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-full bg-[#009639] py-2.5 text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-60"
+                className="flex-1 rounded-full bg-brand py-2.5 text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-60"
               >
                 {saving
                   ? "Saving..."

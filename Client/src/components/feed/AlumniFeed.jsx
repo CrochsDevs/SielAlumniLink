@@ -213,7 +213,7 @@ export default function AlumniFeed({
             next.delete("post");
             setParams(next);
           }}
-          className="text-sm font-bold text-emerald-700 hover:underline"
+          className="text-sm font-bold text-brand hover:underline"
         >
           ← Back to feed
         </button>
@@ -247,7 +247,7 @@ export default function AlumniFeed({
               role="status"
               className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-6 py-10 text-center dark:border-zinc-700 dark:bg-zinc-900"
             >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
                 {onlyType === "story" ? (
                   <Sparkles
                     className="h-9 w-9"
@@ -306,7 +306,7 @@ export default function AlumniFeed({
               type="button"
               disabled={loadingMore}
               onClick={more}
-              className="w-full rounded-xl border border-emerald-600 p-3 text-sm font-bold text-emerald-700 disabled:opacity-50"
+              className="w-full rounded-xl border border-brand p-3 text-sm font-bold text-brand disabled:opacity-50"
             >
               {loadingMore ? "Loading…" : "Load more posts"}
             </button>

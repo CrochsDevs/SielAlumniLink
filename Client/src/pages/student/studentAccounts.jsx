@@ -216,7 +216,7 @@ const LegalDoc = ({ sections }) => (
           </p>
         )}
         {sec.bullets && (
-          <ul className="mt-2 max-w-prose list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-zinc-600 marker:text-[#009639] dark:text-zinc-300">
+          <ul className="mt-2 max-w-prose list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-zinc-600 marker:text-brand dark:text-zinc-300">
             {sec.bullets.map((b) => (
               <li key={b}>{b}</li>
             ))}
@@ -228,7 +228,7 @@ const LegalDoc = ({ sections }) => (
       Questions about this document? Contact{" "}
       <a
         href={`mailto:${SUPPORT_EMAIL}`}
-        className="font-semibold text-[#007a2e] hover:underline dark:text-emerald-300"
+        className="font-semibold text-brand hover:underline dark:text-brand"
       >
         {SUPPORT_EMAIL}
       </a>
@@ -257,7 +257,7 @@ const StudentAccounts = () => {
   };
 
   const inputClass =
-    "w-full h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-800 text-[13px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15";
+    "w-full h-11 px-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-800 text-[13px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15";
 
   const handleSaveName = async (e) => {
     e.preventDefault();
@@ -314,14 +314,14 @@ const StudentAccounts = () => {
           {/* Page header */}
           <PageHeader title="Account settings" description="Manage your profile, security, and preferences.">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-semibold text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">{(user?.name || "A").charAt(0).toUpperCase()}</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-semibold text-brand dark:bg-emerald-950 dark:text-brand">{(user?.name || "A").charAt(0).toUpperCase()}</span>
               <div className="min-w-0"><p className="truncate text-sm font-semibold">{user?.name}</p><p className="break-all text-xs">{user?.email} &middot; {user?.role}</p></div>
             </div>
           </PageHeader>
 
           <div className="flex flex-col items-start gap-5 md:flex-row">
             {/* Sub-sidebar */}
-            <aside className="w-full shrink-0 overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:w-64">
+            <aside className="w-full shrink-0 overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:w-64">
               {TAB_GROUPS.map((group, gi) => (
                 <div
                   key={group.label}
@@ -345,14 +345,14 @@ const StudentAccounts = () => {
                           aria-current={active ? "page" : undefined}
                           className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all ${
                             active
-                              ? "bg-[#009639]/10 ring-1 ring-emerald-200/60 dark:ring-emerald-800/60"
+                              ? "bg-brand/10 ring-1 ring-emerald-200/60 dark:ring-brand/60"
                               : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
                           }`}
                         >
                           <span
                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
                               active
-                                ? "bg-[#009639] text-white shadow-sm"
+                                ? "bg-brand text-white shadow-sm"
                                 : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
                             }`}
                           >
@@ -362,7 +362,7 @@ const StudentAccounts = () => {
                             <span
                               className={`block truncate text-[12.5px] font-bold ${
                                 active
-                                  ? "text-[#007a2e] dark:text-emerald-300"
+                                  ? "text-brand dark:text-brand"
                                   : "text-zinc-700 dark:text-zinc-200"
                               }`}
                             >
@@ -387,7 +387,7 @@ const StudentAccounts = () => {
             {/* Content */}
             <div className="w-full min-w-0 flex-1">
               {activeTab === "profile" && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
                     <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                       Profile Information
@@ -422,7 +422,7 @@ const StudentAccounts = () => {
                       <button
                         type="submit"
                         disabled={saving}
-                        className="h-10 rounded-xl bg-[#009639] px-6 text-[13px] font-bold text-white shadow-sm transition hover:bg-[#007a2e] disabled:opacity-60"
+                        className="h-10 rounded-xl bg-brand px-6 text-[13px] font-bold text-white shadow-sm transition hover:bg-brand disabled:opacity-60"
                       >
                         {saving ? "Saving..." : "Save changes"}
                       </button>
@@ -432,11 +432,11 @@ const StudentAccounts = () => {
               )}
 
               {activeTab === "password" && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
                     <h2 className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                       Change Password
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand dark:bg-emerald-950 dark:text-brand">
                         <Lock className="h-2.5 w-2.5" />
                         Secure
                       </span>
@@ -516,7 +516,7 @@ const StudentAccounts = () => {
               )}
 
               {activeTab === "appearance" && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
                     <h2 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                       Appearance
@@ -537,7 +537,7 @@ const StudentAccounts = () => {
                         onClick={() => changeTheme(key)}
                         className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition ${
                           theme === key
-                            ? "border-[#009639] bg-emerald-50/50 text-[#007a2e] dark:bg-emerald-950/30 dark:text-emerald-300"
+                            ? "border-brand bg-emerald-50/50 text-brand dark:bg-emerald-950/30 dark:text-brand"
                             : "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600"
                         }`}
                       >
@@ -554,7 +554,7 @@ const StudentAccounts = () => {
               )}
 
               {activeTab === "help" && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <DocHeader
                     title="Help & Support"
                     subtitle="Quick answers to common questions."
@@ -562,7 +562,7 @@ const StudentAccounts = () => {
                   <div className="divide-y divide-zinc-100 px-5 dark:divide-zinc-800 sm:px-6">
                     {FAQS.map(({ q, a }) => (
                       <details key={q} className="group py-4">
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13.5px] font-bold text-zinc-900 outline-none marker:hidden focus-visible:ring-2 focus-visible:ring-[#009639]/40 dark:text-zinc-100 [&::-webkit-details-marker]:hidden">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13.5px] font-bold text-zinc-900 outline-none marker:hidden focus-visible:ring-2 focus-visible:ring-brand/40 dark:text-zinc-100 [&::-webkit-details-marker]:hidden">
                           {q}
                           <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
                         </summary>
@@ -574,7 +574,7 @@ const StudentAccounts = () => {
                   </div>
                   <div className="m-5 flex flex-col gap-3 rounded-2xl bg-emerald-50/70 p-4 dark:bg-emerald-950/40 sm:m-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#009639] text-white">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
                         <LifeBuoy className="h-5 w-5" />
                       </span>
                       <div>
@@ -588,7 +588,7 @@ const StudentAccounts = () => {
                     </div>
                     <a
                       href={`mailto:${SUPPORT_EMAIL}?subject=SielAlumni%20support`}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#009639] px-5 text-[13px] font-bold text-white shadow-sm transition hover:bg-[#007a2e]"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-[13px] font-bold text-white shadow-sm transition hover:bg-brand"
                     >
                       <Mail className="h-4 w-4" />
                       Contact support
@@ -598,7 +598,7 @@ const StudentAccounts = () => {
               )}
 
               {activeTab === "privacy" && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <DocHeader
                     title="Privacy Policy"
                     subtitle={`Last updated ${LAST_UPDATED}`}
@@ -608,7 +608,7 @@ const StudentAccounts = () => {
               )}
 
               {activeTab === "terms" && (
-                <section className="overflow-hidden rounded-3xl border border-emerald-900/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <DocHeader
                     title="Terms & Conditions"
                     subtitle={`Last updated ${LAST_UPDATED}`}

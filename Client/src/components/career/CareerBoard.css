@@ -2,7 +2,7 @@
 .dark .alumni-career-page { background: #0c1210; }
 .career-marketplace {
   --career-title: #000;
-  --career-green: #007a2e;
+  --career-green: #009639;
   --career-line: #d4dfd1;
   --career-surface: #fafbf6;
   --career-soft: #e6eee2;
@@ -74,7 +74,7 @@
   font-size: 13px;
   font-weight: 600;
 }
-.career-marketplace .career-search button:hover { background: #007a2e; }
+.career-marketplace .career-search button:hover { background: #009639; }
 .career-marketplace .career-search input::placeholder { color: #647568; opacity: 1; }
 .dark .career-marketplace .career-search { background: #1b2c20; }
 .dark .career-marketplace .career-search input::placeholder { color: #a0b5a5; }
@@ -107,10 +107,10 @@
   font-size: 13px;
 }
 .career-marketplace .career-board-navigation nav:not(.admin-tabs) button:hover { background: rgb(255 255 255 / 35%); }
-.career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: #145238; color: #fff; box-shadow: 0 2px 4px rgb(18 56 35 / 12%); }
+.career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: #009639; color: #fff; box-shadow: 0 2px 4px rgb(18 56 35 / 12%); }
 .dark .career-marketplace .career-board-navigation { background: #1b2b20; }
 .dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button { color: #b7c9bc; }
-.dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: #306b45; color: #fff; }
+.dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: #009639; color: #fff; }
 .career-marketplace .career-layout { gap: 24px; }
 .career-marketplace .career-filter-panel {
   padding: 20px 12px 14px;
@@ -130,7 +130,7 @@
 .career-marketplace aside.career-filter-panel .career-filter-heading {
   padding: 18px 16px;
   border-radius: 17px 17px 0 0;
-  background: #145238;
+  background: #009639;
 }
 .career-marketplace aside.career-filter-panel .career-filter-heading h2 { color: #fff; }
 .career-marketplace aside.career-filter-panel .career-filter-heading p { color: #c4dec9; }
@@ -177,7 +177,7 @@
 .career-marketplace .career-feed-heading p { margin-top: 6px; color: #71717a; font-size: 13px; line-height: 21px; }
 .dark .career-marketplace .career-feed-heading p { color: #a1a1aa; }
 .career-marketplace .career-listing {
-  --card-accent: #007a2e;
+  --card-accent: #009639;
   --card-tint: #edf8f0;
   --card-surface: #f5faf1;
   --card-footer: #e7f0df;
@@ -250,14 +250,14 @@
   background: var(--career-surface);
 }
 .career-marketplace .career-member-panel > p { background: transparent; border: 0; padding: 4px; }
-.career-marketplace .career-member-panel > section:first-child { background: #145238; border-color: #145238; box-shadow: 0 8px 24px rgb(20 82 56 / 12%); }
+.career-marketplace .career-member-panel > section:first-child { background: #009639; border-color: #009639; box-shadow: 0 8px 24px rgb(20 82 56 / 12%); }
 .career-marketplace .career-member-panel > section:first-child h2 { color: #fff; }
 .career-marketplace .career-member-panel > section:first-child p { color: #d1e5d5; }
 .career-marketplace .career-member-panel > section:first-child > span:last-of-type { background: rgb(255 255 255 / 12%); color: #e0eddc; }
 .career-marketplace .career-member-panel > section:first-child button { background: #d8efb4; color: #19422b; }
 .career-marketplace .career-member-panel > section:first-child button:hover { background: #c9e69b; }
 .career-marketplace .career-member-panel > section:nth-child(2) { background: #f5f0e3; border-color: #e6dfcf; }
-.dark .career-marketplace .career-member-panel > section:first-child { background: #163e2b; border-color: #28513a; }
+.dark .career-marketplace .career-member-panel > section:first-child { background: #163e2b; border-color: #009639; }
 .dark .career-marketplace .career-member-panel > section:nth-child(2) { background: #29271f; border-color: #3b392e; }
 .career-marketplace :is(button, input):focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
 @media (min-width: 768px) {

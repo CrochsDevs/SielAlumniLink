@@ -71,7 +71,7 @@ export default function StoryReader({
               {post.title}
             </h3>
             <div className="mb-6 mt-5 flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                 <ProfileAvatar user={post.author} />
               </span>
               <div className="min-w-0">
@@ -99,7 +99,7 @@ export default function StoryReader({
             <div className="mt-6 space-y-7">
               {storySections(post).map(([title, body]) => (
                 <section key={title}>
-                  <h4 className="mb-3 text-sm font-semibold text-[#007a2e] dark:text-emerald-300">
+                  <h4 className="mb-3 text-sm font-semibold text-brand dark:text-brand">
                     {title}
                   </h4>
                   <p className="whitespace-pre-wrap break-words text-sm leading-8 text-zinc-600 [overflow-wrap:anywhere] dark:text-zinc-300">
@@ -112,7 +112,7 @@ export default function StoryReader({
               {post.author?._id && (
                 <Link
                   to={profilePath(post.author)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#009639] dark:text-emerald-300"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand dark:text-brand"
                 >
                   Meet the author
                   <ArrowUpRight size={14} />

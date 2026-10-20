@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Building2, Briefcase, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
@@ -42,9 +42,9 @@ const emptyPast = {
 const card =
   "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6";
 const input =
-  "mt-1.5 h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:[color-scheme:dark]";
+  "mt-1.5 h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:[color-scheme:dark]";
 const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white hover:bg-[#007a2e] disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white hover:bg-brand disabled:opacity-50";
 const monthLabel = (value) =>
   /^\d{4}-\d{2}/.test(value || "")
     ? new Date(`${value.slice(0, 7)}-01T00:00:00`).toLocaleDateString("en-US", {
@@ -169,7 +169,7 @@ export default function AlumniEmployment() {
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6 workspace-page">
-          <header className="rounded-2xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white workspace-page-header">
+          <header className="rounded-2xl bg-gradient-to-br from-brand to-brand p-6 text-white workspace-page-header">
             <div className="flex items-center gap-3">
               <Building2 size={25} />
               <h1 className="text-xl font-semibold">My employment</h1>
@@ -204,7 +204,7 @@ export default function AlumniEmployment() {
           {message && (
             <p
               role="status"
-              className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+              className="rounded-lg bg-emerald-50 p-3 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
             >
               {message}
             </p>
@@ -342,7 +342,7 @@ export default function AlumniEmployment() {
                       >
                         <Briefcase
                           size={20}
-                          className="mt-1 shrink-0 text-[#009639]"
+                          className="mt-1 shrink-0 text-brand"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap gap-2">
@@ -350,7 +350,7 @@ export default function AlumniEmployment() {
                               {job.position || job.role}
                             </h3>
                             {job.current && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-brand dark:bg-emerald-950 dark:text-brand">
                                 Current
                               </span>
                             )}

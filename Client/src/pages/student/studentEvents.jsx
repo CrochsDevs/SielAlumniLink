@@ -95,7 +95,7 @@ export default function StudentEvents() {
                 className="flex min-w-0 flex-col rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold capitalize text-[#009639]">
+                  <span className="text-xs font-semibold capitalize text-brand">
                     {event.activityType || "event"}
                   </span>
                   <span className="rounded-md bg-zinc-100 px-2 py-1 text-[10px] dark:bg-zinc-800">
@@ -143,7 +143,7 @@ export default function StudentEvents() {
         )}
         <Link
           to="/student/certificate"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-[#009639]"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-brand"
         >
           Your certificates
           <ArrowUpRight size={14} />

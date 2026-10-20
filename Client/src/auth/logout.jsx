@@ -53,14 +53,14 @@ const Logout = () => {
         {/* Logo + spinner */}
         <div className="relative mx-auto mb-6 h-20 w-20">
           {/* Green glow */}
-          <div className="absolute inset-0 rounded-full bg-[#009639] blur-2xl opacity-40 scale-125"></div>
+          <div className="absolute inset-0 rounded-full bg-brand blur-2xl opacity-40 scale-125"></div>
 
           {/* Spinner ring */}
           <div className="absolute inset-0 rounded-full border-[3px] border-zinc-200 border-t-[#009639] animate-spin"></div>
 
           {/* Center icon */}
           <div className="absolute inset-[10px] rounded-full bg-white flex items-center justify-center shadow-md">
-            <LogOut className="w-7 h-7 text-[#009639]" />
+            <LogOut className="w-7 h-7 text-brand" />
           </div>
         </div>
 
@@ -74,9 +74,9 @@ const Logout = () => {
 
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-1.5 mt-5">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#009639] animate-pulse"></span>
-          <span className="h-1.5 w-1.5 rounded-full bg-[#009639] animate-pulse" style={{ animationDelay: '150ms' }}></span>
-          <span className="h-1.5 w-1.5 rounded-full bg-[#009639] animate-pulse" style={{ animationDelay: '300ms' }}></span>
+          <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
+          <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse" style={{ animationDelay: '150ms' }}></span>
+          <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse" style={{ animationDelay: '300ms' }}></span>
         </div>
       </div>
     </div>

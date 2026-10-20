@@ -48,7 +48,7 @@ export default function MessageBubble({ msg, mine, convoId, onEdit, onUnsend }) 
       variant={msg.unsent ? 'outline' : mine ? 'default' : 'secondary'}
       className={msg.unsent
         ? '[&>[data-slot=bubble-content]]:border-dashed [&>[data-slot=bubble-content]]:bg-transparent'
-        : mine ? '[&>[data-slot=bubble-content]]:bg-[#009639] [&>[data-slot=bubble-content]]:text-white' : ''}
+        : mine ? '[&>[data-slot=bubble-content]]:bg-brand [&>[data-slot=bubble-content]]:text-white' : ''}
     >
       {msg.unsent ? (
         <BubbleContent className="text-xs italic text-muted-foreground">

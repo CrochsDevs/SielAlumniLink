@@ -13,7 +13,7 @@
   font-family: inherit;
 }
 .dark .admin-stat-card { --card-muted: #96a69c; }
-.admin-stat-card:focus-visible { outline: 2px solid #26875e; outline-offset: 4px; }
+.admin-stat-card:focus-visible { outline: 2px solid #009639; outline-offset: 4px; }
 .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { border-color: #81a88b; }
 
 .admin-stat-card {
@@ -25,7 +25,7 @@
   transition: border-color 180ms, background-color 180ms;
 }
 .admin-stat-card:hover { border-color: #699e7a; }
-.admin-stat-card::before { content: ''; position: absolute; top: 0; left: 18px; width: 32px; height: 3px; border-radius: 0 0 4px 4px; background: #438a5e; }
+.admin-stat-card::before { content: ''; position: absolute; top: 0; left: 18px; width: 32px; height: 3px; border-radius: 0 0 4px 4px; background: #009639; }
 .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { background-color: #cce2d2; border-color: #669978; }
 .admin-stat-card .dashboard-stat-header { display: flex; align-items: center; gap: 8px; }
 .admin-stat-card .dashboard-stat-icon {
@@ -37,12 +37,12 @@
   border: 1px solid #b0ceb9;
   border-radius: 9px;
   background: #c4decc;
-  color: #285c3c;
+  color: #009639;
 }
-.admin-stat-card .dashboard-stat-label { flex: 1; color: #2c543a; font-size: 11px; font-weight: 600; line-height: 1.4; }
+.admin-stat-card .dashboard-stat-label { flex: 1; color: #009639; font-size: 11px; font-weight: 600; line-height: 1.4; }
 .admin-stat-card .dashboard-card-arrow { flex-shrink: 0; color: #849a8c; }
 .admin-stat-card .dashboard-stat-body { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 17px 0 16px; }
-.admin-stat-card .dashboard-stat-value { color: #194d30; font-size: 24px; line-height: 1.1; font-weight: 650; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; }
+.admin-stat-card .dashboard-stat-value { color: #009639; font-size: 24px; line-height: 1.1; font-weight: 650; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; }
 .admin-stat-card .dashboard-stat-caption { color: var(--card-muted); font-size: 10px; }
 .admin-stat-card .dashboard-stat-footer {
   display: flex;
@@ -56,7 +56,7 @@
 .admin-stat-card .dashboard-status-dot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: #65a17d; }
 .admin-stat-card .dashboard-stat-detail { flex: 1; color: #4f6e59; font-size: 10px; line-height: 1.5; }
 .admin-stat-card .dashboard-stat-footer > svg { flex-shrink: 0; color: #879c8d; }
-.admin-stat-card.dashboard-stat-featured { background: linear-gradient(120deg, #214d37, #2b6749); border-color: #275c40; }
+.admin-stat-card.dashboard-stat-featured { background: linear-gradient(120deg, #009639, #009639); border-color: #009639; }
 .admin-stat-card.dashboard-stat-featured::before { background: #94d2ac; }
 .admin-stat-card.dashboard-stat-featured .dashboard-stat-icon { background: #ffffff16; border-color: #ffffff26; color: #d1ecdb; }
 .admin-stat-card.dashboard-stat-featured .dashboard-stat-label,
@@ -69,12 +69,12 @@
 .admin-stat-card.dashboard-stat-featured .dashboard-status-dot { background: #95d2ab; }
 .dark .admin-stat-card { background-color: #223c2b; }
 .dark .admin-stat-card .dashboard-stat-value { color: #cdebd7; }
-.dark .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { background-color: #2e4f3b; }
+.dark .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { background-color: #009639; }
 .dark .admin-stat-card .dashboard-stat-icon { background: #263d2e; border-color: #3c5345; color: #abd1b7; }
 .dark .admin-stat-card .dashboard-stat-label { color: #c1d0c6; }
 .dark .admin-stat-card .dashboard-stat-footer { background: transparent; border-top-color: rgb(182 218 192 / 7%); }
 .dark .admin-stat-card .dashboard-stat-detail { color: #a9bcb0; }
-.dark .admin-stat-card.dashboard-stat-featured { background: #295d41; border-color: #467a57; }
+.dark .admin-stat-card.dashboard-stat-featured { background: #009639; border-color: #009639; }
 .dark .admin-stat-card.dashboard-stat-featured .dashboard-stat-icon { background: #35533e; border-color: #45664f; color: #bdd9c5; }
 .dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-label, .dashboard-card-arrow, .dashboard-stat-value) { color: #daeadf; }
 .dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-caption, .dashboard-stat-detail, .dashboard-stat-footer > svg) { color: #acc8b6; }

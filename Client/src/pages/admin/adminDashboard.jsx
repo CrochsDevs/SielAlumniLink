@@ -22,7 +22,7 @@ function Chart({ report, period }) {
   return <>
     <div className="dashboard-chart-scroll mt-5 overflow-x-auto pb-2" aria-label={titles[period] + " engagement bar chart"}>
       <div className="dashboard-chart-plot flex h-36 items-end gap-1" style={{ minWidth: report.buckets.length * 20 }}>
-        {report.buckets.map(bucket => <button key={bucket.key} type="button" onClick={() => setSelected(bucket.key)} aria-pressed={selected === bucket.key} aria-label={bucket.key + ": " + bucket.total + " recorded actions"} className="group flex h-full min-w-3 flex-1 flex-col items-center justify-end rounded-t focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
+        {report.buckets.map(bucket => <button key={bucket.key} type="button" onClick={() => setSelected(bucket.key)} aria-pressed={selected === bucket.key} aria-label={bucket.key + ": " + bucket.total + " recorded actions"} className="group flex h-full min-w-3 flex-1 flex-col items-center justify-end rounded-t focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
           <span className="mb-1 shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{num(bucket.total)}</span>
           <span className="dashboard-chart-bar w-full max-w-12 rounded-full" style={{ height: bucket.total / peak * 55 + "%", minHeight: 2 }} />
           <span className="mt-2 h-7 shrink-0 text-[10px] text-zinc-500 dark:text-zinc-400">{bucket.label}</span>

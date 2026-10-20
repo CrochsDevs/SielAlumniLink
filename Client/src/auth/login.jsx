@@ -52,7 +52,7 @@ const Login = () => {
       {redirecting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm">
           <div className="text-center">
-            <svg className="animate-spin h-7 w-7 mx-auto text-[#009639]" viewBox="0 0 24 24">
+            <svg className="animate-spin h-7 w-7 mx-auto text-brand" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
@@ -67,13 +67,13 @@ const Login = () => {
 
           <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 sm:p-6 relative overflow-hidden">
 
-            <div className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-[#009639]/8 via-transparent to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-brand/8 via-transparent to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
 
               <div className="text-center mb-5">
                 <h1 className="text-[19px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-1">
-                  Get started with <span className="text-[#009639]">SielAlumni</span>
+                  Get started with <span className="text-brand">SielAlumni</span>
                 </h1>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
                   Start exploring smarter connections<br />
@@ -93,7 +93,7 @@ const Login = () => {
                         onChange={handleChange}
                         required
                         placeholder="Enter your email"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
                       />
                     </div>
 
@@ -102,7 +102,7 @@ const Login = () => {
                         <label className="block text-[10.5px] font-semibold text-zinc-700 dark:text-zinc-200">Password</label>
                         <Link
                           to="/forgot-password"
-                          className="text-[10px] font-medium text-[#009639] hover:text-[#007a2e] transition-colors hover:underline underline-offset-2"
+                          className="text-[10px] font-medium text-brand hover:text-brand transition-colors hover:underline underline-offset-2"
                         >
                           Forgot password?
                         </Link>
@@ -114,7 +114,7 @@ const Login = () => {
                         onChange={handleChange}
                         required
                         placeholder="Enter your password"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
                       />
                     </div>
 
@@ -153,14 +153,14 @@ const Login = () => {
                         onChange={handleChange}
                         required
                         placeholder="Enter your email"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full h-8 rounded-lg bg-[#009639] text-white text-[12px] font-semibold tracking-wide transition-all duration-200 hover:bg-[#007a2e] disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
+                      className="w-full h-8 rounded-lg bg-brand text-white text-[12px] font-semibold tracking-wide transition-all duration-200 hover:bg-brand disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
                     >
                       {loading ? (
                         <span className="flex items-center justify-center gap-2">
@@ -174,7 +174,7 @@ const Login = () => {
                     </button>
 
                     {magicMessage && (
-                      <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 p-2 rounded-lg text-[11px] leading-relaxed">
+                      <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 text-brand p-2 rounded-lg text-[11px] leading-relaxed">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mt-0.5 shrink-0" viewBox="0 0 24 24"
                           fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
@@ -228,30 +228,30 @@ const Login = () => {
 
               <p className="text-center text-[9.5px] text-zinc-400 mt-5 leading-relaxed">
                 By continuing, you agree to SielAlumni's{' '}
-                <a href="#" className="text-zinc-600 dark:text-zinc-300 hover:text-[#009639] font-medium transition-colors">Terms</a>
+                <a href="#" className="text-zinc-600 dark:text-zinc-300 hover:text-brand font-medium transition-colors">Terms</a>
                 {' '}&amp;{' '}
-                <a href="#" className="text-zinc-600 dark:text-zinc-300 hover:text-[#009639] font-medium transition-colors">Privacy Policy</a>
+                <a href="#" className="text-zinc-600 dark:text-zinc-300 hover:text-brand font-medium transition-colors">Privacy Policy</a>
               </p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#0F4C3A] via-[#007a2e] to-[#009639] rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden flex flex-col justify-center items-center text-center">
+          <div className="bg-gradient-to-br from-brand via-brand to-brand rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden flex flex-col justify-center items-center text-center">
 
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#009639]/30 rounded-full blur-[80px] pointer-events-none"></div>
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#0F4C3A]/40 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand/30 rounded-full blur-[80px] pointer-events-none"></div>
+            <div className="absolute top-0 right-0 w-48 h-48 bg-brand/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand/40 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col items-center w-full">
 
               <div className="relative mb-5">
                 {/* Green glow — outer, mas malaki */}
-                <div className="absolute inset-0 rounded-full bg-[#009639] blur-2xl opacity-80 scale-125"></div>
+                <div className="absolute inset-0 rounded-full bg-brand blur-2xl opacity-80 scale-125"></div>
 
                 {/* White glow — inner, mas maliit */}
                 <div className="absolute inset-0 rounded-full bg-white blur-xl opacity-50 scale-110"></div>
 
                 {/* Green ring — animated */}
-                <div className="absolute inset-0 rounded-full ring-2 ring-[#009639]/50 ring-offset-4 ring-offset-transparent animate-pulse"></div>
+                <div className="absolute inset-0 rounded-full ring-2 ring-brand/50 ring-offset-4 ring-offset-transparent animate-pulse"></div>
 
                 {/* Logo container */}
                 <div className="relative h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-2xl shadow-black/20 overflow-hidden ring-1 ring-white/60">
@@ -292,7 +292,7 @@ const Login = () => {
 
                     <div className="group flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200">
                       <div className="relative shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-[#009639] flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-[#009639]/50 ring-2 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-brand/50 ring-2 ring-white/20">
                           1
                         </div>
                       </div>
@@ -304,7 +304,7 @@ const Login = () => {
 
                     <div className="group flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200">
                       <div className="relative shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-[#009639] flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-[#009639]/50 ring-2 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-brand/50 ring-2 ring-white/20">
                           2
                         </div>
                       </div>
@@ -316,7 +316,7 @@ const Login = () => {
 
                     <div className="group flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200">
                       <div className="relative shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-[#009639] flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-[#009639]/50 ring-2 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-brand/50 ring-2 ring-white/20">
                           3
                         </div>
                       </div>
@@ -346,7 +346,7 @@ const Login = () => {
 
                     <div className="group flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200">
                       <div className="relative shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-[#009639] flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-[#009639]/50 ring-2 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-brand/50 ring-2 ring-white/20">
                           1
                         </div>
                       </div>
@@ -358,7 +358,7 @@ const Login = () => {
 
                     <div className="group flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200">
                       <div className="relative shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-[#009639] flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-[#009639]/50 ring-2 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-brand/50 ring-2 ring-white/20">
                           2
                         </div>
                       </div>
@@ -370,7 +370,7 @@ const Login = () => {
 
                     <div className="group flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200">
                       <div className="relative shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-[#009639] flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-[#009639]/50 ring-2 ring-white/20">
+                        <div className="h-6 w-6 rounded-full bg-brand flex items-center justify-center text-white text-[10.5px] font-bold shadow-lg shadow-brand/50 ring-2 ring-white/20">
                           3
                         </div>
                       </div>

@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext.jsx";
@@ -75,7 +76,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       <div className="flex justify-center items-center min-h-screen bg-white">
         <div className="text-center">
           <svg
-            className="animate-spin h-8 w-8 mx-auto text-[#009639]"
+            className="animate-spin h-8 w-8 mx-auto text-brand"
             viewBox="0 0 24 24"
           >
             <circle
@@ -655,9 +656,18 @@ function MemberPages() {
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <ChatProvider>
           <MemberPages />

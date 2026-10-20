@@ -85,7 +85,7 @@ const ForgetPassword = () => {
                     {step === 2 && 'Enter OTP'}
                     {step === 3 && 'Create New Password'}
                 </h1>
-                {message && <div className="bg-green-100 text-green-700 p-3 rounded mb-4">{message}</div>}
+                {message && <div className="bg-green-100 text-brand p-3 rounded mb-4">{message}</div>}
                 {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
                 
                 {step === 1 && (

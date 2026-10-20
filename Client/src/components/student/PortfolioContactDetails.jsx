@@ -5,8 +5,8 @@ import api from '../../utils/axios';
 import { FeedDialog } from '../feed/FeedComposer';
 import { LINK_LABELS, resumeLinks, websiteUrl } from '../../utils/resumeContact';
 
-const inputClass = 'mt-2 w-full min-w-0 rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-[#009639] focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-700 dark:bg-zinc-900';
-const buttonClass = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 text-xs font-semibold hover:border-emerald-400 hover:text-emerald-700 disabled:opacity-50 dark:border-zinc-700 dark:hover:text-emerald-300';
+const inputClass = 'mt-2 w-full min-w-0 rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900';
+const buttonClass = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 text-xs font-semibold hover:border-brand hover:text-brand disabled:opacity-50 dark:border-zinc-700 dark:hover:text-brand';
 
 export default function PortfolioContactDetails({ user, disabled, onSaved, refreshUser }) {
   const [draft, setDraft] = useState(null);
@@ -50,7 +50,7 @@ export default function PortfolioContactDetails({ user, disabled, onSaved, refre
       </div>
       <div className="mt-4 space-y-3 text-xs text-zinc-600 dark:text-zinc-300">
         {[[Mail, contactEmail], [Phone, user?.contactNumber], [MapPin, user?.location]].filter(([, value]) => value).map(([Icon, value]) => <p key={value} className="flex items-start gap-2 break-words"><Icon size={14} className="mt-0.5 shrink-0" /><span className="min-w-0 break-all">{value}</span></p>)}
-        {links.map((link, index) => <p key={index} className="flex min-w-0 items-start gap-2"><ArrowUpRight size={14} className="mt-0.5 shrink-0" /><span className="min-w-0"><span className="block text-[10px] text-zinc-500">{LINK_LABELS[link.type]}</span>{websiteUrl(link.url) ? <a href={websiteUrl(link.url)} target="_blank" rel="noopener noreferrer" className="break-all text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-300">{link.url}</a> : <span className="break-all">{link.url}</span>}</span></p>)}
+        {links.map((link, index) => <p key={index} className="flex min-w-0 items-start gap-2"><ArrowUpRight size={14} className="mt-0.5 shrink-0" /><span className="min-w-0"><span className="block text-[10px] text-zinc-500">{LINK_LABELS[link.type]}</span>{websiteUrl(link.url) ? <a href={websiteUrl(link.url)} target="_blank" rel="noopener noreferrer" className="break-all text-brand underline-offset-2 hover:underline dark:text-brand">{link.url}</a> : <span className="break-all">{link.url}</span>}</span></p>)}
       </div>
       <button type="button" disabled={disabled} onClick={open} className={`${buttonClass} mt-4`}><Plus size={14} /> Add details or links</button>
       {draft && <FeedDialog title="Edit contact details" busy={busy} onClose={() => setDraft(null)}>
@@ -73,7 +73,7 @@ export default function PortfolioContactDetails({ user, disabled, onSaved, refre
               <div className="mt-3 flex flex-wrap gap-2">{Object.entries(LINK_LABELS).map(([type, label]) => <button key={type} type="button" disabled={draft.profileLinks.length >= 20} onClick={() => update('profileLinks', [...draft.profileLinks, { id: crypto.randomUUID(), type, url: '' }])} className={buttonClass}><Plus size={14} /> Add {label}</button>)}</div>
             </div>
             {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
-            <div className="flex justify-end gap-2"><button type="button" onClick={() => setDraft(null)} className="rounded-lg px-4 py-2 text-xs text-zinc-500">Cancel</button><button type="submit" className="min-h-11 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white hover:bg-[#007a2e]">{busy ? 'Saving…' : 'Save contact details'}</button></div>
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setDraft(null)} className="rounded-lg px-4 py-2 text-xs text-zinc-500">Cancel</button><button type="submit" className="min-h-11 rounded-lg bg-brand px-4 text-xs font-semibold text-white hover:bg-brand">{busy ? 'Saving…' : 'Save contact details'}</button></div>
           </fieldset>
         </form>
       </FeedDialog>}

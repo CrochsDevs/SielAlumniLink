@@ -70,11 +70,11 @@ const REVIEW_FIELDS = [
   ["How your work relates to your program", "alignmentExplanation"],
 ];
 const inputClass =
-  "h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-[13px] text-zinc-900 placeholder:text-zinc-500 outline-none transition focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/20 disabled:opacity-60 [color-scheme:light] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus:border-[#009639] dark:[color-scheme:dark] [&>option]:bg-white dark:[&>option]:bg-zinc-800";
+  "h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-[13px] text-zinc-900 placeholder:text-zinc-500 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60 [color-scheme:light] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus:border-brand dark:[color-scheme:dark] [&>option]:bg-white dark:[&>option]:bg-zinc-800";
 const secondaryButton =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:px-5 sm:text-sm";
 const primaryButton =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#009639] bg-[#009639] px-4 text-sm font-bold text-black transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-55  sm:px-5";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-brand bg-brand px-4 text-sm font-bold text-black transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-55  sm:px-5";
 
 function Field({ name, label, optional = false, error, children }) {
   return (
@@ -366,7 +366,7 @@ export default function AlumniTracer() {
         />
         <main className="mx-auto max-w-3xl p-4 sm:p-6 workspace-page">
           <section className="rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-sm sm:p-8 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 workspace-page-header">
-            <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#009639]/10 text-[#009639] dark:text-[#009639]">
+            <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand dark:text-brand">
               <ClipboardCheck size={26} />
             </span>
             <h1 className="text-2xl font-bold tracking-tight">
@@ -376,7 +376,7 @@ export default function AlumniTracer() {
               Help CLSU track graduate outcomes. Takes about 3 minutes.
             </p>
             {answered && (
-              <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#009639]/10 px-3 py-1.5 text-xs font-semibold text-[#009639] dark:text-[#009639]">
+              <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand dark:text-brand">
                 <CheckCircle2 size={14} />
                 You already answered — update anytime
               </p>
@@ -439,7 +439,7 @@ export default function AlumniTracer() {
                 Help CLSU track graduate outcomes. Takes about 3 minutes.
               </p>
               {answered && (
-                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#009639]/10 px-3 py-1.5 text-xs font-semibold text-[#009639] dark:text-[#009639]">
+                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand dark:text-brand">
                   <CheckCircle2 size={14} />
                   You already answered — update anytime
                 </p>
@@ -484,7 +484,7 @@ export default function AlumniTracer() {
               role="status"
               className="mx-5 mb-6 rounded-xl border border-zinc-200 bg-white px-5 py-10 text-center sm:mx-7 dark:border-zinc-700 dark:bg-zinc-900"
             >
-              <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#009639] text-black ">
+              <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand text-black ">
                 <Check size={32} />
               </span>
               <h3
@@ -535,14 +535,14 @@ export default function AlumniTracer() {
                         disabled={stepId > step || saving}
                         aria-current={stepId === step ? "step" : undefined}
                         aria-label={`Step ${index + 1}: ${stepId === 2 && form.status === "Self-employed" ? "Business Details" : STEPS[stepId][0]}`}
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-default sm:h-12 sm:w-12 sm:text-xl ${stepId <= step ? "border-[#009639] bg-[#009639] text-black " : "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"}`}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-default sm:h-12 sm:w-12 sm:text-xl ${stepId <= step ? "border-brand bg-brand text-black " : "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"}`}
                       >
                         {index + 1}
                       </button>
                       {index < visibleSteps.length - 1 && (
                         <span
                           aria-hidden="true"
-                          className={`h-[3px] min-w-3 flex-1 rounded-full ${stepId < step ? "bg-[#009639]" : "bg-[#dedede] dark:bg-[#3a3a3a]"}`}
+                          className={`h-[3px] min-w-3 flex-1 rounded-full ${stepId < step ? "bg-brand" : "bg-[#dedede] dark:bg-[#3a3a3a]"}`}
                         />
                       )}
                     </li>
@@ -718,7 +718,7 @@ export default function AlumniTracer() {
                           placeholder="e.g. Makati City"
                         />
                       </Field>
-                      <div className="rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
+                      <div className="rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-brand dark:bg-emerald-950/40 dark:text-emerald-200">
                         How does your current work relate to{" "}
                         <strong>{form.program}</strong>? Consider the knowledge
                         and skills you use in your work.

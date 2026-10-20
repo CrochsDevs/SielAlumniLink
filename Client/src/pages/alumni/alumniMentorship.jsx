@@ -20,7 +20,7 @@ import { useAuth } from "../../context/useAuth";
 const card =
   "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white hover:bg-[#007a2e] disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white hover:bg-brand disabled:opacity-50";
 
 export default function AlumniMentorship() {
   const { user } = useAuth();
@@ -89,7 +89,7 @@ export default function AlumniMentorship() {
         <main className="mx-auto max-w-6xl space-y-5 p-3 sm:p-6 workspace-page">
           <header className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800 workspace-page-header">
             <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#007a2e] dark:text-emerald-300">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-brand dark:text-brand">
                 Alumni mentor
               </span>
               <h1 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -131,7 +131,7 @@ export default function AlumniMentorship() {
                   type="button"
                   aria-pressed={view === id}
                   onClick={() => setView(id)}
-                  className={`min-h-11 shrink-0 border-b-2 px-1 text-xs font-semibold ${view === id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500"}`}
+                  className={`min-h-11 shrink-0 border-b-2 px-1 text-xs font-semibold ${view === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500"}`}
                 >
                   {label}
                   {id === "students" && !loading && (
@@ -205,7 +205,7 @@ export default function AlumniMentorship() {
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder="Search student name or program"
-                        className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900"
+                        className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900"
                       />
                     </label>
                     <p className="text-[11px] text-zinc-500">
@@ -220,7 +220,7 @@ export default function AlumniMentorship() {
                           className={`${card} min-w-0 p-3.5`}
                         >
                           <div className="flex items-center gap-2.5">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                               <ProfileAvatar user={student} />
                             </span>
                             <div className="min-w-0 flex-1">
@@ -245,7 +245,7 @@ export default function AlumniMentorship() {
                             </div>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
-                            <p className="inline-flex items-center gap-1 text-[10px] font-medium text-[#007a2e] dark:text-emerald-300">
+                            <p className="inline-flex items-center gap-1 text-[10px] font-medium text-brand dark:text-brand">
                               <Check size={11} />
                               Connected
                             </p>
@@ -253,7 +253,7 @@ export default function AlumniMentorship() {
                               <Link
                                 data-evaluate-student={student.authId}
                                 to={`/alumni/mentorship/${student.authId}/evaluation`}
-                                className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-[#009639] px-2.5 text-[11px] font-semibold text-white hover:bg-[#007a2e]"
+                                className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-brand px-2.5 text-[11px] font-semibold text-white hover:bg-brand"
                               >
                                 <ClipboardList size={13} />
                                 Evaluate student
@@ -283,7 +283,7 @@ export default function AlumniMentorship() {
                         <button
                           type="button"
                           onClick={() => setQuery("")}
-                          className="mt-3 text-xs font-semibold text-[#009639]"
+                          className="mt-3 text-xs font-semibold text-brand"
                         >
                           Clear search
                         </button>
@@ -313,7 +313,7 @@ export default function AlumniMentorship() {
                       </p>
                       <Link
                         to="/alumni/requests"
-                        className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#009639]"
+                        className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-brand"
                       >
                         Manage requests
                         <ArrowRight size={13} />

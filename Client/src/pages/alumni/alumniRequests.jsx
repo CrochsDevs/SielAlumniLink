@@ -97,7 +97,7 @@ const AlumniRequests = () => {
 
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
             <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#009639]/10 dark:bg-[#009639]/20 text-[#009639] dark:text-emerald-300">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10 dark:bg-brand/20 text-brand dark:text-brand">
                 <UserPlus className="h-4 w-4" />
               </span>
               People You May Know
@@ -122,7 +122,7 @@ const AlumniRequests = () => {
                     className="relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                   >
                     {/* Banner */}
-                    <div className="h-16 bg-gradient-to-br from-[#009639]/30 via-emerald-200/60 to-zinc-200 dark:from-[#009639]/40 dark:via-emerald-900/40 dark:to-zinc-800" />
+                    <div className="h-16 bg-gradient-to-br from-brand/30 via-emerald-200/60 to-zinc-200 dark:from-brand/40 dark:via-emerald-900/40 dark:to-zinc-800" />
 
                     {/* Dismiss */}
                     <button
@@ -139,7 +139,7 @@ const AlumniRequests = () => {
                       <Link
                         to={profilePath(person)}
                         aria-label={`View ${person.name || "Alumni"} profile`}
-                        className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-emerald-50 dark:bg-emerald-900/50 text-2xl font-bold text-[#009639] dark:text-emerald-300"
+                        className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-emerald-50 dark:bg-emerald-900/50 text-2xl font-bold text-brand dark:text-brand"
                       >
                         <ProfileAvatar
                           user={{
@@ -165,7 +165,7 @@ const AlumniRequests = () => {
                       </p>
 
                       <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                        <GraduationCap className="h-3.5 w-3.5 shrink-0 text-[#009639]" />
+                        <GraduationCap className="h-3.5 w-3.5 shrink-0 text-brand" />
                         <span className="truncate">
                           Central Luzon State University
                         </span>
@@ -175,7 +175,7 @@ const AlumniRequests = () => {
                         type="button"
                         disabled={connecting === person.email}
                         onClick={() => handleConnect(person.email)}
-                        className="mt-auto flex w-full items-center justify-center gap-1.5 rounded-full border border-[#009639] px-3 py-1.5 text-[12.5px] font-bold text-[#009639] transition hover:bg-[#009639]/10 disabled:opacity-50 dark:border-emerald-400 dark:text-emerald-300 dark:hover:bg-emerald-400/10"
+                        className="mt-auto flex w-full items-center justify-center gap-1.5 rounded-full border border-brand px-3 py-1.5 text-[12.5px] font-bold text-brand transition hover:bg-brand/10 disabled:opacity-50 dark:border-brand dark:text-brand dark:hover:bg-brand/10"
                         style={{ marginTop: "0.75rem" }}
                       >
                         <UserPlus className="h-3.5 w-3.5" />

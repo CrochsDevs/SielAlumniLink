@@ -240,7 +240,7 @@ const CallManager = ({ getDisplayName }) => {
       {incoming && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-xs rounded-3xl bg-white dark:bg-zinc-900 p-6 text-center shadow-2xl">
-            <span className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-[#009639]/10 text-xl font-extrabold text-[#009639]">
+            <span className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-brand/10 text-xl font-extrabold text-brand">
               {(incoming.fromEmail || 'U').charAt(0).toUpperCase()}
             </span>
             <p className="mt-3 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
@@ -261,7 +261,7 @@ const CallManager = ({ getDisplayName }) => {
               <button
                 type="button"
                 onClick={acceptIncoming}
-                className="flex h-12 w-12 animate-pulse items-center justify-center rounded-full bg-[#009639] text-white shadow-lg transition hover:bg-[#007a2e]"
+                className="flex h-12 w-12 animate-pulse items-center justify-center rounded-full bg-brand text-white shadow-lg transition hover:bg-brand"
                 aria-label="Accept call"
               >
                 <Phone className="h-5 w-5" />
@@ -286,7 +286,7 @@ const CallManager = ({ getDisplayName }) => {
               </div>
             ) : (
               <div className="flex flex-col items-center px-6 pb-2 pt-8">
-                <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#009639]/20 text-3xl font-extrabold text-emerald-300">
+                <span className="flex h-20 w-20 items-center justify-center rounded-full bg-brand/20 text-3xl font-extrabold text-brand">
                   {(active.peerName || 'U').charAt(0).toUpperCase()}
                 </span>
                 <p className="mt-3 text-[16px] font-extrabold text-white">{active.peerName}</p>

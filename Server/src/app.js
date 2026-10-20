@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { frontendOrigins } from '../config/cors.js';
 import cookieParser from 'cookie-parser';
 import userRoutes from '../modules/users/users.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
@@ -28,7 +29,7 @@ import reportRoutes from '../modules/reports/reports.routes.js';
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: frontendOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

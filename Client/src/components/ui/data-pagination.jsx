@@ -88,7 +88,7 @@ const DataPagination = ({
                 variant={p === page ? "default" : "ghost"}
                 size="icon"
                 aria-current={p === page ? "page" : undefined}
-                className={`h-8 w-8 text-[12px] ${p === page ? "bg-[#009639] hover:bg-[#007a2e]" : ""}`}
+                className={`h-8 w-8 text-[12px] ${p === page ? "bg-brand hover:bg-brand" : ""}`}
                 onClick={() => onPageChange(p)}
               >
                 {p}

@@ -33,7 +33,7 @@ import "./CareerBoard.css";
 import { CareerFilters, CareerFilterDrawer } from "./CareerFilters";
 
 const CATEGORIES = [
-  { id: "job", label: "Jobs", icon: Briefcase, color: "bg-[#009639]" },
+  { id: "job", label: "Jobs", icon: Briefcase, color: "bg-brand" },
   {
     id: "internship",
     label: "Internships",
@@ -74,9 +74,9 @@ const INTERESTS = [
 const cardClass =
   "rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const inputClass =
-  "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:[color-scheme:dark]";
+  "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:[color-scheme:dark]";
 const primaryButton =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
 const iconButton =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800";
 const emptyJob = {
@@ -118,7 +118,7 @@ function IconControl({
       className={
         iconButton +
         (active
-          ? " !border-[#009639]/20 !bg-[#009639]/10 !text-[#009639] dark:!text-emerald-300"
+          ? " !border-brand/20 !bg-brand/10 !text-brand dark:!text-brand"
           : "")
       }
     >
@@ -277,7 +277,7 @@ function Editor({ kind, item, onClose, onSaved }) {
                 type="checkbox"
                 checked={form.isActive}
                 onChange={(event) => set("isActive", event.target.checked)}
-                className="h-4 w-4 accent-[#009639]"
+                className="h-4 w-4 accent-brand"
               />
               Visible to the community
             </label>
@@ -311,7 +311,7 @@ function PostDescription({ text }) {
   return (
     <div className="mt-4">
       <p className={`career-description whitespace-pre-wrap break-words text-sm leading-6 text-zinc-600 dark:text-zinc-300 ${canExpand && !expanded ? "line-clamp-3" : ""}`}>{text}</p>
-      {canExpand && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-2 text-xs font-semibold text-[#007a2e] underline-offset-4 hover:underline dark:text-emerald-300">{expanded ? "Show less" : "Read more"}</button>}
+      {canExpand && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-2 text-xs font-semibold text-brand underline-offset-4 hover:underline dark:text-brand">{expanded ? "Show less" : "Read more"}</button>}
     </div>
   );
 }
@@ -584,7 +584,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
         className={marketplace ? "career-board-navigation" : `${cardClass} mb-5 flex flex-wrap items-center justify-between gap-3 px-5 py-3 workspace-page-header`}
       >
         {!marketplace && <h1 className="flex items-center gap-2 text-base font-bold">
-          <Briefcase size={20} className="text-[#009639]" />
+          <Briefcase size={20} className="text-brand" />
           Career Board
         </h1>}
         {isAdmin ? <AdminTabs label="Career board views" value={view} onChange={selectView} items={tabs.map(tab => ({ id: tab.id, label: tab.label }))} /> : (
@@ -598,7 +598,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
               key={tab.id}
               aria-pressed={view === tab.id}
               onClick={() => selectView(tab.id)}
-              className={`shrink-0 border-b-2 py-3 text-xs font-semibold ${view === tab.id ? "border-[#009639] text-[#009639] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
+              className={`shrink-0 border-b-2 py-3 text-xs font-semibold ${view === tab.id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
             >
               {tab.label}
             </button>
@@ -641,7 +641,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                     aria-label={`Filter ${category.label}`}
                     checked={categories.includes(category.id)}
                     onChange={() => toggleFilter(setCategories, category.id)}
-                    className="h-3.5 w-3.5 accent-[#009639]"
+                    className="h-3.5 w-3.5 accent-brand"
                   />
                   {category.label}
                   <span className="ml-auto text-[10px] text-zinc-400">
@@ -662,7 +662,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                     aria-label={`Filter ${label}`}
                     checked={sources.includes(id)}
                     onChange={() => toggleFilter(setSources, id)}
-                    className="h-3.5 w-3.5 accent-[#009639]"
+                    className="h-3.5 w-3.5 accent-brand"
                   />
                   {label}
                   <span className="ml-auto text-[10px] text-zinc-400">
@@ -678,7 +678,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
             {marketplace ? <header className="career-feed-heading">
               <h2>{view === "saved" ? "Your saved resources" : view === "applied" ? "Your applications" : view === "mine" ? "Your career posts" : guideView ? "Career Guides" : "Opportunities for you"}</h2>
               <p>{view === "all" ? "Explore jobs and internships from your university." : guideView ? "Career advice, industry insights, and roadmaps from your community." : "Search and filter to find what you need."}</p>
-            </header> : <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-[#007a2e] to-[#009639] p-5 text-white">
+            </header> : <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -right-8 -top-8 rotate-12 text-white/10"
@@ -717,7 +717,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                 </div>
                 <button
                   type="submit"
-                  className="rounded-lg bg-white px-4 text-xs font-semibold text-[#007a2e]"
+                  className="rounded-lg bg-white px-4 text-xs font-semibold text-brand"
                 >
                   Search
                 </button>
@@ -773,7 +773,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                             : [...interests, interest],
                         );
                       }}
-                      className={`rounded-lg px-3 py-2 text-xs ${interests.includes(interest) ? "bg-[#009639] text-white" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
+                      className={`rounded-lg px-3 py-2 text-xs ${interests.includes(interest) ? "bg-brand text-white" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
                     >
                       {interest}
                     </button>
@@ -796,7 +796,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                 {interestsSaved && (
                   <p
                     role="status"
-                    className="mt-3 text-xs text-[#009639] dark:text-emerald-300"
+                    className="mt-3 text-xs text-brand dark:text-brand"
                   >
                     Career interests saved.
                   </p>
@@ -1053,7 +1053,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
             </section>
             <aside className="career-member-panel order-3 grid min-w-0 gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1 xl:sticky xl:top-20">
               <section className={`${cardClass} p-5 text-center`}>
-                <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950 dark:text-emerald-300">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
                   <ProfileAvatar user={user} />
                 </span>
                 <h2 className="mt-3 break-words text-sm font-semibold">

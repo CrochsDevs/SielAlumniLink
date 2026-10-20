@@ -23,7 +23,7 @@ function PostCard({ post, query }) {
     ? profilePath({ _id: post.authorProfileId, role: post.authorRole })
     : null;
   return (
-    <article className="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <article className="rounded-2xl border border-brand/10 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-4 flex items-center gap-3">
         <Avatar person={post} />
         <div className="min-w-0">
@@ -56,7 +56,7 @@ function PostCard({ post, query }) {
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((value) => !value)}
-        className="mt-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400"
+        className="mt-2 text-sm font-semibold text-brand dark:text-brand"
       >
         {expanded ? "Show less" : "View full post"}
       </button>
@@ -64,7 +64,7 @@ function PostCard({ post, query }) {
         {post.tags?.map((tag, index) => (
           <span
             key={`${tag}-${index}`}
-            className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+            className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-brand dark:bg-emerald-950 dark:text-brand"
           >
             #{tag}
           </span>
@@ -210,7 +210,7 @@ export default function SearchResults() {
         />
         <main className="mx-auto max-w-5xl space-y-5 px-4 py-7 sm:px-6 workspace-page">
           <div className="workspace-page-header">
-            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-brand dark:text-brand">
               Your AlumniLink community
             </p>
             <h1 className="break-words text-2xl font-bold">
@@ -224,7 +224,7 @@ export default function SearchResults() {
               Discover students, alumni, and career insights.
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-900/10 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-brand/10 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <nav
               aria-label="Search categories"
               className="flex flex-wrap gap-2"
@@ -235,7 +235,7 @@ export default function SearchResults() {
                   type="button"
                   aria-pressed={category === item}
                   onClick={() => update({ category: item, sort: "relevant" })}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold capitalize transition ${category === item ? "bg-[#009639] text-white" : "text-zinc-600 hover:bg-emerald-50 dark:text-zinc-300 dark:hover:bg-zinc-800"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold capitalize transition ${category === item ? "bg-brand text-white" : "text-zinc-600 hover:bg-emerald-50 dark:text-zinc-300 dark:hover:bg-zinc-800"}`}
                 >
                   {item}
                 </button>
@@ -269,7 +269,7 @@ export default function SearchResults() {
           )}
           {!query.trim() ? (
             <div className="py-16 text-center text-zinc-500">
-              <Search className="mx-auto mb-4 h-10 w-10 text-emerald-600" />
+              <Search className="mx-auto mb-4 h-10 w-10 text-brand" />
               <p>Type a name or keyword in the search bar above.</p>
             </div>
           ) : loading ? (
@@ -287,7 +287,7 @@ export default function SearchResults() {
             >
               <p>{currentError}</p>
               <button
-                className="mt-3 font-semibold text-emerald-600"
+                className="mt-3 font-semibold text-brand"
                 onClick={() => {
                   setError(null);
                   setRevision((value) => value + 1);
@@ -377,7 +377,7 @@ export default function SearchResults() {
                       </button>
                       <button
                         onClick={() => update({ page: 1 })}
-                        className="text-emerald-700 dark:text-emerald-400"
+                        className="text-brand dark:text-brand"
                       >
                         Page {page} · First page
                       </button>

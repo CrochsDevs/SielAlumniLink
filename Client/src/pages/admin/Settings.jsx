@@ -171,7 +171,7 @@ export default function Settings() {
   };
 
   const inputClass =
-    "w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15";
+    "w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 outline-none transition-all duration-200 hover:border-zinc-300 focus:border-brand focus:ring-2 focus:ring-brand/15";
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -216,7 +216,7 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center gap-4 px-5 pt-5">
                       <div className="relative">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-2xl font-extrabold text-[#009639] ring-2 ring-emerald-100">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-2xl font-extrabold text-brand ring-2 ring-emerald-100">
                           {user?.profilePicture ? (
                             <img
                               src={user.profilePicture}
@@ -248,7 +248,7 @@ export default function Settings() {
                           onChange={(e) => setMyName(e.target.value)}
                           required
                           placeholder="Your full name"
-                          className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                          className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-brand focus:ring-2 focus:ring-brand/15"
                         />
                       </div>
                       <div className="flex-1">
@@ -261,13 +261,13 @@ export default function Settings() {
                           onChange={(e) => setMyEmail(e.target.value)}
                           required
                           placeholder="Your email"
-                          className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+                          className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[12.5px] outline-none transition hover:border-zinc-300 focus:border-brand focus:ring-2 focus:ring-brand/15"
                         />
                       </div>
                       <button
                         type="submit"
                         disabled={myNameSaving}
-                        className="h-9 rounded-lg bg-[#009639] px-5 text-[12.5px] font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-60"
+                        className="h-9 rounded-lg bg-brand px-5 text-[12.5px] font-semibold text-white transition hover:bg-brand disabled:opacity-60"
                       >
                         {myNameSaving ? "Saving..." : "Save"}
                       </button>
@@ -342,7 +342,7 @@ export default function Settings() {
                     <button
                       type="submit"
                       disabled={pwLoading}
-                      className="w-full h-9 rounded-lg bg-[#009639] text-white text-[12.5px] font-semibold hover:bg-[#007a2e] disabled:opacity-60 transition-colors"
+                      className="w-full h-9 rounded-lg bg-brand text-white text-[12.5px] font-semibold hover:bg-brand disabled:opacity-60 transition-colors"
                     >
                       {pwLoading ? "Saving..." : "Change password"}
                     </button>
@@ -396,7 +396,7 @@ export default function Settings() {
                       <button
                         type="button"
                         onClick={markAllNotifsRead}
-                        className="text-[11.5px] font-semibold text-[#009639] hover:underline"
+                        className="text-[11.5px] font-semibold text-brand hover:underline"
                       >
                         Mark all read
                       </button>
@@ -410,7 +410,7 @@ export default function Settings() {
                             className={`flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800 ${!item.read ? "bg-emerald-50/50" : ""}`}
                           >
                             <span
-                              className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${!item.read ? "bg-[#009639]" : "bg-zinc-200"}`}
+                              className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${!item.read ? "bg-brand" : "bg-zinc-200"}`}
                             />
                             <span className="min-w-0">
                               <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">

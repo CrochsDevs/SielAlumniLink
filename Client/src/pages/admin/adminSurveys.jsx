@@ -278,7 +278,7 @@ export default function AdminSurveys() {
                       setPage(1);
                     }}
                     placeholder="Search surveys..."
-                    className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
+                    className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/15"
                   />
                 </div>
 
@@ -333,7 +333,7 @@ export default function AdminSurveys() {
                               }
                               className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 transition ${
                                 survey.isActive
-                                  ? "bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60"
+                                  ? "bg-brand/10 text-brand ring-emerald-200/60"
                                   : "bg-zinc-100 text-zinc-400 ring-zinc-200"
                               }`}
                             >
@@ -357,7 +357,7 @@ export default function AdminSurveys() {
                               <button
                                 type="button"
                                 onClick={() => openResults(survey)}
-                                className={`rounded-lg p-2 transition ${resultsFor?._id === survey._id ? "bg-[#009639]/10 text-[#009639] dark:text-emerald-300" : "text-zinc-300 dark:text-zinc-500 hover:bg-emerald-50 hover:text-[#009639]"}`}
+                                className={`rounded-lg p-2 transition ${resultsFor?._id === survey._id ? "bg-brand/10 text-brand dark:text-brand" : "text-zinc-300 dark:text-zinc-500 hover:bg-emerald-50 hover:text-brand"}`}
                                 aria-label="View results"
                                 title="View results"
                               >
@@ -366,7 +366,7 @@ export default function AdminSurveys() {
                               <button
                                 type="button"
                                 onClick={() => openEdit(survey)}
-                                className="rounded-lg p-2 text-zinc-300 dark:text-zinc-500 transition hover:bg-emerald-50 hover:text-[#009639]"
+                                className="rounded-lg p-2 text-zinc-300 dark:text-zinc-500 transition hover:bg-emerald-50 hover:text-brand"
                                 aria-label="Edit survey"
                               >
                                 <Pencil className="h-4 w-4" />
@@ -386,7 +386,7 @@ export default function AdminSurveys() {
                       {paged.length === 0 && (
                         <tr>
                           <td colSpan={5} className="px-5 py-10 text-center">
-                            <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:text-emerald-300">
+                            <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:text-brand">
                               <ClipboardList className="h-6 w-6" />
                             </span>
                             <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
@@ -423,11 +423,11 @@ export default function AdminSurveys() {
 
           {/* Results panel: kalagayan ng alumni per survey */}
           {resultsFor && (
-            <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="flex items-start justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 bg-emerald-50/50 p-4">
                 <div>
                   <h2 className="admin-section-title flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
-                    <BarChart3 className="h-4 w-4 text-[#009639] dark:text-emerald-300" />
+                    <BarChart3 className="h-4 w-4 text-brand dark:text-brand" />
                     Results: {resultsFor.title}
                   </h2>
                   <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">
@@ -490,7 +490,7 @@ export default function AdminSurveys() {
             <div className="admin-panel admin-data-table overflow-hidden">
               <div className="border-b border-zinc-100 dark:border-zinc-800 p-4">
                 <h2 className="admin-section-title flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
-                  <BarChart3 className="h-4 w-4 text-[#009639] dark:text-emerald-300" />
+                  <BarChart3 className="h-4 w-4 text-brand dark:text-brand" />
                   Survey Responses
                 </h2>
                 <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
@@ -503,7 +503,7 @@ export default function AdminSurveys() {
                 </p>
               ) : surveys.length === 0 ? (
                 <div className="p-10 text-center">
-                  <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#009639] dark:text-emerald-300">
+                  <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:text-brand">
                     <ClipboardList className="h-6 w-6" />
                   </span>
                   <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
@@ -529,7 +529,7 @@ export default function AdminSurveys() {
                         <button
                           type="button"
                           onClick={() => openResults(survey)}
-                          className="flex items-center gap-1.5 rounded-lg bg-[#009639]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#007a2e] transition hover:bg-[#009639] hover:text-white"
+                          className="flex items-center gap-1.5 rounded-lg bg-brand/10 px-3 py-1.5 text-[11.5px] font-bold text-brand transition hover:bg-brand hover:text-white"
                         >
                           <BarChart3 className="h-3.5 w-3.5" />
                           View
@@ -594,12 +594,12 @@ export default function AdminSurveys() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Form header — Google Forms style */}
-            <div className="border-t-8 border-[#009639] rounded-t-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6">
+            <div className="border-t-8 border-brand rounded-t-2xl bg-white dark:bg-zinc-900 p-5 sm:p-6">
               <input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="Survey title"
-                className="w-full border-b-2 border-zinc-200 dark:border-zinc-700 bg-transparent pb-2 text-[18px] font-bold text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-[#009639] placeholder-zinc-400"
+                className="w-full border-b-2 border-zinc-200 dark:border-zinc-700 bg-transparent pb-2 text-[18px] font-bold text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-brand placeholder-zinc-400"
               />
               <textarea
                 value={form.description}
@@ -608,7 +608,7 @@ export default function AdminSurveys() {
                 }
                 placeholder="Form description"
                 rows={2}
-                className="mt-2 w-full resize-none border-b border-zinc-100 dark:border-zinc-800 bg-transparent pb-2 text-[13px] text-zinc-600 dark:text-zinc-300 outline-none transition focus:border-[#009639] placeholder-zinc-400"
+                className="mt-2 w-full resize-none border-b border-zinc-100 dark:border-zinc-800 bg-transparent pb-2 text-[13px] text-zinc-600 dark:text-zinc-300 outline-none transition focus:border-brand placeholder-zinc-400"
               />
             </div>
 
@@ -627,7 +627,7 @@ export default function AdminSurveys() {
                           setQuestion(i, { text: e.target.value })
                         }
                         placeholder={`Question ${i + 1}`}
-                        className="w-full border-b border-zinc-200 dark:border-zinc-700 bg-transparent pb-1.5 text-[13.5px] font-medium text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] placeholder-zinc-400"
+                        className="w-full border-b border-zinc-200 dark:border-zinc-700 bg-transparent pb-1.5 text-[13.5px] font-medium text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand placeholder-zinc-400"
                       />
                       {(q.type === "choice" ||
                         q.type === "dropdown" ||
@@ -659,7 +659,7 @@ export default function AdminSurveys() {
                           <button
                             type="button"
                             onClick={() => addOption(i)}
-                            className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#009639] hover:text-[#007a2e]"
+                            className="flex items-center gap-1.5 text-[11.5px] font-semibold text-brand hover:text-brand"
                           >
                             <Plus className="h-3.5 w-3.5" />
                             Add option
@@ -721,7 +721,7 @@ export default function AdminSurveys() {
               <button
                 type="button"
                 onClick={addQuestion}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 py-3 text-[13px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-[#009639] hover:text-[#009639]"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 py-3 text-[13px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-brand hover:text-brand"
               >
                 <Plus className="h-4 w-4" />
                 Add question
@@ -737,7 +737,7 @@ export default function AdminSurveys() {
                   onChange={(e) =>
                     setForm({ ...form, isActive: e.target.checked })
                   }
-                  className="h-4 w-4 accent-[#009639]"
+                  className="h-4 w-4 accent-brand"
                 />
                 Visible to alumni
               </label>
@@ -753,7 +753,7 @@ export default function AdminSurveys() {
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="h-10 rounded-xl bg-[#009639] px-5 text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-60"
+                  className="h-10 rounded-xl bg-brand px-5 text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-60"
                 >
                   {saving
                     ? "Saving..."

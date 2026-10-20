@@ -1,11 +1,11 @@
 import { Server } from 'socket.io';
+import { frontendOrigins } from '../config/cors.js';
 import jwt from 'jsonwebtoken';
 import AuthModel from '../modules/auth/auth.models.js';
 import PresenceStore from './presence.store.js';
 import { initializeMeetings } from '../modules/meetings/meetings.socket.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 let io = null;
 
@@ -46,7 +46,7 @@ const authenticate = async (socket, next) => {
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: FRONTEND_URL,
+      origin: frontendOrigins,
       credentials: true,
     },
   });

@@ -59,7 +59,7 @@ const SetupPassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white px-6">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-zinc-900/5 border border-zinc-100">
         <div className="flex justify-center mb-5">
-          <div className="h-12 w-12 rounded-xl bg-[#009639] flex items-center justify-center shadow-md shadow-[#009639]/20">
+          <div className="h-12 w-12 rounded-xl bg-brand flex items-center justify-center shadow-md shadow-brand/20">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white" viewBox="0 0 24 24"
               fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -99,7 +99,7 @@ const SetupPassword = () => {
               required
               minLength={6}
               placeholder="Enter a new password"
-              className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+              className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />
           </div>
 
@@ -114,14 +114,14 @@ const SetupPassword = () => {
               required
               minLength={6}
               placeholder="Confirm your new password"
-              className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15"
+              className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-9 rounded-lg bg-[#009639] text-white text-[12.5px] font-semibold tracking-wide transition-all duration-200 hover:bg-[#007a2e] disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
+            className="w-full h-9 rounded-lg bg-brand text-white text-[12.5px] font-semibold tracking-wide transition-all duration-200 hover:bg-brand disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
           >
             {loading ? 'Setting up password...' : 'Set password'}
           </button>

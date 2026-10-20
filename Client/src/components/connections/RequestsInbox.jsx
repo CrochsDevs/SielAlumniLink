@@ -66,7 +66,7 @@ const RequestsList = ({ requests, loading, onRespond }) => {
   if (requests.length === 0) {
     return (
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-10 text-center">
-        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300">
+        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-brand dark:text-brand">
           <Inbox className="h-6 w-6" />
         </span>
         <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">
@@ -96,7 +96,7 @@ const RequestsList = ({ requests, loading, onRespond }) => {
           >
             <ProfileLink
               {...profileLinkProps}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand"
             >
               <ProfileAvatar user={r} />
             </ProfileLink>
@@ -123,7 +123,7 @@ const RequestsList = ({ requests, loading, onRespond }) => {
               <button
                 type="button"
                 onClick={() => onRespond(r._id, "accepted")}
-                className="flex h-9 items-center gap-1 rounded-xl bg-[#009639] px-3.5 text-[12px] font-bold text-white transition hover:bg-[#007a2e]"
+                className="flex h-9 items-center gap-1 rounded-xl bg-brand px-3.5 text-[12px] font-bold text-white transition hover:bg-brand"
               >
                 <Check className="h-3.5 w-3.5" />
                 Accept
@@ -139,12 +139,12 @@ const RequestsList = ({ requests, loading, onRespond }) => {
 export const RequestsHeader = ({ count }) => (
   <div className="workspace-page-header rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
     <h1 className="flex items-center gap-2 text-[16px] font-extrabold text-zinc-900 dark:text-zinc-100">
-      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#009639]/10 dark:bg-[#009639]/20 text-[#009639] dark:text-emerald-300">
+      <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10 dark:bg-brand/20 text-brand dark:text-brand">
         <UserPlus className="h-4 w-4" />
       </span>
       Invitations
       {count > 0 && (
-        <span className="rounded-full bg-[#009639] px-2 py-0.5 text-[10.5px] font-bold text-white">
+        <span className="rounded-full bg-brand px-2 py-0.5 text-[10.5px] font-bold text-white">
           {count}
         </span>
       )}

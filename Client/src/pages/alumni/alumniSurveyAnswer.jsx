@@ -74,23 +74,23 @@ const AlumniSurveyAnswer = () => {
           <button
             type="button"
             onClick={() => navigate("/alumni/surveys")}
-            className="mb-3 flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400 transition hover:text-[#007a2e]"
+            className="mb-3 flex items-center gap-1.5 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400 transition hover:text-brand"
           >
             <ArrowLeft className="h-4 w-4" />
             All surveys
           </button>
 
           {loading ? (
-            <p className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
+            <p className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Loading survey...
             </p>
           ) : !survey ? (
-            <p className="rounded-3xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
+            <p className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Survey not found.
             </p>
           ) : (
             <section className="space-y-5">
-              <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-5 py-5 sm:px-6 workspace-page-header">
+              <div className="bg-gradient-to-r from-brand to-brand px-5 py-5 sm:px-6 workspace-page-header">
                 <h1 className="text-[16px] font-extrabold text-white">
                   {survey.title}
                 </h1>
@@ -123,14 +123,14 @@ const AlumniSurveyAnswer = () => {
                       required
                       rows={2}
                       placeholder="Your answer..."
-                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3.5 py-2.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
+                      className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3.5 py-2.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
                     />
                   </div>
                 ))}
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-60"
+                  className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-60"
                 >
                   <Send className="h-4 w-4" />
                   {saving

@@ -14,7 +14,7 @@ export default function StudentReadiness() {
   return (
     <DevelopmentShell title="Employment Readiness">
       <main className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6 workspace-page">
-        <header className="rounded-xl bg-gradient-to-br from-[#007a2e] to-[#009639] p-6 text-white workspace-page-header">
+        <header className="rounded-xl bg-gradient-to-br from-brand to-brand p-6 text-white workspace-page-header">
           <h1 className="flex items-center gap-2 text-xl font-bold">
             <BarChart3 size={24} />
             Employment Readiness Score
@@ -65,7 +65,7 @@ export default function StudentReadiness() {
                 </div>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#009639] dark:text-emerald-300">
+                <h2 className="text-xl font-bold text-brand dark:text-brand">
                   {readiness.level}
                 </h2>
                 <p className="mt-2 max-w-lg text-sm leading-6 text-zinc-500 dark:text-zinc-400">
@@ -77,7 +77,7 @@ export default function StudentReadiness() {
                 <button
                   type="button"
                   onClick={state.load}
-                  className="mt-4 text-xs font-semibold text-[#009639] dark:text-emerald-300"
+                  className="mt-4 text-xs font-semibold text-brand dark:text-brand"
                 >
                   Refresh score
                 </button>
@@ -88,13 +88,13 @@ export default function StudentReadiness() {
                 <section key={factor.key} className={card}>
                   <div className="flex justify-between gap-3">
                     <h3 className="text-sm font-semibold">{factor.label}</h3>
-                    <span className="shrink-0 text-sm font-bold text-[#009639] dark:text-emerald-300">
+                    <span className="shrink-0 text-sm font-bold text-brand dark:text-brand">
                       {factor.points}/20
                     </span>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                     <div
-                      className="h-full bg-[#009639]"
+                      className="h-full bg-brand"
                       style={{ width: `${(factor.points / 20) * 100}%` }}
                     />
                   </div>
@@ -118,7 +118,7 @@ export default function StudentReadiness() {
                           ? "/alumni/journey"
                           : factor.link
                     }
-                    className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[#009639] dark:text-emerald-300"
+                    className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand dark:text-brand"
                   >
                     {factor.points === 20
                       ? "View records"

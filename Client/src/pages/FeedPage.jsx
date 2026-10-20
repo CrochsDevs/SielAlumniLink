@@ -42,9 +42,9 @@ export default function FeedPage() {
           <div className="col-span-full"><PageHeader title="Community feed" description="Updates, conversations, and opportunities from your community." /></div>
           <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start">
             <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <div className="h-16 bg-gradient-to-r from-[#0F4C3A] to-[#009639]" />
+              <div className="h-16 bg-gradient-to-r from-brand to-brand" />
               <div className="px-4 pb-4 text-center">
-                <span className="mx-auto -mt-6 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white text-[#009639] ring-2 ring-emerald-100 dark:bg-zinc-900 dark:ring-emerald-900">
+                <span className="mx-auto -mt-6 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white text-brand ring-2 ring-emerald-100 dark:bg-zinc-900 dark:ring-brand">
                   <ProfileAvatar user={user} />
                 </span>
                 <p className="mt-3 break-words text-sm font-bold">
@@ -55,13 +55,13 @@ export default function FeedPage() {
                 </p>
                 <Link
                   to="/student"
-                  className="mt-4 block rounded-xl bg-[#009639] px-3 py-2.5 text-xs font-bold text-white"
+                  className="mt-4 block rounded-xl bg-brand px-3 py-2.5 text-xs font-bold text-white"
                 >
                   Dashboard
                 </Link>
               </div>
             </section>
-            <div className="rounded-2xl bg-gradient-to-br from-[#0F4C3A] to-[#007a2e] p-4 text-white">
+            <div className="rounded-2xl bg-gradient-to-br from-brand to-brand p-4 text-white">
               <p className="flex items-center gap-2 text-sm font-bold">
                 <Newspaper size={17} />
                 Your alumni network

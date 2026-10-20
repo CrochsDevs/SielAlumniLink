@@ -26,7 +26,7 @@ const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const panel =
   "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const iconButton =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 focus-visible:outline-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 focus-visible:outline-brand dark:text-zinc-400 dark:hover:bg-zinc-800";
 const timeForDay = (event, day) =>
   dateKey(calendarDate(event.startAt)) === dateKey(day)
     ? eventTime(event.startAt)
@@ -39,7 +39,7 @@ function ActivityCard({ event, day, onOpen }) {
       type="button"
       data-calendar-event={event._id}
       onClick={() => onOpen(event)}
-      className={`w-full rounded-lg border p-3 text-left transition hover:brightness-95 focus-visible:outline-emerald-600 ${colors.card}`}
+      className={`w-full rounded-lg border p-3 text-left transition hover:brightness-95 focus-visible:outline-brand ${colors.card}`}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
@@ -146,12 +146,12 @@ export default function EventCalendar({ events, onOpen, now }) {
                 aria-label={dateLabel(day)}
                 aria-pressed={selectedKey === dateKey(day)}
                 onClick={() => setSelected(day)}
-                className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-xs focus-visible:outline-emerald-600 ${selectedKey === dateKey(day) ? "bg-[#009639] font-semibold text-white" : todayKey === dateKey(day) ? "font-semibold text-[#009639] ring-1 ring-emerald-600" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
+                className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-xs focus-visible:outline-brand ${selectedKey === dateKey(day) ? "bg-brand font-semibold text-white" : todayKey === dateKey(day) ? "font-semibold text-brand ring-1 ring-brand" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
               >
                 {day.getUTCDate()}
                 {eventsOnDate(events, day).length > 0 && (
                   <span
-                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${selectedKey === dateKey(day) ? "bg-white" : "bg-emerald-500"}`}
+                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${selectedKey === dateKey(day) ? "bg-white" : "bg-brand"}`}
                   />
                 )}
               </button>
@@ -286,7 +286,7 @@ export default function EventCalendar({ events, onOpen, now }) {
                   <div
                     key={key}
                     data-calendar-date={key}
-                    className={`min-h-[92px] min-w-0 border-b border-r border-zinc-100 p-1 sm:min-h-[126px] sm:p-2 dark:border-zinc-800 [&:nth-child(7n)]:border-r-0 ${key === selectedKey ? "bg-emerald-50/50 dark:bg-emerald-500/5" : !inMonth(day) ? "bg-zinc-50/70 dark:bg-zinc-950/40" : ""}`}
+                    className={`min-h-[92px] min-w-0 border-b border-r border-zinc-100 p-1 sm:min-h-[126px] sm:p-2 dark:border-zinc-800 [&:nth-child(7n)]:border-r-0 ${key === selectedKey ? "bg-emerald-50/50 dark:bg-brand/5" : !inMonth(day) ? "bg-zinc-50/70 dark:bg-zinc-950/40" : ""}`}
                   >
                     <button
                       type="button"
@@ -294,7 +294,7 @@ export default function EventCalendar({ events, onOpen, now }) {
                       aria-pressed={key === selectedKey}
                       aria-current={key === todayKey ? "date" : undefined}
                       onClick={() => setSelected(day)}
-                      className={`mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs focus-visible:outline-emerald-600 ${key === todayKey ? "bg-[#009639] font-semibold text-white" : key === selectedKey ? "font-semibold text-emerald-700 ring-1 ring-emerald-600 dark:text-emerald-300" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
+                      className={`mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs focus-visible:outline-brand ${key === todayKey ? "bg-brand font-semibold text-white" : key === selectedKey ? "font-semibold text-brand ring-1 ring-brand dark:text-brand" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
                     >
                       {day.getUTCDate()}
                     </button>
@@ -306,7 +306,7 @@ export default function EventCalendar({ events, onOpen, now }) {
                           data-calendar-event={event._id}
                           onClick={() => onOpen(event)}
                           title={`${event.title} · ${timeForDay(event, day)}`}
-                          className={`block w-full min-w-0 truncate rounded-md px-1 py-1 text-left text-[10px] font-medium focus-visible:outline-emerald-600 sm:px-1.5 sm:text-[11px] ${activityStyle(event).card}`}
+                          className={`block w-full min-w-0 truncate rounded-md px-1 py-1 text-left text-[10px] font-medium focus-visible:outline-brand sm:px-1.5 sm:text-[11px] ${activityStyle(event).card}`}
                         >
                           <span className="hidden opacity-60 sm:inline">
                             {timeForDay(event, day)}{" "}
@@ -348,7 +348,7 @@ export default function EventCalendar({ events, onOpen, now }) {
                       setSelected(day);
                       setView("day");
                     }}
-                    className={`flex w-full items-center justify-center gap-2 border-b border-zinc-200 py-4 text-xs dark:border-zinc-800 ${dateKey(day) === todayKey ? "text-emerald-700 dark:text-emerald-300" : "text-zinc-500"}`}
+                    className={`flex w-full items-center justify-center gap-2 border-b border-zinc-200 py-4 text-xs dark:border-zinc-800 ${dateKey(day) === todayKey ? "text-brand dark:text-brand" : "text-zinc-500"}`}
                   >
                     <span>{weekdays[day.getUTCDay()]}</span>
                     <span className="font-semibold">{day.getUTCDate()}</span>

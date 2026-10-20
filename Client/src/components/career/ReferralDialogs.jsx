@@ -82,7 +82,7 @@ export function ReferralEditor({ item, onClose, onSaved }) {
                   type="button"
                   aria-pressed={form.type === type.key}
                   onClick={() => change("type", type.key)}
-                  className={`flex min-w-0 flex-col items-center gap-2 rounded-xl border p-3 text-xs font-semibold ${form.type === type.key ? `border-[#009639] ${type.style}` : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"}`}
+                  className={`flex min-w-0 flex-col items-center gap-2 rounded-xl border p-3 text-xs font-semibold ${form.type === type.key ? `border-brand ${type.style}` : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"}`}
                 >
                   {createElement(type.icon, { size: 20 })}
                   {type.singular}
@@ -140,7 +140,7 @@ export function ReferralEditor({ item, onClose, onSaved }) {
               className={`${fieldStyle} !h-auto py-3 leading-6`}
             />
           </label>
-          <p className="rounded-xl bg-emerald-50 px-4 py-3 text-xs leading-6 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+          <p className="rounded-xl bg-emerald-50 px-4 py-3 text-xs leading-6 text-brand dark:bg-emerald-950/50 dark:text-brand">
             Students can apply here in the portal. You can review their notes
             and update their application status.
           </p>
@@ -225,7 +225,7 @@ export function ReferralDetails({
     >
       {submitted ? (
         <div className="py-5 text-center">
-          <CheckCircle2 size={48} className="mx-auto text-[#009639]" />
+          <CheckCircle2 size={48} className="mx-auto text-brand" />
           <h3 className="mt-4 text-xl font-semibold">
             Your next step is underway.
           </h3>
@@ -280,7 +280,7 @@ export function ReferralDetails({
               href={link}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#009639] dark:text-emerald-300"
+              className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand dark:text-brand"
             >
               View official opportunity
               <ArrowUpRight size={15} />
@@ -450,7 +450,7 @@ export function ReferralApplicants({ referral, onClose }) {
       {message && (
         <p
           role="status"
-          className="mt-4 text-xs text-[#009639] dark:text-emerald-300"
+          className="mt-4 text-xs text-brand dark:text-brand"
         >
           {message}
         </p>

@@ -39,7 +39,7 @@ export default function ActivityAccess({ event, onRegistered }) {
   return (
     <div className="mt-auto space-y-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
       {registered ? (
-        <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#007a2e] dark:text-emerald-300">
+        <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand dark:text-brand">
           <BadgeCheck size={15} />
           Registered
         </p>
@@ -86,7 +86,7 @@ export default function ActivityAccess({ event, onRegistered }) {
           meetingAccess?.state === "open" ? (
             <Link
               to={`/meetings/${event._id}`}
-              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white"
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white"
             >
               <Video size={15} />
               View meeting
@@ -118,7 +118,7 @@ export default function ActivityAccess({ event, onRegistered }) {
           type="button"
           disabled={busy || window.state !== "open"}
           onClick={register}
-          className="inline-flex min-h-10 items-center rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:disabled:bg-zinc-800"
+          className="inline-flex min-h-10 items-center rounded-lg bg-brand px-4 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 dark:disabled:bg-zinc-800"
         >
           {busy
             ? "Registering..."
@@ -135,7 +135,7 @@ export default function ActivityAccess({ event, onRegistered }) {
           onClose={() => setShowPass(false)}
         >
           <div className="space-y-4">
-            <p className="inline-flex items-center gap-2 text-xs font-semibold text-[#009639]">
+            <p className="inline-flex items-center gap-2 text-xs font-semibold text-brand">
               <BadgeCheck size={16} />
               Registered participant
             </p>

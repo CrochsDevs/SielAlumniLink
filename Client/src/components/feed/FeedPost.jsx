@@ -23,7 +23,7 @@ import { AudienceSelect, FeedDialog } from "./FeedComposer";
 import FeedImages from "./FeedImages";
 
 const buttonClass =
-  "rounded-lg px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-zinc-800";
+  "rounded-lg px-3 py-2 text-sm font-semibold text-brand hover:bg-emerald-50 disabled:opacity-50 dark:text-brand dark:hover:bg-zinc-800";
 const formatDate = (value) =>
   new Date(value).toLocaleString([], {
     dateStyle: "medium",
@@ -33,7 +33,7 @@ const formatDate = (value) =>
 function Author({ person, createdAt, audience }) {
   const content = (
     <>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-emerald-700">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand">
         <ProfileAvatar user={person} />
       </span>
       <span className="min-w-0">
@@ -83,7 +83,7 @@ function PostContent({ post, onRsvp, busy = false }) {
   const longBody = (post.body || "").length > 600;
   return (
     <>
-      <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+      <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-brand dark:bg-emerald-950 dark:text-brand">
         {post.type === "story" ? "Success story" : post.type}
       </span>
       {post.title && <h3 className="mt-2 text-base font-bold">{post.title}</h3>}
@@ -97,7 +97,7 @@ function PostContent({ post, onRsvp, busy = false }) {
           type="button"
           aria-expanded={expanded}
           onClick={() => setExpanded((value) => !value)}
-          className="mt-2 min-h-9 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+          className="mt-2 min-h-9 text-xs font-semibold text-brand dark:text-brand"
         >
           {expanded ? "Show less" : "Read more"}
         </button>
@@ -105,7 +105,7 @@ function PostContent({ post, onRsvp, busy = false }) {
       {post.type === "story" && !post.originalPost && (
         <Link
           to={`/stories?story=${post._id}`}
-          className="mt-3 block text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+          className="mt-3 block text-xs font-semibold text-brand hover:underline dark:text-brand"
         >
           Read full success story
         </Link>
@@ -143,7 +143,7 @@ function PostContent({ post, onRsvp, busy = false }) {
           href={details.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-block text-sm font-bold text-emerald-700 underline dark:text-emerald-300"
+          className="mt-3 inline-block text-sm font-bold text-brand underline dark:text-brand"
         >
           {post.type === "event"
             ? "Register for this event"
@@ -408,7 +408,7 @@ function ShareLinkDialog({ post, onClose }) {
       {status && (
         <p
           role="status"
-          className="mt-2 text-xs text-emerald-700 dark:text-emerald-300"
+          className="mt-2 text-xs text-brand dark:text-brand"
         >
           {status}
         </p>
@@ -603,7 +603,7 @@ function ModerationDialog({ post, action, onClose, onChanged }) {
         <button
           type="submit"
           disabled={busy || (enabled && !reason.trim())}
-          className="rounded-xl bg-[#009639] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy ? "Saving…" : title}
         </button>
@@ -684,7 +684,7 @@ export default function FeedPost({
   return (
     <article
       id={`post-${post._id}`}
-      className="rounded-2xl border border-emerald-900/10 bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
+      className="rounded-2xl border border-brand/10 bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
     >
       <div className="flex gap-2 p-4">
         <Author
@@ -829,7 +829,7 @@ export default function FeedPost({
             />
             <Link
               to={`/feed?post=${post.originalPost._id}`}
-              className="inline-block text-xs font-bold text-emerald-700 underline"
+              className="inline-block text-xs font-bold text-brand underline"
             >
               View original post
             </Link>
@@ -853,7 +853,7 @@ export default function FeedPost({
           disabled={interactionDisabled}
           aria-pressed={post.likedByMe}
           onClick={() => act(`${post._id}/like`, { liked: !post.likedByMe })}
-          className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-0 py-3 text-xs sm:flex-row sm:px-1 font-semibold hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-zinc-800 ${post.likedByMe ? "text-emerald-600 dark:text-emerald-300" : "text-zinc-500 dark:text-zinc-400"}`}
+          className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-0 py-3 text-xs sm:flex-row sm:px-1 font-semibold hover:bg-emerald-50 disabled:opacity-50 dark:hover:bg-zinc-800 ${post.likedByMe ? "text-brand dark:text-brand" : "text-zinc-500 dark:text-zinc-400"}`}
         >
           <ThumbsUp size={16} />
           {post.likedByMe ? "Liked" : "Like"}

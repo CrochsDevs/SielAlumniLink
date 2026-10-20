@@ -34,7 +34,7 @@ const kinds = [
   { type: "story", label: "Success story", Icon: Sparkles },
 ];
 const fieldClass =
-  "w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm text-zinc-900 outline-none focus:border-emerald-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
+  "w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm text-zinc-900 outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
 
 export function AudienceSelect({
   value,
@@ -361,15 +361,15 @@ export default function FeedComposer({
   };
   return (
     <>
-      <div className="rounded-2xl border border-emerald-900/10 bg-white p-3 shadow-sm dark:bg-zinc-900">
+      <div className="rounded-2xl border border-brand/10 bg-white p-3 shadow-sm dark:bg-zinc-900">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-emerald-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand">
             <ProfileAvatar user={user} fallback="A" />
           </div>
           <button
             type="button"
             onClick={() => open(defaultType)}
-            className="min-w-0 flex-1 rounded-2xl border border-zinc-300 px-3 py-3 text-left text-sm text-zinc-500 hover:border-emerald-500 sm:px-4 dark:border-zinc-700 dark:text-zinc-400"
+            className="min-w-0 flex-1 rounded-2xl border border-zinc-300 px-3 py-3 text-left text-sm text-zinc-500 hover:border-brand sm:px-4 dark:border-zinc-700 dark:text-zinc-400"
           >
             {defaultType === "story"
               ? "Share your success story and inspire others…"
@@ -384,7 +384,7 @@ export default function FeedComposer({
             onClick={() => open(defaultType, true)}
             className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-zinc-600 hover:bg-emerald-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            <ImagePlus size={18} className="text-emerald-600" />
+            <ImagePlus size={18} className="text-brand" />
             Photo
           </button>
           {kinds
@@ -400,7 +400,7 @@ export default function FeedComposer({
                 }
                 className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-zinc-600 hover:bg-emerald-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
-                <kind.Icon size={16} className="text-emerald-600" />
+                <kind.Icon size={16} className="text-brand" />
                 {kind.label}
               </button>
             ))}
@@ -519,7 +519,7 @@ export default function FeedComposer({
                                 <progress
                                   value={photo.percent}
                                   max={100}
-                                  className="h-1.5 w-full accent-emerald-600"
+                                  className="h-1.5 w-full accent-brand"
                                 />
                               </>
                             )}
@@ -533,7 +533,7 @@ export default function FeedComposer({
                                 <button
                                   type="button"
                                   onClick={() => uploadPhoto(photo)}
-                                  className="min-h-11 font-bold text-emerald-700 underline"
+                                  className="min-h-11 font-bold text-brand underline"
                                 >
                                   Retry upload
                                 </button>

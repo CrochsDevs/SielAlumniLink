@@ -79,7 +79,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
           type="button"
           onClick={onReadAll}
           disabled={!items.some((item) => !item.read)}
-          className="text-[11.5px] font-semibold text-[#009639] dark:text-emerald-300 hover:underline disabled:opacity-40"
+          className="text-[11.5px] font-semibold text-brand dark:text-brand hover:underline disabled:opacity-40"
         >
           Mark all read
         </button>
@@ -94,7 +94,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
             type="button"
             aria-pressed={filter === label}
             onClick={() => setFilter(label)}
-            className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition ${filter === label ? "border-[#009639] bg-[#009639] text-white" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"}`}
+            className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition ${filter === label ? "border-brand bg-brand text-white" : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"}`}
           >
             {label}
           </button>
@@ -113,7 +113,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
                   !item.read ? "bg-emerald-50/50 dark:bg-emerald-950/30" : ""
                 }`}
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-brand dark:bg-emerald-950 dark:text-brand">
                   {item.actor ? (
                     <ProfileAvatar user={item.actor} />
                   ) : (
@@ -143,7 +143,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
                   {!item.read && (
                     <span
                       aria-label="Unread notification"
-                      className="h-2 w-2 rounded-full bg-[#009639]"
+                      className="h-2 w-2 rounded-full bg-brand"
                     />
                   )}
                 </span>

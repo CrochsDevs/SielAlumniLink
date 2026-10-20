@@ -63,7 +63,7 @@ export default function StudentCertificates() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search activity, organizer, or certificate ID"
-                  className="h-10 w-full rounded-lg border border-zinc-200 pl-9 pr-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900"
+                  className="h-10 w-full rounded-lg border border-zinc-200 pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900"
                 />
               </label>
               <label>
@@ -106,14 +106,14 @@ export default function StudentCertificates() {
                           setType("all");
                           setQuery("");
                         }}
-                        className="mt-4 text-xs font-semibold text-[#009639]"
+                        className="mt-4 text-xs font-semibold text-brand"
                       >
                         Clear filters
                       </button>
                     ) : (
                       <Link
                         to="/student/journey"
-                        className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-[#009639]"
+                        className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand"
                       >
                         View participation records
                         <ArrowUpRight size={13} />
@@ -129,7 +129,7 @@ export default function StudentCertificates() {
                       className={`${card} flex flex-col p-5`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <BadgeCheck size={23} className="text-[#009639]" />
+                        <BadgeCheck size={23} className="text-brand" />
                         <span className="rounded-md bg-zinc-100 px-2 py-1 text-[10px] font-medium capitalize text-zinc-500 dark:bg-zinc-800">
                           {certificate.activityType}
                         </span>
@@ -148,7 +148,7 @@ export default function StudentCertificates() {
                         {certificate.certificateNumber}
                       </p>
                       <div className="mt-auto flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                        <span className="text-[10px] text-[#007a2e] dark:text-emerald-300">
+                        <span className="text-[10px] text-brand dark:text-brand">
                           Participation confirmed
                         </span>
                         <button

@@ -9,7 +9,7 @@ import { JOB_ALIGNMENT_OPTIONS } from "../../utils/tracerStudy";
 const card =
   "admin-panel p-4";
 const input =
-  "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
+  "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900";
 const button =
   "admin-button admin-button-secondary";
 const periods = [
@@ -474,7 +474,7 @@ export default function ProgramAlignmentReport() {
                             </td>
                             <td className="px-3 py-4">
                               <span
-                                className={`inline-block rounded-lg px-2 py-1 font-medium ${row.alignment === "directly_related" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : row.alignment === "unrelated" ? "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
+                                className={`inline-block rounded-lg px-2 py-1 font-medium ${row.alignment === "directly_related" ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : row.alignment === "unrelated" ? "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
                               >
                                 {row.alignmentLabel}
                               </span>

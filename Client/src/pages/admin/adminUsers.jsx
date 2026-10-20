@@ -23,7 +23,7 @@ import DataPagination from "../../components/ui/data-pagination";
 const ROLE_META = {
   [Roles.ALUMNI]: {
     icon: GraduationCap,
-    style: "bg-[#009639]/10 text-[#007a2e] ring-emerald-200/60",
+    style: "bg-brand/10 text-brand ring-emerald-200/60",
   },
   [Roles.STUDENT]: {
     icon: BookOpen,
@@ -263,7 +263,7 @@ export default function AdminUsers() {
                   type="button"
                   onClick={fetchAudit}
                   disabled={auditLoading}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-[11.5px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e] disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-[11.5px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand disabled:opacity-50"
                 >
                   <RefreshCw
                     className={`h-3.5 w-3.5 ${auditLoading ? "animate-spin" : ""}`}
@@ -298,7 +298,7 @@ export default function AdminUsers() {
                             <span
                               className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ${
                                 log.action === "login"
-                                  ? "bg-[#009639]/10 text-[#007a2e]"
+                                  ? "bg-brand/10 text-brand"
                                   : "bg-zinc-100 text-zinc-500"
                               }`}
                             >
@@ -355,7 +355,7 @@ export default function AdminUsers() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search name or email..."
-                      className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
+                      className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/15"
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -456,8 +456,8 @@ export default function AdminUsers() {
                               </td>
                               <td className="px-5 py-3">
                                 {online ? (
-                                  <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[#007a2e]">
-                                    <Circle className="h-2 w-2 fill-current text-[#009639] dark:text-emerald-300" />
+                                  <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-brand">
+                                    <Circle className="h-2 w-2 fill-current text-brand dark:text-brand" />
                                     Active now
                                   </span>
                                 ) : (
@@ -509,7 +509,7 @@ export default function AdminUsers() {
                   >
                     <h2 className="admin-section-title flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
                       <RefreshCw
-                        className={`h-4 w-4 text-[#009639] dark:text-emerald-300 ${syncLoading ? "animate-spin" : ""}`}
+                        className={`h-4 w-4 text-brand dark:text-brand ${syncLoading ? "animate-spin" : ""}`}
                       />
                       Sync from CAIS
                     </h2>
@@ -523,7 +523,7 @@ export default function AdminUsers() {
                       <button
                         type="button"
                         onClick={runCaisSync}
-                        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#009639] text-[13.5px] font-bold text-white shadow-sm transition hover:bg-[#007a2e]"
+                        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-[13.5px] font-bold text-white shadow-sm transition hover:bg-brand"
                       >
                         <RefreshCw className="h-4 w-4" />
                         Sync Now
@@ -533,7 +533,7 @@ export default function AdminUsers() {
                     {syncLoading && (
                       <div className="mt-4 flex flex-col items-center rounded-2xl bg-zinc-50 dark:bg-zinc-800 py-8">
                         <svg
-                          className="h-8 w-8 animate-spin text-[#009639] dark:text-emerald-300"
+                          className="h-8 w-8 animate-spin text-brand dark:text-brand"
                           viewBox="0 0 24 24"
                         >
                           <circle
@@ -610,7 +610,7 @@ export default function AdminUsers() {
                             setSyncSummary(null);
                             runCaisSync();
                           }}
-                          className="h-10 flex-1 rounded-xl bg-[#009639] text-[13px] font-bold text-white transition hover:bg-[#007a2e]"
+                          className="h-10 flex-1 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand"
                         >
                           Sync Again
                         </button>

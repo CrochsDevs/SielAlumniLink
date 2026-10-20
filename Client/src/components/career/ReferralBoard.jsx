@@ -1,4 +1,4 @@
-﻿import { createElement, useCallback, useEffect, useRef, useState } from "react";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -233,7 +233,7 @@ export default function ReferralBoard({ embedded = false }) {
         />}
         <div className="relative flex flex-wrap items-center justify-between gap-6">
           <div className="max-w-2xl">
-            {embedded && <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300">
+            {embedded && <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand dark:bg-emerald-950 dark:text-brand">
               <Handshake size={14} />
               The alumni advantage
             </p>}
@@ -267,7 +267,7 @@ export default function ReferralBoard({ embedded = false }) {
             type="button"
             aria-pressed={type === item.key}
             onClick={() => setFilter(type === item.key ? "all" : item.key)}
-            className={`${panel} group flex min-w-0 items-center gap-4 p-4 text-left transition hover:border-[#009639]/40 ${type === item.key ? "!border-[#009639] ring-1 ring-[#009639]/10" : ""}`}
+            className={`${panel} group flex min-w-0 items-center gap-4 p-4 text-left transition hover:border-brand/40 ${type === item.key ? "!border-brand ring-1 ring-brand/10" : ""}`}
           >
             <span
               className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.style}`}
@@ -294,7 +294,7 @@ export default function ReferralBoard({ embedded = false }) {
       {message && (
         <p
           role="status"
-          className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+          className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
         >
           <CheckCircle2 size={18} />
           {message}
@@ -316,7 +316,7 @@ export default function ReferralBoard({ embedded = false }) {
                     setView(tab.id);
                     setPage(1);
                   }}
-                  className={`inline-flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold ${view === tab.id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
+                  className={`inline-flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold ${view === tab.id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
                 >
                   {tab.label}
                   {tab.count !== undefined && (
@@ -342,7 +342,7 @@ export default function ReferralBoard({ embedded = false }) {
                     setPage(1);
                   }}
                   placeholder="Search a title, organization, or keyword"
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-800"
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800"
                 />
               </div>
               <select
@@ -376,7 +376,7 @@ export default function ReferralBoard({ embedded = false }) {
                     type="button"
                     aria-pressed={type === item.key}
                     onClick={() => setFilter(item.key)}
-                    className={`rounded-lg px-3 py-1.5 text-[11px] font-medium ${type === item.key ? "bg-[#009639]/10 text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
+                    className={`rounded-lg px-3 py-1.5 text-[11px] font-medium ${type === item.key ? "bg-brand/10 text-brand dark:bg-emerald-950 dark:text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
                   >
                     {item.label}
                   </button>
@@ -584,7 +584,7 @@ export default function ReferralBoard({ embedded = false }) {
                                 type="button"
                                 aria-label={`Edit ${referral.title}`}
                                 onClick={() => setEditor({ item: referral })}
-                                className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-[#009639] dark:text-zinc-400"
+                                className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-brand dark:text-zinc-400"
                               >
                                 <Pencil size={12} />
                                 Edit
@@ -633,7 +633,7 @@ export default function ReferralBoard({ embedded = false }) {
         <aside className="grid min-w-0 gap-4 sm:grid-cols-2 xl:sticky xl:top-20 xl:grid-cols-1">
           <section className={`${panel} p-5`}>
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                 <ProfileAvatar user={user} />
               </span>
               <div className="min-w-0">
@@ -709,7 +709,7 @@ export default function ReferralBoard({ embedded = false }) {
           </section>
           <section className={`${panel} p-5 sm:col-span-2 xl:col-span-1`}>
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <ClipboardList size={16} className="text-[#009639]" />
+              <ClipboardList size={16} className="text-brand" />
               How it works
             </h2>
             <ol className="mt-4 space-y-4">

@@ -134,7 +134,7 @@ export default function StudentInternship() {
           className={(`${card} mb-4 flex flex-wrap items-center justify-between gap-3`) + " workspace-page-header"}
         >
           <h1 className="flex items-center gap-2 text-base font-bold">
-            <Briefcase size={20} className="text-[#009639]" />
+            <Briefcase size={20} className="text-brand" />
             Internship Board
           </h1>
           <nav aria-label="Internship views" className="flex gap-4">
@@ -147,7 +147,7 @@ export default function StudentInternship() {
                 type="button"
                 aria-pressed={view === id}
                 onClick={() => setView(id)}
-                className={`border-b-2 pb-2 text-xs font-semibold ${view === id ? "border-[#009639] text-[#009639] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
+                className={`border-b-2 pb-2 text-xs font-semibold ${view === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
               >
                 {label}
               </button>
@@ -191,7 +191,7 @@ export default function StudentInternship() {
                       setFilter(id);
                       setView("records");
                     }}
-                    className="accent-[#009639]"
+                    className="accent-brand"
                   />
                   {label}
                 </label>
@@ -199,13 +199,13 @@ export default function StudentInternship() {
             </div>
             <Link
               to="/student/readiness"
-              className="mt-6 block text-xs font-semibold text-[#009639] dark:text-emerald-300"
+              className="mt-6 block text-xs font-semibold text-brand dark:text-brand"
             >
               View readiness score
             </Link>
           </aside>
           <section className="order-1 min-w-0 space-y-3 md:order-none">
-            <header className="rounded-lg bg-gradient-to-br from-[#007a2e] to-[#009639] p-5 text-white">
+            <header className="rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white">
               <h2 className="text-xl font-semibold">Internship Tracking</h2>
               <p className="mt-2 text-xs leading-6 text-white/90">
                 Record your company, supervisor, completed hours, and
@@ -302,7 +302,7 @@ export default function StudentInternship() {
                       className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                     >
                       <div
-                        className="h-full bg-[#009639]"
+                        className="h-full bg-brand"
                         style={{
                           width: `${(record.hoursCompleted / record.requiredHours) * 100}%`,
                         }}
@@ -313,7 +313,7 @@ export default function StudentInternship() {
                       {record.evaluation || "Not recorded yet"}
                     </p>
                     <span
-                      className={`mt-3 inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold ${record.completed ? "bg-emerald-50 text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300" : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"}`}
+                      className={`mt-3 inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold ${record.completed ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"}`}
                     >
                       {record.completed ? "Completed" : "In progress"} ·
                       Self-reported
@@ -376,7 +376,7 @@ export default function StudentInternship() {
           </section>
           <aside className="order-3 grid gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1">
             <section className={`${card} text-center`}>
-              <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                 <ProfileAvatar user={user} />
               </span>
               <h2 className="mt-3 text-sm font-semibold">{user?.name}</h2>
@@ -386,7 +386,7 @@ export default function StudentInternship() {
             </section>
             <section className={card}>
               <h2 className="flex items-center gap-2 text-sm font-semibold">
-                <Clock3 size={18} className="text-[#009639]" />
+                <Clock3 size={18} className="text-brand" />
                 OJT Hours
               </h2>
               <p className="mt-4 text-2xl font-bold">
@@ -398,7 +398,7 @@ export default function StudentInternship() {
               </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                 <div
-                  className="h-full bg-[#009639]"
+                  className="h-full bg-brand"
                   style={{ width: `${percent}%` }}
                 />
               </div>

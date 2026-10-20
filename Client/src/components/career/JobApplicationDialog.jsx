@@ -19,9 +19,9 @@ import { FeedDialog } from "../feed/FeedComposer";
 import api from "../../utils/axios";
 
 const button =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#009639] px-5 text-sm font-semibold text-white transition hover:bg-[#007a2e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white transition hover:bg-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50";
 const input =
-  "mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
 
 export function JobApplicationDialog({
   jobId,
@@ -153,7 +153,7 @@ export function JobApplicationDialog({
               className="flex min-w-0 flex-1 items-center gap-2 text-[10px] font-medium sm:text-xs"
             >
               <span
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] ${index <= current ? "bg-[#009639] text-white" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"}`}
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] ${index <= current ? "bg-brand text-white" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"}`}
               >
                 {index < current ? <Check size={12} /> : index + 1}
               </span>
@@ -199,7 +199,7 @@ export function JobApplicationDialog({
             role="status"
             className="flex items-center justify-center gap-3 py-16 text-sm text-zinc-500"
           >
-            <LoaderCircle size={20} className="animate-spin text-[#009639]" />
+            <LoaderCircle size={20} className="animate-spin text-brand" />
             Loading job details...
           </div>
         )
@@ -208,10 +208,10 @@ export function JobApplicationDialog({
           <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/50 dark:bg-emerald-950 dark:ring-emerald-950/40">
             <CheckCircle2
               size={38}
-              className="text-[#009639] dark:text-emerald-400"
+              className="text-brand dark:text-brand"
             />
           </span>
-          <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#007a2e] dark:text-emerald-400">
+          <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand dark:text-brand">
             Application received
           </p>
           <h3 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -242,13 +242,13 @@ export function JobApplicationDialog({
         </div>
       ) : (
         <>
-          <div className="relative overflow-hidden rounded-xl border border-emerald-900/10 bg-gradient-to-br from-emerald-50 via-white to-zinc-50 p-5 sm:p-6 dark:border-emerald-900/40 dark:from-emerald-950/50 dark:via-zinc-900 dark:to-zinc-900">
+          <div className="relative overflow-hidden rounded-xl border border-brand/10 bg-gradient-to-br from-emerald-50 via-white to-zinc-50 p-5 sm:p-6 dark:border-brand/40 dark:from-emerald-950/50 dark:via-zinc-900 dark:to-zinc-900">
             <div className="relative flex items-start gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-200/70 bg-white text-[#009639] shadow-sm dark:border-emerald-800 dark:bg-emerald-950">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-200/70 bg-white text-brand shadow-sm dark:border-brand dark:bg-emerald-950">
                 <Building2 size={25} />
               </span>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#007a2e] dark:text-emerald-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand dark:text-brand">
                   {job.company}
                 </p>
                 <h3 className="mt-1.5 break-words text-xl font-semibold leading-snug tracking-tight sm:text-2xl">
@@ -306,7 +306,7 @@ export function JobApplicationDialog({
                   <div role="status" className="flex items-center gap-3">
                     <CheckCircle2
                       size={22}
-                      className="shrink-0 text-[#009639] dark:text-emerald-400"
+                      className="shrink-0 text-brand dark:text-brand"
                     />
                     <div>
                       <p className="text-sm font-semibold">
@@ -360,7 +360,7 @@ export function JobApplicationDialog({
                   </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <label className="block text-xs font-medium">
-                      Full name <span className="text-[#009639]">*</span>
+                      Full name <span className="text-brand">*</span>
                       <input
                         required
                         maxLength={200}
@@ -373,7 +373,7 @@ export function JobApplicationDialog({
                       />
                     </label>
                     <label className="block text-xs font-medium">
-                      Contact email <span className="text-[#009639]">*</span>
+                      Contact email <span className="text-brand">*</span>
                       <input
                         required
                         type="email"
@@ -390,7 +390,7 @@ export function JobApplicationDialog({
                 </section>
                 <section>
                   <h4 className="text-sm font-semibold">
-                    Your resume <span className="text-[#009639]">*</span>
+                    Your resume <span className="text-brand">*</span>
                   </h4>
                   <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                     Upload a PDF, up to 5 MB.
@@ -417,11 +417,11 @@ export function JobApplicationDialog({
                       setDragging(false);
                       if (!busy) chooseResume(event.dataTransfer.files?.[0]);
                     }}
-                    className={`mt-3 rounded-xl border border-dashed p-5 transition ${dragging ? "border-[#009639] bg-emerald-50 dark:bg-emerald-950/40" : resume ? "border-emerald-300 bg-emerald-50/40 dark:border-emerald-800 dark:bg-emerald-950/20" : "border-zinc-300 bg-zinc-50/60 dark:border-zinc-600 dark:bg-zinc-800/30"}`}
+                    className={`mt-3 rounded-xl border border-dashed p-5 transition ${dragging ? "border-brand bg-emerald-50 dark:bg-emerald-950/40" : resume ? "border-emerald-300 bg-emerald-50/40 dark:border-brand dark:bg-emerald-950/20" : "border-zinc-300 bg-zinc-50/60 dark:border-zinc-600 dark:bg-zinc-800/30"}`}
                   >
                     {resume ? (
                       <div className="flex items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-[#009639] dark:bg-zinc-900">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-brand dark:bg-zinc-900">
                           <FileText size={23} />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -433,7 +433,7 @@ export function JobApplicationDialog({
                           </p>
                           <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                             {(resume.size / 1024).toFixed(0)} KB{" "}
-                            <span className="ml-2 text-[#007a2e] dark:text-emerald-400">
+                            <span className="ml-2 text-brand dark:text-brand">
                               Ready to submit
                             </span>
                           </p>
@@ -451,7 +451,7 @@ export function JobApplicationDialog({
                       <div className="text-center">
                         <UploadCloud
                           size={28}
-                          className="mx-auto text-[#009639] dark:text-emerald-400"
+                          className="mx-auto text-brand dark:text-brand"
                         />
                         <p className="mt-3 text-sm font-medium">
                           Drop your resume here
@@ -462,7 +462,7 @@ export function JobApplicationDialog({
                         <button
                           type="button"
                           onClick={() => fileInput.current?.click()}
-                          className="mt-4 min-h-10 rounded-lg border border-zinc-200 bg-white px-4 text-xs font-semibold transition hover:border-[#009639] hover:text-[#007a2e] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                          className="mt-4 min-h-10 rounded-lg border border-zinc-200 bg-white px-4 text-xs font-semibold transition hover:border-brand hover:text-brand dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
                         >
                           Browse files
                         </button>
@@ -490,7 +490,7 @@ export function JobApplicationDialog({
                 <p className="flex items-start gap-2 rounded-lg bg-zinc-50 p-3 text-[11px] leading-5 text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
                   <ShieldCheck
                     size={16}
-                    className="mt-0.5 shrink-0 text-[#009639] dark:text-emerald-400"
+                    className="mt-0.5 shrink-0 text-brand dark:text-brand"
                   />
                   Your contact details and resume are shared with the university
                   career team for this application.

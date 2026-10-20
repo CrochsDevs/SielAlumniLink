@@ -71,7 +71,7 @@ export default function CertificatePreview({ certificate, onClose }) {
                 type="button"
                 disabled={!ready}
                 onClick={() => window.print()}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#009639] px-3 text-xs font-semibold text-white"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white"
               >
                 <Printer size={14} />
                 Print / Save as PDF

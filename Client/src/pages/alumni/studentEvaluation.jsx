@@ -21,9 +21,9 @@ const REVIEW_PROMPTS = {
 const card =
   "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white disabled:opacity-50";
 const input =
-  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
+  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900";
 const level = (value) =>
   value ? `${LEVELS[value - 1]} (${value}/4)` : "Not evaluated";
 const date = (value) =>
@@ -176,7 +176,7 @@ function StudentEvaluationWorkspace({ studentId }) {
             Back to my students
           </Link>
           <header className="border-b border-zinc-200 pb-5 dark:border-zinc-800 workspace-page-header">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#007a2e] dark:text-emerald-300">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-brand dark:text-brand">
               Student evaluation
             </p>
             <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight">
@@ -200,7 +200,7 @@ function StudentEvaluationWorkspace({ studentId }) {
           {notice && (
             <p
               role="status"
-              className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-brand dark:border-brand dark:bg-emerald-950 dark:text-brand"
             >
               {notice}
             </p>
@@ -216,7 +216,7 @@ function StudentEvaluationWorkspace({ studentId }) {
                   data-evaluation-student={studentId}
                   className={`${card} flex flex-wrap items-center gap-4 p-5`}
                 >
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[#009639] dark:bg-emerald-950">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                     <ProfileAvatar user={details.student} />
                   </span>
                   <div className="min-w-0 flex-1">

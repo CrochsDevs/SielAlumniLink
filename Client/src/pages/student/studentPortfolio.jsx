@@ -41,7 +41,7 @@ const SECTIONS = [
     hint: "The tools, technologies, and strengths you bring.",
     example: "e.g. JavaScript, one skill at a time",
     color:
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+      "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand",
   },
   {
     key: "projects",
@@ -98,9 +98,9 @@ const SECTIONS = [
 const card =
   "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const primary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white transition hover:bg-[#007a2e] disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
 const field =
-  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-[#009639] focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-700 dark:bg-zinc-900";
+  "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900";
 
 export default function StudentPortfolio() {
   const { user, refreshUser } = useAuth();
@@ -308,7 +308,7 @@ export default function StudentPortfolio() {
               type="button"
               aria-pressed={view === id}
               onClick={() => setView(id)}
-              className={`border-b-2 pb-3 text-xs font-semibold ${view === id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
+              className={`border-b-2 pb-3 text-xs font-semibold ${view === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
             >
               {label}
             </button>
@@ -346,7 +346,7 @@ export default function StudentPortfolio() {
                     <h2>Digital certificates</h2>
                     <Link
                       to="/student/certificate"
-                      className="text-xs font-semibold text-[#009639]"
+                      className="text-xs font-semibold text-brand"
                     >
                       View certificates
                     </Link>
@@ -451,7 +451,7 @@ export default function StudentPortfolio() {
                         }
                         aria-label={`Add ${section.singular}`}
                         onClick={() => startEdit(section)}
-                        className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 px-2.5 text-[11px] font-semibold transition hover:border-emerald-300 hover:text-[#007a2e] disabled:opacity-40 dark:border-zinc-700 dark:hover:text-emerald-300"
+                        className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-zinc-200 px-2.5 text-[11px] font-semibold transition hover:border-emerald-300 hover:text-brand disabled:opacity-40 dark:border-zinc-700 dark:hover:text-brand"
                       >
                         <Plus size={14} />
                         Add
@@ -481,7 +481,7 @@ export default function StudentPortfolio() {
                           return section.type === "tags" ? (
                             <div
                               key={index}
-                              className="flex max-w-full items-center gap-1 rounded-lg border border-emerald-100 bg-emerald-50/50 py-1 pl-3 pr-1 text-xs font-medium text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200"
+                              className="flex max-w-full items-center gap-1 rounded-lg border border-emerald-100 bg-emerald-50/50 py-1 pl-3 pr-1 text-xs font-medium text-brand dark:border-brand dark:bg-emerald-950/30 dark:text-emerald-200"
                             >
                               <span className="break-words">{title}</span>
                               {controls(section, index, title)}
@@ -527,7 +527,7 @@ export default function StudentPortfolio() {
             </Link>
             <section className={`${card} p-5`}>
               <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-lg font-semibold text-[#009639] dark:bg-emerald-950">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-lg font-semibold text-brand dark:bg-emerald-950">
                   <ProfileAvatar user={user} />
                 </span>
                 <div className="min-w-0">
@@ -547,7 +547,7 @@ export default function StudentPortfolio() {
               )}
               <Link
                 to="/student/accounts"
-                className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-[#007a2e] dark:text-emerald-300"
+                className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-brand dark:text-brand"
               >
                 Update profile details
                 <ArrowUpRight size={13} />
@@ -607,7 +607,7 @@ export default function StudentPortfolio() {
               >
                 About
                 {resumeUser?.bio?.trim() ? (
-                  <Check size={14} className="text-[#009639]" />
+                  <Check size={14} className="text-brand" />
                 ) : (
                   <span className="h-3 w-3 rounded-full border border-zinc-300 dark:border-zinc-600" />
                 )}
@@ -626,11 +626,11 @@ export default function StudentPortfolio() {
                       }),
                     );
                   }}
-                  className="flex items-center justify-between rounded-lg py-2 text-xs text-zinc-500 hover:text-[#007a2e] dark:text-zinc-400 dark:hover:text-emerald-300"
+                  className="flex items-center justify-between rounded-lg py-2 text-xs text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand"
                 >
                   {section.label}
                   {data[section.key].length ? (
-                    <Check size={14} className="text-[#009639]" />
+                    <Check size={14} className="text-brand" />
                   ) : (
                     <span className="h-3 w-3 rounded-full border border-zinc-300 dark:border-zinc-600" />
                   )}

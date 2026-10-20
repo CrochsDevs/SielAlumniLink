@@ -46,14 +46,14 @@ const StudentMessage = () => {
             <button
               type="button"
               onClick={() => setActiveTab("chats")}
-              className={`flex-1 rounded-t-md px-4 py-2 text-[13px] font-medium transition-colors ${activeTab === "chats" ? "text-[#009639] bg-[#009639]/10 dark:text-emerald-300 dark:bg-zinc-800" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+              className={`flex-1 rounded-t-md px-4 py-2 text-[13px] font-medium transition-colors ${activeTab === "chats" ? "text-brand bg-brand/10 dark:text-brand dark:bg-zinc-800" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
             >
               Chats
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("requests")}
-              className={`flex-1 rounded-t-md px-4 py-2 text-[13px] font-medium transition-colors ${activeTab === "requests" ? "text-[#009639] bg-[#009639]/10 dark:text-emerald-300 dark:bg-zinc-800" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
+              className={`flex-1 rounded-t-md px-4 py-2 text-[13px] font-medium transition-colors ${activeTab === "requests" ? "text-brand bg-brand/10 dark:text-brand dark:bg-zinc-800" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
             >
               Requests
             </button>

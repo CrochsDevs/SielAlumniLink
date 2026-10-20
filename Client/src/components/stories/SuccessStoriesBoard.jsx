@@ -222,7 +222,7 @@ export default function SuccessStoriesBoard() {
       {notice && (
         <p
           role="status"
-          className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+          className="rounded-xl bg-emerald-50 p-4 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
         >
           {notice}
         </p>
@@ -249,7 +249,7 @@ export default function SuccessStoriesBoard() {
                   type="button"
                   aria-pressed={filters.topic === topic.key}
                   onClick={() => change("topic", topic.key)}
-                  className={`shrink-0 rounded-lg px-3 py-2.5 text-xs font-semibold ${filters.topic === topic.key ? "bg-[#009639]/10 text-[#007a2e] dark:bg-emerald-950 dark:text-emerald-300" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
+                  className={`shrink-0 rounded-lg px-3 py-2.5 text-xs font-semibold ${filters.topic === topic.key ? "bg-brand/10 text-brand dark:bg-emerald-950 dark:text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
                 >
                   {topic.label}
                 </button>
@@ -263,7 +263,7 @@ export default function SuccessStoriesBoard() {
               onClick={() =>
                 change("mine", filters.mine === "true" ? "false" : "true")
               }
-              className={`${secondaryButton} !min-h-9 ${filters.mine === "true" ? "!border-[#009639] !text-[#007a2e] dark:!text-emerald-300" : ""}`}
+              className={`${secondaryButton} !min-h-9 ${filters.mine === "true" ? "!border-brand !text-brand dark:!text-brand" : ""}`}
             >
               My stories
             </button>
@@ -288,7 +288,7 @@ export default function SuccessStoriesBoard() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search a story title or keyword"
-              className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
           <button type="submit" className={secondaryButton}>
@@ -398,7 +398,7 @@ export default function SuccessStoriesBoard() {
                     <button
                       type="button"
                       onClick={() => open(post._id)}
-                      className="text-left hover:text-[#007a2e] dark:hover:text-emerald-300"
+                      className="text-left hover:text-brand dark:hover:text-brand"
                     >
                       {post.title}
                     </button>
@@ -408,7 +408,7 @@ export default function SuccessStoriesBoard() {
                   </p>
                   <div className="mt-auto">
                     <div className="flex items-center gap-2.5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                         <ProfileAvatar user={post.author} />
                       </span>
                       <div className="min-w-0">
@@ -425,7 +425,7 @@ export default function SuccessStoriesBoard() {
                     <button
                       type="button"
                       onClick={() => open(post._id)}
-                      className="mt-4 inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-[#007a2e] dark:text-emerald-300"
+                      className="mt-4 inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-brand dark:text-brand"
                     >
                       Read story
                       <ArrowRight size={15} />

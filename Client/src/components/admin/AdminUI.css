@@ -1,8 +1,8 @@
 .admin-workspace {
   --admin-radius: 16px;
   --admin-control-radius: 10px;
-  --admin-primary: #285f40;
-  --admin-primary-hover: #1e4c31;
+  --admin-primary: #009639;
+  --admin-primary-hover: #009639;
   --admin-ink: var(--alumni-heading, #19472f);
   --admin-muted: #526e5d;
   --admin-surface: var(--alumni-card, #e3eee4);
@@ -14,8 +14,8 @@
   --admin-switch-off: #9db4a5;
 }
 .dark .admin-workspace {
-  --admin-primary: #356f4a;
-  --admin-primary-hover: #408357;
+  --admin-primary: #009639;
+  --admin-primary-hover: #009639;
   --admin-muted: #afc8b8;
   --admin-toolbar: #22392a;
   --admin-table-heading: #2b4533;
@@ -78,11 +78,11 @@
   .admin-workspace .admin-tabs > :is(button, a):hover:not([aria-pressed="true"]):not([aria-current="page"]):not(:disabled) { background: var(--admin-control-hover); color: var(--admin-ink); }
   .admin-workspace .admin-tabs > :is(button, a):is([aria-pressed="true"], [aria-current="page"]):hover { background: var(--admin-primary-hover); color: white; }
 }
-.admin-workspace .admin-tabs > :is(button, a):focus-visible { outline: 2px solid #43895c; outline-offset: 2px; }
+.admin-workspace .admin-tabs > :is(button, a):focus-visible { outline: 2px solid #009639; outline-offset: 2px; }
 .admin-workspace .admin-tabs > button:disabled { opacity: .5; cursor: not-allowed; }
 .admin-workspace .admin-tab-count { padding: 0 5px; border-radius: 5px; background: rgb(54 102 69 / 10%); font-size: 10px; }
 .admin-workspace .admin-tabs > :is([aria-pressed="true"], [aria-current="page"]) .admin-tab-count { background: rgb(255 255 255 / 15%); }
-.admin-workspace .admin-tab-badge { color: #21784b; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+.admin-workspace .admin-tab-badge { color: #009639; font-size: 9px; font-weight: 600; text-transform: uppercase; }
 .admin-workspace .admin-tabs > :is([aria-pressed="true"], [aria-current="page"]) .admin-tab-badge { color: #c4ead1; }
 .admin-workspace .admin-tabs-vertical { flex-direction: column; width: 100%; align-items: stretch; overflow: visible; padding: 0; border: 0; background: transparent; }
 .admin-workspace .admin-tabs-vertical > :is(button, a) { justify-content: flex-start; white-space: normal; }
@@ -103,8 +103,8 @@
 .admin-workspace main .admin-section-title { color: var(--admin-ink); font: 600 12px/18px ui-sans-serif, system-ui, sans-serif; }
 .admin-workspace main .text-white .admin-section-title { color: inherit; }
 .admin-workspace main .admin-calendar-reminder { background: var(--admin-primary); }
-.admin-workspace main :is(button, a)[class~="bg-[#009639]"] { background-color: var(--admin-primary); border-radius: var(--admin-control-radius); font-size: 12px; font-weight: 500; }
-.admin-workspace main :is(button, a)[class~="bg-[#009639]"]:hover { background-color: var(--admin-primary-hover); }
+.admin-workspace main :is(button, a)[class~="bg-brand"] { background-color: var(--admin-primary); border-radius: var(--admin-control-radius); font-size: 12px; font-weight: 500; }
+.admin-workspace main :is(button, a)[class~="bg-brand"]:hover { background-color: var(--admin-primary-hover); }
 .admin-workspace main .admin-toolbar {
   display: flex;
   flex-direction: row;
@@ -130,7 +130,7 @@
   border-radius: var(--admin-control-radius);
   font-size: 12px;
 }
-.admin-workspace main :is(a, button, input, select, textarea):focus-visible { outline: 2px solid #43895c; outline-offset: 3px; }
+.admin-workspace main :is(a, button, input, select, textarea):focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
 .admin-workspace .data-pagination { border-color: var(--admin-line); }
 .admin-workspace .data-pagination p { color: var(--admin-muted); }
 .admin-workspace .data-pagination p span { color: var(--admin-ink); font-weight: 600; }

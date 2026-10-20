@@ -37,7 +37,7 @@ const AlumniSidebar = ({
   const navItemClass = (active) =>
     `group flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-colors ${
       active
-        ? "bg-[#145238] text-white font-semibold shadow-sm dark:bg-[#306b45]"
+        ? "bg-[#009639] text-white font-semibold shadow-sm dark:bg-[#009639]"
         : "text-zinc-700 hover:bg-[#dce8d3] hover:text-zinc-900 font-medium dark:text-zinc-300 dark:hover:bg-[#263d2b] dark:hover:text-zinc-100"
     }`;
 
@@ -77,7 +77,7 @@ const AlumniSidebar = ({
             />
             <div className="leading-tight mt-1">
               <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">
-                Siel<span className="text-[#009639]">Alumni</span>
+                Siel<span className="text-brand">Alumni</span>
               </p>
             </div>
           </Link>

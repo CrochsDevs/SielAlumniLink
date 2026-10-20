@@ -27,7 +27,7 @@ export function Highlight({ text = "", query = "" }) {
 
 export function Avatar({ person }) {
   return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 font-bold text-emerald-800">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 font-bold text-brand">
       {person.profilePicture ? (
         <img
           src={person.profilePicture}
@@ -49,7 +49,7 @@ export function PersonSummary({ person, query }) {
         <span className="block break-words font-semibold text-zinc-900 dark:text-zinc-100">
           <Highlight text={person.name} query={query} />
         </span>
-        <span className="block text-xs capitalize text-emerald-700 dark:text-emerald-400">
+        <span className="block text-xs capitalize text-brand dark:text-brand">
           {person.role}
         </span>
         <span className="block text-xs text-zinc-500 dark:text-zinc-400">
@@ -79,14 +79,14 @@ export default function SearchPerson({ person, query, onConnect, busy }) {
     declined: "Declined",
   }[person.connectionStatus];
   return (
-    <article className="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <article className="rounded-2xl border border-brand/10 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <Link to={profilePath(person)} className="flex items-start gap-3">
         <PersonSummary person={person} query={query} />
       </Link>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
         <Link
           to={profilePath(person)}
-          className="rounded-full border border-emerald-600 px-4 py-1.5 font-semibold text-emerald-700 dark:text-emerald-400"
+          className="rounded-full border border-brand px-4 py-1.5 font-semibold text-brand dark:text-brand"
         >
           View Profile
         </Link>
@@ -98,7 +98,7 @@ export default function SearchPerson({ person, query, onConnect, busy }) {
               type="button"
               disabled={busy}
               onClick={() => onConnect(person)}
-              className="rounded-full bg-[#009639] px-4 py-1.5 font-semibold text-white disabled:opacity-50"
+              className="rounded-full bg-brand px-4 py-1.5 font-semibold text-white disabled:opacity-50"
             >
               {busy ? "Sending…" : "Connect"}
             </button>

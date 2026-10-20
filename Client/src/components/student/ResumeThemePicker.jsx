@@ -17,7 +17,7 @@ export default function ResumeThemePicker({
         {RESUME_THEMES.map((theme) => (
           <label
             key={theme.id}
-            className={`relative flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${value === theme.id ? "border-[#009639] bg-emerald-50/50 dark:border-emerald-500 dark:bg-emerald-950/20" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"} ${compact ? "justify-center" : ""}`}
+            className={`relative flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${value === theme.id ? "border-brand bg-emerald-50/50 dark:border-brand dark:bg-emerald-950/20" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"} ${compact ? "justify-center" : ""}`}
           >
             <input
               type="radio"
@@ -49,10 +49,10 @@ export default function ResumeThemePicker({
             {value === theme.id && (
               <Check
                 size={13}
-                className="shrink-0 text-[#009639] dark:text-emerald-300"
+                className="shrink-0 text-brand dark:text-brand"
               />
             )}
-            <span className="pointer-events-none absolute inset-0 rounded-lg peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-500 peer-focus-visible:ring-offset-2" />
+            <span className="pointer-events-none absolute inset-0 rounded-lg peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2" />
           </label>
         ))}
       </div>

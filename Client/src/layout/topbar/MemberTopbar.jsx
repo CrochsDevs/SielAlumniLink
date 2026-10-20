@@ -131,7 +131,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   return (
     <div className="member-topbar sticky top-3 z-10 mx-auto max-w-7xl px-4 pt-3 sm:px-6">
       <header
-        className="flex flex-wrap items-center gap-3 rounded-2xl border border-emerald-900/10 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 px-3 py-3 shadow-lg shadow-emerald-900/5 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-4 sm:py-0"
+        className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand/10 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 px-3 py-3 shadow-lg shadow-emerald-900/5 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-4 sm:py-0"
         style={{
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
         }}
@@ -140,7 +140,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
         <button
           type="button"
           onClick={onMenuClick}
-          className="rounded-xl bg-[#009639] p-2 text-white transition hover:bg-[#007a2e] lg:hidden"
+          className="rounded-xl bg-brand p-2 text-white transition hover:bg-brand lg:hidden"
           aria-label="Open sidebar"
         >
           <Menu className="h-5 w-5" />
@@ -152,7 +152,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
             <li className="flex items-center">
               <Link
                 to={homePath}
-                className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 font-semibold text-[#007a2e] dark:text-emerald-300 transition hover:bg-emerald-100 dark:hover:bg-emerald-900"
+                className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 font-semibold text-brand dark:text-brand transition hover:bg-emerald-100 dark:hover:bg-emerald-900"
               >
                 <Home className="h-3.5 w-3.5" />
                 <span>{roleLabel}</span>
@@ -182,7 +182,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
             <button
               type="button"
               onClick={() => setChatOpen((open) => !open)}
-              className={`relative rounded-full p-2.5 transition ${chatOpen ? "bg-emerald-50 text-[#009639]" : "text-zinc-500 hover:bg-emerald-50 hover:text-[#009639]"}`}
+              className={`relative rounded-full p-2.5 transition ${chatOpen ? "bg-emerald-50 text-brand" : "text-zinc-500 hover:bg-emerald-50 hover:text-brand"}`}
               aria-label="Chats"
               aria-expanded={chatOpen}
               aria-controls={chatOpen ? `${memberRole}-topbar-chats` : undefined}
@@ -211,7 +211,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
                   <Link
                     to={`${homePath}/message`}
                     onClick={() => setChatOpen(false)}
-                    className="text-[11.5px] font-semibold text-[#009639] dark:text-emerald-300 hover:underline"
+                    className="text-[11.5px] font-semibold text-brand dark:text-brand hover:underline"
                   >
                     See all
                   </Link>
@@ -227,7 +227,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
                         }}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
                       >
-                        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[13px] font-bold text-[#009639]">
+                        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[13px] font-bold text-brand">
                           <ChatAvatar convo={c} />
                           {c.unread > 0 && (
                             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
@@ -266,7 +266,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
                 setNotifOpen(!notifOpen);
                 refreshNotifs();
               }}
-              className={`relative rounded-full p-2.5 transition ${notifOpen ? "bg-emerald-50 text-[#009639]" : "text-zinc-500 hover:bg-emerald-50 hover:text-[#009639]"}`}
+              className={`relative rounded-full p-2.5 transition ${notifOpen ? "bg-emerald-50 text-brand" : "text-zinc-500 hover:bg-emerald-50 hover:text-brand"}`}
               aria-label="Notifications"
               aria-expanded={notifOpen}
             >
@@ -297,7 +297,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
             aria-expanded={dropdownOpen}
             className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-1 pl-1 pr-2 transition hover:border-emerald-300 hover:shadow-sm"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#007a2e] to-[#009639] text-[11px] font-bold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand text-[11px] font-bold text-white">
               {user?.profilePicture ? (
                 <img
                   src={user.profilePicture}

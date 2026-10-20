@@ -301,8 +301,8 @@ const AlumniDashboard = () => {
         <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] workspace-page">
           {/* LEFT: Sieles ID card */}
           <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-            <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="h-16 overflow-hidden bg-gradient-to-r from-[#0F4C3A] via-[#007a2e] to-[#009639]">
+            <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
+              <div className="h-16 overflow-hidden bg-gradient-to-r from-brand via-brand to-brand">
                 {user?.bannerImage && (
                   <img
                     src={user.bannerImage}
@@ -312,18 +312,18 @@ const AlumniDashboard = () => {
                 )}
               </div>
               <div className="px-4 pb-4 text-center">
-                <div className="relative mx-auto -mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-white dark:bg-zinc-900 text-xl font-extrabold text-[#009639] dark:text-emerald-300 shadow ring-2 ring-emerald-100 dark:ring-emerald-900">
+                <div className="relative mx-auto -mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-white dark:bg-zinc-900 text-xl font-extrabold text-brand dark:text-brand shadow ring-2 ring-emerald-100 dark:ring-brand">
                   <ProfileAvatar user={user} fallback="A" />
                 </div>
                 <p className="mt-2 flex items-center justify-center gap-1 text-[14px] font-bold text-zinc-900 dark:text-zinc-100">
                   <span className="truncate">{user?.name || "Alumni"}</span>
-                  <BadgeCheck className="h-4 w-4 shrink-0 text-[#009639] dark:text-emerald-300" />
+                  <BadgeCheck className="h-4 w-4 shrink-0 text-brand dark:text-brand" />
                 </p>
                 <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">
                   {profileStats.program}
                   {profileStats.batch ? ` • Batch ${profileStats.batch}` : ""}
                 </p>
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#009639]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#007a2e]">
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
                   <GraduationCap className="h-3 w-3" />
                   Verified Alumni
                 </span>
@@ -334,10 +334,10 @@ const AlumniDashboard = () => {
                       setShowConnections(true);
                       loadConnections();
                     }}
-                    className="flex w-full justify-between py-0.5 text-zinc-500 dark:text-zinc-400 transition hover:text-[#009639] dark:text-emerald-300"
+                    className="flex w-full justify-between py-0.5 text-zinc-500 dark:text-zinc-400 transition hover:text-brand dark:text-brand"
                   >
                     <span>Total Connections</span>
-                    <span className="font-bold text-[#009639] dark:text-emerald-300">
+                    <span className="font-bold text-brand dark:text-brand">
                       {profileStats.connections}
                     </span>
                   </button>
@@ -345,14 +345,14 @@ const AlumniDashboard = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/alumni/profile")}
-                  className="mt-3 w-full rounded-xl bg-[#009639] py-2 text-[12px] font-bold text-white transition hover:bg-[#007a2e]"
+                  className="mt-3 w-full rounded-xl bg-brand py-2 text-[12px] font-bold text-white transition hover:bg-brand"
                 >
                   View Profile
                 </button>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-emerald-900/10 bg-gradient-to-br from-[#0F4C3A] to-[#007a2e] p-4 text-white shadow-sm">
+            <div className="rounded-2xl border border-brand/10 bg-gradient-to-br from-brand to-brand p-4 text-white shadow-sm">
               <p className="flex items-center gap-1.5 text-[12.5px] font-bold">
                 <ClipboardCheck className="h-4 w-4" />
                 Tracer Study 2026
@@ -363,7 +363,7 @@ const AlumniDashboard = () => {
               <button
                 type="button"
                 onClick={() => navigate("/alumni/tracer")}
-                className="mt-3 w-full rounded-xl bg-white dark:bg-zinc-900 py-2 text-[12px] font-bold text-[#007a2e] transition hover:bg-emerald-50"
+                className="mt-3 w-full rounded-xl bg-white dark:bg-zinc-900 py-2 text-[12px] font-bold text-brand transition hover:bg-emerald-50"
               >
                 Answer now
               </button>
@@ -384,7 +384,7 @@ const AlumniDashboard = () => {
                   onClick={() => setDashTab(key)}
                   className={`rounded-full px-4 py-2 text-[12.5px] font-bold transition ${
                     dashTab === key
-                      ? "bg-[#009639] text-white shadow-sm"
+                      ? "bg-brand text-white shadow-sm"
                       : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-100"
                   }`}
                 >
@@ -395,13 +395,13 @@ const AlumniDashboard = () => {
 
             {dashTab === "mentorship" ? (
               <div className="space-y-3">
-                <div className="rounded-2xl border border-emerald-900/10 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-sm">
+                <div className="rounded-2xl border border-brand/10 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-sm">
                   <h3 className="flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#009639]/10 dark:bg-[#009639]/20 text-[#009639] dark:text-emerald-300">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 dark:bg-brand/20 text-brand dark:text-brand">
                       <Users className="h-3.5 w-3.5" />
                     </span>
                     My Mentees
-                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 text-[10.5px] font-bold text-[#007a2e] dark:text-emerald-300">
+                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 text-[10.5px] font-bold text-brand dark:text-brand">
                       {mentees.length} connected students
                     </span>
                   </h3>
@@ -421,7 +421,7 @@ const AlumniDashboard = () => {
                           key={m.email}
                           className="flex items-center gap-3 rounded-2xl border border-zinc-100 dark:border-zinc-800 p-3"
                         >
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
                             {m.profilePicture ? (
                               <img
                                 src={m.profilePicture}
@@ -443,7 +443,7 @@ const AlumniDashboard = () => {
                           <button
                             type="button"
                             onClick={() => openChatByEmail(m.email)}
-                            className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#009639] px-3.5 py-1.5 text-[11.5px] font-bold text-white transition hover:bg-[#007a2e]"
+                            className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-[11.5px] font-bold text-white transition hover:bg-brand"
                           >
                             <MessageSquare className="h-3.5 w-3.5" />
                             Chat
@@ -455,7 +455,7 @@ const AlumniDashboard = () => {
                   <button
                     type="button"
                     onClick={() => navigate("/alumni/requests")}
-                    className="mt-3 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 py-2.5 text-[12.5px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-[#009639] hover:text-[#007a2e] dark:hover:text-emerald-300"
+                    className="mt-3 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 py-2.5 text-[12.5px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand dark:hover:text-brand"
                   >
                     View invitations
                     {pendingCount > 0 ? ` (${pendingCount} pending)` : ""}
@@ -469,8 +469,8 @@ const AlumniDashboard = () => {
 
           {/* RIGHT: Connection requests + Suggested connects */}
           <aside className="order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:sticky xl:top-20 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-            <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-4 py-2.5">
+            <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
+              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
                   <UserPlus className="h-3.5 w-3.5" />
                   Connection Requests
@@ -505,7 +505,7 @@ const AlumniDashboard = () => {
                           <div className="flex items-center gap-2">
                             <ProfileLink
                               {...profileLinkProps}
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-[11px] font-bold text-[#009639] dark:text-emerald-300"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-[11px] font-bold text-brand dark:text-brand"
                             >
                               <ProfileAvatar user={r} />
                             </ProfileLink>
@@ -525,7 +525,7 @@ const AlumniDashboard = () => {
                             <button
                               type="button"
                               onClick={() => handleRespond(r._id, "accepted")}
-                              className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#009639] py-1.5 text-[10.5px] font-bold text-white transition hover:bg-[#007a2e]"
+                              className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand py-1.5 text-[10.5px] font-bold text-white transition hover:bg-brand"
                             >
                               <Check className="h-3 w-3" />
                               Accept
@@ -547,14 +547,14 @@ const AlumniDashboard = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/alumni/requests")}
-                  className="mt-2.5 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-[#009639] hover:text-[#007a2e] dark:hover:text-emerald-300"
+                  className="mt-2.5 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-brand hover:text-brand dark:hover:text-brand"
                 >
                   View more
                 </button>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+            <div className="rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 p-4 shadow-sm">
               <p className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100">
                 Suggested Connects
               </p>
@@ -568,7 +568,7 @@ const AlumniDashboard = () => {
                   <button
                     type="button"
                     onClick={loadSuggestions}
-                    className="mt-2 font-bold text-[#009639] hover:underline"
+                    className="mt-2 font-bold text-brand hover:underline"
                   >
                     Retry suggestions
                   </button>
@@ -584,7 +584,7 @@ const AlumniDashboard = () => {
                       <Link
                         to={profilePath(person)}
                         aria-label={`View ${person.name || "Alumni"} profile`}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-xs font-bold text-[#009639] dark:text-emerald-300"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand dark:text-brand"
                       >
                         <ProfileAvatar
                           user={{
@@ -609,7 +609,7 @@ const AlumniDashboard = () => {
                           type="button"
                           disabled={connecting !== null}
                           onClick={() => handleConnect(person)}
-                          className="mt-1.5 rounded-full bg-[#009639]/10 px-3 py-1 text-[11px] font-bold text-[#007a2e] transition hover:bg-[#009639] hover:text-white disabled:opacity-50"
+                          className="mt-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold text-brand transition hover:bg-brand hover:text-white disabled:opacity-50"
                         >
                           {connecting === person.email ? "..." : "+ connect"}
                         </button>
@@ -621,14 +621,14 @@ const AlumniDashboard = () => {
               <button
                 type="button"
                 onClick={() => navigate("/alumni/requests")}
-                className="mt-3 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-[#009639] hover:text-[#007a2e] dark:hover:text-emerald-300"
+                className="mt-3 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 py-1.5 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-brand hover:text-brand dark:hover:text-brand"
               >
                 View more
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-4 py-2.5">
+            <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
+              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
                   <Megaphone className="h-3.5 w-3.5" />
                   At CLSU Today
@@ -647,7 +647,7 @@ const AlumniDashboard = () => {
                         onClick={() => setSelectedAnnouncement(item)}
                         className="w-full text-left"
                       >
-                        <p className="text-[12px] font-semibold leading-snug text-zinc-800 dark:text-zinc-100 transition hover:text-[#009639] dark:text-emerald-300">
+                        <p className="text-[12px] font-semibold leading-snug text-zinc-800 dark:text-zinc-100 transition hover:text-brand dark:text-brand">
                           {item.title}
                         </p>
                         <p className="text-[10.5px] text-zinc-400 dark:text-zinc-500">
@@ -701,7 +701,7 @@ const AlumniDashboard = () => {
                     key={person.email}
                     className="flex items-center gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-emerald-700">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand">
                       <ProfileAvatar user={person} />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -725,7 +725,7 @@ const AlumniDashboard = () => {
                         setShowConnections(false);
                         openChatByEmail(person.email);
                       }}
-                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white"
+                      className="rounded-lg bg-brand px-3 py-2 text-xs font-bold text-white"
                     >
                       Message
                     </button>

@@ -121,7 +121,7 @@ export default function SkillInput({
           type="button"
           onClick={() => add(value)}
           disabled={blocked || !value.trim()}
-          className="flex h-9 shrink-0 items-center gap-1 rounded-xl bg-[#009639] px-3 text-[12px] font-bold text-white transition hover:bg-[#007a2e] disabled:opacity-50"
+          className="flex h-9 shrink-0 items-center gap-1 rounded-xl bg-brand px-3 text-[12px] font-bold text-white transition hover:bg-brand disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" /> Add
         </button>

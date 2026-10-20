@@ -8,7 +8,7 @@ import api from "../../utils/axios";
 const card =
   "admin-panel p-4";
 const input =
-  "h-10 min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
+  "h-10 min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900";
 const button =
   "admin-button admin-button-secondary";
 const labelMonth = (value) => (value ? value.slice(0, 7) : "Date not provided");
@@ -308,7 +308,7 @@ export default function EmploymentReports() {
                         className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                       >
                         <div
-                          className="h-full rounded-full bg-[#009639]"
+                          className="h-full rounded-full bg-brand"
                           style={{ width: `${item.percentage}%` }}
                         />
                       </div>
@@ -424,7 +424,7 @@ export default function EmploymentReports() {
                                 expanded === person._id ? null : person._id,
                               )
                             }
-                            className="font-semibold text-[#009639] dark:text-emerald-300"
+                            className="font-semibold text-brand dark:text-brand"
                           >
                             {person.employmentHistory.length} roles · View
                           </button>
@@ -467,7 +467,7 @@ export default function EmploymentReports() {
                             {person.employmentHistory.map((job, index) => (
                               <li
                                 key={job._id || index}
-                                className="border-l-2 border-[#009639] pl-3"
+                                className="border-l-2 border-brand pl-3"
                               >
                                 <p className="break-words text-sm font-medium">
                                   {job.position ||

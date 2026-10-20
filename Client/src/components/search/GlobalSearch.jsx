@@ -169,7 +169,7 @@ function SearchInput({ initialQuery }) {
               select(items[active]);
             }
           }}
-          className="h-10 w-full rounded-full border border-zinc-200 bg-zinc-50 pl-9 pr-9 text-sm text-zinc-900 outline-none focus:border-[#009639] focus:ring-2 focus:ring-emerald-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+          className="h-10 w-full rounded-full border border-zinc-200 bg-zinc-50 pl-9 pr-9 text-sm text-zinc-900 outline-none focus:border-brand focus:ring-2 focus:ring-emerald-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
         />
         {query && (
           <button
@@ -234,7 +234,7 @@ function SearchInput({ initialQuery }) {
               <button
                 type="submit"
                 tabIndex={-1}
-                className={`w-full border-t border-zinc-100 px-4 py-3 text-left text-sm font-semibold text-emerald-700 dark:border-zinc-800 dark:text-emerald-400 ${active === items.length ? "bg-emerald-50 dark:bg-zinc-800" : ""}`}
+                className={`w-full border-t border-zinc-100 px-4 py-3 text-left text-sm font-semibold text-brand dark:border-zinc-800 dark:text-brand ${active === items.length ? "bg-emerald-50 dark:bg-zinc-800" : ""}`}
               >
                 See all results for “{term}”
               </button>

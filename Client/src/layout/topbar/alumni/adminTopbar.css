@@ -5,7 +5,7 @@
 }
 .admin-workspace .member-topbar button[aria-expanded="true"] {
   background-color: #e9eceb;
-  color: #1d6845;
+  color: #009639;
 }
 .dark .admin-workspace .member-topbar > header {
   background-color: #18181bf2;
@@ -47,5 +47,5 @@
   line-height: 18px;
   font-weight: 500;
 }
-.admin-workspace .page-header-actions > .admin-primary-action { background-color: #145238; color: #fff; }
+.admin-workspace .page-header-actions > .admin-primary-action { background-color: #009639; color: #fff; }
 .admin-workspace .page-header-actions > .admin-primary-action:hover { background-color: #0f432c; }

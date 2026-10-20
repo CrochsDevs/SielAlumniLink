@@ -156,7 +156,7 @@ export default function StoryComposer({ onClose, onPublished }) {
                   type="button"
                   aria-pressed={form.topic === topic.key}
                   onClick={() => change("topic", topic.key)}
-                  className={`flex min-w-0 flex-col items-center gap-2 rounded-xl border px-2 py-3 text-xs font-medium ${form.topic === topic.key ? `border-[#009639] ${topic.style}` : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"}`}
+                  className={`flex min-w-0 flex-col items-center gap-2 rounded-xl border px-2 py-3 text-xs font-medium ${form.topic === topic.key ? `border-brand ${topic.style}` : "border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"}`}
                 >
                   {createElement(topic.icon, { size: 20 })}
                   {topic.label}
@@ -253,7 +253,7 @@ export default function StoryComposer({ onClose, onPublished }) {
                 type="button"
                 disabled={busy || uploading}
                 onClick={() => photoInput.current?.click()}
-                className="flex min-h-10 items-center gap-2 text-xs font-semibold text-[#007a2e] dark:text-emerald-300"
+                className="flex min-h-10 items-center gap-2 text-xs font-semibold text-brand dark:text-brand"
               >
                 <ImagePlus size={18} />
                 Add a cover photo{" "}

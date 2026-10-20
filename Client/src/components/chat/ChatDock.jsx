@@ -147,15 +147,15 @@ const ChatWindow = ({
             aria-expanded={!minimized && profileUrl ? showProfile : undefined}
             className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-transparent text-left"
           >
-            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 text-[11px] font-bold text-[#009639]">
+            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
               <ChatAvatar convo={convo} />
-              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-zinc-900 bg-[#009639]" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-zinc-900 bg-brand" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[12px] font-bold text-zinc-800 dark:text-zinc-100">
                 {convo.name}
               </span>
-              <span className="block text-[10px] text-[#009639] dark:text-emerald-300">
+              <span className="block text-[10px] text-brand dark:text-brand">
                 {convo.isGroup
                   ? `${convo.memberCount || ""} members`.trim() || "Group"
                   : "Active now"}
@@ -172,7 +172,7 @@ const ChatWindow = ({
                 role="menuitem"
                 to={profileUrl}
                 onClick={() => setShowProfile(false)}
-                className="block rounded-lg px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-emerald-50 hover:text-[#009639] dark:text-zinc-200 dark:hover:bg-emerald-950"
+                className="block rounded-lg px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-emerald-50 hover:text-brand dark:text-zinc-200 dark:hover:bg-emerald-950"
               >
                 View profile
               </Link>
@@ -222,7 +222,7 @@ const ChatWindow = ({
               <button
                 type="button"
                 onClick={() => setShowEmoji((value) => !value)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
                 aria-label="Add emoji"
                 aria-expanded={showEmoji}
               >
@@ -244,7 +244,7 @@ const ChatWindow = ({
               )}
             </div>
             <label
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
               title="Send photo"
             >
               <ImagePlus className="h-4 w-4" />
@@ -259,7 +259,7 @@ const ChatWindow = ({
               />
             </label>
             <label
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
               title="Attach file"
             >
               <Paperclip className="h-4 w-4" />
@@ -276,12 +276,12 @@ const ChatWindow = ({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Write a message..."
-              className="h-9 min-w-0 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:bg-zinc-50 dark:focus:bg-zinc-700 focus:ring-2 focus:ring-[#009639]/20"
+              className="h-9 min-w-0 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:bg-zinc-50 dark:focus:bg-zinc-700 focus:ring-2 focus:ring-brand/20"
             />
             <button
               type="submit"
               disabled={!draft.trim()}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#009639] transition hover:bg-emerald-50 disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand transition hover:bg-emerald-50 disabled:opacity-40"
               aria-label="Send message"
             >
               <Send className="h-4 w-4" />

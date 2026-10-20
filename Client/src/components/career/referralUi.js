@@ -8,8 +8,8 @@ export const REFERRAL_TYPES = [
     icon: BriefcaseBusiness,
     description: "Take the next step in your career.",
     style:
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
-    accent: "bg-emerald-500",
+      "bg-emerald-50 text-brand dark:bg-emerald-950/60 dark:text-brand",
+    accent: "bg-brand",
   },
   {
     key: "internship",
@@ -47,7 +47,7 @@ export const APPLICATION_STATUSES = [
     key: "accepted",
     label: "Accepted",
     style:
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+      "bg-emerald-50 text-brand dark:bg-emerald-950/60 dark:text-brand",
   },
   {
     key: "declined",
@@ -80,8 +80,8 @@ export const referralLink = (value) => {
 export const panel =
   "rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 export const fieldStyle =
-  "mt-2 h-11 w-full min-w-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/10 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:[color-scheme:dark]";
+  "mt-2 h-11 w-full min-w-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:[color-scheme:dark]";
 export const primaryButton =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#009639] px-4 text-xs font-semibold text-white transition hover:bg-[#007a2e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-50";
 export const secondaryButton =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800";

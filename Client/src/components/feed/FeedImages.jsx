@@ -147,7 +147,7 @@ function ImageViewer({ images, initialIndex, onClose }) {
               onClick={() => setIndex(i)}
               aria-label={`Show photo ${i + 1}`}
               aria-pressed={i === index}
-              className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 ${i === index ? "border-emerald-400" : "border-transparent"}`}
+              className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 ${i === index ? "border-brand" : "border-transparent"}`}
             >
               <img
                 src={postImageUrl(image)}
@@ -176,7 +176,7 @@ export default function FeedImages({ images = [] }) {
             type="button"
             aria-label={`View photo ${i + 1} of ${images.length}`}
             onClick={() => setSelected(i)}
-            className={`relative min-h-0 min-w-0 overflow-hidden focus-visible:z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-emerald-500 ${images.length === 2 || (images.length === 3 && i === 0) ? "row-span-2" : ""}`}
+            className={`relative min-h-0 min-w-0 overflow-hidden focus-visible:z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-brand ${images.length === 2 || (images.length === 3 && i === 0) ? "row-span-2" : ""}`}
           >
             <Photo
               image={image}

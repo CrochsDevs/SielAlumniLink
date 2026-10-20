@@ -208,7 +208,7 @@ const GroupModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
-          <Users className="h-4 w-4 text-[#009639]" />
+          <Users className="h-4 w-4 text-brand" />
           New group chat
         </h2>
         <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
@@ -219,7 +219,7 @@ const GroupModal = ({
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             placeholder="Group name (e.g. Batch 2019)"
-            className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none focus:border-[#009639]"
+            className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3.5 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none focus:border-brand"
           />
 
           <div className="flex items-center justify-between px-1 pt-1">
@@ -249,7 +249,7 @@ const GroupModal = ({
                   key={p.email}
                   className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-[13px] font-bold text-[#009639] dark:text-emerald-300">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-[13px] font-bold text-brand dark:text-brand">
                     {(p.name || "A").charAt(0).toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -265,8 +265,8 @@ const GroupModal = ({
                     onClick={() => toggle(p.email)}
                     className={`flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition ${
                       added
-                        ? "bg-[#009639] text-white hover:bg-[#007a2e]"
-                        : "border border-[#009639] text-[#009639] hover:bg-[#009639]/10 dark:border-emerald-400 dark:text-emerald-300"
+                        ? "bg-brand text-white hover:bg-brand"
+                        : "border border-brand text-brand hover:bg-brand/10 dark:border-brand dark:text-brand"
                     }`}
                   >
                     {added ? (
@@ -295,7 +295,7 @@ const GroupModal = ({
             <button
               type="submit"
               disabled={groupSaving || groupEmails.length < 2}
-              className="h-10 flex-1 rounded-xl bg-[#009639] text-[13px] font-bold text-white hover:bg-[#007a2e] disabled:opacity-50"
+              className="h-10 flex-1 rounded-xl bg-brand text-[13px] font-bold text-white hover:bg-brand disabled:opacity-50"
             >
               {groupSaving ? "Creating..." : "Create group"}
             </button>
@@ -331,13 +331,13 @@ const ConvoList = ({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search messages..."
-          className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
+          className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
         />
       </div>
       <button
         type="button"
         onClick={() => setGroupOpen(true)}
-        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 py-2 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-[#009639] hover:text-[#009639]"
+        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 py-2 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-brand hover:text-brand"
       >
         <Plus className="h-3.5 w-3.5" />
         New group chat
@@ -353,11 +353,11 @@ const ConvoList = ({
               onClick={() => setActiveId(String(c._id))}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
                 isActive
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-200/60 dark:ring-emerald-900"
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-200/60 dark:ring-brand"
                   : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
               }`}
             >
-              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
+              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
                 <ChatAvatar convo={c} />
                 {c.unread > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
@@ -462,7 +462,7 @@ const ThreadPane = ({
   if (!active) {
     return (
       <div className="hidden flex-1 flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-zinc-950/50 p-8 text-center md:flex">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950 text-brand dark:text-brand">
           <Send className="h-6 w-6" />
         </span>
         <p className="text-[14px] font-bold text-zinc-700 dark:text-zinc-200">
@@ -487,9 +487,9 @@ const ThreadPane = ({
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639]/10 dark:bg-[#009639]/20 text-sm font-bold text-[#009639] dark:text-emerald-300">
+        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
           <ChatAvatar convo={active} />
-          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-[#009639]" />
+          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-brand" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
@@ -500,7 +500,7 @@ const ThreadPane = ({
               </span>
             ) : null}
           </span>
-          <span className="block text-[11px] font-medium text-[#009639] dark:text-emerald-300">
+          <span className="block text-[11px] font-medium text-brand dark:text-brand">
             Active now
           </span>
         </span>
@@ -511,7 +511,7 @@ const ThreadPane = ({
               onClick={() =>
                 window.__startCall?.(active.authId, active.name, "voice")
               }
-              className="rounded-full p-2 text-zinc-500 dark:text-zinc-400 transition hover:bg-emerald-50 dark:hover:bg-zinc-800 hover:text-[#009639]"
+              className="rounded-full p-2 text-zinc-500 dark:text-zinc-400 transition hover:bg-emerald-50 dark:hover:bg-zinc-800 hover:text-brand"
               aria-label="Voice call"
               title="Voice call"
             >
@@ -522,7 +522,7 @@ const ThreadPane = ({
               onClick={() =>
                 window.__startCall?.(active.authId, active.name, "video")
               }
-              className="rounded-full p-2 text-zinc-500 dark:text-zinc-400 transition hover:bg-emerald-50 dark:hover:bg-zinc-800 hover:text-[#009639]"
+              className="rounded-full p-2 text-zinc-500 dark:text-zinc-400 transition hover:bg-emerald-50 dark:hover:bg-zinc-800 hover:text-brand"
               aria-label="Video call"
               title="Video call"
             >
@@ -552,7 +552,7 @@ const ThreadPane = ({
           <button
             type="button"
             onClick={() => setShowEmoji(!showEmoji)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
             aria-label="Add emoji"
             aria-expanded={showEmoji}
           >
@@ -575,7 +575,7 @@ const ThreadPane = ({
           )}
         </div>
         <label
-          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
           title="Send photo"
         >
           <ImagePlus className="h-4 w-4" />
@@ -590,7 +590,7 @@ const ThreadPane = ({
           />
         </label>
         <label
-          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-[#009639]"
+          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
           title="Attach file"
         >
           <Paperclip className="h-4 w-4" />
@@ -607,12 +607,12 @@ const ThreadPane = ({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={`Message ${active.isGroup ? "group" : active.name.split(" ")[0]}...`}
-          className="h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-[#009639] focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-[#009639]/15"
+          className="h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
         />
         <button
           type="submit"
           disabled={!draft.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#009639] text-white shadow-sm transition hover:bg-[#007a2e] disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-sm transition hover:bg-brand disabled:opacity-40"
           aria-label="Send message"
         >
           <Send className="h-4 w-4" />

@@ -39,7 +39,7 @@ const StudentSidebar = ({
   const navItemClass = (active) =>
     `group flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
       active
-        ? "bg-[#009639]/10 text-[#009639] font-semibold dark:bg-[#009639]/20 dark:text-emerald-300"
+        ? "bg-[#009639] text-white font-semibold dark:bg-[#009639] dark:text-white"
         : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
     }`;
 
@@ -79,7 +79,7 @@ const StudentSidebar = ({
             />
             <div className="leading-tight mt-1">
               <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">
-                Siel<span className="text-[#009639]">Alumni</span>
+                Siel<span className="text-brand">Alumni</span>
               </p>
             </div>
           </Link>
@@ -215,7 +215,7 @@ const StudentSidebar = ({
         {/* User + Logout */}
         <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-            <div className="h-8 w-8 rounded-full bg-emerald-50 text-[#009639] flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:ring-emerald-900">
+            <div className="h-8 w-8 rounded-full bg-emerald-50 text-brand flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:bg-emerald-950 dark:text-brand dark:ring-brand">
               <ProfileAvatar user={user} fallback="S" />
             </div>
             <div className="min-w-0 flex-1">

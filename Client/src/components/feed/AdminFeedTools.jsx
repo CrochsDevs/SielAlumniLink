@@ -61,8 +61,8 @@ export default function AdminFeedTools() {
   };
   return (
     <div className="space-y-3">
-      <section className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm dark:bg-zinc-900">
-        <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-4 py-2.5">
+      <section className="overflow-hidden rounded-2xl border border-brand/10 bg-white shadow-sm dark:bg-zinc-900">
+        <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
         <h2 className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
           <Shield size={14} />
           Feed moderation
@@ -80,14 +80,14 @@ export default function AdminFeedTools() {
         </p>
         <Link
           to="/admin/users"
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 py-1.5 text-[11px] font-bold text-zinc-500 transition hover:border-[#009639] hover:text-[#007a2e] dark:border-zinc-700 dark:text-zinc-400"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 py-1.5 text-[11px] font-bold text-zinc-500 transition hover:border-brand hover:text-brand dark:border-zinc-700 dark:text-zinc-400"
         >
           <Users size={15} />
           Manage users
         </Link>
         </div>
       </section>
-      <section className="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:bg-zinc-900">
+      <section className="rounded-2xl border border-brand/10 bg-white p-4 shadow-sm dark:bg-zinc-900">
         <h2 className="text-[13px] font-bold">Restricted members</h2>
         {error && (
           <p
@@ -123,7 +123,7 @@ export default function AdminFeedTools() {
                   type="button"
                   disabled={busy !== null}
                   onClick={() => restore(member.author.authId)}
-                  className="mt-2 rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-[#009639] disabled:opacity-50 dark:border-zinc-700"
+                  className="mt-2 rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-brand disabled:opacity-50 dark:border-zinc-700"
                 >
                   {busy === member.author.authId
                     ? "Restoring…"
