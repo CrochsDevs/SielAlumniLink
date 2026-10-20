@@ -1,5 +1,6 @@
+import AdminStatCard from "../../components/admin/AdminStatCard";
+import { AdminStatGrid, AdminTabs, AdminButton } from "../../components/admin/AdminUI";
 import {
-  createElement,
   useCallback,
   useEffect,
   useMemo,
@@ -249,7 +250,7 @@ function MiniCalendar({ value, onSelect, hasEvents, highlightWeek }) {
   return (
     <div className="rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <h3 className="admin-section-title text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
           {view.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </h3>
         <div className="flex items-center gap-0.5">
@@ -332,7 +333,7 @@ function CollapseCard({ title, open, onToggle, children }) {
         aria-expanded={open}
         className="flex w-full items-center justify-between text-left"
       >
-        <span className="text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <span className="admin-section-title">
           {title}
         </span>
         {open ? (
@@ -524,7 +525,6 @@ export default function AdminEvents() {
     upcomingOnly: false,
   });
   const [filtersOpen, setFiltersOpen] = useState(true);
-  const [overviewOpen, setOverviewOpen] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -758,14 +758,14 @@ export default function AdminEvents() {
   const renderReminder = () => {
     const ongoing = nextEvent && new Date(nextEvent.startAt) <= now;
     return (
-      <div className="rounded-3xl bg-[#009639] p-4 text-white shadow-sm dark:bg-[#007a2e]">
+      <div className="admin-calendar-reminder rounded-2xl p-4 text-white shadow-sm">
         <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-white/80">
           <Bell className="h-3.5 w-3.5" />{" "}
           {ongoing ? "Happening now" : "Next event"}
         </p>
         {nextEvent ? (
           <>
-            <h3 className="mt-1 text-[17px] font-extrabold leading-snug tracking-tight">
+            <h3 className="admin-section-title mt-1 text-[17px] font-extrabold leading-snug tracking-tight">
               {nextEvent.title}
             </h3>
             <p className="mt-2 flex items-center gap-1.5 text-[11.5px] text-white/90">
@@ -784,7 +784,7 @@ export default function AdminEvents() {
                 type="button"
                 aria-label="Edit event"
                 onClick={() => openEdit(nextEvent)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300 text-zinc-900 transition hover:bg-amber-400"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white/25"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -792,7 +792,7 @@ export default function AdminEvents() {
                 type="button"
                 aria-label="View event"
                 onClick={() => setSelectedEvent(nextEvent)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-white transition hover:bg-zinc-800"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white/25"
               >
                 <Check className="h-3.5 w-3.5" />
               </button>
@@ -800,13 +800,13 @@ export default function AdminEvents() {
           </>
         ) : (
           <>
-            <h3 className="mt-1 text-[17px] font-extrabold leading-snug tracking-tight">
+            <h3 className="admin-section-title mt-1 text-[17px] font-extrabold leading-snug tracking-tight">
               Nothing coming up
             </h3>
             <button
               type="button"
               onClick={() => openAddForDay(new Date())}
-              className="mt-3 rounded-full bg-amber-300 px-3.5 py-1.5 text-[12px] font-bold text-zinc-900 transition hover:bg-amber-400"
+              className="mt-3 rounded-[10px] bg-white/15 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-white/25"
             >
               Create event
             </button>
@@ -850,37 +850,9 @@ export default function AdminEvents() {
     </CollapseCard>
   );
 
-  const renderOverview = () => (
-    <CollapseCard
-      title="Overview"
-      open={overviewOpen}
-      onToggle={() => setOverviewOpen((o) => !o)}
-    >
-      <div className="space-y-2.5">
-        {[
-          { label: "Total events", value: counts.total, icon: Calendar },
-          { label: "Published", value: counts.active, icon: Power },
-          { label: "Upcoming", value: counts.upcoming, icon: CalendarDays },
-        ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
-              {createElement(Icon, { className: "h-4 w-4" })}
-            </span>
-            <span className="flex-1 text-[12.5px] font-medium text-zinc-600 dark:text-zinc-300">
-              {label}
-            </span>
-            <span className="text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
-              {value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </CollapseCard>
-  );
-
   /* ----- views (plain functions, not components, so inputs keep focus) ----- */
   const renderHeader = () => (
-    <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-white px-4 py-3 shadow-sm dark:bg-zinc-900 sm:px-5">
+    <div className="admin-panel admin-toolbar">
       {viewMode !== "list" ? (
         <div className="flex items-center gap-1">
           <button
@@ -891,7 +863,7 @@ export default function AdminEvents() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <h2 className="px-1 text-[17px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-xl">
+          <h2 className="admin-section-title px-1 text-[17px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-xl">
             {title}
           </h2>
           <button
@@ -911,44 +883,14 @@ export default function AdminEvents() {
           </button>
         </div>
       ) : (
-        <h2 className="text-[17px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-xl">
+        <h2 className="admin-section-title text-[17px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-xl">
           All events
         </h2>
       )}
 
-      <div
-        className="order-3 inline-flex w-full rounded-full bg-zinc-100 p-1 dark:bg-zinc-800 lg:order-none lg:mx-auto lg:w-auto"
-        role="tablist"
-        aria-label="Calendar view"
-      >
-        {VIEWS.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={viewMode === key}
-            onClick={() => setViewMode(key)}
-            className={`flex-1 rounded-full px-4 py-1.5 text-[12px] font-bold transition lg:flex-none ${
-              viewMode === key
-                ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <AdminTabs label="Calendar view" value={viewMode} onChange={setViewMode} items={VIEWS.map(item => ({ id: item.key, label: item.label }))} className="lg:mx-auto" />
 
-      <button
-        type="button"
-        onClick={() =>
-          openAddForDay(viewMode === "list" ? new Date() : currentDate)
-        }
-        className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-300 px-4 text-[12.5px] font-bold text-zinc-900 transition hover:bg-amber-400 lg:ml-0"
-      >
-        <Plus className="h-4 w-4" />
-        <span>Create event</span>
-      </button>
+      <AdminButton onClick={() => openAddForDay(viewMode === "list" ? new Date() : currentDate)} className="ml-auto"><Plus size={15} />Create event</AdminButton>
     </div>
   );
 
@@ -1244,7 +1186,16 @@ export default function AdminEvents() {
         />
 
         <main className="workspace-page mx-auto grid max-w-[1500px] gap-4 p-4 sm:p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-          <div className="order-first xl:col-span-2"><PageHeader title="Calendar" description="Manage community events, schedules, and reminders." /></div>
+          <div className="order-first space-y-4 xl:col-span-2">
+            <PageHeader title="Calendar" description="Manage community events, schedules, and reminders." />
+            <AdminStatGrid columns={3}>
+              {[
+                { label: "Total events", value: counts.total, icon: Calendar, caption: "community activities", detail: "Published and draft activities" },
+                { label: "Published", value: counts.active, icon: Power, caption: "visible events", detail: "Available in the community calendar" },
+                { label: "Upcoming", value: counts.upcoming, icon: CalendarDays, caption: "scheduled activities", detail: "Activities that have not started" },
+              ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} />)}
+            </AdminStatGrid>
+          </div>
           {/* left rail */}
           <aside className="order-2 space-y-4 xl:order-1">
             <MiniCalendar
@@ -1255,7 +1206,6 @@ export default function AdminEvents() {
             />
             {renderReminder()}
             {renderFilters()}
-            {renderOverview()}
           </aside>
 
           {/* main */}
@@ -1283,7 +1233,7 @@ export default function AdminEvents() {
             <div className="p-5">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+                  <h3 className="admin-section-title text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
                     {selectedEvent.title}
                   </h3>
                   <span
@@ -1391,7 +1341,7 @@ export default function AdminEvents() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+              <h3 className="admin-section-title text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
                 {editing ? "Edit event" : "New event"}
               </h3>
               <button

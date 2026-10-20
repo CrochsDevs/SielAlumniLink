@@ -1,0 +1,90 @@
+.admin-overview {
+  --card-border: var(--alumni-card-border, #d4dfd1);
+  --card-muted: #758078;
+  --card-ink: var(--alumni-heading, #101b14);
+  --card-soft: var(--alumni-tab, #dfe9dc);
+  --card-surface: var(--alumni-card, #f5faf1);
+}
+.admin-overview .dashboard-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  background-color: var(--card-surface);
+  box-shadow: var(--alumni-card-shadow, 0 3px 14px rgb(24 59 35 / 4%));
+}
+.admin-overview .dashboard-card h2 { color: var(--card-ink); font-size: 12px; line-height: 1.5; font-weight: 600; }
+.admin-overview .dashboard-card-heading h2 { padding-left: 8px; border-left: 3px solid #488d61; }
+.admin-overview .dashboard-engagement { background-color: #dfece2; border-color: #accbb6; }
+.admin-overview .dashboard-engagement h2 { color: #1c5334; }
+.admin-overview .dashboard-chart-plot {
+  padding: 12px 10px 0;
+  border: 1px solid #b5cfbd;
+  border-radius: 12px;
+  background-color: #cfe2d5;
+  background-image: linear-gradient(to top, rgb(43 90 59 / 10%) 1px, transparent 1px);
+  background-size: 100% 25%;
+}
+.admin-overview .dashboard-chart-bar { background: linear-gradient(180deg, #4c9d70, #205d3e); }
+.admin-overview .dashboard-chart-plot button:hover .dashboard-chart-bar { background: #235f3e; }
+.admin-overview .dashboard-chart-plot button[aria-pressed="true"] .dashboard-chart-bar { background: #123d28; box-shadow: 0 0 0 2px #8fbd9e; }
+.admin-overview .dashboard-chart-plot button > span:first-child { color: #28593b; font-weight: 600; }
+.admin-overview .dashboard-chart-plot button > span:last-child { color: #476a52; }
+.admin-overview .dashboard-tracer { --card-surface: #d4e5d9; background-color: var(--card-surface); }
+.admin-overview .dashboard-mentorship { background-color: #dce8db; }
+.admin-overview :is(.dashboard-tracer, .dashboard-mentorship) :is(strong, .text-xl) { color: #215739; }
+.admin-overview .dashboard-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.admin-overview .dashboard-view-link { display: inline-flex; align-items: center; flex-shrink: 0; gap: 3px; color: #59836a; font-size: 10px; }
+.admin-overview .dashboard-view-link:hover { color: #217b56; }
+.admin-overview a:focus-visible,
+.admin-overview button:focus-visible { outline: 2px solid #26875e; outline-offset: 4px; }
+.admin-overview .dashboard-attention { background-color: var(--alumni-secondary, #f5f0e3); border-color: var(--alumni-secondary-border, #e6dfcf); }
+.admin-overview .dashboard-attention h2 { color: #6c5425; }
+.admin-overview .dashboard-tracer [role="img"] > div { background-color: var(--card-surface); }
+.admin-overview .dashboard-attention .dashboard-queue > a { border-bottom-color: var(--alumni-secondary-border, #e6dfcf); }
+.admin-overview .dashboard-queue { margin-top: 12px; }
+.admin-overview .dashboard-queue > a { min-height: 42px; padding: 9px 0; border-radius: 0; border-bottom: 1px solid var(--card-border); transition: background-color 150ms; }
+.admin-overview .dashboard-queue > a:last-child { border-bottom: 0; }
+.admin-overview .dashboard-queue > a:hover { background: var(--card-soft); }
+.admin-overview .dashboard-queue > a > span.flex-1 { font-size: 11px; }
+.admin-overview .dashboard-queue > a > svg:first-child { color: #769582; }
+.admin-overview .dashboard-operations { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 14px 0; border: 1px solid var(--card-border); border-radius: 16px; background: #cfdfd2; box-shadow: var(--alumni-card-shadow); }
+.admin-overview .dashboard-operation { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 4px 18px; border-right: 1px solid var(--card-border); }
+.admin-overview .dashboard-operation:last-child { border-right: 0; }
+.admin-overview .dashboard-operation:hover { background: var(--card-soft); }
+.admin-overview .dashboard-operation > svg:first-child { width: 32px; height: 32px; flex-shrink: 0; padding: 8px; border-radius: 10px; background: var(--card-soft); }
+.admin-overview .dashboard-operation > div { flex: 1; min-width: 0; }
+.admin-overview .dashboard-operation p.text-xs { margin-top: 2px; font-size: 10px; }
+.admin-overview .dashboard-operation-arrow { flex-shrink: 0; color: #90a397; }
+.admin-overview .dashboard-event,
+.admin-overview .dashboard-announcement { padding: 8px; margin: -8px; border-radius: 12px; }
+.admin-overview .dashboard-event:hover,
+.admin-overview .dashboard-announcement:hover { background: var(--card-soft); }
+.admin-overview .dashboard-tracer,
+.admin-overview .dashboard-mentorship { height: 100%; }
+.admin-overview .dashboard-breakdown { gap: 0; }
+.admin-overview .dashboard-breakdown > div { padding: 10px 12px; border-left: 3px solid #74a784; margin-bottom: 10px; }
+.admin-overview .dashboard-breakdown dd { color: #205337; }
+.admin-overview .dashboard-breakdown dt { font-size: 10px; }
+.dark .admin-overview { --card-muted: #96a69c; }
+.dark .admin-overview .dashboard-attention h2 { color: #e1cc95; }
+.dark .admin-overview .dashboard-breakdown > div { border-color: #334b3c; }
+.dark .admin-overview .dashboard-engagement { background-color: #20392b; border-color: #416a50; }
+.dark .admin-overview .dashboard-engagement h2 { color: #d1eeda; }
+.dark .admin-overview .dashboard-chart-plot { background-color: #172e21; border-color: #3e604a; background-image: linear-gradient(to top, rgb(180 222 194 / 10%) 1px, transparent 1px); }
+.dark .admin-overview .dashboard-chart-bar { background: linear-gradient(180deg, #8bd4a6, #3a9a60); }
+.dark .admin-overview .dashboard-chart-plot button > span:first-child { color: #d1eeda; }
+.dark .admin-overview .dashboard-chart-plot button > span:last-child { color: #a7c8b2; }
+.dark .admin-overview .dashboard-chart-plot button[aria-pressed="true"] .dashboard-chart-bar { background: #b4e9c6; }
+.dark .admin-overview .dashboard-tracer { --card-surface: #23402e; --tracer-track: #44634e; }
+.dark .admin-overview .dashboard-mentorship { background-color: #283f2b; }
+.dark .admin-overview .dashboard-operations { background-color: #284231; }
+.dark .admin-overview :is(.dashboard-tracer, .dashboard-mentorship) :is(strong, .text-xl),
+.dark .admin-overview .dashboard-breakdown dd { color: #c5ead0; }
+@media (max-width: 767px) {
+  .admin-overview .dashboard-operations { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; }
+  .admin-overview .dashboard-operation { padding: 4px 12px; }
+  .admin-overview .dashboard-operation:nth-child(2) { border-right: 0; }
+  .admin-overview .dashboard-operation-arrow { display: none; }
+}
+

@@ -1,3 +1,5 @@
+import AdminStatCard from "../../components/admin/AdminStatCard";
+import { AdminStatGrid, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
@@ -151,34 +153,16 @@ export default function AdminAnnouncements() {
 
         <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
           <PageHeader title="Announcements" description="Share updates and manage announcements for your community." />
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-3">
+          <AdminStatGrid columns={2}>
             {[
-              { label: "Total", value: counts.total, icon: Megaphone },
-              { label: "Published", value: counts.active, icon: Eye },
-            ].map(({ label, value, icon: Icon }) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                    {label}
-                  </span>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
+              { label: "Total announcements", value: counts.total, icon: Megaphone, caption: "community updates", detail: "Published and draft announcements" },
+              { label: "Published", value: counts.active, icon: Eye, caption: "active announcements", detail: "Visible to the selected audience" },
+            ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} />)}
+          </AdminStatGrid>
 
           {/* Table card */}
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-zinc-100 dark:border-zinc-800 p-4 sm:flex-row sm:items-center">
+          <div className="admin-panel admin-data-table overflow-hidden">
+            <div className="admin-toolbar">
               <div className="relative flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                 <input
@@ -191,14 +175,7 @@ export default function AdminAnnouncements() {
                   className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
                 />
               </div>
-              <button
-                type="button"
-                onClick={openAdd}
-                className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[#009639] px-4 text-[12.5px] font-bold text-white transition hover:bg-[#007a2e]"
-              >
-                <Plus className="h-4 w-4" />
-                New Announcement
-              </button>
+              <AdminButton onClick={openAdd}><Plus size={15} />New Announcement</AdminButton>
             </div>
 
             {loading ? (
@@ -341,7 +318,7 @@ export default function AdminAnnouncements() {
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
+            <h2 className="admin-section-title text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
               {editing ? "Edit Announcement" : "New Announcement"}
             </h2>
             <form onSubmit={handleSave} className="mt-4 space-y-3">

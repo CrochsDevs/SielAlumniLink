@@ -1,3 +1,5 @@
+import AdminStatCard from "../../components/admin/AdminStatCard";
+import { AdminStatGrid, AdminTabs, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
@@ -244,75 +246,29 @@ export default function AdminSurveys() {
       <div className="lg:pl-64">
         <AdminTopbar
           user={user}
-          title="Survey"
+          title="Surveys"
           onMenuClick={() => setSidebarOpen(true)}
         />
 
         <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
           <PageHeader title="Surveys" description="Create surveys and review responses from your community." />
-          {/* Stat cards */}
-          <div className="grid grid-cols-3 gap-3">
+          <AdminStatGrid columns={3}>
             {[
-              { label: "Total Surveys", value: counts.total, icon: FileText },
-              { label: "Active", value: counts.active, icon: Power },
-              { label: "Questions", value: counts.questions, icon: ListChecks },
-            ].map(({ label, value, icon: Icon }) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                    {label}
-                  </span>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
+              { label: "Total Surveys", value: counts.total, icon: FileText, caption: "community surveys", detail: "Active and inactive surveys" },
+              { label: "Active", value: counts.active, icon: Power, caption: "accepting responses", detail: "Available to community members" },
+              { label: "Questions", value: counts.questions, icon: ListChecks, caption: "survey questions", detail: "Across all surveys" },
+            ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} />)}
+          </AdminStatGrid>
 
-          {/* Tabs */}
-          <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-700">
-            <button
-              type="button"
-              onClick={() => setActiveTab("questions")}
-              className={`flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-[13px] font-bold transition ${
-                activeTab === "questions"
-                  ? "bg-white dark:bg-zinc-900 text-[#009639] dark:text-emerald-300 border-b-2 border-[#009639]"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-              }`}
-            >
-              <FileText className="h-4 w-4" />
-              Questions
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("responses")}
-              className={`flex items-center gap-2 rounded-t-lg px-4 py-2.5 text-[13px] font-bold transition ${
-                activeTab === "responses"
-                  ? "bg-white dark:bg-zinc-900 text-[#009639] dark:text-emerald-300 border-b-2 border-[#009639]"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-              }`}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Responses
-              {results.length > 0 && (
-                <span className="rounded-full bg-[#009639] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {results.length}
-                </span>
-              )}
-            </button>
-          </div>
+          <AdminTabs label="Survey views" value={activeTab} onChange={setActiveTab} items={[
+            { id: "questions", label: "Questions", icon: FileText },
+            { id: "responses", label: "Responses", icon: BarChart3, count: results.length || null },
+          ]} />
 
           {/* Questions tab */}
           {activeTab === "questions" && (
-            <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-zinc-100 dark:border-zinc-800 p-4 sm:flex-row sm:items-center">
+            <div className="admin-panel admin-data-table overflow-hidden">
+              <div className="admin-toolbar">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                   <input
@@ -326,14 +282,7 @@ export default function AdminSurveys() {
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={openAdd}
-                  className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[#009639] px-4 text-[12.5px] font-bold text-white transition hover:bg-[#007a2e]"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Survey
-                </button>
+                <AdminButton onClick={openAdd}><Plus size={15} />New Survey</AdminButton>
               </div>
 
               {loading ? (
@@ -477,7 +426,7 @@ export default function AdminSurveys() {
             <div className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="flex items-start justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 bg-emerald-50/50 p-4">
                 <div>
-                  <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
+                  <h2 className="admin-section-title flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
                     <BarChart3 className="h-4 w-4 text-[#009639] dark:text-emerald-300" />
                     Results: {resultsFor.title}
                   </h2>
@@ -538,9 +487,9 @@ export default function AdminSurveys() {
 
           {/* Responses tab */}
           {activeTab === "responses" && (
-            <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+            <div className="admin-panel admin-data-table overflow-hidden">
               <div className="border-b border-zinc-100 dark:border-zinc-800 p-4">
-                <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
+                <h2 className="admin-section-title flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
                   <BarChart3 className="h-4 w-4 text-[#009639] dark:text-emerald-300" />
                   Survey Responses
                 </h2>

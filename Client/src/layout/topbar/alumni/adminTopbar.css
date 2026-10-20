@@ -1,0 +1,51 @@
+.admin-workspace .member-topbar > header {
+  background-color: #fafafaf2;
+  border-color: #e4e4e7;
+  box-shadow: 0 4px 14px rgb(24 24 27 / 4%);
+}
+.admin-workspace .member-topbar button[aria-expanded="true"] {
+  background-color: #e9eceb;
+  color: #1d6845;
+}
+.dark .admin-workspace .member-topbar > header {
+  background-color: #18181bf2;
+  border-color: #3f3f46;
+}
+.dark .admin-workspace .member-topbar button[aria-expanded="true"] {
+  background-color: #27272a;
+  color: #b6e2c4;
+}
+
+/* Every admin screen uses the same page heading and action layout. */
+.member-workspace.admin-workspace main .workspace-page-header {
+  align-items: flex-start;
+  gap: 16px;
+}
+.member-workspace.admin-workspace main .workspace-page-header .page-header-copy {
+  flex: 1 1 280px;
+}
+.member-workspace.admin-workspace main.workspace-page .workspace-page-header h1 {
+  font: 600 24px/32px ui-sans-serif, system-ui, sans-serif !important;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.member-workspace.admin-workspace main.workspace-page .workspace-page-header .page-header-copy p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 20px;
+}
+.admin-workspace .page-header-actions { min-width: 0; max-width: 100%; }
+.admin-workspace .page-header-actions > :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.admin-workspace .page-header-actions > .admin-primary-action { background-color: #145238; color: #fff; }
+.admin-workspace .page-header-actions > .admin-primary-action:hover { background-color: #0f432c; }

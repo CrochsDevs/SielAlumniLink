@@ -1,14 +1,16 @@
+import AdminStatCard from "../admin/AdminStatCard";
+import { AdminStatGrid } from "../admin/AdminUI";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Briefcase } from "lucide-react";
 import DataPagination from "../ui/data-pagination";
 import api from "../../utils/axios";
 
 const card =
-  "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900";
+  "admin-panel p-4";
 const input =
   "h-10 min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
 const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 text-xs font-semibold hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
+  "admin-button admin-button-secondary";
 const labelMonth = (value) => (value ? value.slice(0, 7) : "Date not provided");
 const csvCell = (value) => {
   const text = String(value ?? "");
@@ -160,7 +162,7 @@ export default function EmploymentReports() {
         className={`${card} flex flex-wrap items-center justify-between gap-4`}
       >
         <div>
-          <h2 className="text-xl font-semibold">Alumni employment tracking</h2>
+          <h2 className="admin-section-title text-xl font-semibold">Alumni employment tracking</h2>
           <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
             Employment outcomes and career history from alumni profiles.
           </p>
@@ -244,7 +246,7 @@ export default function EmploymentReports() {
         !error &&
         report && (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <AdminStatGrid columns={4}>
               {[
                 [
                   "Employment rate",
@@ -266,20 +268,8 @@ export default function EmploymentReports() {
                   report.summary.alumniWithCareerChanges,
                   "Alumni with recorded company or position changes",
                 ],
-              ].map(([title, value, detail]) => (
-                <section key={title} className={card}>
-                  <h2 className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {title}
-                  </h2>
-                  <p className="mt-2 text-3xl font-semibold text-[#009639] dark:text-emerald-300">
-                    {value}
-                  </p>
-                  <p className="mt-2 text-[11px] leading-5 text-zinc-500 dark:text-zinc-400">
-                    {detail}
-                  </p>
-                </section>
-              ))}
-            </div>
+              ].map(([label, value, detail], index) => <AdminStatCard key={label} label={label} value={value} detail={detail} icon={Briefcase} featured={index === 0} />)}
+            </AdminStatGrid>
             <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
               Employment rate = employed and self-employed alumni ÷ alumni with
               a reported status. Studying and unemployed are included in the
@@ -289,7 +279,7 @@ export default function EmploymentReports() {
             </p>
             <div className="grid gap-4 lg:grid-cols-2">
               <section className={card}>
-                <h2 className="text-base font-semibold">
+                <h2 className="admin-section-title text-base font-semibold">
                   Industry distribution
                 </h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -327,7 +317,7 @@ export default function EmploymentReports() {
                 </div>
               </section>
               <section className={card}>
-                <h2 className="text-base font-semibold">Employment status</h2>
+                <h2 className="admin-section-title text-base font-semibold">Employment status</h2>
                 <dl className="mt-4 space-y-3">
                   {report.statusDistribution.map((item) => (
                     <div
@@ -344,7 +334,7 @@ export default function EmploymentReports() {
               </section>
             </div>
             <section className={card}>
-              <h2 className="text-base font-semibold">Career progression</h2>
+              <h2 className="admin-section-title text-base font-semibold">Career progression</h2>
               <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
                 View recorded roles over time. Position changes are shown as
                 history; seniority is not inferred.
@@ -457,7 +447,7 @@ export default function EmploymentReports() {
                       .map((person) => (
                         <div key={person._id}>
                           <div className="flex items-center justify-between gap-3">
-                            <h3 className="text-sm font-semibold">
+                            <h3 className="admin-section-title text-sm font-semibold">
                               {person.name} — career history
                             </h3>
                             <button

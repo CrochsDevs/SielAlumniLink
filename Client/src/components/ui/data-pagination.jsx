@@ -36,7 +36,7 @@ const DataPagination = ({
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-zinc-100 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="data-pagination flex flex-col gap-3 border-t border-zinc-100 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-[11.5px] text-zinc-500">
         Showing{" "}
         <span className="font-bold text-zinc-800">
@@ -87,6 +87,7 @@ const DataPagination = ({
                 key={p}
                 variant={p === page ? "default" : "ghost"}
                 size="icon"
+                aria-current={p === page ? "page" : undefined}
                 className={`h-8 w-8 text-[12px] ${p === page ? "bg-[#009639] hover:bg-[#007a2e]" : ""}`}
                 onClick={() => onPageChange(p)}
               >

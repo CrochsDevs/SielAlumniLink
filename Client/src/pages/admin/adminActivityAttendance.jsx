@@ -1,3 +1,6 @@
+import AdminStatCard from "../../components/admin/AdminStatCard";
+import { AdminStatGrid, AdminButton } from "../../components/admin/AdminUI";
+import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BadgeCheck, Users, Video } from "lucide-react";
@@ -8,7 +11,7 @@ import CertificatePreview from "../../components/student/CertificatePreview";
 import api from "../../utils/axios";
 
 const card =
-  "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
+  "admin-panel";
 const time = (value) =>
   new Date(value).toLocaleString([], {
     dateStyle: "medium",
@@ -91,27 +94,17 @@ export default function AdminActivityAttendance() {
             <ArrowLeft size={14} />
             Back to calendar
           </Link>
-          <header className="workspace-page-header flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {event?.title || "Registration & attendance"}
-              </h1>
-              <p className="mt-2 text-sm text-zinc-500">
-                {event
-                  ? `${online ? "Online" : "On site"} · ${time(event.startAt)}`
-                  : "Registered participants and verified attendance"}
-              </p>
-            </div>
+          <PageHeader title={event?.title || "Registration & attendance"} description={event ? `${online ? "Online" : "On site"} - ${time(event.startAt)}` : "Registered participants and verified attendance"}>
             {online && (
-              <Link
+              <AdminButton
                 to={`/meetings/${eventId}`}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white"
+
               >
                 <Video size={15} />
                 Open meeting
-              </Link>
+              </AdminButton>
             )}
-          </header>
+          </PageHeader>
           {error && (
             <p role="alert" className={`${card} p-4 text-sm text-red-600`}>
               {error}{" "}
@@ -127,21 +120,13 @@ export default function AdminActivityAttendance() {
           ) : (
             event && (
               <>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <AdminStatGrid columns={3}>
                   {[
-                    ["Registered", people.length],
-                    [online ? "Recorded attendance" : "Checked in", attended],
-                    [
-                      "Certificates issued",
-                      people.filter((person) => person.certificateId).length,
-                    ],
-                  ].map(([label, count]) => (
-                    <div key={label} className={`${card} p-4`}>
-                      <p className="text-xs text-zinc-500">{label}</p>
-                      <p className="mt-2 text-2xl font-semibold">{count}</p>
-                    </div>
-                  ))}
-                </div>
+                    { label: "Registered", value: people.length, icon: Users, detail: "Registered participants" },
+                    { label: online ? "Recorded attendance" : "Checked in", value: attended, icon: BadgeCheck, detail: online ? "Participants with recorded meeting time" : "Participants checked in at the venue" },
+                    { label: "Certificates issued", value: people.filter(person => person.certificateId).length, icon: BadgeCheck, detail: "Participants with certificates" },
+                  ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} />)}
+                </AdminStatGrid>
                 <section
                   className={`${card} p-4 text-xs leading-6 text-zinc-500`}
                 >
@@ -177,7 +162,7 @@ export default function AdminActivityAttendance() {
                       className={`${card} flex flex-wrap items-center justify-between gap-4 p-5`}
                     >
                       <div className="min-w-0">
-                        <h2 className="break-words text-sm font-semibold">
+                        <h2 className="admin-section-title break-words text-sm font-semibold">
                           {person.name}
                         </h2>
                         <p className="mt-1 break-words text-xs text-zinc-500">

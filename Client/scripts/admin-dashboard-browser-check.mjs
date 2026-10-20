@@ -92,6 +92,9 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
       timezone: "Asia/Manila",
       generatedAt: new Date().toISOString(),
       members: { students: 10, alumni: 20, total: 30 },
+      overview: { jobs: 12, applications: 42, pendingApplications: 8, events: 3, registrations: 64, surveys: 4, surveyResponses: 85, certificates: 120, pendingCertificates: 6, announcements: 5, posts: 93, blockedPosts: 2, unreadMessages: 3, tracerResponses: 15, employedAlumni: 12,
+        upcomingEvents: [{ _id: 'event1', title: 'Alumni Homecoming', startAt: '2026-12-01T02:00:00Z', location: 'CLSU Auditorium' }],
+        recentAnnouncements: [{ _id: 'announcement1', title: 'Welcome to our alumni community', createdAt: '2026-10-19T00:00:00Z', audience: 'all' }] },
       mentorship: { accepted: 6, pending: 3, rejected: 1, total: 10 },
       engagement: summarizeEngagement(
         date === "2023-01-01"
@@ -148,7 +151,7 @@ try {
     'document.body.textContent.includes("Mentorship Status Reports")',
   );
   await evaluate(
-    'Array.from(document.querySelectorAll("button")).find(b => b.textContent.includes("Daily Engagement Summary")).click()',
+    'Array.from(document.querySelectorAll("button")).find(b => b.getAttribute("aria-label") === "Daily Engagement Summary").click()',
   );
   await until(
     'document.querySelectorAll("[aria-label$=\\"recorded actions\\"]").length === 24',
@@ -160,7 +163,7 @@ try {
     'document.body.textContent.includes("9 actions · 2 active members")',
   );
   await evaluate(
-    'Array.from(document.querySelectorAll("button")).find(b => b.textContent.includes("Yearly Engagement Summary")).click()',
+    'Array.from(document.querySelectorAll("button")).find(b => b.getAttribute("aria-label") === "Yearly Engagement Summary").click()',
   );
   await until(
     'document.querySelectorAll("[aria-label$=\\"recorded actions\\"]").length === 12',

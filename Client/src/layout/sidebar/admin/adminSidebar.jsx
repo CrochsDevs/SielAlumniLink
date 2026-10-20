@@ -1,223 +1,77 @@
-import React, { useState } from "react";
+﻿import { createElement, useEffect, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Users,
-  ClipboardCheck,
-  Briefcase,
-  FileText,
-  Calendar,
-  Link2,
-  Megaphone,
-  MessageSquare,
-  Settings,
-  LogOut,
+  LayoutDashboard, Users, ClipboardCheck, Briefcase, FileText, Calendar,
+  Link2, Megaphone, MessageSquare, Settings, LogOut, Award, X,
 } from "lucide-react";
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
 import ProfileAvatar from "../../../components/profile/ProfileAvatar";
+import "./adminSidebar.css";
 
-const AdminSidebar = ({
-  user,
-  mobileOpen: controlledOpen,
-  setMobileOpen: controlledSet,
-}) => {
+const menuGroups = [
+  { label: "Overview", items: [
+    { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+    { to: "/admin/users", label: "Users", icon: Users },
+    { to: "/feed", label: "Alumni Feed", icon: MessageSquare },
+  ] },
+  { label: "Management", items: [
+    { to: "/admin/tracer", label: "Tracer Study", icon: ClipboardCheck },
+    { to: "/admin/jobs", label: "Job Posts", icon: Briefcase },
+    { to: "/admin/surveys", label: "Surveys", icon: FileText },
+    { to: "/admin/certificates", label: "Certificates", icon: Award },
+    { to: "/admin/events", label: "Calendar", icon: Calendar },
+  ] },
+  { label: "Community", items: [
+    { to: "/admin/connections", label: "Connections", icon: Link2 },
+    { to: "/admin/announcements", label: "Announcements", icon: Megaphone },
+    { to: "/admin/message", label: "Messages", icon: MessageSquare },
+  ] },
+];
+
+export default function AdminSidebar({ user, mobileOpen: controlledOpen, setMobileOpen: controlledSet }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
-
-  // Controlled when parent passes props (dashboard topbar hamburger),
-  // otherwise falls back to internal state.
   const mobileOpen = controlledOpen ?? internalOpen;
   const setMobileOpen = controlledSet ?? setInternalOpen;
 
-  const isActive = (path) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
-  const isSettingsActive = location.pathname.startsWith("/admin/settings");
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const closeOnEscape = event => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [mobileOpen, setMobileOpen]);
 
-  const navItemClass = (active) =>
-    `group flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-colors ${
-      active
-        ? "bg-[#145238] text-white font-semibold shadow-sm dark:bg-[#306b45]"
-        : "text-zinc-700 hover:bg-[#dce8d3] hover:text-zinc-900 font-medium dark:text-zinc-300 dark:hover:bg-[#263d2b] dark:hover:text-zinc-100"
-    }`;
-
-  const handleLogout = () => {
-    navigate("/logout");
-  };
-
-  return (
-    <>
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        ></div>
-      )}
-
-      <aside
-        id="sidebar"
-        className={`admin-sidebar fixed left-0 top-0 h-full w-64 bg-[#f8faf6] dark:bg-[#16231b] border-r border-[#dce4d8] dark:border-[#304535] shadow-[4px_0_20px_rgba(24,59,35,0.06)] transform transition-transform duration-300 z-30 flex flex-col ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
-        style={{
-          fontFamily: "'Libre Franklin', ui-sans-serif, system-ui, sans-serif",
-        }}
-      >
-        {/* Header / Brand */}
-        <div className="px-4 pt-5 pb-5 border-b border-[#dce4d8] dark:border-[#304535] bg-[#f1f5ed] dark:bg-[#1c3022]">
-          <Link
-            to="/admin"
-            className="flex flex-col items-center text-center group"
-          >
-            <img
-              src={clsuLogo}
-              alt="CLSU"
-              className="h-16 w-16 object-contain"
-            />
-            <div className="leading-tight mt-1">
-              <p className="font-extrabold text-[17px] tracking-tight text-zinc-800 dark:text-zinc-100">
-                Siel<span className="text-[#009639]">Alumni</span>
-              </p>
-            </div>
+  return <>
+    {mobileOpen && <button type="button" aria-label="Close sidebar overlay" className="admin-sidebar-overlay fixed inset-0 z-20 lg:hidden" onClick={() => setMobileOpen(false)} />}
+    <aside id="sidebar" aria-label="Admin sidebar" className={`admin-sidebar fixed left-0 top-0 z-30 flex h-full w-64 flex-col transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+      <div className="admin-sidebar-brand">
+        <Link to="/admin" onClick={() => setMobileOpen(false)} className="admin-brand-link">
+          <span className="admin-brand-logo"><img src={clsuLogo} alt="CLSU" /></span>
+          <span><span className="admin-brand-name">Siel<span>Alumni</span></span><span className="admin-brand-caption">Administration workspace</span></span>
+        </Link>
+        <button type="button" className="admin-sidebar-close lg:hidden" aria-label="Close sidebar" onClick={() => setMobileOpen(false)}><X size={16} /></button>
+      </div>
+      <div className="admin-sidebar-scroll">
+        {menuGroups.map(group => <nav key={group.label} aria-label={group.label} className="admin-menu-group">
+          <p className="admin-menu-label">{group.label}</p>
+          {group.items.map(item => <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setMobileOpen(false)} className={({ isActive }) => `admin-menu-item ${isActive || (item.to === "/admin" && location.pathname === "/admin/dashboard") ? "is-active" : ""}`}>
+            {createElement(item.icon, { size: 16, strokeWidth: 1.7, "aria-hidden": true })}<span>{item.label}</span>
+          </NavLink>)}
+        </nav>)}
+      </div>
+      <div className="admin-sidebar-bottom">
+        <NavLink to="/admin/settings" onClick={() => setMobileOpen(false)} className={({ isActive }) => `admin-menu-item ${isActive ? "is-active" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></NavLink>
+        <div className="admin-sidebar-account">
+          <Link to="/admin/settings" className="admin-account-link" onClick={() => setMobileOpen(false)} aria-label="Account settings">
+            <span className="admin-account-avatar"><ProfileAvatar user={user} fallback="A" /></span>
+            <span className="admin-account-details"><strong>{user?.name || "Admin"}</strong><span>{user?.email || "Administrator"}</span></span>
           </Link>
+          <button type="button" onClick={() => navigate("/logout")} className="admin-sidebar-logout" aria-label="Logout" title="Logout"><LogOut size={16} strokeWidth={1.7} /></button>
         </div>
-
-        {/* Nav */}
-        <div className="flex-1 overflow-y-auto px-2.5 pb-2 pt-6 space-y-0.5">
-          {/* Primary group */}
-          <nav className="space-y-0.5">
-            <NavLink
-              to="/admin"
-              end
-              className={navItemClass(
-                isActive("/admin/dashboard") || location.pathname === "/admin",
-              )}
-            >
-              <LayoutDashboard className="w-4 h-4 shrink-0" />
-              <span className="truncate">Dashboard</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/users"
-              className={navItemClass(isActive("/admin/users"))}
-            >
-              <Users className="w-4 h-4 shrink-0" />
-              <span className="truncate">Users</span>
-            </NavLink>
-            <NavLink to="/feed" className={navItemClass(isActive("/feed"))}>
-              <Megaphone className="w-4 h-4 shrink-0" />
-              <span className="truncate">Alumni Feed</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/tracer"
-              className={navItemClass(isActive("/admin/tracer"))}
-            >
-              <ClipboardCheck className="w-4 h-4 shrink-0" />
-              <span className="truncate">Tracer Study</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/jobs"
-              className={navItemClass(isActive("/admin/jobs"))}
-            >
-              <Briefcase className="w-4 h-4 shrink-0" />
-              <span className="truncate">Job Posts</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/surveys"
-              className={navItemClass(isActive("/admin/surveys"))}
-            >
-              <FileText className="w-4 h-4 shrink-0" />
-              <span className="truncate">Survey</span>
-            </NavLink>
-          </nav>
-
-          {/* Secondary group */}
-          <nav className="space-y-0.5">
-            <NavLink
-              to="/admin/certificates"
-              className={navItemClass(isActive("/admin/certificates"))}
-            >
-              <FileText className="w-4 h-4 shrink-0" />
-              <span className="truncate">Certificates</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/events"
-              className={navItemClass(isActive("/admin/events"))}
-            >
-              <Calendar className="w-4 h-4 shrink-0" />
-              <span className="truncate">Calendar</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/connections"
-              className={navItemClass(isActive("/admin/connections"))}
-            >
-              <Link2 className="w-4 h-4 shrink-0" />
-              <span className="truncate">Connections</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/announcements"
-              className={navItemClass(isActive("/admin/announcements"))}
-            >
-              <Megaphone className="w-4 h-4 shrink-0" />
-              <span className="truncate">Announcements</span>
-            </NavLink>
-
-            <NavLink
-              to="/admin/message"
-              className={navItemClass(isActive("/admin/message"))}
-            >
-              <MessageSquare className="w-4 h-4 shrink-0" />
-              <span className="truncate">Message</span>
-            </NavLink>
-          </nav>
-
-          {/* Settings */}
-          <div id="nav-settings-group">
-            <NavLink
-              to="/admin/settings"
-              className={navItemClass(isSettingsActive)}
-            >
-              <Settings className="w-4 h-4 shrink-0" />
-              <span className="truncate">Settings</span>
-            </NavLink>
-          </div>
-        </div>
-
-        {/* User + Logout */}
-        <div className="p-2.5 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-            <div className="h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-950 text-[#009639] dark:text-emerald-300 flex items-center justify-center text-[11px] font-semibold shrink-0 ring-1 ring-emerald-100 dark:ring-emerald-900">
-              <ProfileAvatar user={user} fallback="A" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-zinc-800 dark:text-zinc-100 truncate leading-tight">
-                {user?.name || "Admin"}
-              </p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-tight mt-0.5">
-                {user?.email || "admin@clsu.edu.ph"}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[12px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 transition-colors text-left"
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            <span className="truncate">Logout</span>
-          </button>
-        </div>
-      </aside>
-    </>
-  );
-};
-
-export default AdminSidebar;
+      </div>
+    </aside>
+  </>;
+}

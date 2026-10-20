@@ -1,15 +1,17 @@
+import AdminStatCard from "../admin/AdminStatCard";
+import { AdminStatGrid } from "../admin/AdminUI";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, ClipboardCheck } from "lucide-react";
 import api from "../../utils/axios";
 import DataPagination from "../ui/data-pagination";
 import { JOB_ALIGNMENT_OPTIONS } from "../../utils/tracerStudy";
 
 const card =
-  "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900";
+  "admin-panel p-4";
 const input =
   "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
 const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 text-xs font-semibold hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
+  "admin-button admin-button-secondary";
 const periods = [
   ["3-5", "3–5 years after graduation"],
   ["0-2", "0–2 years after graduation"],
@@ -177,7 +179,7 @@ export default function ProgramAlignmentReport() {
         className={`${card} flex flex-wrap items-start justify-between gap-4`}
       >
         <div className="max-w-2xl">
-          <h2 className="text-xl font-semibold">
+          <h2 className="admin-section-title text-xl font-semibold">
             Are alumni working in their field of study?
           </h2>
           <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
@@ -298,7 +300,7 @@ export default function ProgramAlignmentReport() {
         !error &&
         report && (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <AdminStatGrid columns={4}>
               {[
                 [
                   "Direct alignment rate",
@@ -320,20 +322,8 @@ export default function ProgramAlignmentReport() {
                   report.summary.respondents,
                   `${report.summary.working} working; ${report.summary.notWorking} not working / studying`,
                 ],
-              ].map(([label, value, detail]) => (
-                <section className={card} key={label}>
-                  <h3 className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {label}
-                  </h3>
-                  <p className="mt-3 text-2xl font-semibold text-[#009639] dark:text-emerald-300">
-                    {value}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                    {detail}
-                  </p>
-                </section>
-              ))}
-            </div>
+              ].map(([label, value, detail], index) => <AdminStatCard key={label} label={label} value={value} detail={detail} icon={ClipboardCheck} featured={index === 0} />)}
+            </AdminStatGrid>
             <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
               Alignment is reported by alumni based on their duties. Rates
               exclude Not sure, Not reported, and non-working responses. Years
@@ -344,7 +334,7 @@ export default function ProgramAlignmentReport() {
             </p>
             {!report.rows.length ? (
               <div className={`${card} py-10 text-center`}>
-                <h3 className="font-semibold">
+                <h3 className="admin-section-title font-semibold">
                   No responses in this follow-up period
                 </h3>
                 <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
@@ -356,7 +346,7 @@ export default function ProgramAlignmentReport() {
             ) : (
               <>
                 <section className={card}>
-                  <h3 className="text-base font-semibold">
+                  <h3 className="admin-section-title text-base font-semibold">
                     Alignment by graduation program
                   </h3>
                   <div className="mt-4 overflow-x-auto">
@@ -413,7 +403,7 @@ export default function ProgramAlignmentReport() {
                   </div>
                 </section>
                 <section className={card}>
-                  <h3 className="text-base font-semibold">
+                  <h3 className="admin-section-title text-base font-semibold">
                     Program and reported work
                   </h3>
                   <p

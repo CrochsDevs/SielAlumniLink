@@ -61,30 +61,34 @@ export default function AdminFeedTools() {
   };
   return (
     <div className="space-y-3">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="flex items-center gap-2 text-sm font-bold">
-          <Shield size={18} className="text-[#009639]" />
+      <section className="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm dark:bg-zinc-900">
+        <div className="bg-gradient-to-r from-[#0F4C3A] to-[#009639] px-4 py-2.5">
+        <h2 className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
+          <Shield size={14} />
           Feed moderation
         </h2>
-        <p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+        </div>
+        <div className="p-4">
+        <p className="text-[11.5px] leading-relaxed text-zinc-500 dark:text-zinc-400">
           Use the three-dot menu on a post to block content, manage comments,
           restrict a member, or delete a post. Use the feed filter to review
           blocked posts.
         </p>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-[11.5px] leading-relaxed text-zinc-500 dark:text-zinc-400">
           You can review public and connections-only posts. Restoring content
           preserves its original audience.
         </p>
         <Link
           to="/admin/users"
-          className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#009639] hover:underline"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 py-1.5 text-[11px] font-bold text-zinc-500 transition hover:border-[#009639] hover:text-[#007a2e] dark:border-zinc-700 dark:text-zinc-400"
         >
           <Users size={15} />
           Manage users
         </Link>
+        </div>
       </section>
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="text-sm font-bold">Restricted members</h2>
+      <section className="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:bg-zinc-900">
+        <h2 className="text-[13px] font-bold">Restricted members</h2>
         {error && (
           <p
             role="alert"

@@ -1,4 +1,6 @@
-import { createElement, useEffect, useMemo, useState } from "react";
+import AdminStatCard from "../admin/AdminStatCard";
+import { AdminStatGrid } from "../admin/AdminUI";
+import { useEffect, useMemo, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
 import {
   Search,
@@ -179,7 +181,7 @@ export default function TracerResponses() {
   return (
     <section aria-label="Tracer survey responses" className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="admin-section-title text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           Tracer responses
         </h2>
         <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
@@ -187,8 +189,7 @@ export default function TracerResponses() {
           Tracer Study form.
         </p>
       </div>
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <AdminStatGrid columns={4}>
         {[
           { label: "Responses", value: counts.total, icon: ClipboardCheck },
           { label: "Employed", value: counts.employed, icon: Briefcase },
@@ -202,29 +203,12 @@ export default function TracerResponses() {
             value: counts.batches,
             icon: GraduationCap,
           },
-        ].map(({ label, value, icon: Icon }) => (
-          <div
-            key={label}
-            className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                {label}
-              </span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
-                {createElement(Icon, { className: "h-4 w-4" })}
-              </span>
-            </div>
-            <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {value}
-            </p>
-          </div>
-        ))}
-      </div>
+        ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} detail="Current tracer responses" />)}
+      </AdminStatGrid>
 
       {/* Table card */}
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-zinc-100 dark:border-zinc-800 p-4 sm:flex-row sm:items-center">
+      <div className="admin-panel admin-data-table overflow-hidden">
+        <div className="admin-toolbar">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
             <input

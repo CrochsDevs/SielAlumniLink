@@ -1,12 +1,16 @@
+import { AdminTabs, AdminButton } from "../../components/admin/AdminUI";
+import PageHeader from "../../components/ui/PageHeader";
+import "./adminDashboard.css";
 import { useEffect, useState } from "react";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Plus } from "lucide-react";
+import { OverviewStats, AttentionPanel, EventsPanel, TracerPanel, CommunityPanel, UpdatesPanel, OperationsStrip, dashboardPanel } from "../../components/admin/DashboardOverview";
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 
-const panel = "rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
-const button = "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
+const panel = dashboardPanel;
+const button = "inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
 const num = value => Number(value).toLocaleString();
 const today = () => new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
 const titles = { daily: "Daily", monthly: "Monthly", yearly: "Yearly" };
@@ -16,12 +20,12 @@ function Chart({ report, period }) {
   const peak = Math.max(1, ...report.buckets.map(bucket => bucket.total));
   const detail = report.buckets.find(bucket => bucket.key === selected);
   return <>
-    <div className="mt-5 overflow-x-auto pb-2" aria-label={titles[period] + " engagement bar chart"}>
-      <div className="flex h-60 items-end gap-2 border-b border-zinc-200 dark:border-zinc-700" style={{ minWidth: report.buckets.length * 38 }}>
-        {report.buckets.map(bucket => <button key={bucket.key} type="button" onClick={() => setSelected(bucket.key)} aria-pressed={selected === bucket.key} aria-label={bucket.key + ": " + bucket.total + " recorded actions"} className="group flex h-full min-w-7 flex-1 flex-col items-center justify-end rounded-t focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
-          <span className="mb-1 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{num(bucket.total)}</span>
-          <span className={selected === bucket.key ? "w-full max-w-12 rounded-t bg-emerald-800 dark:bg-emerald-400" : "w-full max-w-12 rounded-t bg-emerald-500 group-hover:bg-emerald-600"} style={{ height: bucket.total / peak * 76 + "%", minHeight: 2 }} />
-          <span className="mt-2 h-7 text-[10px] text-zinc-500 dark:text-zinc-400">{bucket.label}</span>
+    <div className="dashboard-chart-scroll mt-5 overflow-x-auto pb-2" aria-label={titles[period] + " engagement bar chart"}>
+      <div className="dashboard-chart-plot flex h-36 items-end gap-1" style={{ minWidth: report.buckets.length * 20 }}>
+        {report.buckets.map(bucket => <button key={bucket.key} type="button" onClick={() => setSelected(bucket.key)} aria-pressed={selected === bucket.key} aria-label={bucket.key + ": " + bucket.total + " recorded actions"} className="group flex h-full min-w-3 flex-1 flex-col items-center justify-end rounded-t focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
+          <span className="mb-1 shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{num(bucket.total)}</span>
+          <span className="dashboard-chart-bar w-full max-w-12 rounded-full" style={{ height: bucket.total / peak * 55 + "%", minHeight: 2 }} />
+          <span className="mt-2 h-7 shrink-0 text-[10px] text-zinc-500 dark:text-zinc-400">{bucket.label}</span>
         </button>)}
       </div>
     </div>
@@ -62,20 +66,35 @@ export default function AdminDashboard() {
   const current = result?.key === requestKey ? result : null;
   const data = current?.data;
   const report = data?.engagement[period];
-  return <div className="min-h-screen bg-zinc-50 text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
+  return <div className="min-h-screen bg-[#f5f6f8] text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
     <AdminSidebar user={user} mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
     <div className="lg:pl-64">
       <AdminTopbar user={user} title="Dashboard" onMenuClick={() => setSidebarOpen(true)} />
-      <main className="workspace-page mx-auto max-w-[1600px] space-y-6 p-4 sm:p-6">
-        <div className="workspace-page-header flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm text-emerald-700 dark:text-emerald-400">Admin overview</p><h1 className="mt-1 text-2xl font-bold">Engagement Reports</h1><p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Community participation and student–alumni mentorship matches.</p></div><div className="flex flex-wrap gap-2"><button className={button} disabled={!current} onClick={() => setRevision(v => v + 1)}><RefreshCw size={16} />Refresh</button><button className={button} disabled={!data} onClick={() => download(data, period)}><Download size={16} />Export CSV</button></div></div>
-        <div className="flex flex-wrap items-end justify-between gap-3"><label className="flex flex-col gap-1 text-sm font-medium">Report date<input aria-label="Report date" type="date" min="2000-01-01" max={today()} value={date} onChange={event => { if (event.target.value && event.target.validity.valid) setDate(event.target.value); }} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900" /></label><p className="text-xs text-zinc-500 dark:text-zinc-400">{data ? "Updated " + new Date(data.generatedAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" }) + " · Philippine time" : "Reports use Philippine time (UTC+8)."}</p></div>
-        {!current && <div className={panel} role="status">Loading dashboard reports…</div>}
+      <main className="workspace-page admin-overview mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
+        <PageHeader title="Dashboard" description="Your community, connected. Everything you need to keep it moving.">
+          <AdminButton variant="secondary" aria-label="Refresh dashboard" disabled={!current} onClick={() => setRevision(v => v + 1)}><RefreshCw size={14} />Refresh</AdminButton>
+          <AdminButton variant="secondary" disabled={!data} onClick={() => download(data, period)}><Download size={14} />Export CSV</AdminButton>
+          <AdminButton to="/admin/announcements"><Plus size={16} />Announcement</AdminButton>
+        </PageHeader>
+        {!current && <div className={panel} role="status">Loading dashboard reports...</div>}
         {current?.error && <div className={panel} role="alert"><p>{current.error}</p><button className={button + " mt-3"} onClick={() => setRevision(v => v + 1)}>Retry reports</button></div>}
         {data && <>
-          <div className="grid gap-4 md:grid-cols-3">{Object.entries(titles).map(([key, label]) => <button key={key} aria-pressed={period === key} onClick={() => setPeriod(key)} className={panel + " text-left " + (period === key ? "ring-2 ring-emerald-600" : "hover:border-emerald-400")}><h2 className="text-sm font-semibold">{label} Engagement Summary</h2><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{data.engagement[key].key}</p><p className="mt-4 text-3xl font-bold tabular-nums">{num(data.engagement[key].total)}</p><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Recorded actions · {num(data.engagement[key].activeMembers)} active members</p></button>)}</div>
-          <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]"><section className={panel + " min-w-0"}><h2 className="text-lg font-bold">{titles[period]} engagement · {report.key}</h2><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">The selected day, calendar month, or calendar year. Current periods include records up to the last refresh.</p><Chart key={period + ":" + data.date} report={report} period={period} /></section><section className={panel}><h2 className="text-lg font-bold">Summary Statistics</h2><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{titles[period]} · {report.key}</p><dl className="mt-5 space-y-3">{report.breakdown.map(source => <div key={source.key} className="flex justify-between gap-3 text-sm"><dt>{source.label}</dt><dd className="font-semibold tabular-nums">{num(source.count)}</dd></div>)}<div className="flex justify-between gap-3 border-t border-zinc-200 pt-3 font-semibold dark:border-zinc-700"><dt>Total actions</dt><dd>{num(report.total)}</dd></div><div className="flex justify-between gap-3 text-sm"><dt>Distinct active members</dt><dd>{num(report.activeMembers)}</dd></div></dl><p className="mt-5 rounded-xl bg-zinc-50 p-3 text-sm dark:bg-zinc-800">{num(data.members.total)} current members · {num(data.members.students)} students · {num(data.members.alumni)} alumni</p></section></div>
-          <section className={panel}><h2 className="text-lg font-bold">Mentorship Status Reports</h2><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Current student–alumni connection requests, independent of report date. {num(data.mentorship.total)} total matches.</p><div className="mt-5 grid gap-4 md:grid-cols-3">{[["accepted", "Accepted Matches", "bg-emerald-500"], ["pending", "Pending Matches", "bg-amber-500"], ["rejected", "Rejected Matches", "bg-rose-500"]].map(([key, label, color]) => <div key={key} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-700"><h3 className="text-sm font-medium">{label}</h3><p className="mt-2 text-3xl font-bold">{num(data.mentorship[key])}</p><div role="img" aria-label={label + ": " + data.mentorship[key] + " of " + data.mentorship.total} className="mt-4 h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"><div className={"h-full rounded-full " + color} style={{ width: (data.mentorship.total ? data.mentorship[key] / data.mentorship.total * 100 : 0) + "%" }} /></div></div>)}</div>{!data.mentorship.total && <p className="mt-4 text-sm">No mentorship requests have been recorded.</p>}<p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">Rejected matches are declined requests. AI recommendations count only after a connection request is sent. Removed requests are excluded.</p></section>
-          <details className={panel + " text-sm"}><summary className="cursor-pointer font-semibold">How these reports are calculated</summary><p className="mt-3 leading-relaxed text-zinc-500 dark:text-zinc-400">Engagement counts retained logins, posts, comments, job and referral applications, event registrations, and initial survey submissions from current student and alumni accounts. Administrators, deleted posts and comments, and blocked posts are excluded. Likes, page views, messages, and survey edits are not counted. Active members are unique people in each period; daily counts cannot be added to obtain monthly unique members. Reports reflect available records, not a permanent historical audit.</p></details>
+          <OverviewStats data={data} />
+          <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+            <div className="min-w-0 space-y-4">
+              <section className={panel + " dashboard-engagement min-w-0"}>
+                <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="admin-section-title text-sm font-semibold">Community engagement</h2><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{num(report.total)} recorded actions &middot; {num(report.activeMembers)} active members</p></div><AdminTabs label="Engagement period" value={period} onChange={setPeriod} items={Object.entries(titles).map(([id, label]) => ({ id, label, ariaLabel: label + " Engagement Summary" }))} /></div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">Report date<input aria-label="Report date" type="date" min="2000-01-01" max={today()} value={date} onChange={event => { if (event.target.value && event.target.validity.valid) setDate(event.target.value); }} className="min-w-0 rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-zinc-700 dark:border-zinc-700 dark:text-zinc-200" /></label><span className="text-xs text-zinc-500">{titles[period]} &middot; {report.key}</span></div>
+                <Chart key={period + ":" + data.date} report={report} period={period} />
+              </section>
+              <div className="grid gap-4 md:grid-cols-2"><TracerPanel data={data} /><CommunityPanel data={data} /></div>
+            </div>
+            <div className="space-y-4"><AttentionPanel data={data} /><EventsPanel overview={data.overview} /></div>
+          </div>
+          <OperationsStrip overview={data.overview} />
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]"><section className={panel}><h2 className="admin-section-title text-sm font-semibold">Engagement breakdown</h2><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{titles[period]} &middot; {report.key}</p><dl className="dashboard-breakdown mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{report.breakdown.map(source => <div key={source.key}><dd className="text-base font-semibold tabular-nums">{num(source.count)}</dd><dt className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{source.label}</dt></div>)}</dl></section><UpdatesPanel overview={data.overview} /></div>
+          <details className="rounded-2xl border border-zinc-200 p-4 text-xs dark:border-zinc-800"><summary className="cursor-pointer font-medium">How these reports are calculated</summary><p className="mt-3 leading-relaxed text-zinc-500 dark:text-zinc-400">Overview cards and queues show current system records, independent of the report date. Tracer coverage counts current alumni with a response; employment is self-reported. Pending mentorship requests await a member response. Attendance needs verification before issuing certificates. Engagement counts retained logins, posts, comments, job and referral applications, event registrations, and initial survey submissions from current students and alumni. Administrators, deleted posts and comments, and blocked posts are excluded. Likes, page views, messages, and survey edits are not counted. Active members are unique in each period. CSV exports contain the selected engagement report and current mentorship counts.</p></details>
+          <p className="text-right text-[10px] text-zinc-500 dark:text-zinc-400">Updated {new Date(data.generatedAt).toLocaleString("en-PH", { timeZone: "Asia/Manila" })} &middot; Philippine time &middot; Use Refresh for the latest records</p>
         </>}
       </main>
     </div>

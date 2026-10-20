@@ -1,3 +1,5 @@
+import { AdminStatGrid, AdminTabs, AdminButton } from "../../components/admin/AdminUI";
+import AdminStatCard from "../../components/admin/AdminStatCard";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
@@ -8,7 +10,6 @@ import {
   BookOpen,
   ScrollText,
   RefreshCw,
-  Circle,
   DatabaseZap,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
@@ -225,67 +226,33 @@ export default function AdminUsers() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+        <main className="workspace-page admin-users mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
           <PageHeader title="Users" description="Manage community members and review account activity." />
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+          <AdminStatGrid columns={3} label="User summaries">
             {[
-              { label: "Total Users", value: counts.all, icon: UsersIcon },
-              { label: "Alumni", value: counts.alumni, icon: GraduationCap },
-              { label: "Students", value: counts.student, icon: BookOpen },
-            ].map(({ label, value, icon: Icon }) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                    {label}
-                  </span>
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#009639]/10 text-[#009639] dark:text-emerald-300">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
+              { label: "Total Users", value: counts.all, icon: UsersIcon, filter: "all", caption: "community members", detail: `${counts.alumni.toLocaleString()} alumni / ${counts.student.toLocaleString()} students` },
+              { label: "Alumni", value: counts.alumni, icon: GraduationCap, filter: Roles.ALUMNI, caption: "registered alumni", detail: "View alumni accounts" },
+              { label: "Students", value: counts.student, icon: BookOpen, filter: Roles.STUDENT, caption: "registered students", detail: "View student accounts" },
+            ].map(({ filter, ...item }, index) => <AdminStatCard
+              key={filter}
+              {...item}
+              featured={index === 0}
+              loading={loading}
+              selected={view === "users" && roleFilter === filter}
+              onClick={() => { setView("users"); setRoleFilter(filter); setUserPage(1); }}
+            />)}
+          </AdminStatGrid>
 
-          {/* View tabs */}
-          <div className="flex gap-1.5">
-            {[
-              { key: "users", label: "Users", icon: UsersIcon },
-              { key: "audit", label: "Audit Logs", icon: ScrollText },
-            ].map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setView(key)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold transition ${
-                  view === key
-                    ? "bg-zinc-900 text-white"
-                    : "bg-white text-zinc-500 border border-zinc-200 hover:text-zinc-900"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-                {key === "audit" && (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400">
-                    <Circle className="h-1.5 w-1.5 fill-current" />
-                    LIVE
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+          <AdminTabs label="User management views" value={view} onChange={setView} items={[
+            { id: "users", label: "Users", icon: UsersIcon },
+            { id: "audit", label: "Audit Logs", icon: ScrollText, badge: "Live" },
+          ]} />
 
           {view === "audit" ? (
-            <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+            <div className="admin-panel admin-data-table overflow-hidden">
               <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 p-4">
                 <div>
-                  <h2 className="text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
+                  <h2 className="admin-section-title text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
                     Audit Logs
                   </h2>
                   <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">
@@ -380,8 +347,8 @@ export default function AdminUsers() {
           ) : (
             <>
               {/* Table card */}
-              <div className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-                <div className="flex flex-col gap-3 border-b border-zinc-100 dark:border-zinc-800 p-4 sm:flex-row sm:items-center">
+              <div className="admin-panel admin-data-table overflow-hidden">
+                <div className="admin-toolbar">
                   <div className="relative flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                     <input
@@ -391,29 +358,11 @@ export default function AdminUsers() {
                       className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-[#009639] focus:bg-white focus:ring-2 focus:ring-[#009639]/15"
                     />
                   </div>
-                  <div className="flex gap-1.5">
-                    {["all", Roles.ALUMNI, Roles.STUDENT].map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setRoleFilter(r)}
-                        className={`rounded-full px-3 py-1.5 text-[11.5px] font-bold capitalize transition ${
-                          roleFilter === r
-                            ? "bg-[#009639] text-white"
-                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setSyncOpen(true)}
-                      className="flex items-center gap-1.5 rounded-full bg-zinc-900 px-3.5 py-1.5 text-[11.5px] font-bold text-white transition hover:bg-zinc-800"
-                    >
-                      <DatabaseZap className="h-3.5 w-3.5" />
-                      Sync CAIS
-                    </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <AdminTabs label="Filter users by role" value={roleFilter} onChange={value => { setRoleFilter(value); setUserPage(1); }} items={[
+                      { id: "all", label: "All" }, { id: Roles.ALUMNI, label: "Alumni" }, { id: Roles.STUDENT, label: "Student" },
+                    ]} />
+                    <AdminButton onClick={() => setSyncOpen(true)}><DatabaseZap size={15} />Sync CAIS</AdminButton>
                   </div>
                 </div>
 
@@ -558,7 +507,7 @@ export default function AdminUsers() {
                     className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 p-5 shadow-xl"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
+                    <h2 className="admin-section-title flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
                       <RefreshCw
                         className={`h-4 w-4 text-[#009639] dark:text-emerald-300 ${syncLoading ? "animate-spin" : ""}`}
                       />

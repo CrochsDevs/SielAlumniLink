@@ -94,6 +94,26 @@
   .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) > .min-h-screen {
     background: var(--alumni-page-background);
   }
+  .member-workspace.admin-workspace[data-workspace-role="admin"] {
+    --alumni-page-background: #e6eee7;
+    --alumni-card: #e3eee4;
+    --alumni-card-border: #bbd2c1;
+    --alumni-secondary: #f0e7cc;
+    --alumni-secondary-border: #d9c999;
+    --alumni-tab: #d0e1d3;
+    --alumni-heading: #19472f;
+    --alumni-card-shadow: 0 3px 10px rgb(30 62 40 / 4%);
+  }
+  .dark .member-workspace.admin-workspace[data-workspace-role="admin"] {
+    --alumni-page-background: #111b15;
+    --alumni-card: #1b2920;
+    --alumni-card-border: #304237;
+    --alumni-secondary: #292b21;
+    --alumni-secondary-border: #3d4232;
+    --alumni-tab: #293e30;
+    --alumni-heading: #e4f2e7;
+    --alumni-card-shadow: 0 2px 6px rgb(0 0 0 / 5%);
+  }
   .member-workspace main.workspace-page {
     width: 100%;
     max-width: 80rem;

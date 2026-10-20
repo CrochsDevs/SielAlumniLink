@@ -1,4 +1,5 @@
 import { SOURCES, TIMEZONE, requireAdmin, reportPeriod, summarizeEngagement, summarizeMentorship } from './reports.policy.js';
+import { dashboardOverview } from './reports.overview.js';
 
 export function createReportService(db, { now = () => new Date() } = {}) {
   return {
@@ -11,7 +12,7 @@ export function createReportService(db, { now = () => new Date() } = {}) {
       const students = accounts.filter(account => account.role.toLowerCase() === 'student').map(account => String(account._id));
       const alumni = accounts.filter(account => account.role.toLowerCase() === 'alumni').map(account => String(account._id));
       const asString = field => ({ $convert: { input: `$${field}`, to: 'string', onError: '', onNull: '' } });
-      const [sourceRows, mentorshipRows] = await Promise.all([
+      const [sourceRows, mentorshipRows, overview] = await Promise.all([
         Promise.all(SOURCES.map(async source => {
           const rows = await db.collection(source.collection).aggregate([
             { $match: { ...source.filter, [source.date]: { $gte: period.start, $lt: period.end } } },
@@ -28,10 +29,11 @@ export function createReportService(db, { now = () => new Date() } = {}) {
           ] } } },
           { $group: { _id: '$status', count: { $sum: 1 } } },
         ]).toArray(),
+        dashboardOverview(db, user, generatedAt, alumni),
       ]);
       return { date: period.date, timezone: TIMEZONE, generatedAt: generatedAt.toISOString(),
         members: { students: students.length, alumni: alumni.length, total: memberIds.length },
-        engagement: summarizeEngagement(sourceRows.flat(), period), mentorship: summarizeMentorship(mentorshipRows) };
+        overview, engagement: summarizeEngagement(sourceRows.flat(), period), mentorship: summarizeMentorship(mentorshipRows) };
     },
   };
 }

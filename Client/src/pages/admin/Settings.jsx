@@ -1,3 +1,4 @@
+import { AdminTabs, AdminSwitch } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -188,30 +189,14 @@ export default function Settings() {
         />
 
         <main className="workspace-page p-4 sm:p-6">
-          <PageHeader title="Account settings" description="Manage your profile, account preferences, and security." />
+          <PageHeader title="Settings" description="Manage your profile, account preferences, and security." />
           <div className="flex flex-col md:flex-row gap-5 items-start">
             {/* Sub-sidebar */}
             <aside className="w-full md:w-60 shrink-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-2">
               <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                 Settings
               </p>
-              <nav className="space-y-0.5">
-                {TABS.map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => switchTab(key)}
-                    className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[12.5px] transition-colors text-left ${
-                      activeTab === key
-                        ? "bg-[#009639]/10 text-[#009639] font-semibold"
-                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 font-medium"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{label}</span>
-                  </button>
-                ))}
-              </nav>
+              <AdminTabs label="Settings sections" value={activeTab} onChange={switchTab} className="admin-tabs-vertical" items={TABS.map(item => ({ id: item.key, label: item.label, icon: item.icon }))} />
             </aside>
 
             {/* Content */}
@@ -222,7 +207,7 @@ export default function Settings() {
                   {/* My personal information */}
                   <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
                     <div className="px-5 py-4 border-b border-zinc-100">
-                      <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
+                      <h2 className="admin-section-title text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
                         My Personal Information
                       </h2>
                       <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
@@ -294,7 +279,7 @@ export default function Settings() {
               {/* SECURITY */}
               {activeTab === "security" && (
                 <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 max-w-md">
-                  <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
+                  <h2 className="admin-section-title text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
                     Security and Password
                   </h2>
                   <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mb-4">
@@ -369,7 +354,7 @@ export default function Settings() {
               {activeTab === "notifications" && (
                 <div className="space-y-4 max-w-md">
                   <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 space-y-1">
-                    <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
+                    <h2 className="admin-section-title text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
                       Preferences
                     </h2>
                     <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mb-2">
@@ -388,35 +373,20 @@ export default function Settings() {
                       ],
                       ["events", "Events", "New gatherings and activities"],
                     ].map(([key, label, desc]) => (
-                      <button
+                      <AdminSwitch
                         key={key}
-                        type="button"
-                        onClick={() => toggleNotifPref(key)}
-                        className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
-                      >
-                        <span>
-                          <span className="block text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">
-                            {label}
-                          </span>
-                          <span className="block text-[11.5px] text-zinc-500 dark:text-zinc-400">
-                            {desc}
-                          </span>
-                        </span>
-                        <span
-                          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${notifPrefs[key] !== false ? "bg-[#009639]" : "bg-zinc-200"}`}
-                        >
-                          <span
-                            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${notifPrefs[key] !== false ? "left-[22px]" : "left-0.5"}`}
-                          />
-                        </span>
-                      </button>
+                        label={label}
+                        description={desc}
+                        checked={notifPrefs[key] !== false}
+                        onChange={() => toggleNotifPref(key)}
+                      />
                     ))}
                   </div>
 
                   <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
+                        <h2 className="admin-section-title text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
                           Recent Alerts
                         </h2>
                         <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
@@ -480,33 +450,17 @@ export default function Settings() {
               {/* APPEARANCE */}
               {activeTab === "appearance" && (
                 <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-5 max-w-md">
-                  <h2 className="text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
+                  <h2 className="admin-section-title text-[15px] font-bold text-zinc-800 dark:text-zinc-100">
                     Appearance
                   </h2>
                   <p className="text-[12px] text-zinc-500 dark:text-zinc-400 mb-3">
                     Choose how SielAlumni looks on this device.
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
+                  <AdminTabs label="Color theme" value={theme} onChange={changeTheme} items={[
                       { key: "light", label: "Light", icon: Sun },
                       { key: "dark", label: "Dark", icon: Moon },
                       { key: "system", label: "System", icon: Monitor },
-                    ].map(({ key, label, icon: Icon }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => changeTheme(key)}
-                        className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3.5 transition ${
-                          theme === key
-                            ? "border-[#009639] bg-emerald-50/50 text-[#007a2e]"
-                            : "border-zinc-200 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 hover:text-zinc-700"
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="text-[12px] font-bold">{label}</span>
-                      </button>
-                    ))}
-                  </div>
+                    ].map(item => ({ id: item.key, label: item.label, icon: item.icon }))} />
                   <p className="mt-3 text-[11.5px] text-zinc-400">
                     System follows your device setting and updates
                     automatically.

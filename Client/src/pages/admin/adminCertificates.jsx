@@ -1,3 +1,5 @@
+import { AdminTabs, AdminButton } from "../../components/admin/AdminUI";
+import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, BadgeCheck } from "lucide-react";
@@ -9,9 +11,8 @@ import CertificatePreview from "../../components/student/CertificatePreview";
 import api from "../../utils/axios";
 
 const card =
-  "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
-const button =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#009639] px-4 text-xs font-semibold text-white hover:bg-[#007a2e] disabled:opacity-50";
+  "admin-panel";
+const button = "admin-button admin-button-primary";
 const input =
   "mt-2 w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-900";
 const today = () =>
@@ -126,25 +127,17 @@ export default function AdminCertificates() {
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="workspace-page mx-auto max-w-6xl space-y-5 p-3 sm:p-6">
-          <header className="workspace-page-header flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                Attendance &amp; certificates
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">
-                Confirm participation to issue a certificate automatically.
-              </p>
-            </div>
-            <button
+          <PageHeader title="Certificates" description="Confirm participation and manage attendance certificates.">
+            <AdminButton
               type="button"
               disabled={loading || !participants.length}
               onClick={() => open(null)}
-              className={button}
+
             >
               <Plus size={14} />
               Record participation
-            </button>
-          </header>
+            </AdminButton>
+          </PageHeader>
           {error && (
             <p role="alert" className={`${card} p-4 text-sm text-red-600`}>
               {error}{" "}
@@ -153,25 +146,10 @@ export default function AdminCertificates() {
               </button>
             </p>
           )}
-          <nav
-            aria-label="Certificate management views"
-            className="flex gap-5 border-b border-zinc-200 dark:border-zinc-800"
-          >
-            {[
-              ["pending", "Attendance review", pending.length],
-              ["issued", "Issued certificates", issued.length],
-            ].map(([id, label, count]) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={view === id}
-                onClick={() => setView(id)}
-                className={`border-b-2 pb-3 text-xs font-semibold ${view === id ? "border-[#009639] text-[#007a2e] dark:text-emerald-300" : "border-transparent text-zinc-500"}`}
-              >
-                {label} ({loading ? "-" : count})
-              </button>
-            ))}
-          </nav>
+          <AdminTabs label="Certificate management views" value={view} onChange={setView} items={[
+            { id: "pending", label: "Attendance review", count: loading ? "-" : pending.length },
+            { id: "issued", label: "Issued certificates", count: loading ? "-" : issued.length },
+          ]} />
           {loading ? (
             <p role="status" className="p-8 text-sm text-zinc-500">
               Loading records...
@@ -190,7 +168,7 @@ export default function AdminCertificates() {
                   className={`${card} flex flex-wrap items-center justify-between gap-4 p-5`}
                 >
                   <div>
-                    <h2 className="text-sm font-semibold">{record.title}</h2>
+                    <h2 className="admin-section-title text-sm font-semibold">{record.title}</h2>
                     <p className="mt-2 text-xs text-zinc-500">
                       {record.studentName} | {record.date}
                     </p>
@@ -222,7 +200,7 @@ export default function AdminCertificates() {
                   className={`${card} flex flex-wrap items-center justify-between gap-3 p-5`}
                 >
                   <div>
-                    <h2 className="text-sm font-semibold">
+                    <h2 className="admin-section-title text-sm font-semibold">
                       {certificate.title}
                     </h2>
                     <p className="mt-2 text-xs text-zinc-500">

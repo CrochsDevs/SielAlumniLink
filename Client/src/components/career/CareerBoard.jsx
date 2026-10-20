@@ -1,3 +1,4 @@
+import { AdminTabs, AdminButton } from "../admin/AdminUI";
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import {
   Bookmark,
@@ -571,8 +572,8 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
   return (
     <main className={`mx-auto max-w-7xl p-3 text-zinc-900 sm:p-5 dark:text-zinc-100 workspace-page ${marketplace ? "career-marketplace" : ""}`}>
       {marketplace && <>
-        <PageHeader title="Career Board" description="Find opportunities, learn from alumni, and build what comes next.">
-          {canPost && <button type="button" onClick={() => setEditor({ kind: isAdmin && view !== "guides" ? "job" : "guide" })} className={primaryButton}><Plus size={16} />{isAdmin && view !== "guides" ? 'Post an opportunity' : 'Share a career guide'}</button>}
+        <PageHeader title={isAdmin ? "Job Posts" : "Career Board"} description={isAdmin ? "Manage job opportunities and career resources for your community." : "Find opportunities, learn from alumni, and build what comes next."}>
+          {canPost && (isAdmin ? <AdminButton onClick={() => setEditor({ kind: view !== "guides" ? "job" : "guide" })}><Plus size={15} />{view !== "guides" ? "Post an opportunity" : "Share a career guide"}</AdminButton> : <button type="button" onClick={() => setEditor({ kind: "guide" })} className={primaryButton}><Plus size={16} />Share a career guide</button>)}
         </PageHeader>
         {view !== "referrals" && <div className="career-search-row">
           <CareerSearch value={query} onChange={setQuery} onSearch={(value) => { setTerm(value); setPage(1); }} placeholder={searchPlaceholder} />
@@ -586,6 +587,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
           <Briefcase size={20} className="text-[#009639]" />
           Career Board
         </h1>}
+        {isAdmin ? <AdminTabs label="Career board views" value={view} onChange={selectView} items={tabs.map(tab => ({ id: tab.id, label: tab.label }))} /> : (
         <nav
           aria-label="Career board views"
           className="flex max-w-full gap-4 overflow-x-auto"
@@ -602,6 +604,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
             </button>
           ))}
         </nav>
+        )}
       </div>
       {view === "referrals" && referralContent ? (
         referralContent

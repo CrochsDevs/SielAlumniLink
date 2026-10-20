@@ -1,3 +1,4 @@
+import PageHeader from "../../components/ui/PageHeader";
 import { useState } from "react";
 import { useAuth } from "../../context/useAuth";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
@@ -25,14 +26,15 @@ const AdminMessage = () => {
       <div className="lg:pl-64">
         <AdminTopbar
           user={user}
-          title="Message"
+          title="Messages"
           onMenuClick={() => setSidebarOpen(true)}
         />
 
         <main className="workspace-page mx-auto max-w-6xl p-4 sm:p-6">
+          <PageHeader title="Messages" description="Manage conversations and stay connected with your community." />
           <div
             className="grid grid-cols-1 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
-            style={{ height: "calc(100vh - 12rem)", minHeight: "480px" }}
+            style={{ height: "calc(100vh - 17rem)", minHeight: "480px" }}
           >
             <div className={`${activeId ? "hidden md:block" : "block"}`}>
               <ConvoList {...inbox} />

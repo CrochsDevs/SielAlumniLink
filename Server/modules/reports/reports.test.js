@@ -66,6 +66,35 @@ test('MongoDB reports count all sources, timezone boundaries and student–alumn
       { requesterAuthId: student, recipientAuthId: admin, status: 'accepted' },
     ]);
     const service = createReportService(db, { now: () => new Date('2024-03-01T00:00:00Z') });
+    await db.collection('job_posts').insertMany([{ isActive: true }, { isActive: false }]);
+    await db.collection('events').insertMany([
+      { title: 'Next event', isActive: true, startAt: new Date('2024-03-02') },
+      { title: 'Past event', isActive: true, startAt: at },
+      { title: 'Hidden event', isActive: false, startAt: new Date('2024-03-03') },
+    ]);
+    await db.collection('tracer_responses').insertMany([
+      { authId: alumni, status: 'Employed' }, { authId: String(otherAlumni), status: 'Studying' },
+      { authId: student, status: 'Employed' }, { authId: new ObjectId(), status: 'Employed' },
+    ]);
+    const ownConversation = new ObjectId(), privateConversation = new ObjectId();
+    await db.collection('conversations').insertMany([
+      { _id: ownConversation, participants: [{ authId: String(admin) }] },
+      { _id: privateConversation, participants: [{ authId: String(student) }] },
+    ]);
+    await db.collection('messages').insertMany([
+      { conversationId: ownConversation, senderAuthId: String(student), read: false },
+      { conversationId: ownConversation, senderAuthId: String(admin), read: false },
+      { conversationId: privateConversation, senderAuthId: String(alumni), read: false },
+    ]);
+    const overview = (await service.dashboard({ role: 'admin', _id: admin }, { date: '2024-02-29' })).overview;
+    assert.equal(overview.jobs, 1);
+    assert.equal(overview.events, 1);
+    assert.equal(overview.upcomingEvents[0].title, 'Next event');
+    assert.equal(overview.tracerResponses, 2);
+    assert.equal(overview.employedAlumni, 1);
+    assert.equal(overview.unreadMessages, 1);
+    assert.equal(overview.posts, 1);
+    assert.equal(overview.blockedPosts, 1);
     const result = await service.dashboard({ role: 'admin' }, { date: '2024-02-29' });
     assert.equal(result.engagement.daily.total, 7);
     assert.equal(result.engagement.daily.activeMembers, 2);

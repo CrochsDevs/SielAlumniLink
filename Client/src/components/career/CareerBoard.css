@@ -99,18 +99,18 @@
   background: #dfe9dc;
 }
 .career-marketplace .career-board-navigation nav { gap: 4px; }
-.career-marketplace .career-board-navigation button {
+.career-marketplace .career-board-navigation nav:not(.admin-tabs) button {
   padding: 9px 14px;
   border: 0;
   border-radius: 8px;
   color: #4b6051;
   font-size: 13px;
 }
-.career-marketplace .career-board-navigation button:hover { background: rgb(255 255 255 / 35%); }
-.career-marketplace .career-board-navigation button[aria-pressed="true"] { background: #145238; color: #fff; box-shadow: 0 2px 4px rgb(18 56 35 / 12%); }
+.career-marketplace .career-board-navigation nav:not(.admin-tabs) button:hover { background: rgb(255 255 255 / 35%); }
+.career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: #145238; color: #fff; box-shadow: 0 2px 4px rgb(18 56 35 / 12%); }
 .dark .career-marketplace .career-board-navigation { background: #1b2b20; }
-.dark .career-marketplace .career-board-navigation button { color: #b7c9bc; }
-.dark .career-marketplace .career-board-navigation button[aria-pressed="true"] { background: #306b45; color: #fff; }
+.dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button { color: #b7c9bc; }
+.dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: #306b45; color: #fff; }
 .career-marketplace .career-layout { gap: 24px; }
 .career-marketplace .career-filter-panel {
   padding: 20px 12px 14px;

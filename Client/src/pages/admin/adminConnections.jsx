@@ -1,3 +1,5 @@
+import { AdminTabs } from "../../components/admin/AdminUI";
+import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Users, Eye, X } from "lucide-react";
@@ -199,18 +201,9 @@ export default function AdminConnections() {
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-          <div className="workspace-page-header flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                Community connections
-              </h1>
-              <p className="mt-1 text-sm text-zinc-500">
-                Select a student or alumnus to see their connections.
-              </p>
-            </div>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <div className="flex flex-col gap-3 border-b border-zinc-100 p-4 dark:border-zinc-800 sm:flex-row sm:items-center">
+          <PageHeader title="Connections" description="Select a student or alumnus to see their community connections." />
+          <div className="admin-panel admin-data-table overflow-hidden">
+            <div className="admin-toolbar">
               <div className="relative flex-1">
                 <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-zinc-400" />
                 <input
@@ -225,22 +218,7 @@ export default function AdminConnections() {
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none focus:border-[#009639] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
-                {FILTERS.map((filter) => (
-                  <button
-                    key={filter}
-                    type="button"
-                    aria-pressed={roleFilter === filter}
-                    onClick={() => {
-                      setRoleFilter(filter);
-                      setPage(1);
-                    }}
-                    className={`rounded-full px-4 py-2 text-xs font-bold capitalize ${roleFilter === filter ? "bg-[#009639] text-white" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
+              <AdminTabs label="Filter connections by role" value={roleFilter} onChange={value => { setRoleFilter(value); setPage(1); }} items={FILTERS.map(filter => ({ id: filter, label: filter.charAt(0).toUpperCase() + filter.slice(1) }))} />
             </div>
             {loading ? (
               <p role="status" className="p-6 text-sm text-zinc-500">

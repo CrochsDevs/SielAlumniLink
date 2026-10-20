@@ -188,9 +188,10 @@ try {
   await until(`document.querySelector('[data-workspace-role="alumni"] .career-marketplace')`);
   await evaluate(`document.documentElement.classList.remove('dark')`);
   const alumniStyle = await evaluate(`(()=>{const top=getComputedStyle(document.querySelector('.member-topbar header'));const h=getComputedStyle(document.querySelector('.workspace-page-header h1'));return [top.borderRadius,top.backgroundColor,h.fontSize,h.fontWeight,getComputedStyle(document.querySelector('.min-h-screen')).backgroundColor]})()`);
-  assert.deepEqual(adminStyle, alumniStyle, 'Admin and alumni share topbar, title typography, and background');
+  assert.deepEqual([adminStyle[0], adminStyle[2]], [alumniStyle[0], alumniStyle[2]], 'Admin and alumni retain shared topbar geometry and title size');
+  assert.deepEqual(adminStyle.slice(3), ['600', 'rgb(230, 238, 231)'], 'Admin uses the shared compact heading weight and green workspace theme');
   assert.deepEqual(runtimeErrors, []);
-  console.log('Passed: alumni/admin design parity, desktop/mobile/dark layouts, filter drawer, admin edit/create controls and visibility toggle, guide editor and settings link. Fixture data only. Screenshots: ' + artifacts);
+  console.log('Passed: shared workspace geometry and admin theme, desktop/mobile/dark layouts, filter drawer, admin edit/create controls and visibility toggle, guide editor and settings link. Fixture data only. Screenshots: ' + artifacts);
 } finally {
   await send('Browser.close').catch(() => {});
   socket.close();
