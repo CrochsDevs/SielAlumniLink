@@ -1,3 +1,6 @@
+import useJobDeadline, { deadlinePassed, deadlineLabel } from "./useJobDeadline";
+import JobDescription from "./JobDescription";
+import { useChat } from "../../context/useChat";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -8,8 +11,12 @@ import {
   CheckCircle2,
   Download,
   FileText,
+  GraduationCap,
   LoaderCircle,
   MapPin,
+  Mail,
+  MessageCircle,
+  Phone,
   Send,
   ShieldCheck,
   UploadCloud,
@@ -21,7 +28,7 @@ import api from "../../utils/axios";
 const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white transition hover:bg-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50";
 const input =
-  "mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-3 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-3 text-sm text-zinc-900 shadow-sm shadow-zinc-900/10 outline-none transition placeholder:text-zinc-400 focus:border-brand focus:shadow-md focus:shadow-brand/10 focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-black/25 dark:focus:shadow-brand/10";
 
 export function JobApplicationDialog({
   jobId,
@@ -31,6 +38,8 @@ export function JobApplicationDialog({
   onClose,
 }) {
   const [job, setJob] = useState(null);
+  const now = useJobDeadline();
+  const closed = !job?.isActive || deadlinePassed(job, now);
   const [step, setStep] = useState("details");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,8 +48,24 @@ export function JobApplicationDialog({
     name: user?.name || "",
     email: user?.email || "",
     note: "",
+    phone: "",
   });
   const [resume, setResume] = useState(null);
+  const [coverMode, setCoverMode] = useState("text");
+  const [coverPdf, setCoverPdf] = useState(null);
+  const coverInput = useRef(null);
+  const coverSelection = useRef(0);
+  const chooseCoverPdf = async (file) => {
+    const selection = ++coverSelection.current;
+    if (!file) return;
+    setCoverPdf(null);
+    try {
+      if (!file.name.toLowerCase().endsWith(".pdf") || file.size > 5 * 1024 * 1024 || (file.type && !["application/pdf", "application/octet-stream"].includes(file.type)) || await file.slice(0, 5).text() !== "%PDF-") throw new Error();
+      if (selection !== coverSelection.current) return;
+      setCoverPdf(file);
+      setError("");
+    } catch { if (selection === coverSelection.current) setError("Choose a PDF cover note up to 5 MB."); }
+  };
   const pending = useRef(false);
   const fileInput = useRef(null);
   const [dragging, setDragging] = useState(false);
@@ -84,6 +109,7 @@ export function JobApplicationDialog({
   const submit = async (event) => {
     event.preventDefault();
     if (pending.current) return;
+    if (!job?.isActive || deadlinePassed(job)) { setError("This job is no longer accepting applications."); return; }
     if (
       !resume ||
       !resume.name.toLowerCase().endsWith(".pdf") ||
@@ -92,11 +118,13 @@ export function JobApplicationDialog({
       setError("Choose a PDF resume up to 5 MB.");
       return;
     }
+    if (form.phone && (!/^\+?[0-9() -]+$/.test(form.phone.trim()) || form.phone.replace(/\D/g, "").length < 7 || form.phone.replace(/\D/g, "").length > 15)) { setError("Enter a valid contact number (7 to 15 digits)."); return; }
     pending.current = true;
     setBusy(true);
     setError("");
     const body = new FormData();
-    Object.entries(form).forEach(([key, value]) => body.append(key, value));
+    Object.entries({ ...form, note: coverMode === "text" ? form.note : "" }).forEach(([key, value]) => body.append(key, value));
+    if (coverMode === "pdf" && coverPdf) body.append("coverNote", coverPdf);
     body.append("resume", resume);
     try {
       const response = await api.post(`/jobs/${jobId}/apply`, body);
@@ -127,6 +155,8 @@ export function JobApplicationDialog({
     }
   };
   const complete = step === "success" || !!application;
+  const currentStep = complete ? 2 : step === "resume" ? 1 : 0;
+  const stepLabels = ["Job details", "Your application", "Submitted"];
   return (
     <FeedDialog
       wide
@@ -136,46 +166,22 @@ export function JobApplicationDialog({
       busy={busy}
       onClose={onClose}
     >
-      <ol
-        aria-label="Application progress"
-        className="mb-6 flex items-center gap-2 border-b border-zinc-100 pb-5 dark:border-zinc-800"
-      >
-        {[
-          ["details", "Job details"],
-          ["resume", "Your application"],
-          ["success", "Submitted"],
-        ].map(([id, label], index) => {
-          const current = complete ? 2 : step === "resume" ? 1 : 0;
-          return (
-            <li
-              key={id}
-              aria-current={current === index ? "step" : undefined}
-              className="flex min-w-0 flex-1 items-center gap-2 text-[10px] font-medium sm:text-xs"
-            >
-              <span
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] ${index <= current ? "bg-brand text-white" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"}`}
-              >
-                {index < current ? <Check size={12} /> : index + 1}
+      <div className="relative mb-6 border-b border-zinc-100 pb-5 dark:border-zinc-800">
+        <div role="progressbar" aria-label="Application progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentStep * 50} aria-valuetext={`Step ${currentStep + 1} of 3: ${stepLabels[currentStep]}`}
+          className="absolute left-[16.6667%] right-[16.6667%] top-[15px] h-[3px] overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div className="h-full rounded-full bg-brand transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${currentStep * 50}%` }} />
+        </div>
+        <ol aria-label="Application steps" className="relative grid grid-cols-3 gap-2">
+          {stepLabels.map((label, index) => (
+            <li key={label} aria-current={currentStep === index ? "step" : undefined} className="flex min-w-0 flex-col items-center gap-2 text-center text-[10px] font-medium sm:text-xs">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs ring-4 ring-white dark:ring-zinc-900 ${index <= currentStep ? "bg-brand text-white" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"}`}>
+                {index < currentStep || (complete && index === currentStep) ? <Check size={15} aria-hidden="true" /> : index + 1}
               </span>
-              <span
-                className={
-                  index <= current
-                    ? "text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-400"
-                }
-              >
-                {label}
-              </span>
-              {index < 2 && (
-                <span
-                  aria-hidden="true"
-                  className="ml-auto hidden h-px flex-1 bg-zinc-200 sm:block dark:bg-zinc-700"
-                />
-              )}
+              <span className={index <= currentStep ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-400"}>{label}</span>
             </li>
-          );
-        })}
-      </ol>
+          ))}
+        </ol>
+      </div>
       {error && (
         <p
           role="alert"
@@ -272,17 +278,22 @@ export function JobApplicationDialog({
                       {job.mode}
                     </span>
                   )}
+                  {job.experienceLevel && (
+                    <span className="flex items-center gap-1.5">
+                      <GraduationCap size={13} aria-hidden="true" />
+                      <span>Experience level: {job.experienceLevel}</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
+          {job.applicationDeadline && <p role="status" className="mt-4 rounded-lg border border-zinc-300 p-3 text-sm dark:border-zinc-600">{closed ? "Applications closed" : "Apply until"}: {deadlineLabel(job.applicationDeadline)}</p>}
           {step === "details" ? (
             <>
               <section className="px-1 py-6 sm:px-2">
                 <h4 className="text-sm font-semibold">About the role</h4>
-                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-zinc-600 dark:text-zinc-300">
-                  {job.description || "No additional details provided."}
-                </p>
+                <JobDescription value={job.description || "No additional details provided."} format={job.descriptionFormat} className="mt-3 text-zinc-600 dark:text-zinc-300" />
                 {(job.tags || []).length > 0 && (
                   <div className="mt-6 border-t border-zinc-100 pt-5 dark:border-zinc-800">
                     <h4 className="mb-3 text-xs font-semibold">
@@ -324,9 +335,10 @@ export function JobApplicationDialog({
                             )
                           : "Saved in your Applied tab"}
                       </p>
+                      {application.coverNoteName && <ApplicationPdfDownload application={application} kind="coverNote" />}
                     </div>
                   </div>
-                ) : job.isActive ? (
+                ) : !closed ? (
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold">Ready to apply?</p>
@@ -352,7 +364,8 @@ export function JobApplicationDialog({
             </>
           ) : (
             <form onSubmit={submit} className="mt-6">
-              <fieldset disabled={busy} className="space-y-6">
+              {closed && <p role="alert" className="mb-4 text-sm text-red-600">This job is no longer accepting applications.</p>}
+              <fieldset disabled={busy || closed} className="space-y-6">
                 <section>
                   <h4 className="text-sm font-semibold">Contact details</h4>
                   <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -387,6 +400,9 @@ export function JobApplicationDialog({
                       />
                     </label>
                   </div>
+                  <label className="mt-4 block text-xs font-medium">Contact number <span className="font-normal text-zinc-400">(optional)</span>
+                    <input type="tel" autoComplete="tel" maxLength={32} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className={input} placeholder="e.g. 0917 123 4567" />
+                  </label>
                 </section>
                 <section>
                   <h4 className="text-sm font-semibold">
@@ -470,29 +486,27 @@ export function JobApplicationDialog({
                     )}
                   </div>
                 </section>
-                <label className="block text-xs font-medium">
-                  Cover note{" "}
-                  <span className="font-normal text-zinc-400">(optional)</span>
-                  <textarea
-                    rows={3}
-                    maxLength={5000}
-                    value={form.note}
-                    onChange={(event) =>
-                      setForm({ ...form, note: event.target.value })
-                    }
-                    className={`${input} resize-y`}
-                    placeholder="What makes this opportunity a good fit for you?"
-                  />
-                  <span className="mt-1 block text-right text-[10px] font-normal text-zinc-400">
-                    {form.note.length.toLocaleString()} / 5,000
-                  </span>
-                </label>
+                <section aria-label="Cover note">
+                  <h4 className="text-sm font-semibold">Cover note <span className="text-xs font-normal text-zinc-400">(optional)</span></h4>
+                  <div role="group" aria-label="Cover note format" className="mt-3 inline-flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
+                    {[["text", "Type a note"], ["pdf", "Upload PDF"]].map(([mode, label]) => <button key={mode} type="button" aria-pressed={coverMode === mode} onClick={() => { setCoverMode(mode); setError(""); }} className={`rounded-md px-3 py-2 text-xs font-semibold transition ${coverMode === mode ? "bg-brand text-white shadow-sm" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"}`}>{label}</button>)}
+                  </div>
+                  {coverMode === "text" ? <label className="mt-2 block text-xs font-medium">
+                    <span className="sr-only">Cover note text</span>
+                    <textarea rows={3} maxLength={5000} value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} className={`${input} resize-y`} placeholder="What makes this opportunity a good fit for you?" />
+                    <span className="mt-1 block text-right text-[10px] font-normal text-zinc-400">{form.note.length.toLocaleString()} / 5,000</span>
+                  </label> : <div className="mt-3 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-4 dark:border-zinc-600 dark:bg-zinc-800/30">
+                    <input ref={coverInput} type="file" aria-label="Choose PDF cover note" accept=".pdf,application/pdf" className="hidden" onChange={(event) => { chooseCoverPdf(event.target.files?.[0]); event.target.value = ""; }} />
+                    {coverPdf ? <div className="flex items-center gap-3"><FileText size={24} className="shrink-0 text-brand" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium" title={coverPdf.name}>{coverPdf.name}</p><p className="mt-1 text-xs text-zinc-500">{Math.ceil(coverPdf.size / 1024)} KB ? PDF</p></div><button type="button" aria-label="Remove PDF cover note" onClick={() => { ++coverSelection.current; setCoverPdf(null); }} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700"><X size={16} /></button></div> : <p className="text-xs text-zinc-500 dark:text-zinc-400">Attach a PDF cover note, up to 5 MB. Other file types are not accepted.</p>}
+                    <button type="button" onClick={() => coverInput.current?.click()} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold shadow-sm dark:border-zinc-600 dark:bg-zinc-900"><UploadCloud size={15} />{coverPdf ? "Change PDF" : "Choose PDF"}</button>
+                  </div>}
+                </section>
                 <p className="flex items-start gap-2 rounded-lg bg-zinc-50 p-3 text-[11px] leading-5 text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
                   <ShieldCheck
                     size={16}
                     className="mt-0.5 shrink-0 text-brand dark:text-brand"
                   />
-                  Your contact details and resume are shared with the university
+                  Your contact details and attached documents are shared with the university
                   career team for this application.
                 </p>
                 <div className="flex flex-col-reverse gap-3 border-t border-zinc-100 pt-5 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
@@ -526,11 +540,28 @@ export function JobApplicationDialog({
 }
 
 export function JobApplicantsDialog({ job, onClose }) {
+  const { openChatByEmail } = useChat();
+  const [contactBusy, setContactBusy] = useState(false);
+  const [contactError, setContactError] = useState("");
+  const contactPending = useRef(false);
+  const messageApplicant = async () => {
+    if (contactPending.current || !selectedApplication?.messageEmail) return;
+    contactPending.current = true;
+    setContactBusy(true);
+    setContactError("");
+    try {
+      const opened = await openChatByEmail(selectedApplication.messageEmail);
+      if (opened) onClose();
+      else setContactError("Unable to open the conversation. You can still contact the applicant by email.");
+    } catch { setContactError("Unable to open the conversation. Please try again."); }
+    finally { contactPending.current = false; setContactBusy(false); }
+  };
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
-  const [downloading, setDownloading] = useState(null);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const lastViewButton = useRef(null);
   useEffect(() => {
     let active = true;
     api
@@ -551,30 +582,39 @@ export function JobApplicantsDialog({ job, onClose }) {
       active = false;
     };
   }, [job._id, attempt]);
-  const download = async (application) => {
-    setDownloading(application._id);
-    setError("");
-    try {
-      const response = await api.get(
-        `/jobs/applications/${application._id}/resume`,
-        { responseType: "blob" },
-      );
-      const url = URL.createObjectURL(response.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = application.resumeName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch {
-      setError("Unable to download the resume. Please try again.");
-    } finally {
-      setDownloading(null);
-    }
-  };
   return (
-    <FeedDialog title={`Applicants for ${job.title}`} onClose={onClose}>
+    <FeedDialog title={selectedApplication ? "Application details" : `Applicants for ${job.title}`} onClose={onClose}>
+      {selectedApplication ? <>
+        <button type="button" onClick={() => { setSelectedApplication(null); setContactError(""); requestAnimationFrame(() => document.getElementById(`view-application-${lastViewButton.current}`)?.focus()); }} className="mb-5 inline-flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-brand dark:text-zinc-400"><ArrowLeft size={15} />Back to applicants</button>
+        <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/40">
+          <p className="text-xs font-medium text-brand">{job.title}</p>
+          <h3 className="mt-2 break-words text-lg font-semibold">{selectedApplication.name}</h3>
+          <p className="mt-1 break-all text-sm text-zinc-500 dark:text-zinc-400">{selectedApplication.email}</p>
+          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Submitted {new Date(selectedApplication.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })} (PH time)</p>
+        </section>
+        <section className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20" aria-label="Contact applicant">
+          <h3 className="text-sm font-semibold">Contact applicant</h3>
+          <a href={`mailto:${encodeURIComponent(selectedApplication.email)}`} className="mt-3 flex items-start gap-2 text-sm text-brand"><Mail size={16} className="mt-0.5 shrink-0" /><span className="min-w-0 break-all">{selectedApplication.email}</span></a>
+          {selectedApplication.phone && <a href={`tel:${selectedApplication.phone.replace(/[^+0-9]/g, "")}`} className="mt-2 flex items-center gap-2 text-sm text-brand"><Phone size={16} className="shrink-0" />{selectedApplication.phone}</a>}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a href={`mailto:${encodeURIComponent(selectedApplication.email)}?subject=${encodeURIComponent(`Regarding your application: ${job.title}`)}`} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white"><Mail size={14} />Email applicant</a>
+            {selectedApplication.messageEmail && <button type="button" disabled={contactBusy} onClick={messageApplicant} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-brand disabled:opacity-50 dark:border-emerald-800 dark:bg-zinc-900">{contactBusy ? <LoaderCircle size={14} className="animate-spin" /> : <MessageCircle size={14} />}{contactBusy ? "Opening..." : "Message applicant"}</button>}
+          </div>
+          {!selectedApplication.messageEmail && <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">In-system messaging is unavailable for this account. Use the contact email above.</p>}
+          {contactError && <p role="alert" className="mt-3 text-xs text-red-600 dark:text-red-400">{contactError}</p>}
+        </section>
+        <section className="mt-5 border-t border-zinc-200 pt-5 dark:border-zinc-700">
+          <h3 className="text-sm font-semibold">Resume</h3>
+          {selectedApplication.resumeName ? <><p className="mt-2 break-all text-xs text-zinc-500 dark:text-zinc-400">{selectedApplication.resumeName}</p><ApplicationPdfDownload application={selectedApplication} kind="resume" /></> : <p className="mt-2 text-xs text-zinc-500">No resume attached.</p>}
+        </section>
+        <section className="mt-5 border-t border-zinc-200 pt-5 dark:border-zinc-700">
+          <h3 className="text-sm font-semibold">Cover note</h3>
+          {selectedApplication.note && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{selectedApplication.note}</p>}
+          {selectedApplication.coverNoteName && <><p className="mt-2 break-all text-xs text-zinc-500 dark:text-zinc-400">{selectedApplication.coverNoteName}</p><ApplicationPdfDownload application={selectedApplication} kind="coverNote" /></>}
+          {!selectedApplication.note && !selectedApplication.coverNoteName && <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">No cover note provided.</p>}
+        </section>
+      </> : <>
+
       {error && (
         <p role="alert" className="mb-3 text-sm text-red-600">
           {error}{" "}
@@ -598,35 +638,42 @@ export function JobApplicantsDialog({ job, onClose }) {
               key={application._id}
               className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700"
             >
-              <h3 className="break-words text-sm font-semibold">
-                {application.name}
-              </h3>
-              <p className="break-all text-xs text-zinc-500">
-                {application.email}
-              </p>
-              <p className="mt-1 text-xs text-zinc-500">
-                Submitted {new Date(application.createdAt).toLocaleDateString()}
-              </p>
-              {application.note && (
-                <p className="mt-3 whitespace-pre-wrap break-words text-sm">
-                  {application.note}
-                </p>
-              )}
-              <button
-                type="button"
-                disabled={downloading !== null}
-                onClick={() => download(application)}
-                className={`${button} mt-3`}
-              >
-                <Download size={14} />
-                {downloading === application._id
-                  ? "Downloading..."
-                  : "Download resume"}
-              </button>
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words text-sm font-semibold">{application.name}</h3>
+                  <p className="mt-1 break-all text-xs text-zinc-500 dark:text-zinc-400">{application.email}</p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Submitted {new Date(application.createdAt).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</p>
+                </div>
+                <button id={`view-application-${application._id}`} type="button" onClick={() => { lastViewButton.current = application._id; setContactError(""); setSelectedApplication(application); }} className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">View application</button>
+              </div>
             </li>
           ))}
         </ul>
       )}
+      </>}
     </FeedDialog>
   );
+}
+
+function ApplicationPdfDownload({ application, kind }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const label = kind === "coverNote" ? "cover note PDF" : "resume";
+  const download = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await api.get(`/jobs/applications/${application._id}/${kind === "coverNote" ? "cover-note" : "resume"}`, { responseType: "blob" });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = application[`${kind}Name`];
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { setError(`Unable to download the ${label}. Please try again.`); }
+    finally { setBusy(false); }
+  };
+  return <div><button type="button" disabled={busy} onClick={download} className={`${button} mt-2`}><Download size={14} />{busy ? "Downloading..." : `Download ${label}`}</button>{error && <p role="alert" className="mt-2 text-xs text-red-600">{error}</p>}</div>;
 }

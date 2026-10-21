@@ -1,3 +1,5 @@
+@config "../tailwind.config.js";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,18 +67,18 @@
 }
 
 /* Shared heading scale for every student page. Resume typography is separate. */
-.student-page main :is(h1, h2, h3):not(:where(.portfolio-resume *, dialog *)) {
+.student-page main :is(h1, h2, h3):not(:where(.portfolio-resume *, .opportunity-prose *, dialog *)) {
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: -0.025em;
 }
 
-.student-page main h1:not(:where(.portfolio-resume *, dialog *)) {
+.student-page main h1:not(:where(.portfolio-resume *, .opportunity-prose *, dialog *)) {
   font-size: 1.5rem;
   line-height: 2rem;
 }
 
-.student-page main :is(h2, h3):not(:where(.portfolio-resume *, dialog *)) {
+.student-page main :is(h2, h3):not(:where(.portfolio-resume *, .opportunity-prose *, dialog *)) {
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
@@ -131,7 +133,7 @@
     color: hsl(var(--foreground)) !important;
     box-shadow: none !important;
   }
-  .member-workspace main.workspace-page h1:not(:where(.portfolio-resume *, dialog *)) {
+  .member-workspace main.workspace-page h1:not(:where(.portfolio-resume *, .opportunity-prose *, dialog *)) {
     margin: 0;
     font: 600 1.5rem/2rem ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.025em;
@@ -144,7 +146,7 @@
     font-size: 0.875rem;
     line-height: 1.5rem;
   }
-  .member-workspace main.workspace-page :is(h2, h3):not(:where(.portfolio-resume *, dialog *)) {
+  .member-workspace main.workspace-page :is(h2, h3):not(:where(.portfolio-resume *, .opportunity-prose *, dialog *)) {
     font-family: ui-sans-serif, system-ui, sans-serif;
     font-weight: 600;
     letter-spacing: -0.025em;

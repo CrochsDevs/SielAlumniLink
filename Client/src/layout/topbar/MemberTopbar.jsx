@@ -17,6 +17,7 @@ import {
 import { useNotifications } from "../../realtime/useNotifications";
 import NotificationDropdown from "../../components/notifications/NotificationDropdown";
 import { useChat } from "../../context/useChat.js";
+import "./MemberTopbar.css";
 
 const breadcrumbMap = [
   ["/admin/users", "Users"],
@@ -66,6 +67,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [scrollHidden, setScrollHidden] = useState(false);
   const {
     convos,
     openChat,
@@ -82,6 +84,26 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   const dropdownRef = useRef(null);
   const chatRef = useRef(null);
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    let previousY = Math.max(0, window.scrollY);
+    const reset = requestAnimationFrame(() => setScrollHidden(false));
+    const onScroll = () => {
+      const currentY = Math.max(0, window.scrollY);
+      if (currentY <= 80) {
+        setScrollHidden(false);
+        previousY = currentY;
+      } else if (Math.abs(currentY - previousY) >= 8) {
+        setScrollHidden(currentY > previousY);
+        previousY = currentY;
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(reset);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     if (chatOpen) refreshConvos();
@@ -129,7 +151,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   };
 
   return (
-    <div className="member-topbar sticky top-3 z-10 mx-auto max-w-7xl px-4 pt-3 sm:px-6">
+    <div className={`member-topbar ${scrollHidden && !dropdownOpen && !chatOpen && !notifOpen ? "is-scroll-hidden" : ""} sticky top-3 z-10 mx-auto max-w-7xl px-4 pt-3 sm:px-6`}>
       <header
         className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand/10 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 px-3 py-3 shadow-lg shadow-emerald-900/5 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-4 sm:py-0"
         style={{

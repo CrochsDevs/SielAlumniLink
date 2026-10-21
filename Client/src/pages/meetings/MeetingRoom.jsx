@@ -28,6 +28,7 @@ import api from "../../utils/axios";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 import CertificatePreview from "../../components/student/CertificatePreview";
 import { Bubble, BubbleContent, BubbleGroup } from "../../components/ui/bubble";
+import "./MeetingRoom.css";
 
 function VideoTile({ peer, stream, local = false }) {
   const video = useRef(null);
@@ -109,6 +110,7 @@ export default function MeetingRoom() {
   const [panel, setPanel] = useState("participants"),
     [draft, setDraft] = useState(""),
     [sending, setSending] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [roster, setRoster] = useState([]),
     [confirmEnd, setConfirmEnd] = useState(false),
     [actionBusy, setActionBusy] = useState(false),
@@ -213,8 +215,8 @@ export default function MeetingRoom() {
     ],
   ];
   return (
-    <main className="flex min-h-screen flex-col bg-[#111315] text-zinc-100">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-4 sm:px-6">
+    <main className={`meeting-room ${state.joined ? "is-joined" : "is-preview"} ${panelOpen ? "has-panel" : ""} flex min-h-screen flex-col bg-[#111315] text-zinc-100`}>
+      <header className="meeting-header flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-4">
           <Link
             to={host ? "/admin/events" : "/activities"}
@@ -268,8 +270,8 @@ export default function MeetingRoom() {
           </Link>
         </p>
       ) : (
-        <div className="grid flex-1 items-start gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-6">
-          <section className="min-w-0 space-y-4">
+        <div className="meeting-layout">
+          <section className="meeting-stage min-w-0">
             {state.joined ? (
               <>
                 {sharer && (
@@ -282,7 +284,7 @@ export default function MeetingRoom() {
                   />
                 )}
                 <div
-                  className={`grid gap-3 ${everyone.length > 1 ? "sm:grid-cols-2" : ""} ${everyone.length > 4 ? "xl:grid-cols-3" : ""}`}
+                  className={`meeting-gallery grid gap-3 ${everyone.length > 1 ? "sm:grid-cols-2" : ""} ${everyone.length > 4 ? "xl:grid-cols-3" : ""}`}
                 >
                   {everyone
                     .filter((peer) => peer.id !== sharer?.id)
@@ -305,11 +307,11 @@ export default function MeetingRoom() {
             ) : (
               <>
                 <VideoTile peer={self} stream={state.stream} local />
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                <div className="meeting-join-card">
                   <h2 className="text-base font-semibold">
                     {details.meeting?.state === "ended"
                       ? "This session has ended"
-                      : "Ready to join?"}
+                      : "Join meeting"}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-zinc-400">
                     {event.description ||
@@ -374,7 +376,8 @@ export default function MeetingRoom() {
               </>
             )}
           </section>
-          <aside className="flex min-h-80 flex-col rounded-xl border border-zinc-800 bg-zinc-900">
+          <aside id="meeting-side-panel" className={`meeting-side-panel ${!state.joined && host && details.meeting?.state === "ended" ? "show-attendance" : ""} flex min-h-80 flex-col rounded-xl border border-zinc-800 bg-zinc-900`}>
+            {state.joined && <button type="button" className="meeting-panel-close" onClick={() => setPanelOpen(false)} aria-label="Close meeting panel"><X size={18} /></button>}
             <nav
               className="flex border-b border-zinc-800 p-2"
               aria-label="Meeting panels"
@@ -545,7 +548,7 @@ export default function MeetingRoom() {
         </div>
       )}
       {state.joined && (
-        <footer className="sticky bottom-0 flex flex-wrap items-center justify-center gap-2 border-t border-zinc-800 bg-[#111315] p-3 sm:gap-3">
+        <footer className="meeting-toolbar">
           {controls.map(([key, icon, label, handler, active]) => (
             <button
               key={key}
@@ -556,7 +559,7 @@ export default function MeetingRoom() {
               className={`${smallButton} ${!active ? "bg-zinc-800" : ""}`}
             >
               {createElement(icon, { size: 18 })}
-              <span className="hidden sm:inline">
+              <span>
                 {key === "audio" ? "Microphone" : "Camera"}
               </span>
             </button>
@@ -569,7 +572,7 @@ export default function MeetingRoom() {
             className={`${smallButton} ${state.sharing ? "border-brand text-brand" : ""}`}
           >
             <MonitorUp size={18} />
-            <span className="hidden sm:inline">
+            <span>
               {state.sharing ? "Stop sharing" : "Share screen"}
             </span>
           </button>
@@ -581,16 +584,21 @@ export default function MeetingRoom() {
             className={`${smallButton} ${state.hand ? "text-amber-300" : ""}`}
           >
             <Hand size={18} />
-            <span className="hidden sm:inline">Raise hand</span>
+            <span>Raise hand</span>
+          </button>
+          <button type="button" aria-label="Participants" aria-expanded={panelOpen && panel === "participants"} aria-controls="meeting-side-panel" onClick={() => { setPanel("participants"); setPanelOpen(!(panelOpen && panel === "participants")); }} className={smallButton}>
+            <Users size={18} /><span>People ({everyone.length})</span>
           </button>
           <button
             type="button"
             aria-label="Chat"
-            onClick={() => setPanel(panel === "chat" ? "participants" : "chat")}
+            aria-expanded={panelOpen && panel === "chat"}
+            aria-controls="meeting-side-panel"
+            onClick={() => { setPanel("chat"); setPanelOpen(!(panelOpen && panel === "chat")); }}
             className={smallButton}
           >
             <MessageSquare size={18} />
-            <span className="hidden sm:inline">Chat</span>
+            <span>Chat</span>
           </button>
           <button
             type="button"
@@ -598,7 +606,7 @@ export default function MeetingRoom() {
             onClick={() =>
               host ? setConfirmEnd(true) : controller.leave().then(load)
             }
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-xs font-semibold disabled:opacity-40"
+            className="meeting-leave inline-flex min-h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-xs font-semibold disabled:opacity-40"
           >
             <PhoneOff size={18} />
             {host ? "End meeting" : "Leave"}

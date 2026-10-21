@@ -86,6 +86,7 @@ test('alignment reports require an authenticated administrator', () => {
 });
 
 test('submissions persist alignment against the authenticated account and reject missing answers', async t => {
+  t.mock.method(TracerModel, 'findByAuthId', async () => null);
   const save = t.mock.method(TracerModel, 'upsertByAuthId', async (authId, data) => ({ authId, ...data }));
   let output = res();
   await submitResponse({ user: { _id: 'owner', email: 'owner@example.test' }, body: { ...response, authId: 'other' } }, output);

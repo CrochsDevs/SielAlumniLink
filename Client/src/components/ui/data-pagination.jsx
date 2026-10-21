@@ -17,6 +17,7 @@ const DataPagination = ({
   onPageChange,
   perPage,
   onPerPageChange,
+  perPageOptions = [5, 10, 20, 50],
   totalItems,
   itemLabel = "items",
 }) => {
@@ -55,7 +56,7 @@ const DataPagination = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {[5, 10, 20, 50].map((n) => (
+            {perPageOptions.map((n) => (
               <SelectItem key={n} value={String(n)}>
                 {n} / page
               </SelectItem>

@@ -1,6 +1,16 @@
+import { Link } from "react-router-dom";
+import useJobDeadline, {
+  deadlinePassed,
+  deadlineLabel,
+  deadlineInput,
+} from "./useJobDeadline";
 import { AdminTabs, AdminButton } from "../admin/AdminUI";
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import {
+  CalendarDays,
+  Clock3,
+  FileText,
+  Send,
   Bookmark,
   Briefcase,
   Building2,
@@ -21,7 +31,6 @@ import {
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
 import {
-  JobApplicationDialog,
   JobApplicantsDialog,
 } from "./JobApplicationDialog";
 import ProfileAvatar from "../profile/ProfileAvatar";
@@ -29,7 +38,11 @@ import DataPagination from "../ui/data-pagination";
 import { FeedDialog } from "../feed/FeedComposer";
 import PageHeader from "../ui/PageHeader";
 import CareerSearch from "./CareerSearch";
+import OpportunityEditor from "./OpportunityEditor";
+import JobDescription from "./JobDescription";
+import { descriptionText } from "./description";
 import "./CareerBoard.css";
+import "./OpportunityModal.css";
 import { CareerFilters, CareerFilterDrawer } from "./CareerFilters";
 
 const CATEGORIES = [
@@ -71,10 +84,18 @@ const INTERESTS = [
   "Design",
   "Research",
 ];
+const EXPERIENCE_LEVELS = [
+  "No experience required",
+  "Entry-level",
+  "Mid-level",
+  "Senior-level",
+  "Manager / Lead",
+  "Executive",
+];
 const cardClass =
   "rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const inputClass =
-  "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:[color-scheme:dark]";
+  "h-10 w-full min-w-0 rounded-lg border border-solid border-zinc-400 bg-zinc-50 px-3 text-sm text-zinc-900 outline-none transition-colors hover:border-zinc-500 focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-500 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-400 dark:focus:border-brand dark:[color-scheme:dark]";
 const primaryButton =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
 const iconButton =
@@ -85,9 +106,12 @@ const emptyJob = {
   location: "",
   type: "Full-time",
   mode: "On-site",
+  experienceLevel: "",
+  applicationDeadline: null,
   description: "",
   tags: "",
   isActive: true,
+  audience: "all",
 };
 const emptyGuide = { title: "", type: "advice", body: "", tags: "" };
 const formatDate = (value) =>
@@ -139,6 +163,8 @@ function Editor({ kind, item, onClose, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const pending = useRef(false);
+  const deadlineRef = useRef(null);
+  const [duration, setDuration] = useState(null);
   const set = (field, value) =>
     setForm((previous) => ({ ...previous, [field]: value }));
   const label = kind === "job" ? "opportunity" : "career guide";
@@ -191,112 +217,316 @@ function Editor({ kind, item, onClose, onSaved }) {
       title={`${item ? "Edit" : "Post an"} ${label}`}
       busy={busy}
       onClose={onClose}
+      wide={kind === "job"}
+      header={
+        kind === "job" ? (
+          <div className="opportunity-modal-heading">
+            <span className="opportunity-heading-icon">
+              <Briefcase size={22} aria-hidden="true" />
+            </span>
+            <div>
+              <p className="opportunity-eyebrow">UNIVERSITY CAREER BOARD</p>
+              <h3>{item ? "Edit opportunity" : "Post an opportunity"}</h3>
+              <p>Help a fellow Sielesyuan take the next step.</p>
+            </div>
+          </div>
+        ) : undefined
+      }
     >
-      <form onSubmit={submit} className="space-y-4">
-        <fieldset disabled={busy} className="space-y-4">
-          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            {kind === "job"
-              ? "Share an opening with the university community."
-              : "Share advice, an industry insight, or a roadmap to help others grow."}
-          </p>
-          {field("title", "Title", true)}
+      <form
+        onSubmit={submit}
+        className={kind === "job" ? "opportunity-form" : "space-y-4"}
+      >
+        <fieldset disabled={busy} className="min-w-0 space-y-5">
           {kind === "job" ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {field("company", "Company / Organizer", true)}
-                {field("location", "Location")}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-xs font-medium">
-                  Employment type
-                  <select
-                    aria-label="Employment type"
-                    value={form.type}
-                    onChange={(event) => set("type", event.target.value)}
-                    className={`${inputClass} mt-1.5`}
-                  >
-                    {["Full-time", "Part-time", "Contract", "Internship"].map(
-                      (type) => (
-                        <option key={type}>{type}</option>
-                      ),
-                    )}
-                  </select>
+              <section
+                className="opportunity-section"
+                aria-label="Opportunity details"
+              >
+                <div className="opportunity-section-heading">
+                  <span>
+                    <Briefcase size={16} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h4>Opportunity details</h4>
+                    <p>Start with the role and where it fits.</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <label className="block text-xs font-medium">
+                    Opportunity type
+                    <select
+                      aria-label="Opportunity type"
+                      value={form.type === "Internship" ? "internship" : "job"}
+                      onChange={(event) => set("type", event.target.value === "internship" ? "Internship" : form.type === "Internship" ? "Full-time" : form.type)}
+                      className={`${inputClass} mt-1.5`}
+                    >
+                      <option value="job">Job</option>
+                      <option value="internship">Internship</option>
+                    </select>
+                  </label>
+                  {field("title", "Title", true)}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {field("company", "Company / Organizer", true)}
+                    {field("location", "Location")}
+                  </div>
+                  <div className={`grid gap-4 ${form.type !== "Internship" ? "sm:grid-cols-2" : ""}`}>
+                    {form.type !== "Internship" && <label className="block text-xs font-medium">
+                      Employment type
+                      <select
+                        aria-label="Employment type"
+                        value={form.type}
+                        onChange={(event) => set("type", event.target.value)}
+                        className={`${inputClass} mt-1.5`}
+                      >
+                        {[
+                          "Full-time",
+                          "Part-time",
+                          "Contract",
+                        ].map((type) => (
+                          <option key={type}>{type}</option>
+                        ))}
+                      </select>
+                    </label>}
+                    <label className="block text-xs font-medium">
+                      Work mode
+                      <select
+                        aria-label="Work mode"
+                        value={form.mode}
+                        onChange={(event) => set("mode", event.target.value)}
+                        className={`${inputClass} mt-1.5`}
+                      >
+                        {["On-site", "Hybrid", "Remote"].map((mode) => (
+                          <option key={mode}>{mode}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <label className="block text-xs font-medium">
+                    Experience level
+                    <select
+                      id="career-experienceLevel"
+                      aria-label="Experience level"
+                      value={form.experienceLevel || ""}
+                      onChange={(event) =>
+                        set("experienceLevel", event.target.value)
+                      }
+                      className={`${inputClass} mt-1.5`}
+                    >
+                      <option value="">Not specified</option>
+                      {EXPERIENCE_LEVELS.map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </section>
+              <section
+                className="opportunity-section opportunity-deadline-section"
+                aria-label="Application schedule"
+              >
+                <div className="opportunity-section-heading">
+                  <span>
+                    <CalendarDays size={17} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h4>Application schedule</h4>
+                    <p>Decide how long applications stay open.</p>
+                  </div>
+                  <span className="opportunity-optional">Optional</span>
+                </div>
+                <label
+                  htmlFor="career-deadline"
+                  className="block text-xs font-medium"
+                >
+                  Application deadline (Philippine time)
                 </label>
-                <label className="block text-xs font-medium">
-                  Work mode
-                  <select
-                    aria-label="Work mode"
-                    value={form.mode}
-                    onChange={(event) => set("mode", event.target.value)}
-                    className={`${inputClass} mt-1.5`}
+                <div className="opportunity-date-control">
+                  <input
+                    ref={deadlineRef}
+                    id="career-deadline"
+                    aria-label="Application deadline"
+                    type="datetime-local"
+                    value={deadlineInput(form.applicationDeadline)}
+                    onChange={(event) => {
+                      setDuration(null);
+                      set(
+                        "applicationDeadline",
+                        event.target.value
+                          ? new Date(
+                              `${event.target.value}+08:00`,
+                            ).toISOString()
+                          : null,
+                      );
+                    }}
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    className="opportunity-date-button"
+                    aria-label="Choose application deadline"
+                    title="Choose date and time"
+                    onClick={() => {
+                      try {
+                        if (deadlineRef.current?.showPicker)
+                          deadlineRef.current.showPicker();
+                        else deadlineRef.current?.focus();
+                      } catch {
+                        deadlineRef.current?.focus();
+                      }
+                    }}
                   >
-                    {["On-site", "Hybrid", "Remote"].map((mode) => (
-                      <option key={mode}>{mode}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+                    <CalendarDays size={18} aria-hidden="true" />
+                    <span>Choose date</span>
+                  </button>
+                </div>
+                <div
+                  className="opportunity-duration-options"
+                  role="group"
+                  aria-label="Application duration"
+                >
+                  {[7, 14, 30].map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      aria-pressed={duration === days}
+                      onClick={() => {
+                        setDuration(days);
+                        set(
+                          "applicationDeadline",
+                          new Date(Date.now() + days * 86400000).toISOString(),
+                        );
+                      }}
+                    >
+                      <Clock3 size={13} aria-hidden="true" />
+                      {days} days
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    aria-pressed={!form.applicationDeadline}
+                    onClick={() => {
+                      setDuration(null);
+                      set("applicationDeadline", null);
+                    }}
+                  >
+                    No deadline
+                  </button>
+                </div>
+                <p className="opportunity-deadline-note">
+                  <Clock3 size={15} aria-hidden="true" />
+                  <span>
+                    {form.applicationDeadline
+                      ? `Automatically closes ${deadlineLabel(form.applicationDeadline)}. You can change this anytime.`
+                      : "Keep applications open, or choose a date to close them automatically."}
+                  </span>
+                </p>
+              </section>
+              <section
+                className="opportunity-section"
+                aria-label="About the opportunity"
+              >
+                <div className="opportunity-section-heading">
+                  <span>
+                    <FileText size={17} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h4>About the opportunity</h4>
+                    <p>
+                      Share the responsibilities, qualifications, and benefits.
+                    </p>
+                  </div>
+                </div>
+                <OpportunityEditor
+                  value={form.description}
+                  format={form.descriptionFormat}
+                  disabled={busy}
+                  onChange={(description) =>
+                    setForm((previous) => ({
+                      ...previous,
+                      description,
+                      descriptionFormat: "html",
+                    }))
+                  }
+                />
+              </section>
+              <section className="opportunity-audience-section" aria-label="Opportunity visibility">
+                <div className="opportunity-visibility">
+                  <span className="opportunity-visibility-icon"><Eye size={19} aria-hidden="true" /></span>
+                  <span><strong id="opportunity-visible-label">{form.audience === "alumni" ? "Visible to alumni only" : "Visible to the community"}</strong><span id="opportunity-visible-hint">{form.audience === "alumni" ? "Only alumni can discover and apply to this opportunity." : "Alumni and students can discover and apply to this opportunity."}</span></span>
+                  <button type="button" role="switch" aria-label="Include students" aria-describedby="opportunity-visible-hint" aria-checked={form.audience !== "alumni"} title="On: All (Alumni and Students). Off: Alumni only." className="opportunity-visibility-switch" onClick={() => set("audience", form.audience === "alumni" ? "all" : "alumni")}><span /></button>
+                </div>
+              </section>
             </>
           ) : (
-            <label className="block text-xs font-medium">
-              Guide type
-              <select
-                aria-label="Guide type"
-                value={form.type}
-                onChange={(event) => set("type", event.target.value)}
-                className={`${inputClass} mt-1.5`}
-              >
-                {CATEGORIES.filter((category) =>
-                  ["advice", "insight", "roadmap"].includes(category.id),
-                ).map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="block text-xs font-medium">
-            {kind === "job" ? "Description" : "Guide content *"}
-            <textarea
-              aria-label={kind === "job" ? "Description" : "Guide content"}
-              value={kind === "job" ? form.description : form.body}
-              onChange={(event) =>
-                set(kind === "job" ? "description" : "body", event.target.value)
-              }
-              required={kind !== "job"}
-              rows={5}
-              maxLength={10000}
-              className={`${inputClass} mt-1.5 !h-auto py-3`}
-            />
-          </label>
-          {field("tags", "Tags (comma separated)")}
-          {kind === "job" && (
-            <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(event) => set("isActive", event.target.checked)}
-                className="h-4 w-4 accent-brand"
-              />
-              Visible to the community
-            </label>
+            <>
+              <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                Share advice, an industry insight, or a roadmap to help others
+                grow.
+              </p>
+              {field("title", "Title", true)}
+              <label className="block text-xs font-medium">
+                Guide type
+                <select
+                  aria-label="Guide type"
+                  value={form.type}
+                  onChange={(event) => set("type", event.target.value)}
+                  className={`${inputClass} mt-1.5`}
+                >
+                  {CATEGORIES.filter((category) =>
+                    ["advice", "insight", "roadmap"].includes(category.id),
+                  ).map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs font-medium">
+                Guide content *
+                <textarea
+                  aria-label="Guide content"
+                  value={form.body}
+                  onChange={(event) => set("body", event.target.value)}
+                  required
+                  rows={5}
+                  maxLength={10000}
+                  className={`${inputClass} mt-1.5 !h-auto py-3`}
+                />
+              </label>
+              {field("tags", "Tags (comma separated)")}
+            </>
           )}
           {error && (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">
               {error}
             </p>
           )}
-          <div className="flex justify-end gap-2">
+          <div
+            className={
+              kind === "job"
+                ? "opportunity-modal-actions"
+                : "flex justify-end gap-2"
+            }
+          >
+            {kind === "job" && (
+              <span className="opportunity-required-note">
+                * Required fields
+              </span>
+            )}
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-xs font-semibold dark:border-zinc-700"
+              className="rounded-lg border border-zinc-300 px-4 py-2.5 text-xs font-semibold transition hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"
             >
               Cancel
             </button>
             <button type="submit" className={primaryButton}>
-              {busy ? "Saving…" : item ? "Save changes" : "Publish"}
+              {kind === "job" && <Send size={14} aria-hidden="true" />}
+              {busy ? "Saving..." : item ? "Save changes" : "Publish"}
             </button>
           </div>
         </fieldset>
@@ -305,18 +535,23 @@ function Editor({ kind, item, onClose, onSaved }) {
   );
 }
 
-function PostDescription({ text }) {
-  const [expanded, setExpanded] = useState(false);
-  const canExpand = text.length > 140 || text.split("\n").length > 2;
+function PostDescription({ text, format, preview = false }) {
   return (
     <div className="mt-4">
-      <p className={`career-description whitespace-pre-wrap break-words text-sm leading-6 text-zinc-600 dark:text-zinc-300 ${canExpand && !expanded ? "line-clamp-3" : ""}`}>{text}</p>
-      {canExpand && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-2 text-xs font-semibold text-brand underline-offset-4 hover:underline dark:text-brand">{expanded ? "Show less" : "Read more"}</button>}
+      <JobDescription
+        value={text}
+        format={format}
+        className={`career-description text-zinc-600 dark:text-zinc-300 ${preview ? "max-h-[8.5em] overflow-hidden" : ""}`}
+      />
     </div>
   );
 }
 
-export default function CareerBoard({ referralContent = null, appearance = "default" }) {
+export default function CareerBoard({
+  referralContent = null,
+  appearance = "default",
+}) {
+  const now = useJobDeadline();
   const marketplace = appearance === "marketplace";
   const { user, refreshUser } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -339,7 +574,6 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
   const [sources, setSources] = useState(["university", "community"]);
   const [savedJobs, setSavedJobs] = useState({});
   const [appliedJobs, setAppliedJobs] = useState({});
-  const [selectedJob, setSelectedJob] = useState(null);
   const [applicantsJob, setApplicantsJob] = useState(null);
   const [interestDraft, setInterestDraft] = useState(null);
   const interests = interestDraft ?? user?.interests ?? [];
@@ -488,7 +722,11 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
   const opportunityView = view === "all" || view === "applied";
   const guideView = view === "guides";
   const viewRows = rows.filter((row) =>
-    opportunityView ? row.kind === "job" : guideView ? row.kind === "guide" : true,
+    opportunityView
+      ? row.kind === "job"
+      : guideView
+        ? row.kind === "guide"
+        : true,
   );
   const visibleCategories = CATEGORIES.filter((category) => {
     const opportunity = category.id === "job" || category.id === "internship";
@@ -512,7 +750,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
       (view !== "guides" || row.kind === "guide") &&
       (view !== "applied" ||
         (row.kind === "job" && appliedJobs[row.item._id])) &&
-      `${row.item.title || ""} ${row.item.company || ""} ${row.item.description || row.item.body || ""} ${(row.item.tags || []).join(" ")}`
+      `${row.item.title || ""} ${row.item.company || ""} ${row.item.experienceLevel || ""} ${descriptionText(row.item.description || row.item.body || "", row.item.descriptionFormat)} ${(row.item.tags || []).join(" ")}`
         .toLowerCase()
         .includes(term.toLowerCase()),
   );
@@ -560,7 +798,13 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
       sources={sourceOptions}
       selectedSources={sources}
       rows={viewRows}
-      categoryLabel={guideView ? "Guide type" : opportunityView ? "Opportunity type" : "Resource type"}
+      categoryLabel={
+        guideView
+          ? "Guide type"
+          : opportunityView
+            ? "Opportunity type"
+            : "Resource type"
+      }
       resultCount={filtered.length}
       onCategoryChange={(id) => toggleFilter(setCategories, id)}
       onSourceChange={(id) => toggleFilter(setSources, id)}
@@ -570,173 +814,269 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
   );
 
   return (
-    <main className={`mx-auto max-w-7xl p-3 text-zinc-900 sm:p-5 dark:text-zinc-100 workspace-page ${marketplace ? "career-marketplace" : ""}`}>
-      {marketplace && <>
-        <PageHeader title={isAdmin ? "Job Posts" : "Career Board"} description={isAdmin ? "Manage job opportunities and career resources for your community." : "Find opportunities, learn from alumni, and build what comes next."}>
-          {canPost && (isAdmin ? <AdminButton onClick={() => setEditor({ kind: view !== "guides" ? "job" : "guide" })}><Plus size={15} />{view !== "guides" ? "Post an opportunity" : "Share a career guide"}</AdminButton> : <button type="button" onClick={() => setEditor({ kind: "guide" })} className={primaryButton}><Plus size={16} />Share a career guide</button>)}
-        </PageHeader>
-        {view !== "referrals" && <div className="career-search-row">
-          <CareerSearch value={query} onChange={setQuery} onSearch={(value) => { setTerm(value); setPage(1); }} placeholder={searchPlaceholder} />
-          <button type="button" className="career-filter-toggle" aria-haspopup="dialog" aria-expanded={filtersOpen} aria-controls="career-filter-drawer" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={18} />Filters</button>
-        </div>}
-      </>}
+    <main
+      className={`mx-auto max-w-7xl p-3 text-zinc-900 sm:p-5 dark:text-zinc-100 workspace-page ${marketplace ? "career-marketplace" : ""}`}
+    >
+      {marketplace && (
+        <>
+          <PageHeader
+            title={isAdmin ? "Job Posts" : "Career Board"}
+            description={
+              isAdmin
+                ? "Manage job opportunities and career resources for your community."
+                : "Find opportunities, learn from alumni, and build what comes next."
+            }
+          >
+            {canPost &&
+              (isAdmin ? (
+                <AdminButton
+                  onClick={() =>
+                    setEditor({ kind: view !== "guides" ? "job" : "guide" })
+                  }
+                >
+                  <Plus size={15} />
+                  {view !== "guides"
+                    ? "Post an opportunity"
+                    : "Share a career guide"}
+                </AdminButton>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditor({ kind: "guide" })}
+                  className={primaryButton}
+                >
+                  <Plus size={16} />
+                  Share a career guide
+                </button>
+              ))}
+          </PageHeader>
+          {view !== "referrals" && (
+            <div className="career-search-row">
+              <CareerSearch
+                value={query}
+                onChange={setQuery}
+                onSearch={(value) => {
+                  setTerm(value);
+                  setPage(1);
+                }}
+                placeholder={searchPlaceholder}
+              />
+              <button
+                type="button"
+                className="career-filter-toggle"
+                aria-haspopup="dialog"
+                aria-expanded={filtersOpen}
+                aria-controls="career-filter-drawer"
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal size={18} />
+                Filters
+              </button>
+            </div>
+          )}
+        </>
+      )}
       <div
-        className={marketplace ? "career-board-navigation" : `${cardClass} mb-5 flex flex-wrap items-center justify-between gap-3 px-5 py-3 workspace-page-header`}
+        className={
+          marketplace
+            ? "career-board-navigation"
+            : `${cardClass} mb-5 flex flex-wrap items-center justify-between gap-3 px-5 py-3 workspace-page-header`
+        }
       >
-        {!marketplace && <h1 className="flex items-center gap-2 text-base font-bold">
-          <Briefcase size={20} className="text-brand" />
-          Career Board
-        </h1>}
-        {isAdmin ? <AdminTabs label="Career board views" value={view} onChange={selectView} items={tabs.map(tab => ({ id: tab.id, label: tab.label }))} /> : (
-        <nav
-          aria-label="Career board views"
-          className="flex max-w-full gap-4 overflow-x-auto"
-        >
-          {tabs.map((tab) => (
-            <button
-              type="button"
-              key={tab.id}
-              aria-pressed={view === tab.id}
-              onClick={() => selectView(tab.id)}
-              className={`shrink-0 border-b-2 py-3 text-xs font-semibold ${view === tab.id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        {!marketplace && (
+          <h1 className="flex items-center gap-2 text-base font-bold">
+            <Briefcase size={20} className="text-brand" />
+            Career Board
+          </h1>
+        )}
+        {isAdmin || (marketplace && user?.role === "student") ? (
+          <AdminTabs
+            label="Career board views"
+            value={view}
+            onChange={selectView}
+            items={tabs.map((tab) => ({ id: tab.id, label: tab.label }))}
+          />
+        ) : (
+          <nav
+            aria-label="Career board views"
+            className="flex max-w-full gap-4 overflow-x-auto"
+          >
+            {tabs.map((tab) => (
+              <button
+                type="button"
+                key={tab.id}
+                aria-pressed={view === tab.id}
+                onClick={() => selectView(tab.id)}
+                className={`shrink-0 border-b-2 py-3 text-xs font-semibold ${view === tab.id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
         )}
       </div>
       {view === "referrals" && referralContent ? (
         referralContent
       ) : (
-        <div className="career-layout grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_220px]">
+        <div className={`career-layout grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] ${!marketplace ? "xl:grid-cols-[200px_minmax(0,1fr)_220px]" : ""}`}>
           <aside
             id="career-filters"
             className={`${cardClass} career-filter-panel order-2 p-5 md:order-none md:sticky md:top-20 ${marketplace ? "hidden md:block" : ""}`}
             aria-label="Career filters"
           >
-            {marketplace ? renderFilters() : <>
-
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Filter</h2>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-[11px] font-medium text-red-600 dark:text-red-400"
-              >
-                Clear all
-              </button>
-            </div>
-            <h3 className="mb-4 mt-6 text-xs font-semibold">
-              {guideView ? "Guide type" : opportunityView ? "Opportunity type" : "Resource type"}
-            </h3>
-            <div className="space-y-3">
-              {visibleCategories.map((category) => (
-                <label
-                  key={category.id}
-                  className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
-                >
-                  <input
-                    type="checkbox"
-                    aria-label={`Filter ${category.label}`}
-                    checked={categories.includes(category.id)}
-                    onChange={() => toggleFilter(setCategories, category.id)}
-                    className="h-3.5 w-3.5 accent-brand"
-                  />
-                  {category.label}
-                  <span className="ml-auto text-[10px] text-zinc-400">
-                    {viewRows.filter((row) => row.category === category.id).length}
-                  </span>
-                </label>
-              ))}
-            </div>
-            <h3 className="mb-4 mt-6 text-xs font-semibold">Posted by</h3>
-            <div className="space-y-3">
-              {sourceOptions.map(([id, label]) => (
-                <label
-                  key={id}
-                  className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
-                >
-                  <input
-                    type="checkbox"
-                    aria-label={`Filter ${label}`}
-                    checked={sources.includes(id)}
-                    onChange={() => toggleFilter(setSources, id)}
-                    className="h-3.5 w-3.5 accent-brand"
-                  />
-                  {label}
-                  <span className="ml-auto text-[10px] text-zinc-400">
-                    {viewRows.filter((row) => row.source === id).length}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            </>}
-          </aside>
-          <section className="career-feed order-1 min-w-0 space-y-3 md:order-none">
-            {marketplace ? <header className="career-feed-heading">
-              <h2>{view === "saved" ? "Your saved resources" : view === "applied" ? "Your applications" : view === "mine" ? "Your career posts" : guideView ? "Career Guides" : "Opportunities for you"}</h2>
-              <p>{view === "all" ? "Explore jobs and internships from your university." : guideView ? "Career advice, industry insights, and roadmaps from your community." : "Search and filter to find what you need."}</p>
-            </header> : <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white">
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-8 -top-8 rotate-12 text-white/10"
-              >
-                <Briefcase size={180} strokeWidth={1} />
-              </div>
-              <h2 className="relative text-xl font-semibold">
-                {guideView ? "Career Guides" : "Career Opportunity Board"}
-              </h2>
-              <p className="relative mt-2 max-w-lg text-xs leading-6 text-white/90">
-                {guideView
-                  ? "Explore career advice, industry insights, and roadmaps shared by your community."
-                  : "Discover jobs and internships shared by the university. Find community advice in Career Guides."}
-              </p>
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  setTerm(query.trim());
-                  setPage(1);
-                }}
-                className="relative mt-4 flex flex-wrap gap-2"
-              >
-                <div className="relative min-w-0 flex-1 basis-40">
-                  <Search
-                    size={15}
-                    className="absolute left-3 top-3 text-white/80"
-                  />
-                  <input
-                    type="search"
-                    aria-label="Search career board"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder={searchPlaceholder}
-                    className="h-10 w-full rounded-lg border border-white/20 bg-white/20 pl-9 pr-3 text-xs text-white outline-none placeholder:text-white/75 focus:bg-white/30"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-white px-4 text-xs font-semibold text-brand"
-                >
-                  Search
-                </button>
-                {canPost && (
+            {marketplace ? (
+              renderFilters()
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">Filter</h2>
                   <button
                     type="button"
-                    onClick={() =>
-                      setEditor({
-                        kind: isAdmin && view !== "guides" ? "job" : "guide",
-                      })
-                    }
-                    className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/70 px-3 text-xs font-semibold"
+                    onClick={clearFilters}
+                    className="text-[11px] font-medium text-red-600 dark:text-red-400"
                   >
-                    <Plus size={15} />
-                    Post
+                    Clear all
                   </button>
-                )}
-              </form>
-            </header>}
+                </div>
+                <h3 className="mb-4 mt-6 text-xs font-semibold">
+                  {guideView
+                    ? "Guide type"
+                    : opportunityView
+                      ? "Opportunity type"
+                      : "Resource type"}
+                </h3>
+                <div className="space-y-3">
+                  {visibleCategories.map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`Filter ${category.label}`}
+                        checked={categories.includes(category.id)}
+                        onChange={() =>
+                          toggleFilter(setCategories, category.id)
+                        }
+                        className="h-3.5 w-3.5 accent-brand"
+                      />
+                      {category.label}
+                      <span className="ml-auto text-[10px] text-zinc-400">
+                        {
+                          viewRows.filter((row) => row.category === category.id)
+                            .length
+                        }
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <h3 className="mb-4 mt-6 text-xs font-semibold">Posted by</h3>
+                <div className="space-y-3">
+                  {sourceOptions.map(([id, label]) => (
+                    <label
+                      key={id}
+                      className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300"
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`Filter ${label}`}
+                        checked={sources.includes(id)}
+                        onChange={() => toggleFilter(setSources, id)}
+                        className="h-3.5 w-3.5 accent-brand"
+                      />
+                      {label}
+                      <span className="ml-auto text-[10px] text-zinc-400">
+                        {viewRows.filter((row) => row.source === id).length}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </aside>
+          <section className="career-feed order-1 min-w-0 space-y-3 md:order-none">
+            {marketplace ? (
+              <header className="career-feed-heading">
+                <h2>
+                  {view === "saved"
+                    ? "Your saved resources"
+                    : view === "applied"
+                      ? "Your applications"
+                      : view === "mine"
+                        ? "Your career posts"
+                        : guideView
+                          ? "Career Guides"
+                          : "Opportunities for you"}
+                </h2>
+                <p>
+                  {view === "all"
+                    ? "Explore jobs and internships from your university."
+                    : guideView
+                      ? "Career advice, industry insights, and roadmaps from your community."
+                      : "Search and filter to find what you need."}
+                </p>
+              </header>
+            ) : (
+              <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-8 -top-8 rotate-12 text-white/10"
+                >
+                  <Briefcase size={180} strokeWidth={1} />
+                </div>
+                <h2 className="relative text-xl font-semibold">
+                  {guideView ? "Career Guides" : "Career Opportunity Board"}
+                </h2>
+                <p className="relative mt-2 max-w-lg text-xs leading-6 text-white/90">
+                  {guideView
+                    ? "Explore career advice, industry insights, and roadmaps shared by your community."
+                    : "Discover jobs and internships shared by the university. Find community advice in Career Guides."}
+                </p>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setTerm(query.trim());
+                    setPage(1);
+                  }}
+                  className="relative mt-4 flex flex-wrap gap-2"
+                >
+                  <div className="relative min-w-0 flex-1 basis-40">
+                    <Search
+                      size={15}
+                      className="absolute left-3 top-3 text-white/80"
+                    />
+                    <input
+                      type="search"
+                      aria-label="Search career board"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder={searchPlaceholder}
+                      className="h-10 w-full rounded-lg border border-white/20 bg-white/20 pl-9 pr-3 text-xs text-white outline-none placeholder:text-white/75 focus:bg-white/30"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-white px-4 text-xs font-semibold text-brand"
+                  >
+                    Search
+                  </button>
+                  {canPost && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditor({
+                          kind: isAdmin && view !== "guides" ? "job" : "guide",
+                        })
+                      }
+                      className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/70 px-3 text-xs font-semibold"
+                    >
+                      <Plus size={15} />
+                      Post
+                    </button>
+                  )}
+                </form>
+              </header>
+            )}
             {error && (
               <div
                 role="alert"
@@ -837,7 +1177,9 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                           ? "No posts to show"
                           : view === "applied"
                             ? "No applications yet"
-                            : guideView ? "No career guides found" : "No opportunities found"}
+                            : guideView
+                              ? "No career guides found"
+                              : "No opportunities found"}
                     </h3>
                     <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                       {view === "saved"
@@ -856,9 +1198,7 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                   const controls = (
                     <div className="career-card-actions flex gap-1.5">
                       <IconControl
-                        label={
-                          row.saved ? "Unsave resource" : "Save resource"
-                        }
+                        label={row.saved ? "Unsave resource" : "Save resource"}
                         onClick={() =>
                           kind === "job"
                             ? setSavedJobs((previous) => ({
@@ -909,26 +1249,43 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                       className={`${cardClass} career-listing p-4 sm:p-5`}
                     >
                       <div className="career-card-content">
-                        {marketplace && <div className="career-card-context">
-                          <div className="career-card-labels"><span className="career-category-badge">{category.label}</span>{item.createdAt && <time dateTime={item.createdAt}>Posted {formatDate(item.createdAt)}</time>}</div>
-                          {controls}
-                        </div>}
+                        {marketplace && (
+                          <div className="career-card-context">
+                            <div className="career-card-labels">
+                              {row.category !== "job" && (
+                                <span className="career-category-badge">
+                                  {category.label}
+                                </span>
+                              )}
+                              {item.createdAt && (
+                                <time dateTime={item.createdAt}>
+                                  Posted {formatDate(item.createdAt)}
+                                </time>
+                              )}
+                            </div>
+                            {controls}
+                          </div>
+                        )}
                         <div className="career-card-header flex flex-wrap items-start gap-3">
                           <span
                             className={`career-company-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${category.color}`}
                           >
                             {kind === "job"
-                              ? (item.company || "CLSU")
-                                  .split(/\s+/)
-                                  .slice(0, 2)
-                                  .map((word) => word[0])
-                                  .join("")
-                                  .toUpperCase()
+                              ? ((item.company || "CLSU").match(/\p{L}/u)?.[0] || "C").toUpperCase()
                               : createElement(category.icon, { size: 19 })}
                           </span>
                           <div className="min-w-0 flex-1 basis-36">
                             <h3 className="break-words text-sm font-semibold leading-5">
-                              {marketplace && kind === "job" && !isAdmin ? <button type="button" onClick={() => setSelectedJob(item._id)} className="text-left hover:underline underline-offset-4">{item.title}</button> : item.title}
+                              {kind === "job" ? (
+                                <Link
+                                  to={`${isAdmin ? "/admin/jobs" : user?.role === "alumni" ? "/alumni/career" : "/student/career"}/${item._id}`}
+                                  className="text-left hover:underline underline-offset-4"
+                                >
+                                  {item.title}
+                                </Link>
+                              ) : (
+                                item.title
+                              )}
                             </h3>
                             <p className="career-card-byline mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
                               <span>
@@ -938,10 +1295,15 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                                     item.authorEmail ||
                                     "Community"}
                               </span>
-                              {!marketplace && item.location && <span>· {item.location}</span>}
-                              {!marketplace && <span>
-                                · {kind === "job" ? "University" : "Community"}
-                              </span>}
+                              {!marketplace && item.location && (
+                                <span>· {item.location}</span>
+                              )}
+                              {!marketplace && (
+                                <span>
+                                  ·{" "}
+                                  {kind === "job" ? "University" : "Community"}
+                                </span>
+                              )}
                             </p>
                           </div>
                           {!marketplace && controls}
@@ -952,105 +1314,165 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                               ["Location", item.location, MapPin],
                               ["Employment type", item.type, Briefcase],
                               ["Work mode", item.mode, Monitor],
-                            ].filter(([, value]) => value).map(([label, value, Icon]) => (
-                              <div key={label}>
-                                <dt className="sr-only">{label}</dt>
-                                <dd>{createElement(Icon, {size: 14, "aria-hidden": true})}{value}</dd>
-                              </div>
-                            ))}
+                              [
+                                "Experience level",
+                                item.experienceLevel,
+                                GraduationCap,
+                              ],
+                            ]
+                              .filter(([, value]) => value)
+                              .map(([label, value, Icon]) => (
+                                <div key={label}>
+                                  <dt className="sr-only">{label}</dt>
+                                  <dd>
+                                    {createElement(Icon, {
+                                      size: 14,
+                                      "aria-hidden": true,
+                                    })}
+                                    {value}
+                                  </dd>
+                                </div>
+                              ))}
                           </dl>
                         )}
-                        {marketplace ? <PostDescription text={(kind === "job" ? item.description || "No description provided." : item.body) || ""} /> : <p className="mt-4 whitespace-pre-wrap break-words text-xs leading-6 text-zinc-600 dark:text-zinc-300">
-                          {kind === "job"
-                            ? item.description || "No description provided."
-                            : item.body}
-                        </p>}
-                        {(!marketplace || item.tags?.length > 0 || item.isActive === false) && <footer className="career-card-tags mt-4 flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex flex-wrap gap-1.5">
-                            {!marketplace && <span
-                              className={`rounded-md px-2.5 py-1 text-[10px] font-semibold text-white ${category.color}`}
-                            >
-                              {category.label}
-                            </span>}
-                            {kind === "job" && !marketplace && (
-                              <>
-                                <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                  {item.type}
-                                </span>
-                                <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                                  {item.mode}
-                                </span>
-                                {item.isActive === false && (
-                                  <span className="rounded-md bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                                    Hidden
-                                  </span>
-                                )}
-                              </>
-                            )}
-                            {marketplace && item.isActive === false && <span className="career-hidden-label">Hidden</span>}
-                            {(item.tags || []).map((tag) => (
-                              <span
-                                key={tag}
-                                className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                          {!marketplace && <time
-                            dateTime={item.createdAt}
-                            className="text-[10px] text-zinc-500 dark:text-zinc-400"
+                        {kind === "job" && item.applicationDeadline && (
+                          <p
+                            className={`mt-3 text-xs font-medium ${deadlinePassed(item, now) ? "text-red-600 dark:text-red-400" : "text-zinc-600 dark:text-zinc-300"}`}
                           >
-                            {formatDate(item.createdAt)}
-                          </time>}
-                        </footer>}
+                            {deadlinePassed(item, now)
+                              ? "Applications closed"
+                              : "Apply until"}{" "}
+                            ? {deadlineLabel(item.applicationDeadline)}
+                          </p>
+                        )}
+                        {marketplace ? (
+                          <PostDescription preview={kind === "job"}
+                            text={
+                              (kind === "job"
+                                ? item.description || "No description provided."
+                                : item.body) || ""
+                            }
+                            format={
+                              kind === "job"
+                                ? item.descriptionFormat
+                                : undefined
+                            }
+                          />
+                        ) : (
+                          <JobDescription
+                            value={
+                              (kind === "job"
+                                ? item.description || "No description provided."
+                                : item.body) || ""
+                            }
+                            format={
+                              kind === "job"
+                                ? item.descriptionFormat
+                                : undefined
+                            }
+                            className={`mt-4 text-zinc-600 dark:text-zinc-300 ${kind === "job" ? "max-h-[8.5em] overflow-hidden" : ""}`}
+                          />
+                        )}
+                        {(!marketplace ||
+                          item.tags?.length > 0 ||
+                          item.isActive === false) && (
+                          <footer className="career-card-tags mt-4 flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {!marketplace && (
+                                <span
+                                  className={`rounded-md px-2.5 py-1 text-[10px] font-semibold text-white ${category.color}`}
+                                >
+                                  {category.label}
+                                </span>
+                              )}
+                              {kind === "job" && !marketplace && (
+                                <>
+                                  <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                    {item.type}
+                                  </span>
+                                  <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                    {item.mode}
+                                  </span>
+                                  {item.experienceLevel && (
+                                    <span className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                      {item.experienceLevel}
+                                    </span>
+                                  )}
+                                  {item.isActive === false && (
+                                    <span className="rounded-md bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                                      Hidden
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                              {marketplace && item.isActive === false && (
+                                <span className="career-hidden-label">
+                                  Hidden
+                                </span>
+                              )}
+                              {(item.tags || []).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded-md bg-zinc-100 px-2.5 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                            {!marketplace && (
+                              <time
+                                dateTime={item.createdAt}
+                                className="text-[10px] text-zinc-500 dark:text-zinc-400"
+                              >
+                                {formatDate(item.createdAt)}
+                              </time>
+                            )}
+                          </footer>
+                        )}
+                      </div>
+                      {kind === "job" && (
+                        <div
+                          className={
+                            marketplace ? "career-card-bottom" : undefined
+                          }
+                        >
+                          {marketplace && (
+                            <span className="career-card-source">
+                              <Building2 size={15} aria-hidden="true" />
+                              {item.audience === "alumni" ? "Alumni only" : "Alumni & Students"}
+                            </span>
+                          )}
+                          <div className="career-opportunity-actions mt-4">
+                          <Link to={`${isAdmin ? "/admin/jobs" : user?.role === "alumni" ? "/alumni/career" : "/student/career"}/${item._id}`} className={primaryButton}>
+                            View more<ArrowUpRight size={16} aria-hidden="true" />
+                          </Link>
+                          {isAdmin && <button type="button" onClick={() => setApplicantsJob(item)} className={primaryButton}>View applicants</button>}
+                          </div>
                         </div>
-                        {kind === "job" &&
-                          <div className={marketplace ? "career-card-bottom" : undefined}>
-                          {marketplace && <span className="career-card-source"><Building2 size={15} aria-hidden="true" />University opportunity</span>}
-                          {(!isAdmin ? (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedJob(item._id)}
-                              className={`${primaryButton} mt-4`}
-                            >
-                              {appliedJobs[item._id]
-                                ? "View application"
-                                : "Apply"}
-                              {marketplace && <ArrowUpRight size={16} aria-hidden="true" />}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setApplicantsJob(item)}
-                              className={`${primaryButton} mt-4`}
-                            >
-                              View applicants
-                            </button>
-                          ))}
-                          </div>}
-                      </article>
-                    );
-                  })}
-                  {filtered.length > 0 && (
-                    <div className={`${cardClass} overflow-hidden`}>
-                      <DataPagination
-                        page={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setPage}
-                        perPage={perPage}
-                        onPerPageChange={(value) => {
-                          setPerPage(value);
-                          setPage(1);
-                        }}
-                        totalItems={filtered.length}
-                        itemLabel="resources"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </section>
+                      )}
+                    </article>
+                  );
+                })}
+                {filtered.length > 0 && (
+                  <div className={`${cardClass} overflow-hidden`}>
+                    <DataPagination
+                      page={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                      perPage={perPage}
+                      onPerPageChange={(value) => {
+                        setPerPage(value);
+                        setPage(1);
+                      }}
+                      totalItems={filtered.length}
+                      itemLabel="resources"
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+          {!marketplace && (
             <aside className="career-member-panel order-3 grid min-w-0 gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1 xl:sticky xl:top-20">
               <section className={`${cardClass} p-5 text-center`}>
                 <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
@@ -1078,7 +1500,13 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                 )}
               </section>
               <section className={`${cardClass} p-5`}>
-                <h2 className="mb-4 text-sm font-semibold">{guideView ? "Guides at a glance" : opportunityView ? "Opportunities at a glance" : "Board Summary"}</h2>
+                <h2 className="mb-4 text-sm font-semibold">
+                  {guideView
+                    ? "Guides at a glance"
+                    : opportunityView
+                      ? "Opportunities at a glance"
+                      : "Board Summary"}
+                </h2>
                 <dl className="space-y-3">
                   {visibleCategories.map((category) => (
                     <div
@@ -1121,81 +1549,69 @@ export default function CareerBoard({ referralContent = null, appearance = "defa
                     : "Explore opportunities, save useful guides, and update your career interests."}
               </p>
             </aside>
-          </div>
-        )}
-      {marketplace && filtersOpen && (
-        <CareerFilterDrawer onClose={closeFilters}>{renderFilters(closeFilters)}</CareerFilterDrawer>
+          )}
+        </div>
       )}
-      {selectedJob && (
-          <JobApplicationDialog
-            key={selectedJob}
-            jobId={selectedJob}
-            user={user}
-            application={appliedJobs[selectedJob]}
-            onApplied={(application) =>
-              setAppliedJobs((previous) => ({
-                ...previous,
-                [application.jobId]: application,
-              }))
-            }
-            onClose={() => setSelectedJob(null)}
-          />
-        )}
-        {applicantsJob && (
-          <JobApplicantsDialog
-            job={applicantsJob}
-            onClose={() => setApplicantsJob(null)}
-          />
-        )}
-        {editor && (
-          <Editor
-            key={`${editor.kind}:${editor.item?._id || "new"}`}
-            kind={editor.kind}
-            item={editor.item}
-            onClose={() => setEditor(null)}
-            onSaved={() => {
-              if (editor.kind === "guide" && !editor.item) selectView("guides");
-              load();
-            }}
-          />
-        )}
-        {deleting && (
-          <FeedDialog
-            title="Delete this post?"
-            busy={busy === "delete"}
-            onClose={() => setDeleting(null)}
-          >
-            <p className="text-sm">
-              “{deleting.item.title}” will be removed from the board.
+      {marketplace && filtersOpen && (
+        <CareerFilterDrawer onClose={closeFilters}>
+          {renderFilters(closeFilters)}
+        </CareerFilterDrawer>
+      )}
+      {applicantsJob && (
+        <JobApplicantsDialog
+          job={applicantsJob}
+          onClose={() => setApplicantsJob(null)}
+        />
+      )}
+      {editor && (
+        <Editor
+          key={`${editor.kind}:${editor.item?._id || "new"}`}
+          kind={editor.kind}
+          item={editor.item}
+          onClose={() => setEditor(null)}
+          onSaved={() => {
+            if (editor.kind === "guide" && !editor.item) selectView("guides");
+            load();
+          }}
+        />
+      )}
+      {deleting && (
+        <FeedDialog
+          title="Delete this post?"
+          busy={busy === "delete"}
+          onClose={() => setDeleting(null)}
+        >
+          <p className="text-sm">
+            “{deleting.item.title}” will be removed from the board.
+          </p>
+          {error && (
+            <p
+              role="alert"
+              className="mt-3 text-sm text-red-600 dark:text-red-400"
+            >
+              {error}
             </p>
-            {error && (
-              <p
-                role="alert"
-                className="mt-3 text-sm text-red-600 dark:text-red-400"
-              >
-                {error}
-              </p>
-            )}
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                disabled={busy !== null}
-                onClick={() => setDeleting(null)}
-                className="rounded-lg border border-zinc-200 px-4 py-2 text-xs dark:border-zinc-700"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={busy !== null}
-                onClick={remove}
-                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white"
-              >
-                {busy === "delete" ? "Deleting…" : "Delete post"}
-              </button>
-            </div>
-          </FeedDialog>
-        )}
-      </main>
-    );
-  }
+          )}
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => setDeleting(null)}
+              className="rounded-lg border border-zinc-200 px-4 py-2 text-xs dark:border-zinc-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={remove}
+              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white"
+            >
+              {busy === "delete" ? "Deleting…" : "Delete post"}
+            </button>
+          </div>
+        </FeedDialog>
+      )}
+    </main>
+  );
+}

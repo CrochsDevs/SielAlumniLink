@@ -141,10 +141,11 @@ export const ChatProvider = ({ children }) => {
       }
       setThreads((prev) => {
         const current = prev[conversationId] || [];
+        if (message._id && current.some(item => String(item._id) === String(message._id))) return prev;
         // Skip socket echo of our own optimistic bubble.
         const last = current[current.length - 1];
         if (
-          from === "me" &&
+          !message.call && from === "me" &&
           last?.from === "me" &&
           last?.text === message.text
         ) {
@@ -168,6 +169,8 @@ export const ChatProvider = ({ children }) => {
               _id: message._id,
               from,
               text: message.text,
+              at: message.at,
+              call: message.call || null,
               attachment: message.attachment || null,
             },
           ],

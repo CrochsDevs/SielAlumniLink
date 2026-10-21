@@ -10,11 +10,13 @@ import {
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
 import { useAuth } from "./context/useAuth";
+import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
 
 import AdminDashboard from "./pages/admin/adminDashboard";
 import AdminUsers from "./pages/admin/adminUsers";
 import AdminTracer from "./pages/admin/adminTracer";
 import AdminJobs from "./pages/admin/adminJobs";
+import CareerOpportunityPage from "./pages/CareerOpportunityPage";
 import AdminSurveys from "./pages/admin/adminSurveys";
 import AdminEvents from "./pages/admin/adminEvents";
 import AdminCertificates from "./pages/admin/adminCertificates";
@@ -250,6 +252,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/admin/jobs/:jobId" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><CareerOpportunityPage /></ProtectedRoute>} />
+      <Route path="/alumni/career/:jobId" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}><CareerOpportunityPage /></ProtectedRoute>} />
+      <Route path="/student/career/:jobId" element={<ProtectedRoute allowedRoles={[Roles.STUDENT]}><CareerOpportunityPage /></ProtectedRoute>} />
       <Route
         path="/admin/jobs"
         element={
@@ -651,7 +656,7 @@ function MemberPages() {
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
     <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
-      <AppRoutes />
+      <QuarterlyTracerGate><AppRoutes /></QuarterlyTracerGate>
     </div>
   );
 }

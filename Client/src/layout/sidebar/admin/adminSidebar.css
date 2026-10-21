@@ -7,9 +7,11 @@
   border-right: 1px solid var(--sidebar-line);
   font-family: ui-sans-serif, system-ui, sans-serif;
   box-shadow: 2px 0 16px #183b2304;
+  height: 100vh;
+  height: 100dvh;
 }
 .admin-sidebar-overlay { background: #12271bb3; backdrop-filter: blur(3px); }
-.admin-sidebar-brand { display: flex; align-items: center; gap: 4px; padding: 25px 20px 22px; }
+.admin-sidebar-brand { display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding: 25px 20px 22px; }
 .admin-brand-link { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .admin-brand-logo { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; }
 .admin-brand-logo img { width: 40px; height: 40px; object-fit: contain; }
@@ -51,8 +53,9 @@
 .admin-account-details { min-width: 0; }
 .admin-account-details > strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #35503e; font-size: 11px; font-weight: 600; }
 .admin-account-details > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; color: #89968c; font-size: 9px; }
-.admin-sidebar-logout { display: grid; place-items: center; padding: 7px; border-radius: 8px; color: #819186; }
-.admin-sidebar-logout:hover { background: #f5e4df; color: #a84c3b; }
+.admin-sidebar-logout { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 40px; margin-top: 10px; padding: 10px 12px; border: 1px solid #f0d5d8; border-radius: 9px; background: #fff5f5; color: #a83a43; font-size: 12px; font-weight: 600; text-align: left; transition: background-color 150ms, border-color 150ms; }
+.admin-sidebar-logout > svg { flex-shrink: 0; }
+.admin-sidebar-logout:hover { background: #ffe8e9; border-color: #e6afb5; }
 .dark .admin-sidebar { --sidebar-ink: #b6b9ba; --sidebar-active: #b6e2c4; --sidebar-surface: #18181b; --sidebar-line: #3f3f46; }
 .dark .admin-brand-name { color: #e1ebe3; }
 .dark .admin-brand-name > span { color: #8fc5a0; }
@@ -64,8 +67,10 @@
 .dark .admin-sidebar-account { background: #27272a; border-color: #3f3f46; }
 .dark .admin-account-avatar { background: #304e38; border-color: #43684c; color: #bde0c6; }
 .dark .admin-account-details > strong { color: #d4e4d8; }
-.dark .admin-sidebar-logout:hover { background: #4b302a; color: #ecb9a9; }
+.dark .admin-sidebar-logout { background: #2c2024; border-color: #55353d; color: #f3a5ae; }
+.dark .admin-sidebar-logout:hover { background: #3d2830; border-color: #81505c; }
 @media (prefers-reduced-motion: reduce) {
   .admin-sidebar,
-  .admin-sidebar .admin-menu-item { transition: none; }
+  .admin-sidebar .admin-menu-item,
+  .admin-sidebar-logout { transition: none; }
 }

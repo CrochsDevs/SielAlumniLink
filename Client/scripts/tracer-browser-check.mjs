@@ -70,6 +70,11 @@ const author = {
   passwordSetupRequired: false,
 };
 let savedResponse = null;
+let updateRequired = true;
+let quarter = "2026 Q4";
+let accessFailures = 2;
+let accessFailureStatus = 503;
+let accessRequests = 0;
 let failNextSave = true;
 let failNextLoad = false;
 const saveRequests = [];
@@ -86,7 +91,19 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
       message;
     if (request.method === "OPTIONS") data = null;
     else if (route === "/auth/me" || route === "/users/me") data = author;
-    else if (route === "/tracer/me") {
+    else if (route === "/tracer/access") {
+      accessRequests++;
+      if (accessFailures > 0) {
+        accessFailures--;
+        responseCode = accessFailureStatus;
+        message = "Tracer status unavailable for test.";
+      } else {
+        data = {
+          hasAccess: true, updateRequired, quarter,
+          nextUpdateAt: new Date(Date.now() + 86400000).toISOString(),
+        };
+      }
+    } else if (route === "/tracer/me") {
       if (failNextLoad) {
         failNextLoad = false;
         responseCode = 503;
@@ -101,6 +118,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
         message = "Save failed for test. Please retry.";
       } else {
         savedResponse = payload;
+        updateRequired = false;
         data = payload;
       }
     }
@@ -167,10 +185,19 @@ try {
   await send("Fetch.enable", {
     patterns: [{ urlPattern: "http://localhost:3002/api/*" }],
   });
-  await send("Page.navigate", { url: "http://localhost:5173/alumni/tracer" });
+  await send("Page.navigate", { url: "http://localhost:5173/alumni/career" });
   await until(
     "document.querySelector('dialog[data-tracer-modal] #tracer-batch')",
   );
+  assert.equal(await evaluate("location.pathname"), "/alumni/tracer");
+  assert.equal(accessRequests, 3, "Temporary initial failures must retry automatically");
+  assert.equal(await evaluate("!!document.querySelector('#sidebar a[href=\"/alumni/tracer\"]')"), false);
+  assert.equal(await evaluate("document.querySelector('#tracer-modal-description').textContent.includes('2026 Q4 update is required')"), true);
+  assert.equal(await evaluate("!!document.querySelector('[aria-label=\"Close tracer study\"]')"), false);
+  assert.equal(await evaluate("!!document.querySelector('[data-tracer-modal] a[href=\"/logout\"]')"), true);
+  await until("document.querySelector('[data-tracer-modal]').matches(':modal')");
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  assert.equal(await evaluate("document.querySelector('[data-tracer-modal]').matches(':modal')"), true, "Required update must resist Escape");
   assert.equal(
     await evaluate(
       "document.querySelector('[data-tracer-modal]').matches(':modal')",
@@ -233,6 +260,16 @@ try {
     await capture("job-details", 390, theme);
   await next();
   await until("document.querySelector('[data-tracer-modal] dl')");
+  await evaluate("void (window.tracerDialogBeforeRefresh = document.querySelector('[data-tracer-modal]'))");
+  const beforeFailedRefresh = accessRequests;
+  accessFailures = 3;
+  await evaluate("window.dispatchEvent(new Event('focus')); window.dispatchEvent(new Event('focus'))");
+  await until("Array.from(document.querySelectorAll('[role=status]')).some(element => element.textContent.includes('status could not be refreshed'))");
+  assert.equal(accessRequests - beforeFailedRefresh, 3, "Overlapping focus checks must share one request and its retries");
+  assert.equal(await evaluate("document.querySelector('[data-tracer-modal]') === window.tracerDialogBeforeRefresh"), true, "A failed background check must preserve the form");
+  assert.equal(await evaluate("document.querySelector('[data-tracer-modal] dl').textContent.includes('Test Company')"), true, "A failed background check must preserve answers and review progress");
+  await evaluate("window.dispatchEvent(new Event('online'))");
+  await until("!Array.from(document.querySelectorAll('[role=status]')).some(element => element.textContent.includes('status could not be refreshed'))");
   assert.equal(saveRequests.length, 0, "Only the review step may save");
   assert.equal(
     await evaluate(
@@ -440,9 +477,37 @@ try {
     await evaluate("!!document.querySelector('#tracer-company')"),
     false,
   );
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  await until("!document.querySelector('[data-tracer-modal]')");
+  await evaluate("document.querySelector('#sidebar a[href=\"/alumni\"]').click()");
+  await until("location.pathname === '/alumni' && Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === 'Update Tracer Study')");
+  assert.equal(await evaluate("!!document.querySelector('#sidebar a[href=\"/alumni/tracer\"]')"), false);
+  await evaluate("Array.from(document.querySelectorAll('button')).find(button => button.textContent.trim() === 'Update Tracer Study').click()");
+  await until("document.querySelector('#tracer-batch')");
+  assert.equal(await evaluate("!!document.querySelector('[aria-label=\"Close tracer study\"]')"), true, "Current-quarter updates remain optional");
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  await until("!document.querySelector('[data-tracer-modal]')");
+  updateRequired = true;
+  quarter = "2027 Q1";
+  await evaluate("window.dispatchEvent(new Event('focus'))");
+  await until("document.querySelector('#tracer-modal-description')?.textContent.includes('2027 Q1 update is required') && document.querySelector('#tracer-batch')");
+  assert.equal(await evaluate("document.querySelector('#tracer-batch').value"), savedResponse.batch, "Next quarter must prefill the last response");
+  assert.equal(await evaluate("!!document.querySelector('[aria-label=\"Close tracer study\"]')"), false);
+  accessFailures = 3;
+  await send("Page.reload");
+  await until("document.querySelector('[role=alert]')?.textContent.includes('temporarily unavailable')");
+  assert.equal(await evaluate("!!document.querySelector('#sidebar')"), false, "An unknown initial status must not bypass the quarterly gate");
+  await evaluate("Array.from(document.querySelectorAll('button')).find(button => button.textContent.trim() === 'Retry').click()");
+  await until("document.querySelector('#tracer-batch')");
+  accessFailures = 1;
+  accessFailureStatus = 401;
+  await evaluate("window.dispatchEvent(new Event('focus'))");
+  await until("document.querySelector('[role=alert]')?.textContent.includes('session could not be verified')");
+  await evaluate("document.querySelector('[role=alert] a[href=\"/login\"]').click()");
+  await until("location.pathname === '/login' && !document.querySelector('[data-tracer-modal]') && !document.body.textContent.includes('session could not be verified')");
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Tracer browser check passed: modal, four steps, validation, retained answers, review, failure/retry, duplicate-submit guard, prefill, themes, and mobile/desktop layouts.",
+    "Tracer browser check passed: automatic retries, background failure recovery without losing form progress, deduplicated checks, initial outage blocking, expired-session sign-in, dashboard navigation, required quarterly update, prefill, validation, save retry, themes, and mobile/desktop layouts.",
   );
   console.log("Screenshots:", artifacts);
 } catch (error) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
-import { Pencil, Trash2, Check, X, FileText, Download } from 'lucide-react';
+import { Pencil, Trash2, Check, X, FileText, Download, Phone, PhoneMissed, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Bubble, BubbleContent } from '../ui/bubble';
 
@@ -21,8 +21,8 @@ export default function MessageBubble({ msg, mine, convoId, onEdit, onUnsend }) 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(msg.text || '');
   const postId = sharedPostId(msg.text);
-  const canEdit = mine && msg._id && msg.text && onEdit;
-  const canUnsend = mine && msg._id && onUnsend;
+  const canEdit = !msg.call && mine && msg._id && msg.text && onEdit;
+  const canUnsend = !msg.call && mine && msg._id && onUnsend;
 
   const saveEdit = () => {
     if (draft.trim() && draft.trim() !== msg.text) onEdit(convoId, msg._id, draft.trim());
@@ -89,6 +89,10 @@ export default function MessageBubble({ msg, mine, convoId, onEdit, onUnsend }) 
                 <Download className="h-3.5 w-3.5 shrink-0" />
               </a>
             )}
+            {msg.call && <span className="mb-1 flex items-center gap-2 text-xs font-semibold">
+              {msg.call.status === 'missed' ? <PhoneMissed size={16} /> : msg.call.kind === 'video' ? <Video size={16} /> : <Phone size={16} />}
+              {mine ? 'Outgoing call' : 'Incoming call'}
+            </span>}
             {msg.text && (postId ? (
               <Link to={`/feed?post=${postId}`} className="font-semibold underline underline-offset-2">View shared post →</Link>
             ) : <p>{msg.text}</p>)}

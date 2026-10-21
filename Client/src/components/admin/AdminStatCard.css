@@ -3,16 +3,17 @@
   --card-muted: #526d5b;
   --card-ink: var(--alumni-heading, #101b14);
   --card-surface: var(--alumni-card, #f5faf1);
+  --admin-stat-shadow: 0 4px 16px rgb(15 23 42 / 8%), 0 1px 3px rgb(15 23 42 / 5%);
   min-width: 0;
   width: 100%;
   border: 1px solid var(--card-border);
   border-radius: 16px;
   background-color: #dcebdd;
-  box-shadow: var(--alumni-card-shadow, 0 3px 14px rgb(24 59 35 / 4%));
+  box-shadow: var(--admin-stat-shadow);
   text-align: left;
   font-family: inherit;
 }
-.dark .admin-stat-card { --card-muted: #96a69c; }
+.dark .admin-stat-card { --card-muted: #96a69c; --admin-stat-shadow: 0 4px 18px rgb(0 0 0 / 25%), 0 1px 3px rgb(0 0 0 / 15%); }
 .admin-stat-card:focus-visible { outline: 2px solid #009639; outline-offset: 4px; }
 .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { border-color: #81a88b; }
 

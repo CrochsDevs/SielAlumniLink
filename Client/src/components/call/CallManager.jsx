@@ -17,16 +17,20 @@ const CallManager = ({ getDisplayName }) => {
   const pendingIceRef = useRef([]);
   const activeRef = useRef(null);
   const startingRef = useRef(false);
+  const callIdRef = useRef(null);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const [muted, setMuted] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
 
-  activeRef.current = active;
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   const cleanup = useCallback(() => {
     activeRef.current = null;
+    callIdRef.current = null;
     pendingIceRef.current = [];
     if (pcRef.current) {
       try {
@@ -65,7 +69,7 @@ const CallManager = ({ getDisplayName }) => {
     localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
     pc.onicecandidate = (e) => {
       if (e.candidate) {
-        getSocket().emit('call:signal', { toAuthId, kind: 'signal', data: { candidate: e.candidate } });
+        getSocket().emit('call:signal', { toAuthId, kind: 'signal', data: { candidate: e.candidate, callId: callIdRef.current } });
       }
     };
     attachStreams(pc, localStream, kind);
@@ -75,7 +79,7 @@ const CallManager = ({ getDisplayName }) => {
 
   // Outgoing call — exposed globally for thread headers.
   const startCall = useCallback(async (toAuthId, displayName, kind) => {
-    if (activeRef.current || startingRef.current || !toAuthId) return;
+    if (callIdRef.current || activeRef.current || startingRef.current || !toAuthId) return;
     startingRef.current = true;
     try {
       const localStream = await navigator.mediaDevices.getUserMedia({
@@ -83,13 +87,14 @@ const CallManager = ({ getDisplayName }) => {
         video: kind === 'video',
       });
       localStreamRef.current = localStream;
+      callIdRef.current = crypto.randomUUID();
       const pc = makePC(toAuthId, kind, localStream);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const call = { peerAuthId: toAuthId, peerName: displayName, kind, outgoing: true, status: 'ringing' };
       activeRef.current = call;
       setActive(call);
-      getSocket().emit('call:signal', { toAuthId, kind: 'invite', data: { offer, callKind: kind } });
+      getSocket().emit('call:signal', { toAuthId, kind: 'invite', data: { offer, callKind: kind, callId: callIdRef.current } });
     } catch {
       cleanup();
     } finally {
@@ -106,7 +111,7 @@ const CallManager = ({ getDisplayName }) => {
 
   const endCall = useCallback((peerAuthId) => {
     if (peerAuthId) {
-      getSocket().emit('call:signal', { toAuthId: peerAuthId, kind: 'end' });
+      getSocket().emit('call:signal', { toAuthId: peerAuthId, kind: 'end', data: { callId: callIdRef.current } });
     }
     cleanup();
   }, [cleanup]);
@@ -117,11 +122,13 @@ const CallManager = ({ getDisplayName }) => {
 
     const onSignal = async ({ fromAuthId, fromEmail, kind, data }) => {
       if (kind === 'invite') {
-        if (activeRef.current || startingRef.current) {
-          socket.emit('call:signal', { toAuthId: fromAuthId, kind: 'decline' });
+        if (callIdRef.current || activeRef.current || startingRef.current) {
+          socket.emit('call:signal', { toAuthId: fromAuthId, kind: 'decline', data: { callId: data?.callId } });
           return;
         }
+        callIdRef.current = data?.callId;
         setIncoming({
+          callId: data?.callId,
           fromAuthId,
           fromEmail,
           kind: data?.callKind || 'voice',
@@ -129,12 +136,14 @@ const CallManager = ({ getDisplayName }) => {
         });
         return;
       }
+      if (!data?.callId || data.callId !== callIdRef.current) return;
 
       if (kind === 'decline' || kind === 'end') {
         if (String(activeRef.current?.peerAuthId) === String(fromAuthId)) {
           cleanup();
         }
         setIncoming(null);
+        cleanup();
         return;
       }
 
@@ -166,8 +175,14 @@ const CallManager = ({ getDisplayName }) => {
     };
 
     socket.on('call:signal', onSignal);
+    const onDisconnect = () => {
+      setIncoming(null);
+      cleanup();
+    };
+    socket.on('disconnect', onDisconnect);
     return () => {
       socket.off('call:signal', onSignal);
+      socket.off('disconnect', onDisconnect);
     };
   }, [cleanup]);
 
@@ -179,6 +194,10 @@ const CallManager = ({ getDisplayName }) => {
         audio: true,
         video: incoming.kind === 'video',
       });
+      if (callIdRef.current !== incoming.callId) {
+        localStream.getTracks().forEach(track => track.stop());
+        return;
+      }
       localStreamRef.current = localStream;
       const pc = makePC(incoming.fromAuthId, incoming.kind, localStream);
       await pc.setRemoteDescription(new RTCSessionDescription(incoming.offer));
@@ -198,10 +217,10 @@ const CallManager = ({ getDisplayName }) => {
       activeRef.current = call;
       setActive(call);
       setIncoming(null);
-      getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'accept', data: { answer } });
+      getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'accept', data: { answer, callId: incoming.callId } });
     } catch {
       // mic/camera denied — decline instead
-      getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'decline' });
+      getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'decline', data: { callId: incoming.callId } });
       setIncoming(null);
       cleanup();
     } finally {
@@ -211,9 +230,10 @@ const CallManager = ({ getDisplayName }) => {
 
   const declineIncoming = () => {
     if (incoming) {
-      getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'decline' });
+      getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'decline', data: { callId: incoming.callId } });
     }
     setIncoming(null);
+    cleanup();
   };
 
   const toggleMute = () => {

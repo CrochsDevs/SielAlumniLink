@@ -3,12 +3,15 @@ import { useAuth } from "../../context/useAuth";
 import StudentSidebar from "../../layout/sidebar/student/studentSidebar";
 import StudentTopbar from "../../layout/topbar/student/studentTopbar";
 import CareerBoard from "../../components/career/CareerBoard";
+import "../alumni/alumniCareer.css";
+import "../../components/admin/AdminUI.css";
+import "./studentCareer.css";
 
 export default function StudentCareer() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="student-page min-h-screen bg-zinc-100 dark:bg-zinc-950">
+    <div className="student-page alumni-career-page student-career-page min-h-screen">
       <StudentSidebar
         user={user}
         mobileOpen={sidebarOpen}
@@ -20,7 +23,9 @@ export default function StudentCareer() {
           title="Career"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <CareerBoard />
+        <div className="member-workspace admin-workspace student-career-board">
+          <CareerBoard appearance="marketplace" />
+        </div>
       </div>
     </div>
   );

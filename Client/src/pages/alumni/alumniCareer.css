@@ -1,0 +1,155 @@
+.alumni-career-page {
+  background: #f4f7f5;
+}
+.dark .alumni-career-page {
+  background: #101318;
+}
+.alumni-career-page .career-marketplace {
+  --career-title: #202823;
+  --career-green: #009639;
+  --career-line: #dce3df;
+  --career-surface: #fff;
+  --career-soft: #f1f5f3;
+  max-width: 1160px;
+}
+.dark .alumni-career-page .career-marketplace {
+  --career-title: #f4f4f5;
+  --career-line: #3b424b;
+  --career-surface: #1c2027;
+  --career-soft: #272d35;
+}
+.alumni-career-page .career-board-navigation,
+.dark .alumni-career-page .career-board-navigation {
+  padding: 0;
+  border-bottom: 1px solid var(--career-line);
+  border-radius: 0;
+  background: transparent;
+}
+.alumni-career-page .career-board-navigation nav:not(.admin-tabs) button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: #647069;
+}
+.dark .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button {
+  color: #b6bec8;
+}
+.alumni-career-page .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"],
+.dark .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] {
+  border-bottom-color: #009639;
+  background: transparent;
+  color: var(--career-title);
+  box-shadow: none;
+}
+.alumni-career-page .career-search-row {
+  max-width: none;
+  margin-bottom: 20px;
+}
+.alumni-career-page .career-search,
+.dark .alumni-career-page .career-search {
+  background: var(--career-surface);
+  color: var(--career-title);
+}
+.alumni-career-page aside.career-filter-panel,
+.dark .alumni-career-page aside.career-filter-panel {
+  border-radius: 12px;
+  background: var(--career-surface);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+}
+.alumni-career-page aside.career-filter-panel .career-filter-heading {
+  padding: 16px;
+  border-bottom: 1px solid var(--career-line);
+  border-radius: 0;
+  background: transparent;
+}
+.alumni-career-page aside.career-filter-panel .career-filter-heading h2 {
+  color: var(--career-title);
+  font-size: 14px;
+}
+.alumni-career-page aside.career-filter-panel .career-filter-heading p {
+  color: #77827c;
+}
+.alumni-career-page aside.career-filter-panel .career-filter-heading-icon {
+  background: var(--career-soft);
+  color: #009639;
+}
+.alumni-career-page .career-filter-option.is-selected,
+.alumni-career-page .career-filter-groups [data-filter-group="opportunities"] .career-filter-option.is-selected {
+  background: var(--career-soft);
+}
+.alumni-career-page .career-feed-heading {
+  margin-bottom: 16px;
+}
+.alumni-career-page .career-feed-heading h2 {
+  font-size: 17px;
+  line-height: 24px;
+}
+.alumni-career-page .career-feed-heading p {
+  margin-top: 3px;
+  font-size: 12px;
+}
+.alumni-career-page .career-listing,
+.alumni-career-page .career-listing[data-career-category],
+.alumni-career-page .career-listing[data-career-card] {
+  --card-accent: #009639;
+  --card-tint: var(--career-soft);
+  --card-surface: var(--career-surface);
+  --card-footer: var(--career-surface);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgb(15 23 42 / 5%);
+}
+.alumni-career-page .career-card-content {
+  padding: 20px;
+}
+.alumni-career-page .career-card-context {
+  margin-bottom: 14px;
+}
+.alumni-career-page .career-listing h3:not(:where(.opportunity-prose *)) {
+  font-size: 18px;
+  line-height: 26px;
+}
+.alumni-career-page .career-company-mark,
+.dark .alumni-career-page .career-company-mark {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #b9dfc5;
+  border-radius: 10px;
+  background: #e4f4e9;
+  color: #007c2f;
+  font-size: 22px;
+  font-weight: 700;
+}
+.dark .alumni-career-page .career-company-mark {
+  border-color: #3b6a49;
+  background: #183d29;
+  color: #86efac;
+}
+.alumni-career-page .career-category-badge {
+  color: var(--career-title);
+}
+.alumni-career-page .career-job-details {
+  margin-top: 16px;
+}
+.alumni-career-page .career-card-bottom {
+  padding: 14px 20px;
+  border-top: 1px solid var(--career-line);
+}
+.alumni-career-page .career-listing footer span {
+  color: var(--career-title);
+}
+@media (min-width: 768px) {
+  .alumni-career-page .career-layout {
+    grid-template-columns: 208px minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .alumni-career-page .career-card-content { padding: 16px; }
+  .alumni-career-page .career-card-bottom { padding: 12px 16px; }
+  .alumni-career-page .career-board-navigation nav { gap: 0; }
+  .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button {
+    padding-inline: 12px;
+    font-size: 12px;
+  }
+}

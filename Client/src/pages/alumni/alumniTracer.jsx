@@ -1,10 +1,12 @@
 import {
   useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
+import { TracerQuarterContext } from "../../context/TracerQuarterContext";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import api from "../../utils/axios";
@@ -70,7 +73,7 @@ const REVIEW_FIELDS = [
   ["How your work relates to your program", "alignmentExplanation"],
 ];
 const inputClass =
-  "h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-[13px] text-zinc-900 placeholder:text-zinc-500 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60 [color-scheme:light] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus:border-brand dark:[color-scheme:dark] [&>option]:bg-white dark:[&>option]:bg-zinc-800";
+  "h-12 w-full rounded-xl border border-solid border-zinc-400 bg-zinc-50 px-3 text-[13px] text-zinc-900 placeholder:text-zinc-500 outline-none transition hover:border-zinc-500 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60 [color-scheme:light] dark:border-zinc-500 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:hover:border-zinc-400 dark:focus:border-brand dark:[color-scheme:dark] [&>option]:bg-white dark:[&>option]:bg-zinc-800";
 const secondaryButton =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:px-5 sm:text-sm";
 const primaryButton =
@@ -128,6 +131,7 @@ const toForm = (data) => ({
 
 export default function AlumniTracer() {
   const { user } = useAuth();
+  const quarterlyStatus = useContext(TracerQuarterContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(true);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -139,6 +143,8 @@ export default function AlumniTracer() {
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
+  const updateRequired = !!quarterlyStatus?.updateRequired && !done;
+  const showModal = modalOpen || updateRequired;
   const dialogRef = useRef(null);
   const headingRef = useRef(null);
   const pending = useRef(false);
@@ -179,7 +185,7 @@ export default function AlumniTracer() {
   }, [loadResponse]);
 
   useLayoutEffect(() => {
-    if (!modalOpen) return;
+    if (!showModal) return;
     const dialog = dialogRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -188,12 +194,12 @@ export default function AlumniTracer() {
       dialog.close();
       document.body.style.overflow = previousOverflow;
     };
-  }, [modalOpen]);
+  }, [showModal]);
   useEffect(() => {
-    if (!modalOpen || loading || loadError) return;
+    if (!showModal || loading || loadError) return;
     headingRef.current?.focus({ preventScroll: true });
     dialogRef.current?.scrollTo({ top: 0 });
-  }, [step, done, modalOpen, loading, loadError]);
+  }, [step, done, showModal, loading, loadError]);
 
   const change = (name, value) => {
     setForm((prev) =>
@@ -305,6 +311,7 @@ export default function AlumniTracer() {
       setForm(payload);
       setSavedForm(payload);
       setDone(true);
+      window.dispatchEvent(new Event("tracer-updated"));
     } catch (err) {
       setSaveError(
         err.response?.data?.message ||
@@ -408,15 +415,20 @@ export default function AlumniTracer() {
           </section>
         </main>
       </div>
-      {modalOpen && (
+      {showModal && (
         <dialog
           ref={dialogRef}
           data-tracer-modal
+          closedby={updateRequired || saving ? "none" : "closerequest"}
           aria-labelledby="tracer-modal-title"
           aria-describedby="tracer-modal-description"
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && (saving || updateRequired))
+              e.preventDefault();
+          }}
           onCancel={(e) => {
             e.preventDefault();
-            if (!saving) setModalOpen(false);
+            if (!saving && !updateRequired) setModalOpen(false);
           }}
           className="m-auto max-h-[94dvh] w-[calc(100%-1rem)] max-w-3xl overflow-y-auto overscroll-contain rounded-2xl border border-zinc-200 bg-zinc-50 p-0 text-zinc-900 shadow-2xl backdrop:bg-black/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:w-[calc(100%-2rem)] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           style={{
@@ -436,24 +448,32 @@ export default function AlumniTracer() {
                 id="tracer-modal-description"
                 className="mt-2 text-sm leading-relaxed text-zinc-600 sm:text-sm dark:text-zinc-400"
               >
-                Help CLSU track graduate outcomes. Takes about 3 minutes.
+                {updateRequired
+                  ? `Your ${quarterlyStatus.quarter} update is required. Review and submit your details to continue, even if nothing has changed.`
+                  : "Help CLSU track graduate outcomes. Takes about 3 minutes."}
               </p>
-              {answered && (
+              {answered && !updateRequired && (
                 <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand dark:text-brand">
                   <CheckCircle2 size={14} />
                   You already answered — update anytime
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => setModalOpen(false)}
-              aria-label="Close tracer study"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#009639] disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            >
-              <X size={22} />
-            </button>
+            {updateRequired ? (
+              <Link to="/logout" className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:underline dark:text-zinc-300">
+                Logout
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setModalOpen(false)}
+                aria-label="Close tracer study"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#009639] disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              >
+                <X size={22} />
+              </button>
+            )}
           </header>
           {loading ? (
             <div
@@ -566,7 +586,7 @@ export default function AlumniTracer() {
                         label="Batch Graduated"
                         error={errors.batch}
                       >
-                        <select {...controlProps("batch")} required>
+                        <select {...controlProps("batch")} required disabled={Boolean(savedForm?.batch)} aria-describedby="graduation-year-help">
                           <option value="" disabled>
                             Select graduation year
                           </option>
@@ -580,13 +600,18 @@ export default function AlumniTracer() {
                             </option>
                           ))}
                         </select>
+                        <p id="graduation-year-help" className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          {savedForm?.batch
+                            ? "Your graduation year is saved and cannot be changed."
+                            : "Check your graduation year carefully. It cannot be changed after saving."}
+                        </p>
                       </Field>
                       <Field
                         name="program"
                         label="Program"
                         error={errors.program}
                       >
-                        <select {...controlProps("program")} required>
+                        <select {...controlProps("program")} required disabled={Boolean(savedForm?.program)} aria-describedby="program-lock-help">
                           <option value="" disabled>
                             Select your program
                           </option>
@@ -608,6 +633,11 @@ export default function AlumniTracer() {
                             </optgroup>
                           ))}
                         </select>
+                        <p id="program-lock-help" className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          {savedForm?.program
+                            ? "Your program is saved and cannot be changed."
+                            : "Check your program carefully. It cannot be changed after saving."}
+                        </p>
                       </Field>
                     </div>
                   )}

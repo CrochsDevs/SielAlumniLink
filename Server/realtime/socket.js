@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 import AuthModel from '../modules/auth/auth.models.js';
 import PresenceStore from './presence.store.js';
 import { initializeMeetings } from '../modules/meetings/meetings.socket.js';
+import { createCallService } from './calls.js';
+import ConnectionModel from '../modules/connections/connections.models.js';
+import { ConversationModel, MessageModel } from '../modules/messages/messages.models.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -53,6 +56,34 @@ export const initSocket = (server) => {
 
   io.use(authenticate);
   const meetings = initializeMeetings(io);
+  const calls = createCallService({
+    emit: emitToUser,
+    authorize: async (caller, recipientId) => {
+      const recipient = await AuthModel.findById(recipientId);
+      if (!recipient) return null;
+      if (caller.role !== 'admin') {
+        const connections = await ConnectionModel.findMine(caller._id);
+        if (!connections.some(c => c.status === 'accepted' &&
+          [String(c.requesterAuthId), String(c.recipientAuthId)].includes(String(recipientId)))) return null;
+      }
+      return recipient;
+    },
+    record: async (call) => {
+      const convo = await ConversationModel.getOrCreate(call.caller._id, call.caller.email, call.recipient._id, call.recipient.email);
+      const label = call.kind === 'video' ? 'Video call' : 'Voice call';
+      const duration = `${Math.floor(call.duration / 60)}:${String(call.duration % 60).padStart(2, '0')}`;
+      const text = call.status === 'completed' ? `${label} ended - ${duration}` :
+        call.status === 'declined' ? `${label} declined` : `Missed ${label.toLowerCase()}`;
+      const message = await MessageModel.create({
+        conversationId: convo._id, senderAuthId: call.caller._id, senderEmail: call.caller.email,
+        text, call: { id: call.id, kind: call.kind, status: call.status, duration: call.duration },
+      });
+      const lastMessage = { text, at: message.createdAt, by: String(call.caller._id) };
+      await ConversationModel.touch(convo._id, lastMessage);
+      for (const participant of convo.participants)
+        emitToUser(participant.authId, 'message:new', { conversationId: String(convo._id), message: { ...message, at: message.createdAt }, lastMessage });
+    },
+  });
 
   io.on('connection', (socket) => {
     meetings.attach(socket);
@@ -68,17 +99,12 @@ export const initSocket = (server) => {
     // WebRTC call signaling relay (voice/video). The server never
     // touches media — it only forwards envelopes between users.
     // Payload: { toAuthId, kind: 'invite'|'accept'|'decline'|'signal'|'end', data }
-    socket.on('call:signal', ({ toAuthId, kind, data }) => {
-      if (!toAuthId || !kind) return;
-      io.to(`user:${String(toAuthId)}`).emit('call:signal', {
-        fromAuthId: authId,
-        fromEmail: socket.user.email,
-        kind,
-        data: data || null,
-      });
+    socket.on('call:signal', payload => {
+      void calls.signal(socket, payload).catch(error => console.error('Call signaling failed', error));
     });
 
     socket.on('disconnect', () => {
+      calls.disconnect(socket);
       PresenceStore.markOffline(authId);
       broadcastPresence();
     });

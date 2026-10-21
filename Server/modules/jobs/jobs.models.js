@@ -9,8 +9,9 @@ const toObjectId = async (id) => {
 };
 
 export const JobModel = {
-  async findAll({ activeOnly = false } = {}) {
+  async findAll({ activeOnly = false, role } = {}) {
     const filter = activeOnly ? { isActive: true } : {};
+    if (role !== 'admin' && role !== 'alumni') filter.audience = { $ne: 'alumni' };
     return await jobsCollection.find(filter).sort({ createdAt: -1 }).toArray();
   },
 
@@ -30,9 +31,13 @@ export const JobModel = {
       location: data.location || '',
       type: data.type || 'Full-time',
       mode: data.mode || 'On-site',
+      experienceLevel: data.experienceLevel || '',
+      applicationDeadline: data.applicationDeadline ? new Date(data.applicationDeadline) : null,
       description: data.description || '',
+      descriptionFormat: data.descriptionFormat === 'html' ? 'html' : 'text',
       tags: Array.isArray(data.tags) ? data.tags : [],
       isActive: data.isActive !== false,
+      audience: data.audience === 'alumni' ? 'alumni' : 'all',
       createdBy: data.createdBy ? String(data.createdBy) : null,
       createdAt: now,
       updatedAt: now,
@@ -44,10 +49,10 @@ export const JobModel = {
   async updateById(id, data) {
     try {
       const objectId = await toObjectId(id);
-      const allowed = ['title', 'company', 'location', 'type', 'mode', 'description', 'tags', 'isActive'];
+      const allowed = ['title', 'company', 'location', 'type', 'mode', 'experienceLevel', 'description', 'descriptionFormat', 'applicationDeadline', 'tags', 'isActive', 'audience'];
       const update = {};
       allowed.forEach((key) => {
-        if (data[key] !== undefined) update[key] = data[key];
+        if (data[key] !== undefined) update[key] = key === 'applicationDeadline' ? (data[key] ? new Date(data[key]) : null) : data[key];
       });
       const result = await jobsCollection.updateOne(
         { _id: objectId },

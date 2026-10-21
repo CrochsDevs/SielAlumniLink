@@ -1,0 +1,116 @@
+.meeting-room {
+  min-height: 100dvh;
+  background: #17191d;
+  color: #f4f4f5;
+}
+.meeting-room .meeting-header {
+  flex-shrink: 0;
+  padding: 14px 24px;
+  background: #202227;
+  border-color: #34373e;
+}
+.meeting-header > div { min-width: 0; }
+.meeting-header h1 { font-size: 16px; overflow-wrap: anywhere; }
+.meeting-layout {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 20px;
+  padding: 24px;
+}
+.meeting-stage { align-self: center; }
+.meeting-stage > * + * { margin-top: 18px; }
+.meeting-room.is-preview .meeting-layout {
+  width: 100%;
+  max-width: 1260px;
+  margin-inline: auto;
+  align-content: center;
+  padding-block: 48px;
+}
+.meeting-room.is-preview .meeting-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  align-items: center;
+  gap: 36px;
+}
+.meeting-room.is-preview .meeting-stage > * { margin: 0; }
+.meeting-room [data-meeting-peer] {
+  border-radius: 12px;
+  background: #24262c;
+  border-color: #3d4048;
+}
+.meeting-room.is-preview [data-meeting-peer] { box-shadow: 0 16px 48px rgb(0 0 0 / 22%); }
+.meeting-join-card { min-width: 0; padding: 12px 0; overflow-wrap: anywhere; }
+.meeting-join-card h2 { font-size: 26px; letter-spacing: -.5px; }
+.meeting-join-card button { min-height: 44px; }
+.meeting-join-card > div:last-child > button { width: 100%; }
+.meeting-join-card .text-zinc-500 { color: #a1a1aa; }
+.meeting-side-panel { display: none; min-width: 0; position: relative; }
+.meeting-side-panel.show-attendance { display: flex; }
+.meeting-room.has-panel.is-joined .meeting-side-panel { display: flex; }
+.meeting-panel-close {
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  margin: 8px 8px 0;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 8px;
+}
+.meeting-panel-close:hover { background: #34373e; }
+.meeting-room.is-joined .meeting-layout { align-items: start; }
+.meeting-room.is-joined .meeting-stage { width: 100%; max-width: 1440px; margin-inline: auto; }
+.meeting-toolbar {
+  position: sticky;
+  z-index: 20;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+  border-top: 1px solid #383b42;
+  background: #202227;
+}
+.meeting-toolbar > button {
+  flex-direction: column;
+  gap: 6px;
+  min-width: 76px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 0;
+  font-size: 11px;
+  border-radius: 8px;
+}
+.meeting-toolbar > button[aria-pressed="true"] { color: #fff; background: #30343a; }
+.meeting-toolbar > .meeting-leave { margin-left: auto; min-width: 96px; }
+.meeting-room :is(button, a, input):focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+@media (min-width: 1024px) {
+  .meeting-room.has-panel.is-joined .meeting-layout { grid-template-columns: minmax(0, 1fr) 320px; }
+  .meeting-side-panel { position: sticky; top: 16px; max-height: calc(100dvh - 190px); overflow-y: auto; }
+}
+@media (max-width: 1023px) {
+  .meeting-room.is-joined .meeting-side-panel {
+    position: fixed;
+    z-index: 30;
+    inset: 12px 12px 170px auto;
+    width: min(360px, calc(100vw - 24px));
+    min-height: 0;
+    overflow-y: auto;
+    box-shadow: 0 0 0 100vmax rgb(0 0 0 / 35%), 0 12px 40px rgb(0 0 0 / 30%);
+  }
+}
+@media (max-width: 767px) {
+  .meeting-room .meeting-header { padding: 12px 16px; gap: 8px; }
+  .meeting-layout { padding: 16px; }
+  .meeting-room.is-preview .meeting-layout { padding-block: 20px; }
+  .meeting-room.is-preview .meeting-stage { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .meeting-join-card h2 { font-size: 22px; }
+  .meeting-toolbar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding-inline: 8px; }
+  .meeting-toolbar > button { min-width: 0; width: 100%; padding-inline: 4px; font-size: 10px; min-height: 56px; }
+  .meeting-toolbar > .meeting-leave { min-width: 0; grid-column: span 2; }
+}
+@media (max-height: 500px) and (max-width: 1023px) {
+  .meeting-room.is-joined .meeting-side-panel { bottom: 12px; }
+}

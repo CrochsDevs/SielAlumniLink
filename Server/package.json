@@ -13,6 +13,7 @@
     "test:feed:integration": "node --test modules/feed/feed.integration.test.js",
     "test:search": "node --test modules/search/search.test.js",
     "start": "nodemon src/index.js",
+    "seed:users": "node scripts/seed-users.js",
     "promote-admin": "node scripts/promote-admin.js"
   },
   "dependencies": {

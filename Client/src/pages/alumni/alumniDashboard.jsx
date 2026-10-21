@@ -355,17 +355,18 @@ const AlumniDashboard = () => {
             <div className="rounded-2xl border border-brand/10 bg-gradient-to-br from-brand to-brand p-4 text-white shadow-sm">
               <p className="flex items-center gap-1.5 text-[12.5px] font-bold">
                 <ClipboardCheck className="h-4 w-4" />
-                Tracer Study 2026
+                Tracer Study
               </p>
               <p className="mt-1 text-[11.5px] leading-relaxed text-white/70">
-                Only 3 minutes — help us keep university records updated.
+                Update your details every quarter to keep university records
+                current. Takes about 3 minutes.
               </p>
               <button
                 type="button"
                 onClick={() => navigate("/alumni/tracer")}
                 className="mt-3 w-full rounded-xl bg-white dark:bg-zinc-900 py-2 text-[12px] font-bold text-brand transition hover:bg-emerald-50"
               >
-                Answer now
+                Update Tracer Study
               </button>
             </div>
           </aside>

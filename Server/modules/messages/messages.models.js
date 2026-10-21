@@ -78,12 +78,13 @@ export const ConversationModel = {
 };
 
 export const MessageModel = {
-  async create({ conversationId, senderAuthId, senderEmail, text, attachment }) {
+  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call }) {
     const now = new Date();
     const doc = {
       conversationId: await toObjectId(conversationId),
       senderAuthId: key(senderAuthId),
       senderEmail,
+      ...(call ? { call } : {}),
       text: String(text || '').slice(0, 2000),
       // Inline attachment (base64 data URL) until Cloudinary lands.
       // Capped client-side; migrate `url` to Cloudinary URLs later.
@@ -144,7 +145,7 @@ export const MessageModel = {
     try {
       const objectId = await toObjectId(messageId);
       const message = await messagesCollection.findOne({ _id: objectId });
-      if (!message || String(message.senderAuthId) !== key(senderAuthId) || message.unsent) {
+      if (!message || message.call || String(message.senderAuthId) !== key(senderAuthId) || message.unsent) {
         return null;
       }
       await messagesCollection.updateOne(
@@ -162,7 +163,7 @@ export const MessageModel = {
     try {
       const objectId = await toObjectId(messageId);
       const message = await messagesCollection.findOne({ _id: objectId });
-      if (!message || String(message.senderAuthId) !== key(senderAuthId)) {
+      if (!message || message.call || String(message.senderAuthId) !== key(senderAuthId)) {
         return null;
       }
       await messagesCollection.updateOne(

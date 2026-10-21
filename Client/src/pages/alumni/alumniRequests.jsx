@@ -12,6 +12,7 @@ import RequestsList, {
   useRequests,
 } from "../../components/connections/RequestsInbox";
 import api from "../../utils/axios";
+import DataPagination from "../../components/ui/data-pagination";
 
 const AlumniRequests = () => {
   const { user } = useAuth();
@@ -20,14 +21,30 @@ const AlumniRequests = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [connecting, setConnecting] = useState(null);
+  const [requestsPage, setRequestsPage] = useState(1);
+  const [requestsPerPage, setRequestsPerPage] = useState(5);
+  const [suggestionsPage, setSuggestionsPage] = useState(1);
+  const [suggestionsPerPage, setSuggestionsPerPage] = useState(12);
+  const requestsTotalPages = Math.max(1, Math.ceil(requests.length / requestsPerPage));
+  const currentRequestsPage = Math.min(requestsPage, requestsTotalPages);
+  const pagedRequests = requests.slice(
+    (currentRequestsPage - 1) * requestsPerPage,
+    currentRequestsPage * requestsPerPage,
+  );
+  const suggestionsTotalPages = Math.max(1, Math.ceil(suggestions.length / suggestionsPerPage));
+  const currentSuggestionsPage = Math.min(suggestionsPage, suggestionsTotalPages);
+  const pagedSuggestions = suggestions.slice(
+    (currentSuggestionsPage - 1) * suggestionsPerPage,
+    currentSuggestionsPage * suggestionsPerPage,
+  );
 
-  const loadSuggestions = async () => {
-    setSuggestionsLoading(true);
-    try {
-      const [usersRes, connsRes] = await Promise.all([
-        api.get("/users", { params: { role: "alumni" } }),
-        api.get("/connections/me"),
-      ]);
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      api.get("/users", { params: { role: "alumni" } }),
+      api.get("/connections/me"),
+    ]).then(([usersRes, connsRes]) => {
+      if (!active) return;
       const connectedEmails = new Set(
         (connsRes.data.data || []).map((c) =>
           c.requesterEmail === user?.email
@@ -39,20 +56,15 @@ const AlumniRequests = () => {
         .filter(
           (u) =>
             u.email && u.email !== user?.email && !connectedEmails.has(u.email),
-        )
-        .slice(0, 8);
+        );
       setSuggestions(list);
-    } catch {
+    }).catch(() => {
       // ignore
-    } finally {
-      setSuggestionsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadSuggestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }).finally(() => {
+      if (active) setSuggestionsLoading(false);
+    });
+    return () => { active = false; };
+  }, [user?.email]);
 
   const handleConnect = async (email) => {
     setConnecting(email);
@@ -88,14 +100,32 @@ const AlumniRequests = () => {
         />
 
         <main className="mx-auto max-w-4xl space-y-3 p-4 sm:p-6 workspace-page">
-          <RequestsHeader count={requests.length} />
-          <RequestsList
-            requests={requests}
-            loading={loading}
-            onRespond={respond}
-          />
+          <section aria-label="Invitations" className="space-y-3">
+            <RequestsHeader count={requests.length} />
+            <RequestsList
+              requests={pagedRequests}
+              loading={loading}
+              onRespond={respond}
+            />
+            {!loading && requests.length > 0 && (
+              <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+                <DataPagination
+                  page={currentRequestsPage}
+                  totalPages={requestsTotalPages}
+                  onPageChange={setRequestsPage}
+                  perPage={requestsPerPage}
+                  onPerPageChange={(value) => {
+                    setRequestsPerPage(value);
+                    setRequestsPage(1);
+                  }}
+                  totalItems={requests.length}
+                  itemLabel="invitations"
+                />
+              </div>
+            )}
+          </section>
 
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+          <section aria-label="People You May Know" className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
             <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10 dark:bg-brand/20 text-brand dark:text-brand">
                 <UserPlus className="h-4 w-4" />
@@ -116,7 +146,7 @@ const AlumniRequests = () => {
               </p>
             ) : (
               <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                {suggestions.map((person) => (
+                {pagedSuggestions.map((person) => (
                   <div
                     key={person._id}
                     className="relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
@@ -186,7 +216,22 @@ const AlumniRequests = () => {
                 ))}
               </div>
             )}
-          </div>
+            {!suggestionsLoading && suggestions.length > 0 && (
+              <DataPagination
+                page={currentSuggestionsPage}
+                totalPages={suggestionsTotalPages}
+                onPageChange={setSuggestionsPage}
+                perPage={suggestionsPerPage}
+                perPageOptions={[12, 24, 48]}
+                onPerPageChange={(value) => {
+                  setSuggestionsPerPage(value);
+                  setSuggestionsPage(1);
+                }}
+                totalItems={suggestions.length}
+                itemLabel="people"
+              />
+            )}
+          </section>
         </main>
       </div>
     </div>

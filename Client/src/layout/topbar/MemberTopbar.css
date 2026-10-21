@@ -1,0 +1,10 @@
+.member-topbar {
+  transition: transform 180ms ease;
+}
+.member-topbar.is-scroll-hidden:not(:focus-within) {
+  transform: translateY(calc(-100% - 24px));
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .member-topbar { transition: none; }
+}

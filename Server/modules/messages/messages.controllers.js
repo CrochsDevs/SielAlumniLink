@@ -140,6 +140,7 @@ export const listMessages = async (req, res) => {
         unsent: !!m.unsent,
         senderEmail: m.senderEmail,
         attachment: m.attachment || null,
+        call: m.call || null,
       }))
     });
   } catch (error) {
