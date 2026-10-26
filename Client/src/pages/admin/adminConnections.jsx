@@ -1,3 +1,8 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { AdminTabs } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +15,29 @@ import DataPagination from "../../components/ui/data-pagination";
 import { Avatar } from "../../components/search/SearchPerson";
 import api from "../../utils/axios";
 import { getSocket } from "../../realtime/socket";
+
+const MEMBER_COLUMNS = [
+  {
+    accessorKey: "name",
+    header: "Member",
+    meta: { headerClassName: "px-5 py-3" },
+  },
+  {
+    accessorKey: "role",
+    header: "Role",
+    meta: { headerClassName: "px-5 py-3" },
+  },
+  {
+    accessorKey: "connectionsCount",
+    header: "Connections",
+    meta: { headerClassName: "px-5 py-3" },
+  },
+  {
+    accessorKey: "details",
+    header: "Details",
+    meta: { headerClassName: "px-5 py-3 text-right" },
+  },
+];
 
 const FILTERS = ["all", "students", "alumni"];
 const profileUrl = (person) => `/${person.role}/profile/${person.profileId}`;
@@ -187,6 +215,25 @@ export default function AdminConnections() {
     setPage,
   );
 
+  const membersTable = useReactTable({
+    data: data?.items || [],
+    columns: MEMBER_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => String(row._id),
+    autoResetPageIndex: false,
+    manualPagination: true,
+    rowCount: data?.total || 0,
+    pageCount: data?.pages || 1,
+    state: { pagination: { pageIndex: page - 1, pageSize: perPage } },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(membersTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <AdminSidebar
@@ -201,7 +248,10 @@ export default function AdminConnections() {
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-          <PageHeader title="Connections" description="Select a student or alumnus to see their community connections." />
+          <PageHeader
+            title="Connections"
+            description="Select a student or alumnus to see their community connections."
+          />
           <div className="admin-panel admin-data-table overflow-hidden">
             <div className="admin-toolbar">
               <div className="relative flex-1">
@@ -218,7 +268,18 @@ export default function AdminConnections() {
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                 />
               </div>
-              <AdminTabs label="Filter connections by role" value={roleFilter} onChange={value => { setRoleFilter(value); setPage(1); }} items={FILTERS.map(filter => ({ id: filter, label: filter.charAt(0).toUpperCase() + filter.slice(1) }))} />
+              <AdminTabs
+                label="Filter connections by role"
+                value={roleFilter}
+                onChange={(value) => {
+                  setRoleFilter(value);
+                  setPage(1);
+                }}
+                items={FILTERS.map((filter) => ({
+                  id: filter,
+                  label: filter.charAt(0).toUpperCase() + filter.slice(1),
+                }))}
+              />
             </div>
             {loading ? (
               <p role="status" className="p-6 text-sm text-zinc-500">
@@ -235,51 +296,73 @@ export default function AdminConnections() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[540px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-100 text-xs uppercase text-zinc-400 dark:border-zinc-800">
-                      <th className="px-5 py-3">Member</th>
-                      <th className="px-5 py-3">Role</th>
-                      <th className="px-5 py-3">Connections</th>
-                      <th className="px-5 py-3 text-right">Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data?.items.map((member) => (
+                    {membersTable.getHeaderGroups().map((group) => (
                       <tr
-                        key={member._id}
-                        className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
+                        key={group.id}
+                        className={
+                          "border-b border-zinc-100 text-xs uppercase text-zinc-400 dark:border-zinc-800"
+                        }
                       >
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar person={member} />
-                            <div>
-                              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-                                {member.name}
-                              </p>
-                              <p className="text-xs text-zinc-500">
-                                {member.email}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 capitalize text-brand dark:text-brand">
-                          {member.role}
-                        </td>
-                        <td className="px-5 py-4 font-semibold text-zinc-700 dark:text-zinc-200">
-                          {member.connectionsCount}
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <button
-                            type="button"
-                            aria-label={`View connections of ${member.email}`}
-                            onClick={() => setSelectedMember(member)}
-                            className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-brand dark:bg-emerald-950 dark:text-brand"
+                        {group.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            scope="col"
+                            colSpan={header.colSpan}
+                            className={
+                              header.column.columnDef.meta?.headerClassName
+                            }
                           >
-                            <Eye className="h-4 w-4" />
-                            Connections
-                          </button>
-                        </td>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </th>
+                        ))}
                       </tr>
                     ))}
+                  </thead>
+                  <tbody>
+                    {membersTable
+                      .getRowModel()
+                      .rows.map(({ original: member }) => (
+                        <tr
+                          key={member._id}
+                          className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
+                        >
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar person={member} />
+                              <div>
+                                <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                  {member.name}
+                                </p>
+                                <p className="text-xs text-zinc-500">
+                                  {member.email}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 capitalize text-brand dark:text-brand">
+                            {member.role}
+                          </td>
+                          <td className="px-5 py-4 font-semibold text-zinc-700 dark:text-zinc-200">
+                            {member.connectionsCount}
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <button
+                              type="button"
+                              aria-label={`View connections of ${member.email}`}
+                              onClick={() => setSelectedMember(member)}
+                              className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-brand dark:bg-emerald-950 dark:text-brand"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Connections
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
                 {!data?.items.length && (
@@ -294,12 +377,11 @@ export default function AdminConnections() {
               <DataPagination
                 page={page}
                 totalPages={data.pages}
-                onPageChange={setPage}
+                onPageChange={(value) => membersTable.setPageIndex(value - 1)}
                 perPage={perPage}
-                onPerPageChange={(value) => {
-                  setPerPage(value);
-                  setPage(1);
-                }}
+                onPerPageChange={(pageSize) =>
+                  membersTable.setPagination({ pageIndex: 0, pageSize })
+                }
                 totalItems={data.total}
                 itemLabel="members"
               />

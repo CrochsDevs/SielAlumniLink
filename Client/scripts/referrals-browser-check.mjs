@@ -122,6 +122,10 @@ let referrals = [
 let applications = [],
   applyRequests = 0,
   postRequests = 0,
+  editRequests = 0,
+  deleteRequests = 0,
+  failNextEdit = true,
+  failNextDelete = true,
   failNextApplication = true,
   failNextList = false;
 listeners.set("Runtime.exceptionThrown", ({ exceptionDetails }) =>
@@ -138,6 +142,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     if (request.method !== "OPTIONS") {
       const body = request.postData ? JSON.parse(request.postData) : {};
       if (route === "/auth/me" || route === "/users/me") data = user;
+      else if (route === "/tracer/access") data = { updateRequired: false, quarter: "2026-Q4", nextUpdateAt: "2027-01-01T00:00:00Z" };
       else if (route === "/notifications/unread-count") data = { count: 0 };
       else if (route === "/referrals/applications/me")
         data = applications
@@ -200,15 +205,30 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
         data = applications.find((item) => item._id === route.split("/").pop());
         Object.assign(data, { status: body.status });
       } else if (route.startsWith("/referrals/") && request.method === "PUT") {
-        data = referrals.find((item) => item._id === route.split("/").pop());
-        Object.assign(data, body);
+        editRequests++;
+        if (failNextEdit) {
+          failNextEdit = false;
+          responseCode = 503;
+          message = "Fixture edit failed. Please retry.";
+        } else {
+          data = referrals.find((item) => item._id === route.split("/").pop());
+          Object.assign(data, body);
+        }
       } else if (
         route.startsWith("/referrals/") &&
         request.method === "DELETE"
       ) {
-        const id = route.split("/").pop();
-        referrals = referrals.filter((item) => item._id !== id);
-        applications = applications.filter((item) => item.referralId !== id);
+        deleteRequests++;
+        if (failNextDelete) {
+          failNextDelete = false;
+          responseCode = 503;
+          message = "Fixture delete failed. Please retry.";
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 150));
+          const id = route.split("/").pop();
+          referrals = referrals.filter((item) => item._id !== id);
+          applications = applications.filter((item) => item.referralId !== id);
+        }
       }
     }
     await send("Fetch.fulfillRequest", {
@@ -284,6 +304,7 @@ try {
     url: "http://localhost:5173/student/referrals",
   });
   await until(`document.querySelectorAll('[data-referral-card]').length===3`);
+  assert.equal(await evaluate(`document.querySelectorAll('.referral-card-management').length`), 0, 'Students cannot edit or delete referrals');
   assert.equal(
     await evaluate(
       `Array.from(document.querySelectorAll('button')).some(button=>button.textContent.trim()==='Share an opportunity')`,
@@ -383,6 +404,27 @@ try {
   await navigate("/alumni/referral");
   await photo("alumni-desktop", 1440, false);
   await photo("alumni-mobile-dark", 390, true);
+  assert.equal(await evaluate(`document.querySelectorAll('.referral-card-management').length`), 3, 'Owners can manage their referrals');
+  await click("View details", `document.querySelector('[data-referral-card]')`);
+  await until(`document.querySelector('.referral-detail-management')`);
+  await click("Edit referral", 'document.querySelector("dialog")');
+  await until(`document.querySelector('[aria-label="Organization"]')`);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Opportunity title"]').value`), referrals[0].title);
+  await fill("Organization", "Campus Partners Updated");
+  await click("Save changes", 'document.querySelector("dialog")');
+  await until(`document.querySelector('dialog [role="alert"]')?.textContent.includes('Fixture edit failed')`);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Organization"]').value`), 'Campus Partners Updated', 'Edit failure preserves input');
+  await evaluate(`(()=>{const button=document.querySelector('dialog button[type=submit]');button.click();button.click();})()`);
+  await until(`!document.querySelector('dialog')`);
+  assert.equal(editRequests, 2, 'Retry sends one save request');
+  assert.equal(referrals[0].organization, 'Campus Partners Updated');
+  await click("View details", `document.querySelector('[data-referral-card]')`);
+  await until(`document.querySelector('.referral-detail-management')`);
+  await click("Delete referral", 'document.querySelector("dialog")');
+  await until(`document.querySelector('dialog')?.textContent.includes('Delete this referral?')`);
+  await click("Cancel", 'document.querySelector("dialog")');
+  assert.equal(deleteRequests, 0, 'Cancel does not delete');
+  assert.equal(referrals.length, 3);
   await click("Share an opportunity");
   await until(`document.querySelector('[aria-label="Opportunity title"]')`);
   await click("Scholarship", 'document.querySelector("dialog")');
@@ -429,10 +471,14 @@ try {
   );
   await until(`document.querySelector('dialog')`);
   await click("Delete referral", 'document.querySelector("dialog")');
+  await until(`document.querySelector('dialog [role="alert"]')?.textContent.includes('Fixture delete failed')`);
+  assert.ok(referrals.some(item => item.title === 'Community Leadership Scholarship'), 'Failed deletion preserves referral');
+  await evaluate(`(()=>{const button=Array.from(document.querySelectorAll('dialog button')).find(button=>button.textContent.trim()==='Delete referral');button.click();button.click();})()`);
   await until(
     `!document.querySelector('dialog')&&!document.body.textContent.includes('Community Leadership Scholarship')`,
   );
   user = student;
+  assert.equal(deleteRequests, 2, 'Retry sends one delete request');
   await navigate("/student/referrals");
   await evaluate(
     `Array.from(document.querySelectorAll('button')).find(button=>button.textContent.includes('My applications')).click()`,
@@ -446,7 +492,17 @@ try {
     `document.querySelector('[role="alert"]')?.textContent.includes('Some opportunities')`,
   );
   await click("Retry");
-  await until(`!document.querySelector('[role="alert"]')`);
+  await until(`!document.querySelector('main p[role="alert"]')`);
+  user = { ...alumni, authId: '999999999999999999999999', _id: '888888888888888888888888' };
+  await navigate('/alumni/referral');
+  assert.equal(await evaluate(`document.querySelectorAll('.referral-card-management').length`), 0, 'Other alumni cannot manage someone else’s referrals');
+  await click('View details', `document.querySelector('[data-referral-card]')`);
+  await until(`document.querySelector('dialog')`);
+  assert.equal(await evaluate(`!!document.querySelector('.referral-detail-management')`), false, 'Details hide management from non-owners');
+  await close();
+  user = { ...alumni, role: 'admin' };
+  await navigate('/alumni/referral');
+  assert.equal(await evaluate(`document.querySelectorAll('.referral-card-management').length`), referrals.length, 'Admins can manage all referrals');
   assert.deepEqual(runtimeErrors, []);
   console.log(
     "Passed: responsive referral design, category/search filters, safe links, student applications to all three types, failure/retry, duplicate-submit guards, persisted status, alumni publish/edit/delete, and applicant review. API fixtures only. Screenshots: " +

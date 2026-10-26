@@ -43,7 +43,7 @@ export function createCertificateService(db) {
     const sourceKey = source || `attendance:${String(attendanceId)}`;
     const _id = createHash('sha256').update(JSON.stringify([authId, String(attendanceId)])).digest('hex');
     const now = new Date();
-    const doc = { _id, studentAuthId: authId, recipientName, title: data.title, activityType: data.type, participationDate: data.date, organizer: data.organizer, sourceKey, attendanceId: String(attendanceId), issuedBy: String(admin._id), issuedAt: now, certificateNumber: `SL-${_id.slice(0, 16).toUpperCase()}`, templateVersion: 1 };
+    const doc = { _id, studentAuthId: authId, recipientName, title: data.title, activityType: data.type, participationDate: data.date, organizer: data.organizer, sourceKey, attendanceId: String(attendanceId), issuedBy: String(admin._id), issuedAt: now, certificateNumber: `SL-${_id.slice(0, 16).toUpperCase()}`, templateVersion: 2 };
     try { await certificates.insertOne(doc); }
     catch (error) { if (error.code !== 11000) throw error; }
     const certificate = await certificates.findOne({ _id });

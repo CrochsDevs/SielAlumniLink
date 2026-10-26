@@ -72,6 +72,7 @@ export default function SuccessStoriesBoard() {
   const [error, setError] = useState("");
   const [restricted, setRestricted] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
   const [notice, setNotice] = useState("");
   const [readerPost, setReaderPost] = useState(null);
   const [readerLoading, setReaderLoading] = useState(false);
@@ -211,6 +212,12 @@ export default function SuccessStoriesBoard() {
       "Your story is published. Thank you for sharing your experience.",
     );
     pages.current = 1;
+    void load();
+  };
+  const saved = (post) => {
+    setNotice("Your story has been updated.");
+    setReaderPost(post);
+    setReaderAttempt((previous) => previous + 1);
     void load();
   };
   return (
@@ -430,6 +437,16 @@ export default function SuccessStoriesBoard() {
                       Read story
                       <ArrowRight size={15} />
                     </button>
+                    {post.isMine && canPublish && !restricted && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingPost(post)}
+                        className="ml-4 mt-4 inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-brand dark:text-zinc-300"
+                      >
+                        <PenLine size={15} />
+                        Edit story
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
@@ -453,7 +470,15 @@ export default function SuccessStoriesBoard() {
           onPublished={published}
         />
       )}
-      {storyId && (
+      {editingPost && canPublish && !restricted && (
+        <StoryComposer
+          key={editingPost._id}
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onPublished={saved}
+        />
+      )}
+      {storyId && !editingPost && (
         <StoryReader
           key={storyId}
           post={readerPost?._id === storyId ? readerPost : null}
@@ -464,6 +489,7 @@ export default function SuccessStoriesBoard() {
           onRetry={() => setReaderAttempt((previous) => previous + 1)}
           onClose={close}
           isAdmin={user?.role === "admin"}
+          onEdit={canPublish && !restricted ? setEditingPost : undefined}
           onDeleted={(id) => {
             setPosts((previous) => previous.filter((post) => post._id !== id));
             setNotice("Story deleted.");

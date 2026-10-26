@@ -62,8 +62,8 @@ export default function AdminFeedTools() {
   return (
     <div className="space-y-3">
       <section className="overflow-hidden rounded-2xl border border-brand/10 bg-white shadow-sm dark:bg-zinc-900">
-        <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
-        <h2 className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
+        <div className="bg-zinc-50 px-4 py-2.5 dark:bg-zinc-800">
+        <h2 className="flex items-center gap-1.5 text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">
           <Shield size={14} />
           Feed moderation
         </h2>

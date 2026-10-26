@@ -1,9 +1,15 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import AdminStatCard from "../../components/admin/AdminStatCard";
 import { AdminStatGrid, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import {
   Search,
   Plus,
@@ -19,6 +25,34 @@ import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
+
+const ANNOUNCEMENT_COLUMNS = [
+  {
+    accessorKey: "title",
+    header: "Announcement",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "audience",
+    header: "Audience",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "isActive",
+    header: "Status",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Posted",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "actions",
+    header: "Actions",
+    meta: { headerClassName: "px-5 py-3 font-semibold text-right" },
+  },
+];
 
 const AUDIENCES = ["all", "alumni", "students"];
 const EMPTY_FORM = { title: "", body: "", audience: "all", isActive: true };
@@ -42,7 +76,10 @@ export default function AdminAnnouncements() {
       const res = await api.get("/announcements", { params: { all: "true" } });
       setItems(res.data.data || []);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load announcements" });
+      toast.error("Error", {
+        description:
+          err.response?.data?.message || "Failed to load announcements",
+      });
     } finally {
       setLoading(false);
     }
@@ -64,8 +101,35 @@ export default function AdminAnnouncements() {
     `${a.title} ${a.body || ""}`.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+  const announcementsTable = useReactTable({
+    data: filtered,
+    columns: ANNOUNCEMENT_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          page - 1,
+          Math.max(0, Math.ceil(filtered.length / perPage) - 1),
+        ),
+        pageSize: perPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(announcementsTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
+  const totalPages = Math.max(1, announcementsTable.getPageCount());
+  const paged = announcementsTable
+    .getRowModel()
+    .rows.map((row) => row.original);
 
   const openAdd = () => {
     setEditing(null);
@@ -97,7 +161,10 @@ export default function AdminAnnouncements() {
       fetchItems();
       toast.success("Saved");
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to save announcement" });
+      toast.error("Error", {
+        description:
+          err.response?.data?.message || "Failed to save announcement",
+      });
     } finally {
       setSaving(false);
     }
@@ -120,7 +187,10 @@ export default function AdminAnnouncements() {
       fetchItems();
       toast.success("Deleted");
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to delete announcement" });
+      toast.error("Error", {
+        description:
+          err.response?.data?.message || "Failed to delete announcement",
+      });
     }
   };
 
@@ -129,7 +199,10 @@ export default function AdminAnnouncements() {
       await api.put(`/announcements/${item._id}`, { isActive: !item.isActive });
       fetchItems();
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to update announcement" });
+      toast.error("Error", {
+        description:
+          err.response?.data?.message || "Failed to update announcement",
+      });
     }
   };
 
@@ -152,12 +225,34 @@ export default function AdminAnnouncements() {
         />
 
         <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-          <PageHeader title="Announcements" description="Share updates and manage announcements for your community." />
+          <PageHeader
+            title="Announcements"
+            description="Share updates and manage announcements for your community."
+          />
           <AdminStatGrid columns={2}>
             {[
-              { label: "Total announcements", value: counts.total, icon: Megaphone, caption: "community updates", detail: "Published and draft announcements" },
-              { label: "Published", value: counts.active, icon: Eye, caption: "active announcements", detail: "Visible to the selected audience" },
-            ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} />)}
+              {
+                label: "Total announcements",
+                value: counts.total,
+                icon: Megaphone,
+                caption: "community updates",
+                detail: "Published and draft announcements",
+              },
+              {
+                label: "Published",
+                value: counts.active,
+                icon: Eye,
+                caption: "active announcements",
+                detail: "Visible to the selected audience",
+              },
+            ].map((item, index) => (
+              <AdminStatCard
+                key={item.label}
+                {...item}
+                featured={index === 0}
+                loading={loading}
+              />
+            ))}
           </AdminStatGrid>
 
           {/* Table card */}
@@ -175,7 +270,10 @@ export default function AdminAnnouncements() {
                   className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/15"
                 />
               </div>
-              <AdminButton onClick={openAdd}><Plus size={15} />New Announcement</AdminButton>
+              <AdminButton onClick={openAdd}>
+                <Plus size={15} />
+                New Announcement
+              </AdminButton>
             </div>
 
             {loading ? (
@@ -186,15 +284,32 @@ export default function AdminAnnouncements() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[680px] text-left text-[12.5px]">
                   <thead>
-                    <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                      <th className="px-5 py-3 font-semibold">Announcement</th>
-                      <th className="px-5 py-3 font-semibold">Audience</th>
-                      <th className="px-5 py-3 font-semibold">Status</th>
-                      <th className="px-5 py-3 font-semibold">Posted</th>
-                      <th className="px-5 py-3 font-semibold text-right">
-                        Actions
-                      </th>
-                    </tr>
+                    {announcementsTable.getHeaderGroups().map((group) => (
+                      <tr
+                        key={group.id}
+                        className={
+                          "border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        }
+                      >
+                        {group.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            scope="col"
+                            colSpan={header.colSpan}
+                            className={
+                              header.column.columnDef.meta?.headerClassName
+                            }
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
                   </thead>
                   <tbody>
                     {paged.map((item) => (
@@ -295,12 +410,13 @@ export default function AdminAnnouncements() {
             <DataPagination
               page={Math.min(page, totalPages)}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={(value) =>
+                announcementsTable.setPageIndex(value - 1)
+              }
               perPage={perPage}
-              onPerPageChange={(n) => {
-                setPerPage(n);
-                setPage(1);
-              }}
+              onPerPageChange={(pageSize) =>
+                announcementsTable.setPagination({ pageIndex: 0, pageSize })
+              }
               totalItems={filtered.length}
               itemLabel="announcements"
             />

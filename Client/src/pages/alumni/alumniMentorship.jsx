@@ -205,7 +205,7 @@ export default function AlumniMentorship() {
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder="Search student name or program"
-                        className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900"
+                        className="workspace-search-input h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800"
                       />
                     </label>
                     <p className="text-[11px] text-zinc-500">

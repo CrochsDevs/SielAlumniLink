@@ -97,3 +97,18 @@ test('generated certificate preserves names and escapes markup in all participan
   assert.ok(svg.includes('Alex &amp; Santos')); assert.ok(svg.includes('&lt;script&gt;'));
   assert.equal(svg.includes('<script>'), false); assert.ok(svg.includes(certificate.certificateNumber));
 });
+
+test('appreciation template embeds its artwork and uses saved participation and issue dates', async () => {
+  const { service } = fixture();
+  const certificate = await service.issue(admin, student._id, participation);
+  const svg = certificateSvg({ ...certificate, issuedAt: '2025-02-16T17:00:00Z' });
+  assert.equal(certificate.templateVersion, 2);
+  assert.match(svg, /<title[^>]*>Certificate of Appreciation<\/title>/);
+  assert.match(svg, /data:image\/png;base64,iVBOR/);
+  assert.match(svg, /width="1148" height="794"/);
+  assert.ok(svg.includes('Held on February 15, 2025'));
+  assert.ok(svg.includes('Given on February 17, 2025.'));
+  assert.ok(svg.includes('Organized by SielAlumni'));
+  assert.equal(svg.includes('LEANNE CASTRO'), false);
+  assert.equal(svg.includes('October 9-11, 2024'), false);
+});

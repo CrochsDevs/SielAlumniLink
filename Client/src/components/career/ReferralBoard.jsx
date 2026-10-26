@@ -32,6 +32,7 @@ import {
   referralType,
   secondaryButton,
 } from "./referralUi";
+import "./ReferralBoard.css";
 
 export default function ReferralBoard({ embedded = false }) {
   const { user } = useAuth();
@@ -175,6 +176,17 @@ export default function ReferralBoard({ embedded = false }) {
   ];
   const openDetails = (referral, apply = false) =>
     setDetails({ referral, apply });
+  const editReferral = (referral) => {
+    if (!canManage(referral)) return;
+    setDetails(null);
+    setEditor({ item: referral });
+  };
+  const confirmDelete = (referral) => {
+    if (!canManage(referral)) return;
+    setDetails(null);
+    setDeleteError("");
+    setDeleting(referral);
+  };
   const onSaved = (referral, edited = false) => {
     setReferrals((previous) =>
       previous.some((item) => item._id === referral._id)
@@ -260,37 +272,6 @@ export default function ReferralBoard({ embedded = false }) {
           )}
         </div>
       </header>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {REFERRAL_TYPES.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            aria-pressed={type === item.key}
-            onClick={() => setFilter(type === item.key ? "all" : item.key)}
-            className={`${panel} group flex min-w-0 items-center gap-4 p-4 text-left transition hover:border-brand/40 ${type === item.key ? "!border-brand ring-1 ring-brand/10" : ""}`}
-          >
-            <span
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${item.style}`}
-            >
-              {createElement(item.icon, { size: 23 })}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center justify-between gap-2 text-sm font-semibold">
-                {item.label}
-                <span className="text-lg">
-                  {loading
-                    ? "–"
-                    : referrals.filter((referral) => referral.type === item.key)
-                        .length}
-                </span>
-              </span>
-              <span className="mt-1 block text-[11px] leading-5 text-zinc-500 dark:text-zinc-400">
-                {item.description}
-              </span>
-            </span>
-          </button>
-        ))}
-      </div>
       {message && (
         <p
           role="status"
@@ -342,7 +323,7 @@ export default function ReferralBoard({ embedded = false }) {
                     setPage(1);
                   }}
                   placeholder="Search a title, organization, or keyword"
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800"
+                  className="workspace-search-input h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800"
                 />
               </div>
               <select
@@ -488,13 +469,13 @@ export default function ReferralBoard({ embedded = false }) {
                     <article
                       key={referral._id}
                       data-referral-card
-                      className={`${panel} flex min-w-0 flex-col overflow-hidden transition hover:border-zinc-300 hover:shadow-sm dark:hover:border-zinc-700`}
+                      data-referral-type={meta.key}
+                      className="referral-card"
                     >
-                      <div className={`h-1 ${meta.accent}`} />
-                      <div className="flex flex-1 flex-col p-5">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="referral-card-content">
+                        <div className="referral-card-meta">
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold ${meta.style}`}
+                            className="referral-card-category"
                           >
                             {createElement(meta.icon, { size: 13 })}
                             {meta.singular}
@@ -502,35 +483,34 @@ export default function ReferralBoard({ embedded = false }) {
                           {referral.createdAt && (
                             <time
                               dateTime={referral.createdAt}
-                              className="text-[10px] text-zinc-400"
+                              className="referral-card-date"
                             >
                               {referralDate(referral.createdAt)}
                             </time>
                           )}
                         </div>
-                        <h3 className="mt-4 break-words text-base font-semibold leading-6">
-                          {referral.title}
-                        </h3>
-                        <p className="mt-1 break-words text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                          {referral.organization || "Alumni community"}
-                        </p>
-                        <p className="mb-5 mt-3 line-clamp-3 break-words text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+                        <div className="referral-card-identity">
+                          <span className="referral-card-company-mark" aria-hidden="true">{(referral.organization || "Alumni community").trim().charAt(0).toUpperCase()}</span>
+                          <div className="min-w-0">
+                            <h3 className="referral-card-title">{referral.title}</h3>
+                            <p className="referral-card-organization">{referral.organization || "Alumni community"}</p>
+                          </div>
+                        </div>
+                        <p className="referral-card-description">
                           {referral.description ||
                             (view === "applied"
                               ? "Find updates to this application below."
                               : "View this opportunity and connect with the alumni referrer.")}
                         </p>
-                        <div className="mt-auto">
+                        <div className="referral-card-context">
                           {referral.authorName && (
-                            <div className="mb-4 flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                            <div className="referral-card-referrer">
+                              <span className="referral-card-avatar" aria-hidden="true">
                                 {referral.authorName.charAt(0).toUpperCase()}
                               </span>
-                              <span className="min-w-0 break-words">
-                                Referred by{" "}
-                                <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                                  {referral.authorName}
-                                </span>
+                              <span className="referral-card-referrer-copy">
+                                <span>Referred by</span>
+                                <span className="referral-card-referrer-name">{referral.authorName}</span>
                               </span>
                             </div>
                           )}
@@ -542,12 +522,12 @@ export default function ReferralBoard({ embedded = false }) {
                               </p>
                             </div>
                           )}
-                          <div className="flex flex-wrap gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                          <div className="referral-card-actions">
                             {view !== "applied" || referral.available ? (
                               <button
                                 type="button"
                                 onClick={() => openDetails(referral)}
-                                className={`${secondaryButton} flex-1`}
+                                className="referral-card-details"
                               >
                                 View details
                                 <ChevronRight size={14} />
@@ -561,7 +541,7 @@ export default function ReferralBoard({ embedded = false }) {
                               <button
                                 type="button"
                                 onClick={() => openDetails(referral, true)}
-                                className={`${primaryButton} flex-1`}
+                                className="referral-card-primary"
                               >
                                 Apply directly
                                 <ArrowUpRight size={14} />
@@ -571,7 +551,7 @@ export default function ReferralBoard({ embedded = false }) {
                               <button
                                 type="button"
                                 onClick={() => setApplicantsReferral(referral)}
-                                className={`${primaryButton} flex-1`}
+                                className="referral-card-primary"
                               >
                                 <Users size={14} />
                                 Applicants
@@ -579,28 +559,28 @@ export default function ReferralBoard({ embedded = false }) {
                             )}
                           </div>
                           {manageable && (
-                            <div className="mt-3 flex justify-end gap-4">
-                              <button
-                                type="button"
-                                aria-label={`Edit ${referral.title}`}
-                                onClick={() => setEditor({ item: referral })}
-                                className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-brand dark:text-zinc-400"
-                              >
-                                <Pencil size={12} />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={`Delete ${referral.title}`}
-                                onClick={() => {
-                                  setDeleteError("");
-                                  setDeleting(referral);
-                                }}
-                                className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-red-600 dark:text-zinc-400"
-                              >
-                                <Trash2 size={12} />
-                                Delete
-                              </button>
+                            <div className="referral-card-management" aria-label="Manage referral">
+                              <span>{isMine(referral) ? "Your referral" : "Manage referral"}</span>
+                              <div className="referral-card-management-actions">
+                                <button
+                                  type="button"
+                                  aria-label={`Edit ${referral.title}`}
+                                  onClick={() => editReferral(referral)}
+                                  className="referral-card-edit"
+                                >
+                                  <Pencil size={13} />
+                                  Edit referral
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={`Delete ${referral.title}`}
+                                  onClick={() => confirmDelete(referral)}
+                                  className="referral-card-delete"
+                                >
+                                  <Trash2 size={13} />
+                                  Delete
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -768,6 +748,8 @@ export default function ReferralBoard({ embedded = false }) {
         <ReferralDetails
           key={details.referral._id}
           referral={details.referral}
+          onEdit={canManage(details.referral) ? () => editReferral(details.referral) : undefined}
+          onDelete={canManage(details.referral) ? () => confirmDelete(details.referral) : undefined}
           initialApply={details.apply}
           canApply={
             canApplyRole && !isMine(details.referral) && applicationsReady

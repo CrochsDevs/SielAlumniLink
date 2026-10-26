@@ -30,9 +30,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
-import {
-  JobApplicantsDialog,
-} from "./JobApplicationDialog";
+import { JobApplicantsDialog } from "./JobApplicationDialog";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import DataPagination from "../ui/data-pagination";
 import { FeedDialog } from "../feed/FeedComposer";
@@ -259,7 +257,16 @@ function Editor({ kind, item, onClose, onSaved }) {
                     <select
                       aria-label="Opportunity type"
                       value={form.type === "Internship" ? "internship" : "job"}
-                      onChange={(event) => set("type", event.target.value === "internship" ? "Internship" : form.type === "Internship" ? "Full-time" : form.type)}
+                      onChange={(event) =>
+                        set(
+                          "type",
+                          event.target.value === "internship"
+                            ? "Internship"
+                            : form.type === "Internship"
+                              ? "Full-time"
+                              : form.type,
+                        )
+                      }
                       className={`${inputClass} mt-1.5`}
                     >
                       <option value="job">Job</option>
@@ -271,24 +278,26 @@ function Editor({ kind, item, onClose, onSaved }) {
                     {field("company", "Company / Organizer", true)}
                     {field("location", "Location")}
                   </div>
-                  <div className={`grid gap-4 ${form.type !== "Internship" ? "sm:grid-cols-2" : ""}`}>
-                    {form.type !== "Internship" && <label className="block text-xs font-medium">
-                      Employment type
-                      <select
-                        aria-label="Employment type"
-                        value={form.type}
-                        onChange={(event) => set("type", event.target.value)}
-                        className={`${inputClass} mt-1.5`}
-                      >
-                        {[
-                          "Full-time",
-                          "Part-time",
-                          "Contract",
-                        ].map((type) => (
-                          <option key={type}>{type}</option>
-                        ))}
-                      </select>
-                    </label>}
+                  <div
+                    className={`grid gap-4 ${form.type !== "Internship" ? "sm:grid-cols-2" : ""}`}
+                  >
+                    {form.type !== "Internship" && (
+                      <label className="block text-xs font-medium">
+                        Employment type
+                        <select
+                          aria-label="Employment type"
+                          value={form.type}
+                          onChange={(event) => set("type", event.target.value)}
+                          className={`${inputClass} mt-1.5`}
+                        >
+                          {["Full-time", "Part-time", "Contract"].map(
+                            (type) => (
+                              <option key={type}>{type}</option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+                    )}
                     <label className="block text-xs font-medium">
                       Work mode
                       <select
@@ -453,11 +462,43 @@ function Editor({ kind, item, onClose, onSaved }) {
                   }
                 />
               </section>
-              <section className="opportunity-audience-section" aria-label="Opportunity visibility">
+              <section
+                className="opportunity-audience-section"
+                aria-label="Opportunity visibility"
+              >
                 <div className="opportunity-visibility">
-                  <span className="opportunity-visibility-icon"><Eye size={19} aria-hidden="true" /></span>
-                  <span><strong id="opportunity-visible-label">{form.audience === "alumni" ? "Visible to alumni only" : "Visible to the community"}</strong><span id="opportunity-visible-hint">{form.audience === "alumni" ? "Only alumni can discover and apply to this opportunity." : "Alumni and students can discover and apply to this opportunity."}</span></span>
-                  <button type="button" role="switch" aria-label="Include students" aria-describedby="opportunity-visible-hint" aria-checked={form.audience !== "alumni"} title="On: All (Alumni and Students). Off: Alumni only." className="opportunity-visibility-switch" onClick={() => set("audience", form.audience === "alumni" ? "all" : "alumni")}><span /></button>
+                  <span className="opportunity-visibility-icon">
+                    <Eye size={19} aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong id="opportunity-visible-label">
+                      {form.audience === "alumni"
+                        ? "Visible to alumni only"
+                        : "Visible to the community"}
+                    </strong>
+                    <span id="opportunity-visible-hint">
+                      {form.audience === "alumni"
+                        ? "Only alumni can discover and apply to this opportunity."
+                        : "Alumni and students can discover and apply to this opportunity."}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-label="Include students"
+                    aria-describedby="opportunity-visible-hint"
+                    aria-checked={form.audience !== "alumni"}
+                    title="On: All (Alumni and Students). Off: Alumni only."
+                    className="opportunity-visibility-switch"
+                    onClick={() =>
+                      set(
+                        "audience",
+                        form.audience === "alumni" ? "all" : "alumni",
+                      )
+                    }
+                  >
+                    <span />
+                  </button>
                 </div>
               </section>
             </>
@@ -918,7 +959,9 @@ export default function CareerBoard({
       {view === "referrals" && referralContent ? (
         referralContent
       ) : (
-        <div className={`career-layout grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] ${!marketplace ? "xl:grid-cols-[200px_minmax(0,1fr)_220px]" : ""}`}>
+        <div
+          className={`career-layout grid items-start gap-4 md:grid-cols-[200px_minmax(0,1fr)] ${!marketplace ? "xl:grid-cols-[200px_minmax(0,1fr)_220px]" : ""}`}
+        >
           <aside
             id="career-filters"
             className={`${cardClass} career-filter-panel order-2 p-5 md:order-none md:sticky md:top-20 ${marketplace ? "hidden md:block" : ""}`}
@@ -1271,7 +1314,11 @@ export default function CareerBoard({
                             className={`career-company-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${category.color}`}
                           >
                             {kind === "job"
-                              ? ((item.company || "CLSU").match(/\p{L}/u)?.[0] || "C").toUpperCase()
+                              ? (
+                                  (item.company || "CLSU").match(
+                                    /\p{L}/u,
+                                  )?.[0] || "C"
+                                ).toUpperCase()
                               : createElement(category.icon, { size: 19 })}
                           </span>
                           <div className="min-w-0 flex-1 basis-36">
@@ -1346,7 +1393,8 @@ export default function CareerBoard({
                           </p>
                         )}
                         {marketplace ? (
-                          <PostDescription preview={kind === "job"}
+                          <PostDescription
+                            preview={kind === "job"}
                             text={
                               (kind === "job"
                                 ? item.description || "No description provided."
@@ -1439,14 +1487,28 @@ export default function CareerBoard({
                           {marketplace && (
                             <span className="career-card-source">
                               <Building2 size={15} aria-hidden="true" />
-                              {item.audience === "alumni" ? "Alumni only" : "Alumni & Students"}
+                              {item.audience === "alumni"
+                                ? "Alumni only"
+                                : "Alumni & Students"}
                             </span>
                           )}
                           <div className="career-opportunity-actions mt-4">
-                          <Link to={`${isAdmin ? "/admin/jobs" : user?.role === "alumni" ? "/alumni/career" : "/student/career"}/${item._id}`} className={primaryButton}>
-                            View more<ArrowUpRight size={16} aria-hidden="true" />
-                          </Link>
-                          {isAdmin && <button type="button" onClick={() => setApplicantsJob(item)} className={primaryButton}>View applicants</button>}
+                            <Link
+                              to={`${isAdmin ? "/admin/jobs" : user?.role === "alumni" ? "/alumni/career" : "/student/career"}/${item._id}`}
+                              className={primaryButton}
+                            >
+                              View more
+                              <ArrowUpRight size={16} aria-hidden="true" />
+                            </Link>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => setApplicantsJob(item)}
+                                className={primaryButton}
+                              >
+                                View applicants
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}

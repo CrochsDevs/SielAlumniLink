@@ -1,7 +1,13 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import AdminStatCard from "../admin/AdminStatCard";
 import { AdminStatGrid } from "../admin/AdminUI";
 import { useEffect, useMemo, useState } from "react";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import {
   Search,
   ClipboardCheck,
@@ -81,6 +87,27 @@ function TracerDetailCell({ response, field }) {
   );
 }
 
+const RESPONSE_COLUMNS = TABLE_COLUMNS.map(([header, width], index) => ({
+  accessorKey: [
+    "email",
+    "batch",
+    "program",
+    "status",
+    "company",
+    "position",
+    "salaryRange",
+    "employmentDate",
+    "location",
+    "respondedAt",
+    "updatedAt",
+  ][index],
+  header,
+  size: width,
+  meta: {
+    headerClassName: `sticky top-0 border-b border-zinc-200 bg-zinc-50 px-4 py-3.5 font-semibold whitespace-nowrap dark:border-zinc-700 dark:bg-zinc-800 ${index === 0 ? "md:left-0 z-30 border-r dark:border-r-zinc-700" : "z-20"}`,
+  },
+}));
+
 export default function TracerResponses() {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +123,10 @@ export default function TracerResponses() {
         setResponses((tracerRes.data.data || []).map(normalizeTracerDetails));
       })
       .catch((err) =>
-        toast.error("Error", { description: err.response?.data?.message || "Failed to load tracer responses" }),
+        toast.error("Error", {
+          description:
+            err.response?.data?.message || "Failed to load tracer responses",
+        }),
       )
       .finally(() => setLoading(false));
   }, []);
@@ -133,8 +163,33 @@ export default function TracerResponses() {
     return matchesQuery && matchesStatus;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+  const responsesTable = useReactTable({
+    data: filtered,
+    columns: RESPONSE_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          page - 1,
+          Math.max(0, Math.ceil(filtered.length / perPage) - 1),
+        ),
+        pageSize: perPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(responsesTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
+  const totalPages = Math.max(1, responsesTable.getPageCount());
+  const paged = responsesTable.getRowModel().rows.map((row) => row.original);
 
   // Accreditation / institutional reporting export.
   const exportCSV = () => {
@@ -203,7 +258,15 @@ export default function TracerResponses() {
             value: counts.batches,
             icon: GraduationCap,
           },
-        ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} detail="Current tracer responses" />)}
+        ].map((item, index) => (
+          <AdminStatCard
+            key={item.label}
+            {...item}
+            featured={index === 0}
+            loading={loading}
+            detail="Current tracer responses"
+          />
+        ))}
       </AdminStatGrid>
 
       {/* Table card */}
@@ -268,17 +331,30 @@ export default function TracerResponses() {
               ))}
             </colgroup>
             <thead>
-              <tr className="text-[10.5px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                {TABLE_COLUMNS.map(([label], index) => (
-                  <th
-                    key={label}
-                    scope="col"
-                    className={`sticky top-0 border-b border-zinc-200 bg-zinc-50 px-4 py-3.5 font-semibold whitespace-nowrap dark:border-zinc-700 dark:bg-zinc-800 ${index === 0 ? "md:left-0 z-30 border-r dark:border-r-zinc-700" : "z-20"}`}
-                  >
-                    {label}
-                  </th>
-                ))}
-              </tr>
+              {responsesTable.getHeaderGroups().map((group) => (
+                <tr
+                  key={group.id}
+                  className={
+                    "text-[10.5px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                  }
+                >
+                  {group.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      scope="col"
+                      colSpan={header.colSpan}
+                      className={header.column.columnDef.meta?.headerClassName}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
             </thead>
             <tbody>
               {loading ? (
@@ -371,12 +447,11 @@ export default function TracerResponses() {
         <DataPagination
           page={Math.min(page, totalPages)}
           totalPages={totalPages}
-          onPageChange={setPage}
+          onPageChange={(value) => responsesTable.setPageIndex(value - 1)}
           perPage={perPage}
-          onPerPageChange={(n) => {
-            setPerPage(n);
-            setPage(1);
-          }}
+          onPerPageChange={(pageSize) =>
+            responsesTable.setPagination({ pageIndex: 0, pageSize })
+          }
           totalItems={filtered.length}
           itemLabel="responses"
         />

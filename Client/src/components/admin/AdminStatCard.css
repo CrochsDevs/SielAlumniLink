@@ -79,6 +79,29 @@
 .dark .admin-stat-card.dashboard-stat-featured .dashboard-stat-icon { background: #35533e; border-color: #45664f; color: #bdd9c5; }
 .dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-label, .dashboard-card-arrow, .dashboard-stat-value) { color: #daeadf; }
 .dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-caption, .dashboard-stat-detail, .dashboard-stat-footer > svg) { color: #acc8b6; }
+/* Admin statistics use the same neutral surfaces as the dashboard. */
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card {
+  --card-muted: var(--admin-muted);
+  border: 0;
+  background: var(--alumni-card);
+  box-shadow: var(--alumni-card-shadow);
+}
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card::before { display: none; }
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card[aria-pressed="true"] {
+  background: var(--alumni-tab);
+  box-shadow: var(--alumni-card-shadow), inset 0 0 0 2px #009639;
+}
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card .dashboard-stat-icon {
+  background: var(--alumni-tab);
+  border-color: var(--alumni-card-border);
+  color: #009639;
+}
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card :is(.dashboard-stat-label, .dashboard-stat-value) { color: var(--alumni-heading); }
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card :is(.dashboard-card-arrow, .dashboard-stat-caption, .dashboard-stat-detail, .dashboard-stat-footer > svg) { color: var(--admin-muted); }
+.admin-workspace[data-workspace-role="admin"] .admin-stat-card .dashboard-stat-footer {
+  background: transparent;
+  border: 0;
+}
 @media (prefers-reduced-motion: reduce) {
   .admin-stat-card { transition: none; }
   .admin-stat-card:hover { transform: none; }

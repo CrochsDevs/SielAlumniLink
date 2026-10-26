@@ -1,8 +1,18 @@
-import { AdminStatGrid, AdminTabs, AdminButton } from "../../components/admin/AdminUI";
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  AdminStatGrid,
+  AdminTabs,
+  AdminButton,
+} from "../../components/admin/AdminUI";
 import AdminStatCard from "../../components/admin/AdminStatCard";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import {
   Search,
   Users as UsersIcon,
@@ -11,6 +21,7 @@ import {
   ScrollText,
   RefreshCw,
   DatabaseZap,
+  Circle,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { usePresence } from "../../realtime/usePresence";
@@ -19,6 +30,77 @@ import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import api from "../../utils/axios";
 import { Roles } from "../../utils/roles";
 import DataPagination from "../../components/ui/data-pagination";
+
+const AUDIT_COLUMNS = [
+  {
+    accessorKey: "email",
+    header: "User",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "action",
+    header: "Action",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Time",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+];
+
+const USER_COLUMNS = [
+  {
+    accessorKey: "studentId",
+    header: "Student ID",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "name",
+    header: "Full Name",
+    meta: { headerClassName: "px-5 py-3 font-semibold min-w-[200px]" },
+  },
+  {
+    accessorKey: "program",
+    header: "Program/Course",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "yearLevel",
+    header: "Year Level",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "section",
+    header: "Section",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "academicStatus",
+    header: "Academic Status",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "contactNumber",
+    header: "Contact Number",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "role",
+    header: "Role",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "presence",
+    header: "Status",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+];
 
 const ROLE_META = {
   [Roles.ALUMNI]: {
@@ -73,7 +155,9 @@ export default function AdminUsers() {
       const res = await api.get("/users");
       setUsers(res.data.data || []);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load users" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to load users",
+      });
     } finally {
       setLoading(false);
       usersPending.current = false;
@@ -88,7 +172,9 @@ export default function AdminUsers() {
       const res = await api.get("/activity", { params: { limit: 50 } });
       setAudit(res.data.data || []);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load audit logs" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to load audit logs",
+      });
     } finally {
       setAuditLoading(false);
       auditPending.current = false;
@@ -141,8 +227,11 @@ export default function AdminUsers() {
       setSyncSummary(res.data.data);
       fetchUsers();
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message ||
-          "CAIS sync failed. Check CAIS_API_URL in Server/.env" });
+      toast.error("Error", {
+        description:
+          err.response?.data?.message ||
+          "CAIS sync failed. Check CAIS_API_URL in Server/.env",
+      });
     } finally {
       setSyncLoading(false);
     }
@@ -189,11 +278,33 @@ export default function AdminUsers() {
     setUserPage(1);
   }, [query, roleFilter]);
 
-  const totalUserPages = Math.max(1, Math.ceil(filtered.length / userPerPage));
-  const pagedUsers = filtered.slice(
-    (userPage - 1) * userPerPage,
-    userPage * userPerPage,
-  );
+  const usersTable = useReactTable({
+    data: filtered,
+    columns: USER_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          userPage - 1,
+          Math.max(0, Math.ceil(filtered.length / userPerPage) - 1),
+        ),
+        pageSize: userPerPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(usersTable.getState().pagination)
+          : updater;
+      setUserPage(next.pageIndex + 1);
+      setUserPerPage(next.pageSize);
+    },
+  });
+  const totalUserPages = Math.max(1, usersTable.getPageCount());
+  const pagedUsers = usersTable.getRowModel().rows.map((row) => row.original);
 
   // Audit logs exclude admins (matched by email from the users list).
   const adminEmails = useMemo(
@@ -202,14 +313,33 @@ export default function AdminUsers() {
     [users],
   );
   const filteredAudit = audit.filter((log) => !adminEmails.has(log.email));
-  const totalAuditPages = Math.max(
-    1,
-    Math.ceil(filteredAudit.length / auditPerPage),
-  );
-  const pagedAudit = filteredAudit.slice(
-    (auditPage - 1) * auditPerPage,
-    auditPage * auditPerPage,
-  );
+  const auditTable = useReactTable({
+    data: filteredAudit,
+    columns: AUDIT_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          auditPage - 1,
+          Math.max(0, Math.ceil(filteredAudit.length / auditPerPage) - 1),
+        ),
+        pageSize: auditPerPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(auditTable.getState().pagination)
+          : updater;
+      setAuditPage(next.pageIndex + 1);
+      setAuditPerPage(next.pageSize);
+    },
+  });
+  const totalAuditPages = Math.max(1, auditTable.getPageCount());
+  const pagedAudit = auditTable.getRowModel().rows.map((row) => row.original);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -227,26 +357,66 @@ export default function AdminUsers() {
         />
 
         <main className="workspace-page admin-users mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-          <PageHeader title="Users" description="Manage community members and review account activity." />
+          <PageHeader
+            title="Users"
+            description="Manage community members and review account activity."
+          />
           <AdminStatGrid columns={3} label="User summaries">
             {[
-              { label: "Total Users", value: counts.all, icon: UsersIcon, filter: "all", caption: "community members", detail: `${counts.alumni.toLocaleString()} alumni / ${counts.student.toLocaleString()} students` },
-              { label: "Alumni", value: counts.alumni, icon: GraduationCap, filter: Roles.ALUMNI, caption: "registered alumni", detail: "View alumni accounts" },
-              { label: "Students", value: counts.student, icon: BookOpen, filter: Roles.STUDENT, caption: "registered students", detail: "View student accounts" },
-            ].map(({ filter, ...item }, index) => <AdminStatCard
-              key={filter}
-              {...item}
-              featured={index === 0}
-              loading={loading}
-              selected={view === "users" && roleFilter === filter}
-              onClick={() => { setView("users"); setRoleFilter(filter); setUserPage(1); }}
-            />)}
+              {
+                label: "Total Users",
+                value: counts.all,
+                icon: UsersIcon,
+                filter: "all",
+                caption: "community members",
+                detail: `${counts.alumni.toLocaleString()} alumni / ${counts.student.toLocaleString()} students`,
+              },
+              {
+                label: "Alumni",
+                value: counts.alumni,
+                icon: GraduationCap,
+                filter: Roles.ALUMNI,
+                caption: "registered alumni",
+                detail: "View alumni accounts",
+              },
+              {
+                label: "Students",
+                value: counts.student,
+                icon: BookOpen,
+                filter: Roles.STUDENT,
+                caption: "registered students",
+                detail: "View student accounts",
+              },
+            ].map(({ filter, ...item }, index) => (
+              <AdminStatCard
+                key={filter}
+                {...item}
+                featured={index === 0}
+                loading={loading}
+                selected={view === "users" && roleFilter === filter}
+                onClick={() => {
+                  setView("users");
+                  setRoleFilter(filter);
+                  setUserPage(1);
+                }}
+              />
+            ))}
           </AdminStatGrid>
 
-          <AdminTabs label="User management views" value={view} onChange={setView} items={[
-            { id: "users", label: "Users", icon: UsersIcon },
-            { id: "audit", label: "Audit Logs", icon: ScrollText, badge: "Live" },
-          ]} />
+          <AdminTabs
+            label="User management views"
+            value={view}
+            onChange={setView}
+            items={[
+              { id: "users", label: "Users", icon: UsersIcon },
+              {
+                id: "audit",
+                label: "Audit Logs",
+                icon: ScrollText,
+                badge: "Live",
+              },
+            ]}
+          />
 
           {view === "audit" ? (
             <div className="admin-panel admin-data-table overflow-hidden">
@@ -279,11 +449,32 @@ export default function AdminUsers() {
                 <div className="overflow-x-auto no-scrollbar">
                   <table className="w-full min-w-[560px] text-left text-[12.5px]">
                     <thead>
-                      <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                        <th className="px-5 py-3 font-semibold">User</th>
-                        <th className="px-5 py-3 font-semibold">Action</th>
-                        <th className="px-5 py-3 font-semibold">Time</th>
-                      </tr>
+                      {auditTable.getHeaderGroups().map((group) => (
+                        <tr
+                          key={group.id}
+                          className={
+                            "border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                          }
+                        >
+                          {group.headers.map((header) => (
+                            <th
+                              key={header.id}
+                              scope="col"
+                              colSpan={header.colSpan}
+                              className={
+                                header.column.columnDef.meta?.headerClassName
+                              }
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext(),
+                                  )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
                     </thead>
                     <tbody>
                       {pagedAudit.map((log) => (
@@ -334,12 +525,11 @@ export default function AdminUsers() {
               <DataPagination
                 page={Math.min(auditPage, totalAuditPages)}
                 totalPages={totalAuditPages}
-                onPageChange={setAuditPage}
+                onPageChange={(value) => auditTable.setPageIndex(value - 1)}
                 perPage={auditPerPage}
-                onPerPageChange={(n) => {
-                  setAuditPerPage(n);
-                  setAuditPage(1);
-                }}
+                onPerPageChange={(pageSize) =>
+                  auditTable.setPagination({ pageIndex: 0, pageSize })
+                }
                 totalItems={filteredAudit.length}
                 itemLabel="logs"
               />
@@ -359,10 +549,23 @@ export default function AdminUsers() {
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <AdminTabs label="Filter users by role" value={roleFilter} onChange={value => { setRoleFilter(value); setUserPage(1); }} items={[
-                      { id: "all", label: "All" }, { id: Roles.ALUMNI, label: "Alumni" }, { id: Roles.STUDENT, label: "Student" },
-                    ]} />
-                    <AdminButton onClick={() => setSyncOpen(true)}><DatabaseZap size={15} />Sync CAIS</AdminButton>
+                    <AdminTabs
+                      label="Filter users by role"
+                      value={roleFilter}
+                      onChange={(value) => {
+                        setRoleFilter(value);
+                        setUserPage(1);
+                      }}
+                      items={[
+                        { id: "all", label: "All" },
+                        { id: Roles.ALUMNI, label: "Alumni" },
+                        { id: Roles.STUDENT, label: "Student" },
+                      ]}
+                    />
+                    <AdminButton onClick={() => setSyncOpen(true)}>
+                      <DatabaseZap size={15} />
+                      Sync CAIS
+                    </AdminButton>
                   </div>
                 </div>
 
@@ -374,30 +577,32 @@ export default function AdminUsers() {
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full min-w-[1240px] text-left text-[12.5px]">
                       <thead>
-                        <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                          <th className="px-5 py-3 font-semibold">
-                            Student ID
-                          </th>
-                          <th className="px-5 py-3 font-semibold min-w-[200px]">
-                            Full Name
-                          </th>
-                          <th className="px-5 py-3 font-semibold">
-                            Program/Course
-                          </th>
-                          <th className="px-5 py-3 font-semibold">
-                            Year Level
-                          </th>
-                          <th className="px-5 py-3 font-semibold">Section</th>
-                          <th className="px-5 py-3 font-semibold">
-                            Academic Status
-                          </th>
-                          <th className="px-5 py-3 font-semibold">Email</th>
-                          <th className="px-5 py-3 font-semibold">
-                            Contact Number
-                          </th>
-                          <th className="px-5 py-3 font-semibold">Role</th>
-                          <th className="px-5 py-3 font-semibold">Status</th>
-                        </tr>
+                        {usersTable.getHeaderGroups().map((group) => (
+                          <tr
+                            key={group.id}
+                            className={
+                              "border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                            }
+                          >
+                            {group.headers.map((header) => (
+                              <th
+                                key={header.id}
+                                scope="col"
+                                colSpan={header.colSpan}
+                                className={
+                                  header.column.columnDef.meta?.headerClassName
+                                }
+                              >
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext(),
+                                    )}
+                              </th>
+                            ))}
+                          </tr>
+                        ))}
                       </thead>
                       <tbody>
                         {pagedUsers.map((u) => {
@@ -486,12 +691,11 @@ export default function AdminUsers() {
                 <DataPagination
                   page={Math.min(userPage, totalUserPages)}
                   totalPages={totalUserPages}
-                  onPageChange={setUserPage}
+                  onPageChange={(value) => usersTable.setPageIndex(value - 1)}
                   perPage={userPerPage}
-                  onPerPageChange={(n) => {
-                    setUserPerPage(n);
-                    setUserPage(1);
-                  }}
+                  onPerPageChange={(pageSize) =>
+                    usersTable.setPagination({ pageIndex: 0, pageSize })
+                  }
                   totalItems={filtered.length}
                   itemLabel="users"
                 />

@@ -1,5 +1,5 @@
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, CheckCircle2, Send, Users } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Pencil, Send, Trash2, Users } from "lucide-react";
 import api from "../../utils/axios";
 import { FeedDialog } from "../feed/FeedComposer";
 import {
@@ -53,7 +53,7 @@ export function ReferralEditor({ item, onClose, onSaved }) {
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Unable to publish your referral. Please try again.",
+          (item ? "Unable to save changes. Please try again." : "Unable to publish your referral. Please try again."),
       );
     } finally {
       pending.current = false;
@@ -174,6 +174,8 @@ export function ReferralDetails({
   initialApply = false,
   onClose,
   onApplied,
+  onEdit,
+  onDelete,
 }) {
   const [applying, setApplying] = useState(initialApply);
   const [note, setNote] = useState("");
@@ -286,6 +288,15 @@ export function ReferralDetails({
               <ArrowUpRight size={15} />
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
+          )}
+          {(onEdit || onDelete) && (
+            <div className="referral-detail-management" aria-label="Manage referral">
+              <p>Manage this referral</p>
+              <div>
+                {onEdit && <button type="button" onClick={onEdit} className={secondaryButton}><Pencil size={14} />Edit referral</button>}
+                {onDelete && <button type="button" onClick={onDelete} className={`${secondaryButton} referral-detail-delete`}><Trash2 size={14} />Delete referral</button>}
+              </div>
+            </div>
           )}
           {application ? (
             <div className="mt-5 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800">

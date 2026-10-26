@@ -263,6 +263,24 @@
 .career-marketplace .career-member-panel > section:nth-child(2) { background: #f5f0e3; border-color: #e6dfcf; }
 .dark .career-marketplace .career-member-panel > section:first-child { background: #163e2b; border-color: #009639; }
 .dark .career-marketplace .career-member-panel > section:nth-child(2) { background: #29271f; border-color: #3b392e; }
+/* Admin job posts share the dashboard palette without changing member pages. */
+.admin-workspace[data-workspace-role="admin"] .career-marketplace .career-listing {
+  --card-surface: var(--alumni-card);
+  --card-footer: var(--alumni-tab);
+  background: var(--alumni-card);
+  border-color: var(--alumni-card-border);
+  box-shadow: var(--alumni-card-shadow);
+}
+.admin-workspace[data-workspace-role="admin"] .career-marketplace .career-search {
+  background: var(--alumni-card);
+  border-color: var(--alumni-card-border);
+  color: var(--alumni-heading);
+  box-shadow: var(--alumni-card-shadow);
+}
+.admin-workspace[data-workspace-role="admin"] .career-marketplace .career-search:focus-within {
+  outline: 2px solid #009639;
+  outline-offset: 2px;
+}
 .career-marketplace :is(button, input):focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
 @media (min-width: 768px) {
   .career-marketplace .career-filter-toggle { display: none; }

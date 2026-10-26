@@ -91,6 +91,8 @@ let user = alumni,
   restricted = false,
   failPost = true,
   postRequests = 0,
+  editRequests = 0,
+  failEdit = true,
   removedPhotos = 0,
   failList = false;
 const titles = [
@@ -122,7 +124,7 @@ let stories = Array.from({ length: 14 }, (_, index) => {
     title: titles[index] || "A graduate story " + (index + 1),
     body: Object.values(sections).slice(1).filter(Boolean).join("\n"),
     details: index === 13 ? {} : { story: sections },
-    author: index % 2 ? friend : alumni,
+    author: index % 2 && index !== 13 ? friend : alumni,
     audience: "public",
     images: [],
     createdAt: "2026-10-" + String(index + 1).padStart(2, "0"),
@@ -167,6 +169,9 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
           ? JSON.parse(request.postData)
           : {};
       if (route === "/auth/me" || route === "/users/me") data = user;
+      else if (route === "/tracer/access") data = {
+        updateRequired: false, quarter: "2026-Q4", nextUpdateAt: "2027-01-01T00:00:00Z",
+      };
       else if (route === "/notifications/unread-count") data = { count: 0 };
       else if (route === "/feed/status")
         data = { restricted, reason: restricted ? "Fixture restriction" : "" };
@@ -234,6 +239,23 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
           };
           stories.unshift(data);
           responseCode = 201;
+        }
+      } else if (/^\/feed\/[^/]+$/.test(route) && request.method === "PUT") {
+        editRequests++;
+        const story = stories.find((story) => story._id === route.split("/").pop());
+        if (!story || story.author.authId !== user.authId || restricted) {
+          responseCode = 403;
+          message = "Only the author can edit this story";
+        } else if (failEdit) {
+          failEdit = false;
+          responseCode = 503;
+          message = "Fixture save failed. Please retry.";
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const images = body.images.map((image) => ({ ...image,
+            url: `/api/feed/${story._id}/images/${image.id}`, width: 400, height: 400 }));
+          Object.assign(story, body, { images, updatedAt: new Date().toISOString() });
+          data = serialize(story);
         }
       } else if (route.startsWith("/feed/") && request.method === "DELETE") {
         stories = stories.filter(
@@ -406,6 +428,45 @@ try {
     published._id,
   );
   await click("Close story", 'document.querySelector("dialog")');
+  const publishedCard = `document.querySelector('[data-success-story="ffffffffffffffffffffffff"]')`;
+  await click("Edit story", publishedCard);
+  await until(`document.querySelector('[aria-label="Story title"]')`);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Story title"]').value`), published.title);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Career journey"]').value`), published.details.story.journey);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Story photo description"]').value`), published.images[0].alt);
+  await evaluate(`document.querySelector('[aria-label="Remove story photo"]').click()`);
+  await until(`!document.querySelector('[aria-label="Story photo description"]')`);
+  await fill("Story title", "Unsaved changes");
+  await click("Cancel", 'document.querySelector("dialog")');
+  await until(`!document.querySelector('dialog')`);
+  assert.equal(removedPhotos, 0);
+  assert.notEqual(published.title, "Unsaved changes");
+  await click("Read story", publishedCard);
+  await until(`document.querySelector('dialog')?.textContent.includes('Edit story')`);
+  await click("Edit story", 'document.querySelector("dialog")');
+  await until(`document.querySelector('[aria-label="Story title"]')`);
+  await fill("Story title", "An updated community success story");
+  await fill("Advice for students", "Keep learning and give back to your community.");
+  await photo("story-edit-mobile", 390, false);
+  await click("Save changes", 'document.querySelector("dialog")');
+  await until(`document.querySelector('dialog [role="alert"]')?.textContent.includes('Fixture save failed')`);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Story title"]').value`), "An updated community success story");
+  await evaluate(`(()=>{const button=document.querySelector('dialog button[type=submit]');button.click();button.click();})()`);
+  await until(`!document.querySelector('[aria-label="Story title"]')&&document.querySelector('dialog')?.textContent.includes('Keep learning and give back')`);
+  assert.equal(editRequests, 2);
+  assert.equal(postRequests, 2);
+  assert.equal(published.images.length, 1);
+  assert.equal(removedPhotos, 0);
+  await click("Close story", 'document.querySelector("dialog")');
+  await until(`${publishedCard}?.textContent.includes('An updated community success story')`);
+  // Older stories remain editable without forcing them into structured sections.
+  const legacyId = "000000000000000000000014";
+  await click("Edit story", `document.querySelector('[data-success-story="${legacyId}"]')`);
+  await until(`document.querySelector('[aria-label="Your success story"]')`);
+  await fill("Your success story", "Updated older story content.");
+  await click("Save changes", 'document.querySelector("dialog")');
+  await until(`!document.querySelector('dialog')`);
+  assert.equal(stories.find((story) => story._id === legacyId).body, "Updated older story content.");
   await click("My stories");
   await until(
     `document.querySelectorAll('[data-success-story]').length>0&&Array.from(document.querySelectorAll('[data-success-story]')).every(card=>card.textContent.includes('Jamie Reyes'))`,
@@ -418,6 +479,7 @@ try {
     ),
     false,
   );
+  assert.equal(await evaluate(`Array.from(document.querySelectorAll('button')).some(button=>button.textContent.trim()==='Edit story')`), false);
   assert.equal(
     await evaluate(
       `document.querySelector('[data-success-story="dddddddddddddddddddddddd"]')!==null`,
@@ -431,7 +493,7 @@ try {
     `document.querySelector('[data-success-story="ffffffffffffffffffffffff"]')`,
   );
   await until(
-    `document.querySelector('dialog')?.textContent.includes('Build projects that matter')`,
+    `document.querySelector('dialog')?.textContent.includes('Keep learning and give back')`,
   );
   assert.equal(
     await evaluate(
@@ -458,11 +520,11 @@ try {
     `document.querySelector('[aria-label="Refresh stories"]').click()`,
   );
   await until(
-    `document.querySelector('[role="alert"]')?.textContent.includes('Fixture story list failed')`,
+    `document.querySelector('[aria-label="Alumni success stories"] [role="alert"]')?.textContent.includes('Fixture story list failed')`,
   );
-  await click("Retry");
+  await click("Retry", `document.querySelector('[aria-label="Alumni success stories"]')`);
   await until(
-    `!document.querySelector('[role="alert"]')&&document.querySelectorAll('[data-success-story]').length>0`,
+    `!document.querySelector('[aria-label="Alumni success stories"] [role="alert"]')&&document.querySelectorAll('[data-success-story]').length>0`,
   );
   user = alumni;
   await navigate("/alumni/success?story=ffffffffffffffffffffffff");
@@ -490,9 +552,13 @@ try {
   assert.deepEqual(runtimeErrorsFromFixture, []);
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Passed: story gallery, topic and keyword filters, pagination, structured publishing, optional photo, failure/retry, duplicate-submit guard, student read-only access, private-story denial, deep links, author deletion, restriction handling, and mobile/desktop layouts. API fixtures only. Screenshots: " +
+    "Passed: story gallery, topic and keyword filters, pagination, structured publishing, author editing from gallery and reader, legacy editing, cancel without changing published photos, save failure/retry, duplicate-submit guard, student read-only access, private-story denial, deep links, author deletion, restriction handling, and mobile/desktop layouts. API fixtures only. Screenshots: " +
       artifacts,
   );
+} catch (error) {
+  console.error({ runtimeErrors, runtimeErrorsFromFixture,
+    page: await evaluate(`({url:location.href,text:document.body.innerText.slice(0,2000)})`).catch(() => null) });
+  throw error;
 } finally {
   await send("Browser.close").catch(() => {});
   socket.close();

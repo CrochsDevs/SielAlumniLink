@@ -6,6 +6,7 @@ import { getSocket } from "../realtime/socket";
 import { useAuth } from "./useAuth";
 import ChatDock from "../components/chat/ChatDock";
 import CallManager from "../components/call/CallManager";
+import GroupCallProvider from "../components/call/GroupCallProvider";
 
 const toInitial = (name, email) =>
   (name || email || "U").charAt(0).toUpperCase();
@@ -32,6 +33,12 @@ export const ChatProvider = ({ children }) => {
   }, [convos]);
   const [openChats, setOpenChats] = useState([]);
   const [threads, setThreads] = useState({});
+  const removeGroupLocally = useCallback(({ conversationId }) => {
+    const id = String(conversationId);
+    setConvos(prev => prev.filter(convo => String(convo._id) !== id));
+    setOpenChats(prev => prev.filter(window => String(window.id) !== id));
+    setThreads(prev => Object.fromEntries(Object.entries(prev).filter(([key]) => key !== id)));
+  }, []);
   const pendingRequests = useRef(new Map());
   const getChatData = useCallback((url) => {
     const key = `${myAuthIdRef.current}:${url}`;
@@ -72,11 +79,11 @@ export const ChatProvider = ({ children }) => {
         const res = await getChatData(`/conversations/${id}/messages`);
         if (myAuthIdRef.current !== myAuthId) return;
         setThreads((prev) => ({ ...prev, [id]: res.data.data || [] }));
-      } catch {
-        // ignore
+      } catch (error) {
+        if (myAuthIdRef.current === myAuthId && error.response?.status === 404) removeGroupLocally({ conversationId: id });
       }
     });
-  }, [myAuthId, storageKey, getChatData]);
+  }, [myAuthId, storageKey, getChatData, removeGroupLocally]);
 
   // Persist on every change.
   useEffect(() => {
@@ -101,6 +108,10 @@ export const ChatProvider = ({ children }) => {
     try {
       const res = await getChatData("/conversations");
       if (myAuthIdRef.current !== authId) return;
+      const accessible = new Set((res.data.data || []).map(convo => String(convo._id)));
+      const removed = new Set(convosRef.current.filter(convo => convo.isGroup && !accessible.has(String(convo._id))).map(convo => String(convo._id)));
+      setOpenChats(prev => prev.filter(window => !window.convo?.isGroup || accessible.has(String(window.id))));
+      if (removed.size) setThreads(prev => Object.fromEntries(Object.entries(prev).filter(([id]) => !removed.has(id))));
       setConvos(
         (res.data.data || []).map((c) => ({
           ...c,
@@ -122,6 +133,56 @@ export const ChatProvider = ({ children }) => {
       setThreads({});
     }
   }, [myAuthId, refreshConvos]);
+
+  const applyGroupName = useCallback(({ conversationId, name }) => {
+    const update = convo => String(convo._id) === String(conversationId) && convo.isGroup
+      ? { ...convo, name, initial: toInitial(name) } : convo;
+    setConvos(prev => prev.map(update));
+    setOpenChats(prev => prev.map(window => ({ ...window, convo: update(window.convo) })));
+  }, []);
+
+  const renameGroupChat = useCallback(async (id, name) => {
+    const authId = myAuthIdRef.current;
+    const response = await api.patch(`/conversations/${id}/name`, { name });
+    if (myAuthIdRef.current === authId) applyGroupName(response.data.data);
+  }, [applyGroupName]);
+
+  const applyGroupMembers = useCallback(({ conversationId, memberCount, adminAuthIds, createdBy }) => {
+    if (!myAuthIdRef.current) return;
+    const update = convo => String(convo._id) === String(conversationId) && convo.isGroup
+      ? { ...convo, memberCount, ...(adminAuthIds ? { adminAuthIds, createdBy } : {}) } : convo;
+    setConvos(prev => prev.map(update));
+    setOpenChats(prev => prev.map(window => ({ ...window, convo: update(window.convo) })));
+    // Newly invited members may not have this group in their conversation list.
+    void refreshConvos();
+  }, [refreshConvos]);
+
+  const addGroupMembers = useCallback(async (id, authIds) => {
+    const authId = myAuthIdRef.current;
+    const response = await api.post(`/conversations/${id}/members`, { authIds });
+    if (myAuthIdRef.current === authId) applyGroupMembers(response.data.data);
+    return response.data.data;
+  }, [applyGroupMembers]);
+
+  const promoteGroupAdmin = useCallback(async (id, targetId) => {
+    const authId = myAuthIdRef.current;
+    const response = await api.post(`/conversations/${id}/admins`, { authId: targetId });
+    if (myAuthIdRef.current === authId) applyGroupMembers(response.data.data);
+    return response.data.data;
+  }, [applyGroupMembers]);
+
+  const leaveGroup = useCallback(async id => {
+    const authId = myAuthIdRef.current;
+    await api.post(`/conversations/${id}/leave`);
+    if (myAuthIdRef.current === authId) removeGroupLocally({ conversationId: id });
+  }, [removeGroupLocally]);
+
+  const removeGroupMember = useCallback(async (id, targetId) => {
+    const authId = myAuthIdRef.current;
+    const response = await api.delete(`/conversations/${id}/members/${encodeURIComponent(targetId)}`);
+    if (myAuthIdRef.current === authId) applyGroupMembers(response.data.data);
+    return response.data.data;
+  }, [applyGroupMembers]);
 
   // Live incoming messages (both participants get pushed).
   useEffect(() => {
@@ -228,6 +289,9 @@ export const ChatProvider = ({ children }) => {
       );
     };
     socket.on("profile:updated", onProfileUpdated);
+    socket.on("conversation:renamed", applyGroupName);
+    socket.on("conversation:members", applyGroupMembers);
+    socket.on("conversation:removed", removeGroupLocally);
     socket.on("message:new", onNew);
     socket.on("message:edited", onEdited);
     socket.on("message:unsent", onUnsent);
@@ -235,12 +299,15 @@ export const ChatProvider = ({ children }) => {
     socket.on("connect", refreshConvos);
     return () => {
       socket.off("profile:updated", onProfileUpdated);
+      socket.off("conversation:renamed", applyGroupName);
+      socket.off("conversation:members", applyGroupMembers);
+      socket.off("conversation:removed", removeGroupLocally);
       socket.off("message:new", onNew);
       socket.off("message:edited", onEdited);
       socket.off("message:unsent", onUnsent);
       socket.off("connect", refreshConvos);
     };
-  }, [refreshConvos]);
+  }, [refreshConvos, applyGroupName, applyGroupMembers, removeGroupLocally]);
 
   const loadThread = useCallback(
     async (convoId) => {
@@ -424,9 +491,15 @@ export const ChatProvider = ({ children }) => {
         editChatMessage,
         unsendChatMessage,
         createGroupChat,
+        renameGroupChat,
+        addGroupMembers,
+        promoteGroupAdmin,
+        leaveGroup,
+        removeGroupMember,
         unreadTotal,
       }}
     >
+      <GroupCallProvider key={myAuthId || "signed-out"} user={user}>
       {children}
       <ChatDock
         windows={openChats.map((window) => ({
@@ -452,6 +525,7 @@ export const ChatProvider = ({ children }) => {
           return found?.name || email;
         }}
       />
+      </GroupCallProvider>
     </ChatContext.Provider>
   );
 };

@@ -50,12 +50,19 @@
 .dark .alumni-career-page .career-search {
   background: var(--career-surface);
   color: var(--career-title);
+  box-shadow: var(--alumni-card-shadow);
+}
+.alumni-career-page .career-search:focus-within,
+.dark .alumni-career-page .career-search:focus-within {
+  box-shadow: var(--alumni-card-shadow);
+  outline: 2px solid #009639;
+  outline-offset: 2px;
 }
 .alumni-career-page aside.career-filter-panel,
 .dark .alumni-career-page aside.career-filter-panel {
   border-radius: 12px;
   background: var(--career-surface);
-  box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+  box-shadow: var(--alumni-card-shadow);
 }
 .alumni-career-page aside.career-filter-panel .career-filter-heading {
   padding: 16px;
@@ -97,7 +104,12 @@
   --card-surface: var(--career-surface);
   --card-footer: var(--career-surface);
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgb(15 23 42 / 5%);
+  box-shadow: var(--alumni-card-shadow);
+}
+@media (hover: hover) {
+  .alumni-career-page .career-listing:hover {
+    box-shadow: var(--alumni-card-hover-shadow);
+  }
 }
 .alumni-career-page .career-card-content {
   padding: 20px;

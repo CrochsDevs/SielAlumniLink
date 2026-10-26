@@ -145,6 +145,71 @@ test('structured success stories preserve journey, achievements and advice with 
   await rejects(f.feed.create(f.student, { type: 'story', title: 'Student story', details: { story: sections } }), 403);
 });
 
+test('authors can edit published stories without losing engagement, images or publication metadata', async () => {
+  const f = await fixture();
+  const image = { _id: new ObjectId(), ownerAuthId: String(f.author._id), width: 640, height: 480 };
+  await f.db.collection('feed_images').insertOne(image);
+  const story = await f.feed.create(f.author, { type: 'story', title: 'Original title',
+    details: { story: { topic: 'career_journey', journey: 'My first job.' } },
+    images: [{ id: String(image._id), alt: 'Original cover' }] });
+  await f.feed.setMembership(f.friend, story._id, 'likedBy', true);
+  await f.feed.comment(f.friend, story._id, 'Congratulations!');
+  const repost = await f.feed.share(f.friend, story._id, { audience: 'public' });
+  const before = f.invalidations.length;
+  const updated = await f.feed.updateStory(f.author, story._id, { title: 'Updated title',
+    details: { story: { topic: 'advice', advice: 'Keep practicing.' } } });
+  assert.equal(String(updated._id), String(story._id));
+  assert.equal(updated.title, 'Updated title');
+  assert.equal(updated.body, 'Advice for students\nKeep practicing.');
+  assert.equal(updated.createdAt, story.createdAt);
+  assert.ok(updated.updatedAt >= story.updatedAt);
+  assert.deepEqual(updated.author, story.author);
+  assert.deepEqual(updated.images, story.images);
+  assert.equal(updated.likesCount, 1);
+  assert.equal(updated.commentsCount, 1);
+  assert.equal(updated.sharesCount, 1);
+  assert.equal(f.invalidations.length, before + 1);
+  assert.equal((await f.feed.get(f.student, repost._id)).originalPost.title, 'Updated title');
+  assert.equal((await f.feed.listStories(f.student, { topic: 'advice', q: 'practicing' })).posts.length, 1);
+  await f.feed.updateStory(f.author, story._id, { audience: 'connections', images: [] });
+  await rejects(f.feed.get(f.student, story._id), 404);
+  await rejects(f.feed.get(f.student, repost._id), 404);
+  assert.equal((await f.feed.get(f.friend, story._id)).images.length, 0);
+  assert.ok(await f.db.collection('feed_images').findOne({ _id: image._id }));
+});
+
+test('story editing enforces ownership, restrictions, content validation and image ownership', async () => {
+  const f = await fixture();
+  const story = await f.feed.create(f.author, { type: 'story', title: 'Legacy story', body: 'Original story.' });
+  const updated = await f.feed.updateStory(f.author, story._id, { body: 'An updated legacy story.' });
+  assert.equal(updated.body, 'An updated legacy story.');
+  assert.equal(updated.details.story, undefined);
+  for (const user of [f.friend, f.stranger, f.student, f.admin]) {
+    await rejects(f.feed.updateStory(user, story._id, { title: 'Not mine' }), 403);
+  }
+  for (const changes of [{ title: '' }, { type: 'update' }, { body: '' },
+    { details: { story: { topic: 'advice' } } }, { audience: 'invalid' }]) {
+    await rejects(f.feed.updateStory(f.author, story._id, changes), 400);
+  }
+  const foreign = { _id: new ObjectId(), ownerAuthId: String(f.friend._id) };
+  await f.db.collection('feed_images').insertOne(foreign);
+  await rejects(f.feed.updateStory(f.author, story._id, { images: [{ id: String(foreign._id) }] }), 400);
+  const own = { _id: new ObjectId(), ownerAuthId: String(f.author._id), width: 1200, height: 800 };
+  await f.db.collection('feed_images').insertOne(own);
+  const withPhoto = await f.feed.updateStory(f.author, story._id, { images: [{ id: String(own._id), alt: 'New cover' }] });
+  assert.equal(withPhoto.images[0].alt, 'New cover');
+  assert.equal(withPhoto.images[0].width, 1200);
+  const ordinary = await f.feed.create(f.author, post());
+  await rejects(f.feed.updateStory(f.author, ordinary._id, { title: 'Wrong type' }), 400);
+  const repost = await f.feed.share(f.author, story._id, { audience: 'public' });
+  await rejects(f.feed.updateStory(f.author, repost._id, { title: 'Reposted' }), 400);
+  await f.feed.restrictAuthor(f.admin, f.author._id, { enabled: true, reason: 'Review' });
+  await rejects(f.feed.updateStory(f.author, story._id, { title: 'Restricted' }), 403);
+  await f.feed.restrictAuthor(f.admin, f.author._id, { enabled: false });
+  await f.feed.remove(f.author, story._id);
+  await rejects(f.feed.updateStory(f.author, story._id, { title: 'Deleted' }), 404);
+});
+
 test('story gallery respects student visibility, author ownership, topics, keyword search and original posts', async () => {
   const f = await fixture();
   const visible = await f.feed.create(f.author, { type: 'story', title: 'Learning C++', details: { story: { topic: 'advice', advice: 'Practice C++ with useful projects.' } } });

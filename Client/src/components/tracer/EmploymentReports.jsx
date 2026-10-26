@@ -1,3 +1,9 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import AdminStatCard from "../admin/AdminStatCard";
 import { AdminStatGrid } from "../admin/AdminUI";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -5,12 +11,38 @@ import { Download, RefreshCw, Briefcase } from "lucide-react";
 import DataPagination from "../ui/data-pagination";
 import api from "../../utils/axios";
 
-const card =
-  "admin-panel p-4";
+const EMPLOYMENT_COLUMNS = [
+  {
+    accessorKey: "name",
+    header: "Alumni",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "employmentStatus",
+    header: "Status",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "currentCompany",
+    header: "Company / position",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "industry",
+    header: "Industry",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "history",
+    header: "History",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+];
+
+const card = "admin-panel p-4";
 const input =
   "h-10 min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900";
-const button =
-  "admin-button admin-button-secondary";
+const button = "admin-button admin-button-secondary";
 const labelMonth = (value) => (value ? value.slice(0, 7) : "Date not provided");
 const csvCell = (value) => {
   const text = String(value ?? "");
@@ -69,12 +101,34 @@ export default function EmploymentReports() {
         value.toLowerCase().includes(query.trim().toLowerCase()),
       ),
   );
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const currentPage = Math.min(page, totalPages);
-  const paged = filtered.slice(
-    (currentPage - 1) * perPage,
-    currentPage * perPage,
-  );
+  const employmentTable = useReactTable({
+    data: filtered,
+    columns: EMPLOYMENT_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          page - 1,
+          Math.max(0, Math.ceil(filtered.length / perPage) - 1),
+        ),
+        pageSize: perPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(employmentTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
+  const totalPages = Math.max(1, employmentTable.getPageCount());
+  const currentPage = employmentTable.getState().pagination.pageIndex + 1;
+  const paged = employmentTable.getRowModel().rows.map((row) => row.original);
   const exportReport = () => {
     const rows = [
       ["Employment report", "Value"],
@@ -162,7 +216,9 @@ export default function EmploymentReports() {
         className={`${card} flex flex-wrap items-center justify-between gap-4`}
       >
         <div>
-          <h2 className="admin-section-title text-xl font-semibold">Alumni employment tracking</h2>
+          <h2 className="admin-section-title text-xl font-semibold">
+            Alumni employment tracking
+          </h2>
           <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
             Employment outcomes and career history from alumni profiles.
           </p>
@@ -268,7 +324,16 @@ export default function EmploymentReports() {
                   report.summary.alumniWithCareerChanges,
                   "Alumni with recorded company or position changes",
                 ],
-              ].map(([label, value, detail], index) => <AdminStatCard key={label} label={label} value={value} detail={detail} icon={Briefcase} featured={index === 0} />)}
+              ].map(([label, value, detail], index) => (
+                <AdminStatCard
+                  key={label}
+                  label={label}
+                  value={value}
+                  detail={detail}
+                  icon={Briefcase}
+                  featured={index === 0}
+                />
+              ))}
             </AdminStatGrid>
             <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
               Employment rate = employed and self-employed alumni ÷ alumni with
@@ -317,7 +382,9 @@ export default function EmploymentReports() {
                 </div>
               </section>
               <section className={card}>
-                <h2 className="admin-section-title text-base font-semibold">Employment status</h2>
+                <h2 className="admin-section-title text-base font-semibold">
+                  Employment status
+                </h2>
                 <dl className="mt-4 space-y-3">
                   {report.statusDistribution.map((item) => (
                     <div
@@ -334,7 +401,9 @@ export default function EmploymentReports() {
               </section>
             </div>
             <section className={card}>
-              <h2 className="admin-section-title text-base font-semibold">Career progression</h2>
+              <h2 className="admin-section-title text-base font-semibold">
+                Career progression
+              </h2>
               <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
                 View recorded roles over time. Position changes are shown as
                 history; seniority is not inferred.
@@ -374,24 +443,28 @@ export default function EmploymentReports() {
               </p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[750px] text-left text-xs">
-                  <thead className="border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                    <tr>
-                      {[
-                        "Alumni",
-                        "Status",
-                        "Company / position",
-                        "Industry",
-                        "History",
-                      ].map((value) => (
-                        <th
-                          key={value}
-                          scope="col"
-                          className="px-3 py-3 font-medium"
-                        >
-                          {value}
-                        </th>
-                      ))}
-                    </tr>
+                  <thead>
+                    {employmentTable.getHeaderGroups().map((group) => (
+                      <tr key={group.id}>
+                        {group.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            scope="col"
+                            colSpan={header.colSpan}
+                            className={
+                              header.column.columnDef.meta?.headerClassName
+                            }
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
                   </thead>
                   <tbody>
                     {paged.map((person) => (
@@ -502,12 +575,13 @@ export default function EmploymentReports() {
               <DataPagination
                 page={currentPage}
                 totalPages={totalPages}
-                onPageChange={setPage}
+                onPageChange={(value) =>
+                  employmentTable.setPageIndex(value - 1)
+                }
                 perPage={perPage}
-                onPerPageChange={(value) => {
-                  setPerPage(value);
-                  setPage(1);
-                }}
+                onPerPageChange={(pageSize) =>
+                  employmentTable.setPagination({ pageIndex: 0, pageSize })
+                }
                 totalItems={filtered.length}
                 itemLabel="alumni"
               />

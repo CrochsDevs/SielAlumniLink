@@ -1,5 +1,16 @@
 # Student development modules
 
+Digital certificate previews, SVG downloads, and landscape PDF printing use the
+CLSU Certificate of Appreciation supplied in `Certificate of Appreciation.html`.
+Its embedded PNG is stored in `assets/certificate-appreciation.png`. The SVG
+renderer preserves the artwork, heading, and printed signatory while replacing
+the sample recipient, activity, organizer, participation date, and issue date
+with saved certificate data. New certificates record `templateVersion: 2`;
+existing records also render with this template when opened or downloaded.
+The downloaded SVG embeds the artwork and needs no external image files.
+
+Certificate checks: `node --test --test-isolation=none modules/development/certificates.test.js`.
+
 Alumni evaluate individual connected students from
 `/alumni/mentorship/:studentId/evaluation`. The dashboard lists connected students
 and opens a separate page for each; it does not automatically select a student.

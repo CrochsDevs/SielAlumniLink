@@ -1,3 +1,8 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { AdminTabs, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import {
@@ -6,7 +11,7 @@ import {
 } from "../../components/admin/DashboardVisuals";
 import "./adminDashboard.css";
 import { useEffect, useState } from "react";
-import { Download, RefreshCw, Plus } from "lucide-react";
+import { RefreshCw, Plus } from "lucide-react";
 import {
   OverviewStats,
   AttentionPanel,
@@ -20,6 +25,20 @@ import api from "../../utils/axios";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 
+const ENGAGEMENT_COLUMNS = [
+  { accessorKey: "key", header: "Period", meta: { headerClassName: "py-2" } },
+  {
+    accessorKey: "total",
+    header: "Actions",
+    meta: { headerClassName: undefined },
+  },
+  {
+    accessorKey: "activeMembers",
+    header: "Active members",
+    meta: { headerClassName: undefined },
+  },
+];
+
 const panel = dashboardPanel;
 const button =
   "inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800";
@@ -30,6 +49,13 @@ const titles = { daily: "Daily", monthly: "Monthly", yearly: "Yearly" };
 
 function Chart({ report, period }) {
   const [selected, setSelected] = useState(null);
+  const engagementTable = useReactTable({
+    data: report.buckets,
+    columns: ENGAGEMENT_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => String(row.key),
+    autoResetPageIndex: false,
+  });
   const peak = Math.max(1, ...report.buckets.map((bucket) => bucket.total));
   const detail = report.buckets.find((bucket) => bucket.key === selected);
   return (
@@ -100,75 +126,45 @@ function Chart({ report, period }) {
           <table className="w-full text-left">
             <caption className="sr-only">Engagement chart data</caption>
             <thead>
-              <tr>
-                <th className="py-2">Period</th>
-                <th>Actions</th>
-                <th>Active members</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.buckets.map((bucket) => (
-                <tr
-                  key={bucket.key}
-                  className="border-t border-zinc-100 dark:border-zinc-800"
-                >
-                  <td className="py-2">{bucket.key}</td>
-                  <td>{num(bucket.total)}</td>
-                  <td>{num(bucket.activeMembers)}</td>
+              {engagementTable.getHeaderGroups().map((group) => (
+                <tr key={group.id}>
+                  {group.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      scope="col"
+                      colSpan={header.colSpan}
+                      className={header.column.columnDef.meta?.headerClassName}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </th>
+                  ))}
                 </tr>
               ))}
+            </thead>
+            <tbody>
+              {engagementTable
+                .getRowModel()
+                .rows.map(({ original: bucket }) => (
+                  <tr
+                    key={bucket.key}
+                    className="border-t border-zinc-100 dark:border-zinc-800"
+                  >
+                    <td className="py-2">{bucket.key}</td>
+                    <td>{num(bucket.total)}</td>
+                    <td>{num(bucket.activeMembers)}</td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
       </details>
     </>
   );
-}
-
-function download(data, period) {
-  const report = data.engagement[period];
-  const rows = [
-    ["Engagement report", titles[period], report.key, data.timezone],
-    ["Generated at", data.generatedAt],
-    [
-      "Period",
-      "Recorded actions",
-      "Active members",
-      ...report.breakdown.map((s) => s.label),
-    ],
-    ...report.buckets.map((b) => [
-      b.key,
-      b.total,
-      b.activeMembers,
-      ...b.breakdown.map((s) => s.count),
-    ]),
-    [
-      "Period total",
-      report.total,
-      report.activeMembers,
-      ...report.breakdown.map((s) => s.count),
-    ],
-    [],
-    ["Mentorship status", "Current snapshot, independent of report date"],
-    ["Accepted", data.mentorship.accepted],
-    ["Pending", data.mentorship.pending],
-    ["Rejected", data.mentorship.rejected],
-  ];
-  const csv = rows
-    .map((row) =>
-      row
-        .map((value) => '"' + String(value).replaceAll('"', '""') + '"')
-        .join(","),
-    )
-    .join("\r\n");
-  const url = URL.createObjectURL(
-    new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "admin-report-" + period + "-" + data.date + ".csv";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function AdminDashboard() {
@@ -233,14 +229,6 @@ export default function AdminDashboard() {
               <RefreshCw size={14} />
               Refresh
             </AdminButton>
-            <AdminButton
-              variant="secondary"
-              disabled={!data}
-              onClick={() => download(data, period)}
-            >
-              <Download size={14} />
-              Export CSV
-            </AdminButton>
             <AdminButton to="/admin/announcements">
               <Plus size={16} />
               Announcement
@@ -268,12 +256,10 @@ export default function AdminDashboard() {
                 <div className="min-w-0 space-y-4">
                   <OverviewStats data={data} />
                   <OperationsStrip overview={data.overview} />
-                  <hr className="dashboard-section-divider" />
                   <div className="dashboard-visuals">
                     <CoverageGauge data={data} />
                     <DashboardCalendar overview={data.overview} />
                   </div>
-                  <hr className="dashboard-section-divider" />
                   <section className={panel + " dashboard-engagement min-w-0"}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>

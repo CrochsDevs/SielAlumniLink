@@ -1,0 +1,34 @@
+.group-call-header-actions { display: inline-flex; flex-shrink: 0; gap: 2px; }
+.group-call-header-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 32px; height: 32px; padding: 7px; border-radius: 50%; color: #6b7280; }
+.group-call-header-actions > button:hover { background: #e7f4eb; color: #009639; }
+.group-call-header-actions > button:focus-visible { outline: 2px solid #009639; outline-offset: 2px; }
+.group-call-header-actions > .group-call-join { padding-inline: 9px; border-radius: 7px; background: #009639; color: #fff; font-size: 11px; font-weight: 600; }
+.dark .group-call-header-actions > button { color: #bdc7c0; }
+.dark .group-call-header-actions > .group-call-join { color: #fff; }
+.dark .group-call-header-actions > button:hover { background: #244531; color: #b8e5c5; }
+.group-call-dialog .group-call-subtitle { display: flex; align-items: center; gap: 7px; margin: -5px 0 16px; color: #718077; font-size: 12px; }
+dialog.group-call-dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
+.group-call-dialog > div:first-child, .group-call-dialog > p { flex-shrink: 0; }
+.group-call-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px; min-height: 0; overflow-y: auto; }
+.group-call-peer { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid #37473e; border-radius: 12px; background: #1b2921; }
+.group-call-peer > video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+.group-call-peer > video.group-call-camera-off { opacity: 0; }
+.group-call-avatar { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: #315d3f; color: #e2f5e8; font-size: 24px; font-weight: 600; }
+.group-call-peer > div { position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; background: linear-gradient(transparent, #000a); color: #fff; font-size: 12px; }
+.group-call-peer > div > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group-call-error { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: #fff1f2; color: #a82332; font-size: 12px; line-height: 20px; }
+.group-call-waiting { margin-top: 14px; color: #718077; text-align: center; font-size: 12px; line-height: 20px; }
+.group-call-controls { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+.group-call-controls > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; min-width: 42px; padding: 10px; border-radius: 12px; background: #e8eee9; color: #294334; font-size: 12px; font-weight: 600; }
+.group-call-controls > button[aria-pressed="false"] { background: #fce5e7; color: #ad3140; }
+.group-call-controls > .group-call-leave { background: #be3343; color: #fff; padding-inline: 16px; }
+.group-call-controls > button:focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.group-call-incoming { padding: 8px; text-align: center; }
+.group-call-incoming > span { display: grid; place-items: center; width: 64px; height: 64px; margin: auto; border-radius: 50%; background: #e6f5eb; color: #009639; }
+.group-call-incoming > h3 { margin-top: 16px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.group-call-incoming > p { margin-top: 8px; font-size: 12px; line-height: 20px; color: #718077; }
+.group-call-incoming > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+.group-call-incoming button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 16px; border-radius: 9px; font-size: 12px; font-weight: 600; }
+.group-call-decline { background: #fce5e7; color: #ad3140; }
+.group-call-accept { background: #009639; color: #fff; }
+@media (max-width: 767px) { .inbox-thread-header { flex-wrap: wrap; } .inbox-thread-header .group-call-header-actions { margin-left: auto; } }

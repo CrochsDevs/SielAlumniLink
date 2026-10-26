@@ -1,22 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  CalendarDays,
-  MapPin,
-  Search,
-  RefreshCw,
-  Video,
-  Clock,
-  Building2,
-} from "lucide-react";
-import ActivityAccess from "../../components/student/ActivityAccess";
+import { Search, RefreshCw } from "lucide-react";
+import ActivityDetails from "../../components/events/ActivityDetails";
 import EventCalendar from "../../components/events/EventCalendar";
-import { FeedDialog } from "../../components/feed/FeedComposer";
-import {
-  activityLabel,
-  activityStyle,
-  eventDateTime,
-} from "../../utils/eventCalendar";
+import { activityLabel, activityStyle } from "../../utils/eventCalendar";
 import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
@@ -145,7 +132,10 @@ export default function AlumniEvents() {
             )}
           </header>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <nav aria-label="Events workspace" className="alumni-section-tabs flex max-w-full overflow-x-auto">
+            <nav
+              aria-label="Events workspace"
+              className="alumni-section-tabs flex max-w-full overflow-x-auto"
+            >
               {[
                 ["calendar", "University calendar"],
                 ["community", "Alumni community"],
@@ -284,100 +274,16 @@ export default function AlumniEvents() {
           )}
         </main>
         {selected && (
-          <FeedDialog
+          <ActivityDetails
             key={selected._id}
-            title="Activity details"
+            event={selected}
             onClose={() => setSelectedId(null)}
-          >
-            <div className="space-y-5">
-              <div>
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-semibold ${activityStyle(selected).card}`}
-                >
-                  <CalendarDays size={12} />
-                  {activityLabel(selected)}
-                </span>
-                <h3 className="mt-3 break-words text-xl font-semibold leading-7">
-                  {selected.title}
-                </h3>
-              </div>
-              <dl className="space-y-4 rounded-xl border border-zinc-200 p-4 text-sm dark:border-zinc-700">
-                <div className="flex gap-3">
-                  <Clock size={17} className="mt-0.5 shrink-0 text-zinc-400" />
-                  <div>
-                    <dt className="text-[11px] text-zinc-500">
-                      Schedule · Philippine time
-                    </dt>
-                    <dd className="mt-1 text-xs leading-6">
-                      {eventDateTime(selected.startAt)}
-                      {selected.endAt && (
-                        <>
-                          <br />
-                          to {eventDateTime(selected.endAt)}
-                        </>
-                      )}
-                    </dd>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  {selected.deliveryMode === "online" ? (
-                    <Video
-                      size={17}
-                      className="mt-0.5 shrink-0 text-zinc-400"
-                    />
-                  ) : (
-                    <MapPin
-                      size={17}
-                      className="mt-0.5 shrink-0 text-zinc-400"
-                    />
-                  )}
-                  <div>
-                    <dt className="text-[11px] text-zinc-500">
-                      {selected.deliveryMode === "online"
-                        ? "Online activity"
-                        : "On-site activity"}
-                    </dt>
-                    <dd className="mt-1 break-words text-xs leading-6">
-                      {selected.deliveryMode === "online"
-                        ? "Join through the app when meeting access opens."
-                        : selected.location ||
-                          "Register to view venue details."}
-                    </dd>
-                  </div>
-                </div>
-                {selected.organizer && (
-                  <div className="flex gap-3">
-                    <Building2
-                      size={17}
-                      className="mt-0.5 shrink-0 text-zinc-400"
-                    />
-                    <div>
-                      <dt className="text-[11px] text-zinc-500">Organizer</dt>
-                      <dd className="mt-1 text-xs">{selected.organizer}</dd>
-                    </div>
-                  </div>
-                )}
-              </dl>
-              {selected.description && (
-                <div>
-                  <h4 className="text-xs font-semibold">About this activity</h4>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-zinc-600 dark:text-zinc-300">
-                    {selected.description}
-                  </p>
-                </div>
-              )}
-              <ActivityAccess
-                event={selected}
-                onRegistered={(updated) =>
-                  setEvents((list) =>
-                    list.map((item) =>
-                      item._id === updated._id ? updated : item,
-                    ),
-                  )
-                }
-              />
-            </div>
-          </FeedDialog>
+            onRegistered={(updated) =>
+              setEvents((list) =>
+                list.map((item) => (item._id === updated._id ? updated : item)),
+              )
+            }
+          />
         )}
       </div>
     </div>

@@ -1,9 +1,19 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import AdminStatCard from "../../components/admin/AdminStatCard";
-import { AdminStatGrid, AdminTabs, AdminButton } from "../../components/admin/AdminUI";
+import {
+  AdminStatGrid,
+  AdminTabs,
+  AdminButton,
+} from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import {
   Search,
   Plus,
@@ -21,6 +31,34 @@ import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
+
+const SURVEY_COLUMNS = [
+  {
+    accessorKey: "title",
+    header: "Survey",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "questions",
+    header: "Questions",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "isActive",
+    header: "Status",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "actions",
+    header: "Actions",
+    meta: { headerClassName: "px-5 py-3 font-semibold text-right" },
+  },
+];
 
 const EMPTY_FORM = {
   title: "",
@@ -61,7 +99,9 @@ export default function AdminSurveys() {
       const res = await api.get("/surveys", { params: { all: "true" } });
       setSurveys(res.data.data || []);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load surveys" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to load surveys",
+      });
     } finally {
       setLoading(false);
     }
@@ -89,8 +129,33 @@ export default function AdminSurveys() {
       .includes(query.toLowerCase()),
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+  const surveysTable = useReactTable({
+    data: filtered,
+    columns: SURVEY_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          page - 1,
+          Math.max(0, Math.ceil(filtered.length / perPage) - 1),
+        ),
+        pageSize: perPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(surveysTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
+  const totalPages = Math.max(1, surveysTable.getPageCount());
+  const paged = surveysTable.getRowModel().rows.map((row) => row.original);
 
   const openAdd = () => {
     setEditing(null);
@@ -181,7 +246,9 @@ export default function AdminSurveys() {
       fetchSurveys();
       toast.success("Saved");
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to save survey" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to save survey",
+      });
     } finally {
       setSaving(false);
     }
@@ -204,7 +271,9 @@ export default function AdminSurveys() {
       fetchSurveys();
       toast.success("Deleted");
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to delete survey" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to delete survey",
+      });
     }
   };
 
@@ -213,7 +282,9 @@ export default function AdminSurveys() {
       await api.put(`/surveys/${survey._id}`, { isActive: !survey.isActive });
       fetchSurveys();
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to update survey" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to update survey",
+      });
     }
   };
 
@@ -228,7 +299,9 @@ export default function AdminSurveys() {
       const res = await api.get(`/surveys/${survey._id}/results`);
       setResults(res.data.data.responses || []);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load results" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to load results",
+      });
       setResultsFor(null);
     } finally {
       setResultsLoading(false);
@@ -251,19 +324,57 @@ export default function AdminSurveys() {
         />
 
         <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
-          <PageHeader title="Surveys" description="Create surveys and review responses from your community." />
+          <PageHeader
+            title="Surveys"
+            description="Create surveys and review responses from your community."
+          />
           <AdminStatGrid columns={3}>
             {[
-              { label: "Total Surveys", value: counts.total, icon: FileText, caption: "community surveys", detail: "Active and inactive surveys" },
-              { label: "Active", value: counts.active, icon: Power, caption: "accepting responses", detail: "Available to community members" },
-              { label: "Questions", value: counts.questions, icon: ListChecks, caption: "survey questions", detail: "Across all surveys" },
-            ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} />)}
+              {
+                label: "Total Surveys",
+                value: counts.total,
+                icon: FileText,
+                caption: "community surveys",
+                detail: "Active and inactive surveys",
+              },
+              {
+                label: "Active",
+                value: counts.active,
+                icon: Power,
+                caption: "accepting responses",
+                detail: "Available to community members",
+              },
+              {
+                label: "Questions",
+                value: counts.questions,
+                icon: ListChecks,
+                caption: "survey questions",
+                detail: "Across all surveys",
+              },
+            ].map((item, index) => (
+              <AdminStatCard
+                key={item.label}
+                {...item}
+                featured={index === 0}
+                loading={loading}
+              />
+            ))}
           </AdminStatGrid>
 
-          <AdminTabs label="Survey views" value={activeTab} onChange={setActiveTab} items={[
-            { id: "questions", label: "Questions", icon: FileText },
-            { id: "responses", label: "Responses", icon: BarChart3, count: results.length || null },
-          ]} />
+          <AdminTabs
+            label="Survey views"
+            value={activeTab}
+            onChange={setActiveTab}
+            items={[
+              { id: "questions", label: "Questions", icon: FileText },
+              {
+                id: "responses",
+                label: "Responses",
+                icon: BarChart3,
+                count: results.length || null,
+              },
+            ]}
+          />
 
           {/* Questions tab */}
           {activeTab === "questions" && (
@@ -282,7 +393,10 @@ export default function AdminSurveys() {
                   />
                 </div>
 
-                <AdminButton onClick={openAdd}><Plus size={15} />New Survey</AdminButton>
+                <AdminButton onClick={openAdd}>
+                  <Plus size={15} />
+                  New Survey
+                </AdminButton>
               </div>
 
               {loading ? (
@@ -293,15 +407,32 @@ export default function AdminSurveys() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[680px] text-left text-[12.5px]">
                     <thead>
-                      <tr className="border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                        <th className="px-5 py-3 font-semibold">Survey</th>
-                        <th className="px-5 py-3 font-semibold">Questions</th>
-                        <th className="px-5 py-3 font-semibold">Status</th>
-                        <th className="px-5 py-3 font-semibold">Created</th>
-                        <th className="px-5 py-3 font-semibold text-right">
-                          Actions
-                        </th>
-                      </tr>
+                      {surveysTable.getHeaderGroups().map((group) => (
+                        <tr
+                          key={group.id}
+                          className={
+                            "border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                          }
+                        >
+                          {group.headers.map((header) => (
+                            <th
+                              key={header.id}
+                              scope="col"
+                              colSpan={header.colSpan}
+                              className={
+                                header.column.columnDef.meta?.headerClassName
+                              }
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext(),
+                                  )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
                     </thead>
                     <tbody>
                       {paged.map((survey) => (
@@ -409,12 +540,11 @@ export default function AdminSurveys() {
               <DataPagination
                 page={Math.min(page, totalPages)}
                 totalPages={totalPages}
-                onPageChange={setPage}
+                onPageChange={(value) => surveysTable.setPageIndex(value - 1)}
                 perPage={perPage}
-                onPerPageChange={(n) => {
-                  setPerPage(n);
-                  setPage(1);
-                }}
+                onPerPageChange={(pageSize) =>
+                  surveysTable.setPagination({ pageIndex: 0, pageSize })
+                }
                 totalItems={filtered.length}
                 itemLabel="surveys"
               />
@@ -424,7 +554,7 @@ export default function AdminSurveys() {
           {/* Results panel: kalagayan ng alumni per survey */}
           {resultsFor && (
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="flex items-start justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 bg-emerald-50/50 p-4">
+              <div className="flex items-start justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 p-4 dark:bg-zinc-800">
                 <div>
                   <h2 className="admin-section-title flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
                     <BarChart3 className="h-4 w-4 text-brand dark:text-brand" />

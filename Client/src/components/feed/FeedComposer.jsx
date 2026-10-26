@@ -94,6 +94,7 @@ export function FeedDialog({
   composer = false,
   header,
   wide = false,
+  className = "",
 }) {
   const ref = useRef(null);
   const titleId = useId();
@@ -116,7 +117,7 @@ export function FeedDialog({
         e.preventDefault();
         if (!busy) onClose();
       }}
-      className={`m-auto max-h-[94dvh] w-[calc(100%-1rem)] overflow-y-auto overscroll-contain bg-white text-zinc-900 shadow-xl backdrop:bg-black/60 sm:w-[calc(100%-2rem)] dark:bg-zinc-900 dark:text-zinc-100 ${composer ? "max-w-2xl rounded-xl p-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" : `${wide ? "max-w-3xl" : "max-w-xl"} rounded-2xl p-4 sm:p-5`}`}
+      className={`m-auto max-h-[94dvh] w-[calc(100%-1rem)] overflow-y-auto overscroll-contain bg-white text-zinc-900 shadow-xl backdrop:bg-black/60 sm:w-[calc(100%-2rem)] dark:bg-zinc-900 dark:text-zinc-100 ${composer ? "max-w-2xl rounded-xl p-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" : `${wide ? "max-w-3xl" : "max-w-xl"} rounded-2xl p-4 sm:p-5`} ${className}`}
     >
       <div
         className={

@@ -4,22 +4,30 @@ import { AudienceSelect, FeedDialog } from "../feed/FeedComposer";
 import api from "../../utils/axios";
 import {
   POST_IMAGE_ACCEPT,
+  postImageUrl,
   removePostImage,
   uploadPostImage,
 } from "../../utils/feedImages";
 import { STORY_TOPICS, input, primaryButton, secondaryButton } from "./storyUi";
 
-export default function StoryComposer({ onClose, onPublished }) {
+export default function StoryComposer({ post, onClose, onPublished }) {
+  const editing = !!post;
+  const legacy = editing && !post.details?.story;
   const [form, setForm] = useState({
-    title: "",
-    topic: "career_journey",
-    journey: "",
-    achievements: "",
-    advice: "",
-    audience: "public",
+    title: post?.title || "",
+    topic: post?.details?.story?.topic || "career_journey",
+    journey: post?.details?.story?.journey || "",
+    achievements: post?.details?.story?.achievements || "",
+    advice: post?.details?.story?.advice || "",
+    body: post?.body || "",
+    audience: post?.audience || "public",
   });
-  const [photo, setPhoto] = useState(null);
-  const [photoAlt, setPhotoAlt] = useState("");
+  const [photo, setPhoto] = useState(() =>
+    post?.images?.[0]
+      ? { ...post.images[0], preview: postImageUrl(post.images[0]), persisted: true }
+      : null,
+  );
+  const [photoAlt, setPhotoAlt] = useState(post?.images?.[0]?.alt || "");
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -55,8 +63,10 @@ export default function StoryComposer({ onClose, onPublished }) {
     setUploading(true);
     setError("");
     try {
-      await removePostImage(photo.id);
-      URL.revokeObjectURL(photo.preview);
+      if (!photo.persisted) {
+        await removePostImage(photo.id);
+        URL.revokeObjectURL(photo.preview);
+      }
       setPhoto(null);
       setPhotoAlt("");
     } catch (err) {
@@ -70,7 +80,7 @@ export default function StoryComposer({ onClose, onPublished }) {
     }
   };
   const close = (published = false) => {
-    if (photo) {
+    if (photo && !photo.persisted) {
       URL.revokeObjectURL(photo.preview);
       if (!published) void removePostImage(photo.id).catch(() => {});
     }
@@ -88,15 +98,15 @@ export default function StoryComposer({ onClose, onPublished }) {
       ["Professional achievements", form.achievements],
       ["Advice for students", form.advice],
     ].filter(([, value]) => value.trim());
-    if (!sections.length) {
+    if (legacy ? !form.body.trim() : !sections.length) {
       setError(
-        "Share your career journey, an achievement, or advice to begin your story.",
+        legacy ? "Please enter your story." : "Share your career journey, an achievement, or advice to begin your story.",
       );
       return;
     }
-    const body = sections
-      .map(([label, value]) => `${label}\n${value.trim()}`)
-      .join("\n\n");
+    const body = legacy
+      ? form.body.trim()
+      : sections.map(([label, value]) => `${label}\n${value.trim()}`).join("\n\n");
     if (body.length > 10000) {
       setError("Please keep your full story within 10,000 characters.");
       return;
@@ -105,27 +115,36 @@ export default function StoryComposer({ onClose, onPublished }) {
     setBusy(true);
     setError("");
     try {
-      const response = await api.post("/feed", {
+      const payload = {
         type: "story",
         audience: form.audience,
         title: form.title.trim(),
         body,
         details: {
-          story: {
-            topic: form.topic,
-            journey: form.journey.trim(),
-            achievements: form.achievements.trim(),
-            advice: form.advice.trim(),
-          },
+          ...post?.details,
+          ...(!legacy && {
+            story: {
+              topic: form.topic,
+              journey: form.journey.trim(),
+              achievements: form.achievements.trim(),
+              advice: form.advice.trim(),
+            },
+          }),
         },
-        images: photo ? [{ id: photo.id, alt: photoAlt.trim() }] : [],
-      });
+        images: [
+          ...(photo ? [{ id: photo.id, alt: photoAlt.trim() }] : []),
+          ...(post?.images?.slice(1) || []).map(({ id, alt }) => ({ id, alt })),
+        ],
+      };
+      const response = editing
+        ? await api.put(`/feed/${post._id}`, payload)
+        : await api.post("/feed", payload);
       onPublished(response.data.data);
       close(true);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Unable to publish your story. Please try again.",
+          `Unable to ${editing ? "save" : "publish"} your story. Please try again.`,
       );
     } finally {
       pending.current = false;
@@ -134,7 +153,7 @@ export default function StoryComposer({ onClose, onPublished }) {
   };
   return (
     <FeedDialog
-      title="Share your success story"
+      title={editing ? "Edit your success story" : "Share your success story"}
       busy={busy || uploading}
       onClose={() => close()}
       wide
@@ -145,7 +164,7 @@ export default function StoryComposer({ onClose, onPublished }) {
       </p>
       <form onSubmit={submit}>
         <fieldset disabled={busy || uploading} className="space-y-5">
-          <div>
+          {!legacy && <div>
             <p className="mb-2 text-xs font-semibold">
               What is your story about?
             </p>
@@ -163,7 +182,7 @@ export default function StoryComposer({ onClose, onPublished }) {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
           <label className="block text-xs font-semibold">
             Story title *
             <input
@@ -176,7 +195,7 @@ export default function StoryComposer({ onClose, onPublished }) {
               className={input}
             />
           </label>
-          {[
+          {(legacy ? [["body", "Your success story", "Share your experience."]] : [
             [
               "journey",
               "Career journey",
@@ -192,7 +211,7 @@ export default function StoryComposer({ onClose, onPublished }) {
               "Advice for students",
               "What do you wish you had known? Share practical advice with future graduates.",
             ],
-          ].map(([key, label, prompt]) => (
+          ]).map(([key, label, prompt]) => (
             <label key={key} className="block text-xs font-semibold">
               {label}
               <textarea
@@ -200,16 +219,16 @@ export default function StoryComposer({ onClose, onPublished }) {
                 value={form[key]}
                 onChange={(event) => change(key, event.target.value)}
                 rows={3}
-                maxLength={5000}
+                maxLength={legacy ? 10000 : 5000}
                 placeholder={prompt}
                 className={`${input} leading-6`}
               />
             </label>
           ))}
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          {!legacy && <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Complete any of the three sections, or tell your story through all
             of them.
-          </p>
+          </p>}
           <div className="rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-700">
             <input
               ref={photoInput}
@@ -290,7 +309,7 @@ export default function StoryComposer({ onClose, onPublished }) {
               Cancel
             </button>
             <button type="submit" className={primaryButton}>
-              {busy ? "Publishing…" : "Publish story"}
+              {editing ? (busy ? "Saving…" : "Save changes") : (busy ? "Publishing…" : "Publish story")}
             </button>
           </div>
         </fieldset>

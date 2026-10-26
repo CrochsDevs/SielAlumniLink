@@ -1,4 +1,7 @@
 import { client } from '../../config/db.js';
+import { renameGroup } from './group-name.js';
+import { promoteGroupAdmin } from './group-admin.js';
+import { exitGroup } from './group-exit.js';
 
 const db = client.db('SielAlumni');
 const convosCollection = db.collection('conversations');
@@ -12,6 +15,22 @@ const toObjectId = async (id) => {
 const key = (id) => String(id);
 
 export const ConversationModel = {
+  exitGroup(id, actorId, targetId) {
+    return exitGroup(convosCollection, id, String(actorId), targetId);
+  },
+  promoteAdmin(id, authId, targetId) {
+    return promoteGroupAdmin(convosCollection, id, authId, targetId);
+  },
+  async appendMembers(id, authId, expected, members) {
+    return convosCollection.findOneAndUpdate(
+      { _id: await toObjectId(id), isGroup: true, 'participants.authId': key(authId), participants: expected },
+      { $push: { participants: { $each: members } }, $set: { updatedAt: new Date() } },
+      { returnDocument: 'after' },
+    );
+  },
+  renameGroup(id, authId, name) {
+    return renameGroup(convosCollection, id, authId, name);
+  },
   // One conversation per pair of accounts (order-independent).
   async getOrCreate(aId, aEmail, bId, bEmail) {
     const pair = [key(aId), key(bId)].sort();
@@ -47,6 +66,8 @@ export const ConversationModel = {
     const doc = {
       pairKey: null,
       isGroup: true,
+      createdBy: key(members[0].authId),
+      adminAuthIds: [key(members[0].authId)],
       name: String(name || 'Group Chat').slice(0, 80),
       participants: members.map((m) => ({ authId: key(m.authId), email: m.email })),
       lastMessage: null,

@@ -1,11 +1,11 @@
 /* Dashboard styling is scoped so other admin pages retain their layouts. */
 .member-workspace.admin-workspace > .admin-dashboard-shell {
-  background: #f5f6f8;
+  background: var(--alumni-page-background);
 }
 .admin-overview {
   --card-border: #e1e5e9;
   --dashboard-edge: #b9c3cb;
-  --dashboard-shadow: 0 0 16px 2px rgb(15 23 42 / 16%), 0 0 4px rgb(15 23 42 / 12%);
+  --dashboard-shadow: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
   --card-muted: #7b8087;
   --card-ink: #20242a;
   --card-soft: #f5f7f6;
@@ -23,14 +23,13 @@
 .admin-overview .dashboard-view-link:hover { text-decoration: underline; }
 .admin-workspace .admin-overview .admin-stat-card {
   background: var(--card-surface);
-  border: 1px solid #dce3df;
+  border: 0;
   border-radius: 14px;
   box-shadow: var(--dashboard-shadow);
   padding: 18px 16px 0;
-  transition: border-color 180ms, box-shadow 180ms;
+  transition: box-shadow 180ms;
 }
 .admin-workspace .admin-overview .admin-stat-card:hover {
-  border-color: #009639;
   box-shadow: var(--dashboard-shadow);
 }
 .dark .admin-workspace .admin-overview .admin-stat-card {
@@ -38,11 +37,9 @@
   --card-muted: #aab3c0;
   --card-ink: #f1f4f8;
   background: var(--card-surface);
-  border-color: #39414c;
   box-shadow: var(--dashboard-shadow);
 }
 .dark .admin-workspace .admin-overview .admin-stat-card:hover {
-  border-color: #009639;
   box-shadow: var(--dashboard-shadow);
 }
 .admin-workspace .admin-overview .admin-stat-card::before, .admin-overview .dashboard-stat-icon, .admin-overview .dashboard-stat-caption { display: none; }
@@ -162,7 +159,7 @@
 .dark .admin-overview {
   --card-border: #303742;
   --dashboard-edge: #536071;
-  --dashboard-shadow: 0 0 18px 3px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 5%);
+  --dashboard-shadow: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
   --card-muted: #aab3c0;
   --card-ink: #f1f4f8;
   --card-soft: #252b34;
@@ -196,34 +193,22 @@
 .dark .admin-overview .coverage-legend i.is-muted { background: #66717f; }
 
 .dark .admin-overview .dashboard-operations .dashboard-operation:hover { background: #252b34; }
-.admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation, .admin-stat-card) {
+.admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation) {
   border: 1px solid var(--dashboard-edge);
   box-shadow: var(--dashboard-shadow);
 }
-.dark .admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation, .admin-stat-card) {
+.dark .admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation) {
   border-color: var(--dashboard-edge);
   box-shadow: var(--dashboard-shadow);
 }
-.admin-workspace .admin-overview :is(.dashboard-operation, .admin-stat-card):hover { border-color: #009639; }
+.admin-workspace .admin-overview .dashboard-operation:hover { border-color: #009639; }
 .admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation) {
-  --dashboard-shadow: 0 0 10px rgb(15 23 42 / 5%), 0 4px 12px rgb(15 23 42 / 8%);
   --dashboard-edge: var(--card-border);
 }
-.dark .admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation) {
-  --dashboard-shadow: 0 0 10px rgb(0 0 0 / 16%), 0 4px 14px rgb(0 0 0 / 24%);
-}
-.admin-overview .dashboard-section-divider {
-  height: 0;
-  margin-block: 24px;
-  border: 0;
-  border-top: 1px solid var(--dashboard-edge);
-}
 .admin-workspace .admin-overview .dashboard-engagement {
-  --dashboard-shadow: 0 0 16px 2px rgb(15 23 42 / 16%), 0 0 4px rgb(15 23 42 / 12%);
   --dashboard-edge: #b9c3cb;
 }
 .dark .admin-workspace .admin-overview .dashboard-engagement {
-  --dashboard-shadow: 0 0 18px 3px rgb(0 0 0 / 55%), 0 0 0 1px rgb(255 255 255 / 5%);
   --dashboard-edge: #536071;
 }
 @media (max-width: 767px) {

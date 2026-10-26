@@ -28,6 +28,7 @@ router.put('/restrictions/:authId', action(req => feed.restrictAuthor(req.user, 
 router.get('/', action(req => feed.list(req.user, req.query)));
 router.post('/', action(req => feed.create(req.user, req.body), 201));
 router.get('/:id', action(req => feed.get(req.user, req.params.id)));
+router.put('/:id', action(req => feed.updateStory(req.user, req.params.id, req.body)));
 router.get('/:id/images/:imageId', createFeedImageDownload(feed));
 router.delete('/:id', action(req => feed.remove(req.user, req.params.id)));
 router.put('/:id/moderation', action(req => feed.moderate(req.user, req.params.id, req.body)));

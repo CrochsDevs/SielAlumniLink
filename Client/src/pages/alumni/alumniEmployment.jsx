@@ -5,6 +5,7 @@ import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 import api from "../../utils/axios";
+import "./alumniEmployment.css";
 
 const STATUSES = ["Employed", "Self-employed", "Unemployed", "Studying"];
 const INDUSTRIES = [
@@ -42,7 +43,7 @@ const emptyPast = {
 const card =
   "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6";
 const input =
-  "mt-1.5 h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:[color-scheme:dark]";
+  "alumni-employment-field mt-1 h-9 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:[color-scheme:dark]";
 const button =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white hover:bg-brand disabled:opacity-50";
 const monthLabel = (value) =>
@@ -238,7 +239,7 @@ export default function AlumniEmployment() {
                       disabled={busy}
                       className="grid gap-4 sm:grid-cols-2"
                     >
-                      <label className="block text-xs font-medium sm:col-span-2">
+                      <label className="block text-xs font-medium">
                         Employment status *
                         <select
                           aria-label="Employment status"
@@ -251,7 +252,7 @@ export default function AlumniEmployment() {
                             }));
                             setMessage("");
                           }}
-                          className={input}
+                          className={`${input} block`}
                         >
                           <option value="">Select your status</option>
                           {STATUSES.map((status) => (

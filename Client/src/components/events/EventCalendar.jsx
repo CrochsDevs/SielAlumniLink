@@ -7,6 +7,7 @@ import {
   MapPin,
   Video,
   Check,
+  ArrowUpRight,
 } from "lucide-react";
 import {
   activityLabel,
@@ -21,10 +22,11 @@ import {
   shiftMonth,
   weekDates,
 } from "../../utils/eventCalendar";
+import "./EventCalendar.css";
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const panel =
-  "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
+  "event-calendar-panel rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const iconButton =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 focus-visible:outline-brand dark:text-zinc-400 dark:hover:bg-zinc-800";
 const timeForDay = (event, day) =>
@@ -75,6 +77,45 @@ function ActivityCard({ event, day, onOpen }) {
   );
 }
 
+function CalendarList({ events, todayKey, onOpen }) {
+  const groups = new Map();
+  for (const event of events) {
+    const key = dateKey(calendarDate(event.startAt));
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(event);
+  }
+  return <ol className="event-list-groups">
+    {[...groups].map(([key, activities]) => {
+      const day = calendarDate(activities[0].startAt);
+      return <li key={key} className="event-list-group">
+        <div className="event-list-date-heading">
+          <time dateTime={key} className="event-list-date-tile" aria-hidden="true"><strong>{day.getUTCDate()}</strong><span>{dateLabel(day, { month: "short" })}</span></time>
+          <div className="event-list-date-copy"><h3>{dateLabel(day, { weekday: "long", month: "short", day: "numeric", year: "numeric" })}</h3><p>{activities.length} {activities.length === 1 ? "activity" : "activities"}</p></div>
+          {key === todayKey && <span className="event-list-today">Today</span>}
+        </div>
+        <ul className="event-list-activities">
+          {activities.map(event => {
+            const online = event.deliveryMode === "online";
+            const sameDay = event.endAt && dateKey(calendarDate(event.endAt)) === key;
+            return <li key={event._id}>
+              <button type="button" data-calendar-event={event._id} onClick={() => onOpen(event)} className="event-list-row" aria-label={`View ${event.title}`}>
+                <span className="event-list-time"><strong>{eventTime(event.startAt)}</strong>{event.endAt && <span>{sameDay ? `– ${eventTime(event.endAt)}` : `Ends ${dateLabel(calendarDate(event.endAt), { month: "short", day: "numeric" })}, ${eventTime(event.endAt)}`}</span>}</span>
+                <span className="event-list-content">
+                  <span className={`event-list-type ${activityStyle(event).card}`}>{activityLabel(event)}</span>
+                  <strong className="event-list-title">{event.title}</strong>
+                  <span className="event-list-location">{online ? <Video size={12} /> : <MapPin size={12} />}<span>{online ? "Online activity" : event.location || "On-site activity"}</span></span>
+                  {event.organizer && <span className="event-list-organizer">{event.organizer}</span>}
+                </span>
+                <span className="event-list-action">{event.registration && <span className="event-list-registered"><Check size={12} />Registered</span>}<span>View details <ArrowUpRight size={14} /></span></span>
+              </button>
+            </li>;
+          })}
+        </ul>
+      </li>;
+    })}
+  </ol>;
+}
+
 export default function EventCalendar({ events, onOpen, now }) {
   const today = calendarDate(now);
   const [selected, setSelected] = useState(() => calendarDate(now));
@@ -105,12 +146,12 @@ export default function EventCalendar({ events, onOpen, now }) {
 
   return (
     <div
-      className="grid min-w-0 items-start gap-5 xl:grid-cols-[248px_minmax(0,1fr)]"
+      className="alumni-event-calendar grid min-w-0 items-start gap-5 xl:grid-cols-[248px_minmax(0,1fr)]"
       data-event-calendar
     >
       <aside className="hidden space-y-4 xl:block">
         <section className={`${panel} p-4`} aria-label="Mini calendar">
-          <div className="mb-3 flex items-center justify-between gap-1">
+          <div className="event-calendar-mini-heading mb-3 flex items-center justify-between gap-1">
             <h2 className="text-sm font-semibold">
               {dateLabel(selected, { month: "long", year: "numeric" })}
             </h2>
@@ -145,8 +186,10 @@ export default function EventCalendar({ events, onOpen, now }) {
                 key={dateKey(day)}
                 aria-label={dateLabel(day)}
                 aria-pressed={selectedKey === dateKey(day)}
+                aria-current={todayKey === dateKey(day) ? "date" : undefined}
+                data-outside-month={!inMonth(day) || undefined}
                 onClick={() => setSelected(day)}
-                className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-xs focus-visible:outline-brand ${selectedKey === dateKey(day) ? "bg-brand font-semibold text-white" : todayKey === dateKey(day) ? "font-semibold text-brand ring-1 ring-brand" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
+                className={`event-calendar-number event-calendar-mini-number relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-xs focus-visible:outline-brand ${selectedKey === dateKey(day) ? "bg-brand font-semibold text-white" : todayKey === dateKey(day) ? "font-semibold text-brand ring-1 ring-brand" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
               >
                 {day.getUTCDate()}
                 {eventsOnDate(events, day).length > 0 && (
@@ -172,7 +215,7 @@ export default function EventCalendar({ events, onOpen, now }) {
               day: "numeric",
             })}
           </h2>
-          <div className="mt-4 space-y-2">
+          <div className="event-calendar-selected-activities mt-4 space-y-2">
             {daily.length ? (
               daily.map((event) => (
                 <ActivityCard
@@ -209,7 +252,7 @@ export default function EventCalendar({ events, onOpen, now }) {
         className={`${panel} min-w-0 overflow-hidden`}
         aria-label="University activity calendar"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 p-4 sm:p-5 dark:border-zinc-800">
+        <div className="event-calendar-toolbar flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 p-4 sm:p-5 dark:border-zinc-800">
           <div className="flex min-w-0 items-center gap-1">
             <button
               type="button"
@@ -268,7 +311,7 @@ export default function EventCalendar({ events, onOpen, now }) {
         </div>
         {view === "month" && (
           <div data-calendar-month>
-            <div className="grid grid-cols-7 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="event-calendar-weekdays grid grid-cols-7 border-b border-zinc-200 dark:border-zinc-800">
               {weekdays.map((day) => (
                 <span
                   key={day}
@@ -286,15 +329,16 @@ export default function EventCalendar({ events, onOpen, now }) {
                   <div
                     key={key}
                     data-calendar-date={key}
-                    className={`min-h-[92px] min-w-0 border-b border-r border-zinc-100 p-1 sm:min-h-[126px] sm:p-2 dark:border-zinc-800 [&:nth-child(7n)]:border-r-0 ${key === selectedKey ? "bg-emerald-50/50 dark:bg-brand/5" : !inMonth(day) ? "bg-zinc-50/70 dark:bg-zinc-950/40" : ""}`}
+                    className={`event-calendar-date min-h-[92px] min-w-0 border-b border-r border-zinc-100 p-1 sm:min-h-[126px] sm:p-2 dark:border-zinc-800 [&:nth-child(7n)]:border-r-0 ${key === selectedKey ? "bg-emerald-50/50 dark:bg-brand/5" : !inMonth(day) ? "bg-zinc-50/70 dark:bg-zinc-950/40" : ""}`}
                   >
                     <button
                       type="button"
                       aria-label={`Select ${dateLabel(day)}`}
                       aria-pressed={key === selectedKey}
                       aria-current={key === todayKey ? "date" : undefined}
+                      data-outside-month={!inMonth(day) || undefined}
                       onClick={() => setSelected(day)}
-                      className={`mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs focus-visible:outline-brand ${key === todayKey ? "bg-brand font-semibold text-white" : key === selectedKey ? "font-semibold text-brand ring-1 ring-brand dark:text-brand" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
+                      className={`event-calendar-number mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs focus-visible:outline-brand ${key === todayKey ? "bg-brand font-semibold text-white" : key === selectedKey ? "font-semibold text-brand ring-1 ring-brand dark:text-brand" : inMonth(day) ? "hover:bg-zinc-100 dark:hover:bg-zinc-800" : "text-zinc-400 dark:text-zinc-600"}`}
                     >
                       {day.getUTCDate()}
                     </button>
@@ -340,7 +384,7 @@ export default function EventCalendar({ events, onOpen, now }) {
               {week.map((day) => (
                 <section
                   key={dateKey(day)}
-                  className="min-h-[460px] border-r border-zinc-200 last:border-r-0 dark:border-zinc-800"
+                  className="event-calendar-week-column min-h-[460px] border-r border-zinc-200 last:border-r-0 dark:border-zinc-800"
                 >
                   <button
                     type="button"
@@ -351,7 +395,7 @@ export default function EventCalendar({ events, onOpen, now }) {
                     className={`flex w-full items-center justify-center gap-2 border-b border-zinc-200 py-4 text-xs dark:border-zinc-800 ${dateKey(day) === todayKey ? "text-brand dark:text-brand" : "text-zinc-500"}`}
                   >
                     <span>{weekdays[day.getUTCDay()]}</span>
-                    <span className="font-semibold">{day.getUTCDate()}</span>
+                    <span className="event-calendar-number" aria-current={dateKey(day) === todayKey ? "date" : undefined}>{day.getUTCDate()}</span>
                   </button>
                   <div className="space-y-2 p-2">
                     {eventsOnDate(events, day).map((event) => (
@@ -375,8 +419,10 @@ export default function EventCalendar({ events, onOpen, now }) {
         )}
         {(view === "day" || view === "list") && (
           <div className="min-h-[460px] p-4 sm:p-5" data-calendar-agenda>
-            {(view === "day" ? daily : monthEvents).length ? (
-              <div className="space-y-3">
+            {view === "list" && monthEvents.length ? (
+              <CalendarList events={monthEvents} todayKey={todayKey} onOpen={onOpen} />
+            ) : (view === "day" ? daily : monthEvents).length ? (
+              <div className="event-calendar-agenda-list space-y-3">
                 {(view === "day" ? daily : monthEvents).map((event) => (
                   <div
                     key={event._id}
@@ -424,7 +470,7 @@ export default function EventCalendar({ events, onOpen, now }) {
             )}
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 px-4 py-3 text-[10px] text-zinc-500 sm:text-xs dark:border-zinc-800">
+        <div className="event-calendar-footer flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 px-4 py-3 text-[10px] text-zinc-500 sm:text-xs dark:border-zinc-800">
           <span>Schedules in Philippine time</span>
           <span>Choose an activity to view details and register</span>
         </div>

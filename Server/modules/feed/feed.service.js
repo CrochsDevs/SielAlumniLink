@@ -143,6 +143,29 @@ export const createFeedService = (db, changed = () => {}) => {
 
   const get = async (user, id) => serialize(await readable(id, user), user);
 
+  const updateStory = async (user, id, input) => {
+    await ensureFeedParticipation(db, user);
+    if (!['alumni', 'admin'].includes(String(user.role).toLowerCase())) fail(403, 'Only alumni can edit success stories');
+    const post = await readable(id, user);
+    if (String(post.authorAuthId) !== String(user._id)) fail(403, 'Only the author can edit this story');
+    if (post.type !== 'story' || post.originalPostId) fail(400, 'Only original success stories can be edited');
+    if (input.type !== undefined && input.type !== 'story') fail(400, 'A success story must remain a story');
+    const data = validatePost({
+      type: 'story', title: post.title, body: post.body, audience: post.audience,
+      details: post.details, images: post.images, ...input,
+    });
+    data.images = await Promise.all(data.images.map(async image => {
+      const asset = await images.findOne({ _id: objectId(image.id), ownerAuthId: String(user._id) });
+      if (!asset) fail(400, 'An attached image is unavailable or belongs to another user. Upload it again.');
+      return { ...image, width: asset.width, height: asset.height };
+    }));
+    const updated = await posts.findOneAndUpdate({ _id: post._id, authorAuthId: String(user._id), deletedAt: null },
+      { $set: { ...data, updatedAt: new Date() } }, { returnDocument: 'after' });
+    if (!updated) fail(404, 'Story no longer available');
+    changed();
+    return serialize(updated, user);
+  };
+
   const getImage = async (user, id, imageId) => {
     const post = await readable(id, user);
     if (!(post.images || []).some(image => image.id === String(imageId))) fail(404, 'Image not found');
@@ -271,7 +294,7 @@ export const createFeedService = (db, changed = () => {}) => {
     return Promise.all(rows.map(async row => ({ author: await author(row._id), reason: row.reason, updatedAt: row.updatedAt })));
   };
 
-  return { list, listStories: (user, query = {}) => list(user, { ...query, type: 'story' }, true), create, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
+  return { list, listStories: (user, query = {}) => list(user, { ...query, type: 'story' }, true), create, updateStory, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
     setMembership, listComments, comment, removeComment, share, remove, recipients };
 };
 

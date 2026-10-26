@@ -40,7 +40,14 @@ socket.onmessage = (event) => {
     waiting.delete(message.id);
     if (message.error) request.reject(new Error(message.error.message));
     else request.resolve(message.result);
-  } else listeners.get(message.method)?.(message.params);
+  } else {
+    const pending = listeners.get(message.method)?.(message.params);
+    pending?.catch(error => {
+      // Closing/replacing a preview aborts its request, invalidating the mock
+      // interception before the fixture response can be delivered.
+      if (error.message !== 'Invalid InterceptionId.') runtimeErrors.push(error.message);
+    });
+  }
 };
 const evaluate = async (expression) => {
   const result = await send("Runtime.evaluate", {
@@ -83,6 +90,7 @@ const admin = {
 let account = student,
   certificates = [],
   failFirst = true,
+  failNextDownload = false,
   confirmations = 0;
 const attendance = {
   _id: "dddddddddddddddddddddddd",
@@ -150,6 +158,13 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
       data = certificates[0];
     }
   } else if (route.endsWith("/download") && request.method === "GET") {
+    if (failNextDownload) {
+      await send("Fetch.fulfillRequest", {
+        requestId, responseCode: 503, responseHeaders: headers,
+        body: Buffer.from(JSON.stringify({ success: false, message: 'Preview unavailable' })).toString('base64'),
+      });
+      return;
+    }
     await send("Fetch.fulfillRequest", {
       requestId,
       responseCode: 200,
@@ -172,7 +187,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
 });
 const click = (label, scope = "document") =>
   evaluate(
-    `Array.from(${scope}.querySelectorAll('button')).find(b=>b.textContent.trim()===${JSON.stringify(label)}).click()`,
+    `(()=>{const button=Array.from(${scope}.querySelectorAll('button')).find(b=>b.textContent.trim()===${JSON.stringify(label)});button.focus();button.click();})()`,
   );
 const setValue = (selector, value, type = "HTMLInputElement") =>
   evaluate(
@@ -185,10 +200,10 @@ const navigate = async (url) => {
   await send("Page.navigate", { url: "http://localhost:5173" + url });
   await loaded;
 };
-const photo = async (name, width, dark) => {
+const photo = async (name, width, dark, height = 1000) => {
   await send("Emulation.setDeviceMetricsOverride", {
     width,
-    height: 1000,
+    height,
     deviceScaleFactor: 1,
     mobile: width < 768,
   });
@@ -199,6 +214,16 @@ const photo = async (name, width, dark) => {
     true,
     "Overflow " + name,
   );
+  if (await evaluate(`!!document.querySelector('.certificate-preview-dialog')`)) {
+    assert.equal(await evaluate(`(() => {
+      const modal = document.querySelector('.certificate-preview-dialog');
+      const box = modal.getBoundingClientRect();
+      const footer = modal.querySelector('footer').getBoundingClientRect();
+      return box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight
+        && footer.bottom <= box.bottom && modal.scrollWidth <= modal.clientWidth
+        && modal.scrollHeight <= modal.clientHeight + 1;
+    })()`), true, 'Modal and controls fit viewport: ' + name);
+  }
   const shot = await send("Page.captureScreenshot", { format: "png" });
   await writeFile(
     path.join(artifacts, name + ".png"),
@@ -208,6 +233,7 @@ const photo = async (name, width, dark) => {
 try {
   await send("Page.enable");
   await send("Runtime.enable");
+  await send("Emulation.setFocusEmulationEnabled", { enabled: true });
   await send("Fetch.enable", {
     patterns: [{ urlPattern: "http://localhost:3002/api/*" }],
   });
@@ -250,14 +276,61 @@ try {
   await until(`document.body.textContent.includes('No matching certificates')`);
   await click("Clear filters");
   await until(`document.querySelector('article[data-certificate]')`);
+  failNextDownload = true;
   await click("View certificate");
+  await until(`document.querySelector('.certificate-preview-stage [role=alert]')`);
+  assert.equal(await evaluate(`document.querySelector('.certificate-preview-actions button').disabled`), true);
+  failNextDownload = false;
+  await click("Retry");
   await until(`document.querySelector('dialog img')?.naturalWidth>0`);
   assert.equal(
     await evaluate(`document.querySelector('dialog a[download]').download`),
     "SL-1234567890ABCDEF.svg",
   );
   await photo("certificate-preview-mobile", 390, false);
+  await click("Zoom in");
+  assert.equal(await evaluate(`document.querySelector('.certificate-preview-stage').scrollWidth > document.querySelector('.certificate-preview-stage').clientWidth`), true);
+  await photo("certificate-preview-mobile-zoom", 390, true, 667);
+  await click("Fit to screen");
+  assert.equal(await evaluate(`document.querySelector('.certificate-preview-stage').scrollWidth <= document.querySelector('.certificate-preview-stage').clientWidth`), true);
+  await photo("certificate-preview-small-mobile", 320, false, 568);
+  await photo("certificate-preview-landscape", 844, false, 390);
   await photo("certificate-preview-desktop", 1440, false);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await until(`!document.querySelector('.certificate-preview-dialog')`);
+  assert.equal(await evaluate(`document.body.style.overflow !== 'hidden'`), true);
+  assert.equal(await evaluate(`document.activeElement.textContent.trim()`), 'View certificate');
+  await click('View certificate');
+  await until(`document.querySelector('dialog img')?.naturalWidth>0`);
+  const downloadedSvg = await evaluate(`fetch(document.querySelector('dialog img').src).then(response => response.text())`);
+  assert.ok(downloadedSvg.includes('Certificate of Appreciation'));
+  assert.ok(downloadedSvg.includes('data:image/png;base64,'));
+  // Measure actual rendered text bounds, including maximum-length wide names
+  // and unbroken activity/organizer strings, before checking printed output.
+  for (const details of [certificates[0], {
+    ...certificates[0], recipientName: 'W'.repeat(200),
+    title: 'W'.repeat(300), organizer: 'W'.repeat(200),
+  }, {
+    ...certificates[0], recipientName: 'Alexandria Santos '.repeat(11).trim(),
+    title: 'Research Innovation and Development '.repeat(8).trim(),
+    organizer: 'University Alumni Relations '.repeat(7).trim(),
+  }]) {
+    const markup = certificateSvg(details);
+    const overflowing = await evaluate(`(() => {
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-9999px;top:0';
+      container.innerHTML = ${JSON.stringify(markup)};
+      document.body.append(container);
+      const result = [...container.querySelectorAll('g text')].filter(text => {
+        const box = text.getBBox();
+        return box.x < 350 || box.x + box.width > 1095 || box.y < 420 || box.y + box.height > 635;
+      }).map(text => text.textContent);
+      container.remove();
+      return result;
+    })()`);
+    assert.deepEqual(overflowing, [], 'Personalized details fit within the certificate artwork');
+  }
   await evaluate(
     `window.__printCalls=0;window.print=()=>{window.__printCalls++;}`,
   );
@@ -291,9 +364,10 @@ try {
     1,
   );
   await send("Emulation.setEmulatedMedia", { media: "" });
-  await evaluate(
-    `document.querySelector('button[aria-label="Close dialog"]').click()`,
-  );
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await until(`!document.querySelector('.certificate-preview-dialog')`);
+  assert.equal(await evaluate(`document.body.style.overflow !== 'hidden'`), true);
   await navigate("/student/portfolio");
   await until(
     `document.querySelector('main .portfolio-resume')?.textContent.includes('Web Accessibility Seminar')`,
@@ -304,7 +378,7 @@ try {
   );
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Passed: confirmed attendance auto-issuance, failure/retry and double-submit guard, student collection, activity filters, SVG preview/download, one-page landscape PDF, and automatic portfolio/resume inclusion. Mock APIs only. Artifacts: " +
+    "Passed: attendance issuance, retry and double-submit guard, student filters, preview retry, responsive modal, zoom/fit, Escape and focus restoration, SVG download, one-page PDF, and portfolio inclusion. Mock APIs only. Artifacts: " +
       artifacts,
   );
 } finally {

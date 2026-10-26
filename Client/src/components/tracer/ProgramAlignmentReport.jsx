@@ -1,3 +1,9 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import AdminStatCard from "../admin/AdminStatCard";
 import { AdminStatGrid } from "../admin/AdminUI";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -6,12 +12,76 @@ import api from "../../utils/axios";
 import DataPagination from "../ui/data-pagination";
 import { JOB_ALIGNMENT_OPTIONS } from "../../utils/tracerStudy";
 
-const card =
-  "admin-panel p-4";
+const PROGRAM_COLUMNS = [
+  {
+    accessorKey: "program",
+    header: "Graduation program",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "working",
+    header: "Working",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "directlyRelated",
+    header: "Directly related",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "partlyRelated",
+    header: "Partly related",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "unrelated",
+    header: "Unrelated",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "unassessed",
+    header: "Not sure / not reported",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "directAlignmentRate",
+    header: "Direct alignment rate",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+];
+
+const ALIGNMENT_COLUMNS = [
+  {
+    accessorKey: "name",
+    header: "Alumni / graduation program",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "yearsAfterGraduation",
+    header: "Follow-up",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "position",
+    header: "Reported job / business",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "alignment",
+    header: "Alignment",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+  {
+    accessorKey: "explanation",
+    header: "Duties and explanation",
+    meta: { headerClassName: "px-3 py-3 font-medium" },
+  },
+];
+
+const card = "admin-panel p-4";
 const input =
   "h-10 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900";
-const button =
-  "admin-button admin-button-secondary";
+const button = "admin-button admin-button-secondary";
 const periods = [
   ["3-5", "3–5 years after graduation"],
   ["0-2", "0–2 years after graduation"],
@@ -77,18 +147,46 @@ export default function ProgramAlignmentReport() {
       ++generation.current;
     };
   }, [load]);
+  const programsTable = useReactTable({
+    data: report?.programs || [],
+    columns: PROGRAM_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => String(row.program),
+    autoResetPageIndex: false,
+  });
   const change = (key, value) => {
     setFilters((previous) => ({ ...previous, [key]: value }));
     setPage(1);
   };
-  const totalPages = Math.max(
-    1,
-    Math.ceil((report?.rows.length || 0) / perPage),
-  );
-  const currentPage = Math.min(page, totalPages);
-  const rows =
-    report?.rows.slice((currentPage - 1) * perPage, currentPage * perPage) ||
-    [];
+  const alignmentRows = report?.rows || [];
+  const alignmentTable = useReactTable({
+    data: alignmentRows,
+    columns: ALIGNMENT_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => `${row.authId}:${row.program}:${row.batch}`,
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          page - 1,
+          Math.max(0, Math.ceil(alignmentRows.length / perPage) - 1),
+        ),
+        pageSize: perPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(alignmentTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
+  const totalPages = Math.max(1, alignmentTable.getPageCount());
+  const currentPage = alignmentTable.getState().pagination.pageIndex + 1;
+  const rows = alignmentTable.getRowModel().rows.map((row) => row.original);
   const exportCSV = () => {
     const data = [
       ["Program-job alignment — alumni self-reported"],
@@ -322,7 +420,16 @@ export default function ProgramAlignmentReport() {
                   report.summary.respondents,
                   `${report.summary.working} working; ${report.summary.notWorking} not working / studying`,
                 ],
-              ].map(([label, value, detail], index) => <AdminStatCard key={label} label={label} value={value} detail={detail} icon={ClipboardCheck} featured={index === 0} />)}
+              ].map(([label, value, detail], index) => (
+                <AdminStatCard
+                  key={label}
+                  label={label}
+                  value={value}
+                  detail={detail}
+                  icon={ClipboardCheck}
+                  featured={index === 0}
+                />
+              ))}
             </AdminStatGrid>
             <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
               Alignment is reported by alumni based on their duties. Rates
@@ -352,52 +459,61 @@ export default function ProgramAlignmentReport() {
                   <div className="mt-4 overflow-x-auto">
                     <table className="w-full min-w-[860px] text-left text-xs">
                       <thead>
-                        <tr className="border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                          {[
-                            "Graduation program",
-                            "Working",
-                            "Directly related",
-                            "Partly related",
-                            "Unrelated",
-                            "Not sure / not reported",
-                            "Direct alignment rate",
-                          ].map((label) => (
-                            <th
-                              scope="col"
-                              key={label}
-                              className="px-3 py-3 font-medium"
-                            >
-                              {label}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {report.programs.map((item) => (
+                        {programsTable.getHeaderGroups().map((group) => (
                           <tr
-                            key={item.program}
-                            className="border-b border-zinc-100 dark:border-zinc-800"
+                            key={group.id}
+                            className={
+                              "border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                            }
                           >
-                            <th
-                              scope="row"
-                              className="max-w-72 whitespace-normal px-3 py-4 font-medium"
-                            >
-                              {item.program}
-                            </th>
-                            {[
-                              item.working,
-                              item.directlyRelated,
-                              item.partlyRelated,
-                              item.unrelated,
-                              item.unsure + item.notReported,
-                              percentage(item.directAlignmentRate),
-                            ].map((value, index) => (
-                              <td key={index} className="px-3 py-4">
-                                {value}
-                              </td>
+                            {group.headers.map((header) => (
+                              <th
+                                key={header.id}
+                                scope="col"
+                                colSpan={header.colSpan}
+                                className={
+                                  header.column.columnDef.meta?.headerClassName
+                                }
+                              >
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext(),
+                                    )}
+                              </th>
                             ))}
                           </tr>
                         ))}
+                      </thead>
+                      <tbody>
+                        {programsTable
+                          .getRowModel()
+                          .rows.map(({ original: item }) => (
+                            <tr
+                              key={item.program}
+                              className="border-b border-zinc-100 dark:border-zinc-800"
+                            >
+                              <th
+                                scope="row"
+                                className="max-w-72 whitespace-normal px-3 py-4 font-medium"
+                              >
+                                {item.program}
+                              </th>
+                              {[
+                                item.working,
+                                item.directlyRelated,
+                                item.partlyRelated,
+                                item.unrelated,
+                                item.unsure + item.notReported,
+                                percentage(item.directAlignmentRate),
+                              ].map((value, index) => (
+                                <td key={index} className="px-3 py-4">
+                                  {value}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>
@@ -420,23 +536,32 @@ export default function ProgramAlignmentReport() {
                   >
                     <table className="w-full min-w-[1100px] text-left text-xs">
                       <thead>
-                        <tr className="border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                          {[
-                            "Alumni / graduation program",
-                            "Follow-up",
-                            "Reported job / business",
-                            "Alignment",
-                            "Duties and explanation",
-                          ].map((label) => (
-                            <th
-                              scope="col"
-                              key={label}
-                              className="px-3 py-3 font-medium"
-                            >
-                              {label}
-                            </th>
-                          ))}
-                        </tr>
+                        {alignmentTable.getHeaderGroups().map((group) => (
+                          <tr
+                            key={group.id}
+                            className={
+                              "border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                            }
+                          >
+                            {group.headers.map((header) => (
+                              <th
+                                key={header.id}
+                                scope="col"
+                                colSpan={header.colSpan}
+                                className={
+                                  header.column.columnDef.meta?.headerClassName
+                                }
+                              >
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext(),
+                                    )}
+                              </th>
+                            ))}
+                          </tr>
+                        ))}
                       </thead>
                       <tbody>
                         {rows.map((row) => (
@@ -493,12 +618,13 @@ export default function ProgramAlignmentReport() {
                   <DataPagination
                     page={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setPage}
+                    onPageChange={(value) =>
+                      alignmentTable.setPageIndex(value - 1)
+                    }
                     perPage={perPage}
-                    onPerPageChange={(value) => {
-                      setPerPage(value);
-                      setPage(1);
-                    }}
+                    onPerPageChange={(pageSize) =>
+                      alignmentTable.setPagination({ pageIndex: 0, pageSize })
+                    }
                     totalItems={report.rows.length}
                     itemLabel="responses"
                   />

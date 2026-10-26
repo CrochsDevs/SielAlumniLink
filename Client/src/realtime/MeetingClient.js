@@ -3,8 +3,10 @@ import api from "../utils/axios";
 
 // New arrivals offer to the existing peers. Each pair has a single offerer.
 export default class MeetingClient {
-  constructor(eventId) {
+  constructor(eventId, { namespace = "meeting", joinInput } = {}) {
     this.eventId = eventId;
+    this.namespace = namespace;
+    this.joinInput = joinInput || { eventId };
     this.socket = getSocket();
     this.listeners = new Set();
     this.peers = new Map();
@@ -80,6 +82,7 @@ export default class MeetingClient {
         }
       },
     };
+    this.handlers = Object.fromEntries(Object.entries(this.handlers).map(([event, handler]) => [event.replace(/^meeting:/, `${this.namespace}:`), handler]));
   }
   subscribe = (listener) => {
     this.listeners.add(listener);
@@ -98,7 +101,12 @@ export default class MeetingClient {
     );
     if (!this.socket.connected) this.socket.connect();
   }
+  emit(event, input) {
+    if (this.namespace === "group-call" && event === "meeting:leave") input = { conversationId: this.eventId };
+    this.socket.emit(event.replace(/^meeting:/, `${this.namespace}:`), input);
+  }
   request(event, input = {}) {
+    if (this.namespace === "group-call" && event === "meeting:leave") input = { conversationId: this.eventId };
     if (!this.socket.connected)
       return Promise.reject(
         new Error(
@@ -106,7 +114,7 @@ export default class MeetingClient {
         ),
       );
     return new Promise((resolve, reject) =>
-      this.socket.timeout(12000).emit(event, input, (error, response) => {
+      this.socket.timeout(12000).emit(event.replace(/^meeting:/, `${this.namespace}:`), input, (error, response) => {
         if (error || !response?.success)
           reject(
             new Error(
@@ -120,7 +128,7 @@ export default class MeetingClient {
   }
   status() {
     if (this.state.joined)
-      this.socket.emit("meeting:status", {
+      this.emit("meeting:status", {
         mic: this.state.mic,
         camera: this.state.camera,
         sharing: this.state.sharing,
@@ -139,11 +147,9 @@ export default class MeetingClient {
       if (host) await api.post(`/meetings/${this.eventId}/start`);
       const response = await api.get("/meetings/config");
       this.iceServers = response.data.data.iceServers;
-      const info = await this.request("meeting:join", {
-        eventId: this.eventId,
-      });
+      const info = await this.request("meeting:join", this.joinInput);
       if (!this.active) {
-        this.socket.emit("meeting:leave");
+        this.emit("meeting:leave");
         return;
       }
       this.update({
@@ -169,7 +175,7 @@ export default class MeetingClient {
           await connection.pc.setLocalDescription(
             await connection.pc.createOffer(),
           );
-          this.socket.emit("meeting:signal", {
+          this.emit("meeting:signal", {
             to: peer.id,
             description: connection.pc.localDescription,
           });
@@ -189,7 +195,7 @@ export default class MeetingClient {
     const connection = { pc, stream, pending: [] };
     pc.onicecandidate = ({ candidate }) => {
       if (candidate)
-        this.socket.emit("meeting:signal", {
+        this.emit("meeting:signal", {
           to: id,
           candidate: candidate.toJSON(),
         });
@@ -234,7 +240,7 @@ export default class MeetingClient {
           await transceiver.sender.replaceTrack(track || null);
         }
         await pc.setLocalDescription(await pc.createAnswer());
-        this.socket.emit("meeting:signal", {
+        this.emit("meeting:signal", {
           to: from,
           description: pc.localDescription,
         });
@@ -423,7 +429,7 @@ export default class MeetingClient {
     Object.entries(this.handlers).forEach(([event, handler]) =>
       this.socket.off(event, handler),
     );
-    if (this.state.joined || this.joining) this.socket.emit("meeting:leave");
+    if (this.state.joined || this.joining) this.emit("meeting:leave");
     this.cleanupMedia();
   }
 }

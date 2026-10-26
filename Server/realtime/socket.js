@@ -5,12 +5,16 @@ import AuthModel from '../modules/auth/auth.models.js';
 import PresenceStore from './presence.store.js';
 import { initializeMeetings } from '../modules/meetings/meetings.socket.js';
 import { createCallService } from './calls.js';
+import { createGroupCallRuntime } from './group-calls.js';
+import UserModel from '../modules/users/users.models.js';
 import ConnectionModel from '../modules/connections/connections.models.js';
 import { ConversationModel, MessageModel } from '../modules/messages/messages.models.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
 let io = null;
+let groupCalls = null;
+export const removeGroupCallMember = (id, authId) => groupCalls?.removeMember(id, authId);
 
 const broadcastPresence = () => {
   if (io) {
@@ -56,6 +60,25 @@ export const initSocket = (server) => {
 
   io.use(authenticate);
   const meetings = initializeMeetings(io);
+  groupCalls = createGroupCallRuntime(io, {
+    emitToUser,
+    authorize: async (user, id) => {
+      const group = await ConversationModel.findById(id);
+      if (!group?.isGroup || !group.participants.some(member => String(member.authId) === String(user._id))) return null;
+      const profile = await UserModel.findByAuthId(user._id);
+      return { ...group, displayName: profile?.name || user.email };
+    },
+    record: async call => {
+      const group = await ConversationModel.findById(call.id);
+      if (!group) return;
+      const label = `Group ${call.kind === 'video' ? 'video' : 'voice'} call`;
+      const text = call.acceptedAt == null ? `${label} ended without other participants` : `${label} ended - ${Math.floor(call.duration / 60)}:${String(call.duration % 60).padStart(2, '0')}`;
+      const message = await MessageModel.create({ conversationId: call.id, senderAuthId: call.caller._id, senderEmail: call.caller.email, text, call: { id: call.callId, kind: call.kind, status: call.acceptedAt == null ? 'missed' : 'completed', duration: call.duration, group: true } });
+      const lastMessage = { text, at: message.createdAt, by: String(call.caller._id) };
+      await ConversationModel.touch(call.id, lastMessage);
+      for (const participant of group.participants) emitToUser(participant.authId, 'message:new', { conversationId: call.id, message: { ...message, at: message.createdAt }, lastMessage });
+    },
+  });
   const calls = createCallService({
     emit: emitToUser,
     authorize: async (caller, recipientId) => {
@@ -87,6 +110,7 @@ export const initSocket = (server) => {
 
   io.on('connection', (socket) => {
     meetings.attach(socket);
+    groupCalls.attach(socket);
     const authId = String(socket.user._id);
     // Personal room so the server can push to all of a user's tabs.
     socket.join(`user:${authId}`);

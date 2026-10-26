@@ -12,6 +12,8 @@
   --admin-table-heading: #c7dece;
   --admin-control-hover: #c6dbcd;
   --admin-switch-off: #9db4a5;
+  --admin-tabs-line: #b8c0ca;
+  --admin-tabs-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 5px rgb(0 0 0 / 14%), 0 6px 14px rgb(0 0 0 / 10%);
 }
 .dark .admin-workspace {
   --admin-primary: #009639;
@@ -21,6 +23,8 @@
   --admin-table-heading: #2b4533;
   --admin-control-hover: #344e3d;
   --admin-switch-off: #4c6355;
+  --admin-tabs-line: #515866;
+  --admin-tabs-shadow: 0 0 0 1px rgb(0 0 0 / 12%), 0 2px 5px rgb(0 0 0 / 28%), 0 6px 14px rgb(0 0 0 / 22%);
 }
 .admin-workspace .admin-button {
   display: inline-flex;
@@ -52,9 +56,10 @@
   max-width: 100%;
   padding: 4px;
   overflow-x: auto;
-  border: 1px solid var(--admin-line);
+  border: 1px solid var(--admin-tabs-line);
   border-radius: 11px;
   background: var(--admin-surface);
+  box-shadow: var(--admin-tabs-shadow);
 }
 .admin-workspace .admin-tabs > :is(button, a) {
   display: inline-flex;
@@ -84,7 +89,7 @@
 .admin-workspace .admin-tabs > :is([aria-pressed="true"], [aria-current="page"]) .admin-tab-count { background: rgb(255 255 255 / 15%); }
 .admin-workspace .admin-tab-badge { color: #009639; font-size: 9px; font-weight: 600; text-transform: uppercase; }
 .admin-workspace .admin-tabs > :is([aria-pressed="true"], [aria-current="page"]) .admin-tab-badge { color: #c4ead1; }
-.admin-workspace .admin-tabs-vertical { flex-direction: column; width: 100%; align-items: stretch; overflow: visible; padding: 0; border: 0; background: transparent; }
+.admin-workspace .admin-tabs-vertical { flex-direction: column; width: 100%; align-items: stretch; overflow: visible; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .admin-workspace .admin-tabs-vertical > :is(button, a) { justify-content: flex-start; white-space: normal; }
 .admin-stat-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
 @media (min-width: 640px) { .admin-stat-grid { grid-template-columns: repeat(var(--stat-tablet-columns), minmax(0, 1fr)); } }
@@ -118,8 +123,45 @@
 .admin-workspace main .admin-toolbar > .relative { min-width: 0; flex: 1 1 220px; }
 .admin-workspace main :is(.admin-data-table, .admin-panel) table thead { background: var(--admin-table-heading); }
 .admin-workspace main :is(.admin-data-table, .admin-panel) table th { color: var(--admin-ink); font-size: 10px; font-weight: 600; }
+.admin-workspace[data-workspace-role="admin"] {
+  --admin-header-surface: #cbd0d8;
+  --admin-header-ink: #303b49;
+  --admin-header-line: #b8c0ca;
+  --admin-row-shadow: inset 0 -1px 0 rgb(0 0 0 / 7%), inset 0 -5px 6px -6px rgb(0 0 0 / 24%);
+}
+.dark .admin-workspace[data-workspace-role="admin"] {
+  --admin-header-surface: #4b4f58;
+  --admin-header-ink: #f3f4f6;
+  --admin-header-line: #616875;
+  --admin-row-shadow: inset 0 -1px 0 rgb(0 0 0 / 20%), inset 0 -5px 6px -6px rgb(0 0 0 / 45%);
+}
+.admin-workspace[data-workspace-role="admin"] main.workspace-page table > thead,
+.admin-workspace[data-workspace-role="admin"] main.workspace-page table > thead > tr {
+  background-color: var(--admin-header-surface);
+  background-image: none;
+}
+.admin-workspace[data-workspace-role="admin"] main.workspace-page table > thead th {
+  padding-block: 14px;
+  border-bottom: 1px solid var(--admin-header-line);
+  background-color: var(--admin-header-surface);
+  background-image: none;
+  color: var(--admin-header-ink);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: 0.015em;
+  text-transform: none;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.admin-workspace[data-workspace-role="admin"] main.workspace-page table > tbody > tr {
+  border-block-width: 0;
+}
+.admin-workspace[data-workspace-role="admin"] main.workspace-page table > tbody > tr > :is(td, th) {
+  box-shadow: var(--admin-row-shadow);
+}
 .admin-workspace main :is(.admin-data-table, .admin-panel) table tbody tr { border-color: var(--admin-line); }
-.admin-workspace main :is(.admin-data-table, .admin-panel) table tbody tr:hover { background-color: rgb(39 79 49 / 4%); }
+.admin-workspace main :is(.admin-data-table, .admin-panel) table tbody tr:hover { background-color: var(--admin-soft); }
 .admin-workspace .career-marketplace { --career-surface: var(--admin-surface); --career-line: var(--admin-line); --career-soft: var(--admin-soft); --career-title: var(--admin-ink); }
 .admin-workspace .career-marketplace .career-board-navigation { padding: 0; border: 0; border-radius: 0; background: transparent; }
 .admin-workspace main :is(.admin-data-table, .admin-panel) table td { font-size: 12px; }

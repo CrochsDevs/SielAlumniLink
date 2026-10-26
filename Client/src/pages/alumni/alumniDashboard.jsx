@@ -21,6 +21,7 @@ import { profilePath } from "../../components/search/searchLinks";
 import api from "../../utils/axios";
 import AlumniFeed from "../../components/feed/AlumniFeed";
 import { FeedDialog } from "../../components/feed/FeedComposer";
+import "./alumniDashboard.css";
 
 const AlumniDashboard = () => {
   const { user } = useAuth();
@@ -300,7 +301,7 @@ const AlumniDashboard = () => {
 
         <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] workspace-page">
           {/* LEFT: Sieles ID card */}
-          <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          <aside className="alumni-dashboard-rail order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="h-16 overflow-hidden bg-gradient-to-r from-brand via-brand to-brand">
                 {user?.bannerImage && (
@@ -323,7 +324,7 @@ const AlumniDashboard = () => {
                   {profileStats.program}
                   {profileStats.batch ? ` • Batch ${profileStats.batch}` : ""}
                 </p>
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
+                <span className="alumni-verified-badge mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
                   <GraduationCap className="h-3 w-3" />
                   Verified Alumni
                 </span>
@@ -469,7 +470,7 @@ const AlumniDashboard = () => {
           </section>
 
           {/* RIGHT: Connection requests + Suggested connects */}
-          <aside className="order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:sticky xl:top-20 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+          <aside className="alumni-dashboard-rail order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:sticky xl:top-20 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
@@ -610,7 +611,7 @@ const AlumniDashboard = () => {
                           type="button"
                           disabled={connecting !== null}
                           onClick={() => handleConnect(person)}
-                          className="mt-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold text-brand transition hover:bg-brand hover:text-white disabled:opacity-50"
+                          className="alumni-suggested-connect"
                         >
                           {connecting === person.email ? "..." : "+ connect"}
                         </button>

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ArrowUpRight, BookOpen, Trash2 } from "lucide-react";
+import { ArrowUpRight, BookOpen, PenLine, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FeedDialog } from "../feed/FeedComposer";
 import FeedImages from "../feed/FeedImages";
@@ -21,6 +21,7 @@ export default function StoryReader({
   onRetry,
   onClose,
   onDeleted,
+  onEdit,
   isAdmin,
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -117,6 +118,17 @@ export default function StoryReader({
                   Meet the author
                   <ArrowUpRight size={14} />
                 </Link>
+              )}
+              {post.isMine && onEdit && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onEdit(post)}
+                  className={secondaryButton}
+                >
+                  <PenLine size={14} />
+                  Edit story
+                </button>
               )}
               {(post.isMine || isAdmin) && (
                 <button

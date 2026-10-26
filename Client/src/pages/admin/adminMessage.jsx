@@ -1,4 +1,3 @@
-import PageHeader from "../../components/ui/PageHeader";
 import { useState } from "react";
 import { useAuth } from "../../context/useAuth";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
@@ -8,6 +7,7 @@ import {
   ConvoList,
   ThreadPane,
 } from "../../components/chat/InboxParts";
+import "../../components/chat/MessagesWorkspace.css";
 
 const AdminMessage = () => {
   const { user } = useAuth();
@@ -16,32 +16,34 @@ const AdminMessage = () => {
   const { activeId } = inbox;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="messages-workspace min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <AdminSidebar
         user={user}
         mobileOpen={sidebarOpen}
         setMobileOpen={setSidebarOpen}
       />
 
-      <div className="lg:pl-64">
+      <div className="messages-workspace-layout lg:pl-64">
         <AdminTopbar
           user={user}
           title="Messages"
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="workspace-page mx-auto max-w-6xl p-4 sm:p-6">
-          <PageHeader title="Messages" description="Manage conversations and stay connected with your community." />
-          <div
-            className="grid grid-cols-1 overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm md:grid-cols-[300px_minmax(0,1fr)]"
-            style={{ height: "calc(100vh - 17rem)", minHeight: "480px" }}
+        <main
+          aria-label="Messages workspace"
+          className="workspace-page messages-page grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)]"
+        >
+          <aside
+            aria-label="Message list sidebar"
+            className={`messages-sidebar-slot ${activeId ? "hidden md:block" : "block"}`}
           >
-            <div className={`${activeId ? "hidden md:block" : "block"}`}>
-              <ConvoList {...inbox} />
-            </div>
-            <div className={`min-w-0 ${activeId ? "block" : "hidden md:block"}`}>
-              <ThreadPane {...inbox} />
-            </div>
+            <ConvoList {...inbox} workspace />
+          </aside>
+          <div
+            className={`messages-thread-slot min-w-0 ${activeId ? "block" : "hidden md:block"}`}
+          >
+            <ThreadPane {...inbox} workspace />
           </div>
         </main>
       </div>

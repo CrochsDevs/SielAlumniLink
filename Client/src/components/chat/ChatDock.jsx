@@ -2,6 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
 import { X, Minus, Send, Smile, ImagePlus, Paperclip } from "lucide-react";
 import ChatAvatar from "./ChatAvatar";
+import EditGroupName from "./EditGroupName";
+import GroupMembers from "./GroupMembers";
+import GroupCallButtons from "../call/GroupCallButtons";
 import MessageThread from "./MessageThread";
 import EmojiPicker from "emoji-picker-react";
 import { Link } from "react-router-dom";
@@ -179,6 +182,9 @@ const ChatWindow = ({
             </div>
           )}
         </div>
+        {convo.isGroup && <EditGroupName conversation={convo} />}
+        {convo.isGroup && <GroupMembers conversation={convo} />}
+        <GroupCallButtons conversation={convo} />
         <button
           type="button"
           onClick={onToggleMin}

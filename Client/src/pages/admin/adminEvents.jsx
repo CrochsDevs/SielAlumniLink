@@ -1,13 +1,18 @@
-import AdminStatCard from "../../components/admin/AdminStatCard";
-import { AdminStatGrid, AdminTabs, AdminButton } from "../../components/admin/AdminUI";
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import AdminStatCard from "../../components/admin/AdminStatCard";
+import {
+  AdminStatGrid,
+  AdminTabs,
+  AdminButton,
+} from "../../components/admin/AdminUI";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -34,6 +39,29 @@ import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import PageHeader from "../../components/ui/PageHeader";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
+
+const EVENT_COLUMNS = [
+  {
+    accessorKey: "title",
+    header: "Event",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "startAt",
+    header: "Schedule",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "isActive",
+    header: "Status",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "actions",
+    header: "Actions",
+    meta: { headerClassName: "px-5 py-3 text-right font-semibold" },
+  },
+];
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, "0");
@@ -333,9 +361,7 @@ function CollapseCard({ title, open, onToggle, children }) {
         aria-expanded={open}
         className="flex w-full items-center justify-between text-left"
       >
-        <span className="admin-section-title">
-          {title}
-        </span>
+        <span className="admin-section-title">{title}</span>
         {open ? (
           <ChevronUp className="h-4 w-4 text-zinc-400" />
         ) : (
@@ -532,7 +558,9 @@ export default function AdminEvents() {
       const res = await api.get("/events", { params: { all: "true" } });
       setEvents(res.data.data || []);
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to load events" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to load events",
+      });
     } finally {
       setLoading(false);
     }
@@ -598,8 +626,33 @@ export default function AdminEvents() {
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+  const eventsTable = useReactTable({
+    data: filtered,
+    columns: EVENT_COLUMNS,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
+    autoResetPageIndex: false,
+    state: {
+      pagination: {
+        pageIndex: Math.min(
+          page - 1,
+          Math.max(0, Math.ceil(filtered.length / perPage) - 1),
+        ),
+        pageSize: perPage,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(eventsTable.getState().pagination)
+          : updater;
+      setPage(next.pageIndex + 1);
+      setPerPage(next.pageSize);
+    },
+  });
+  const totalPages = Math.max(1, eventsTable.getPageCount());
+  const paged = eventsTable.getRowModel().rows.map((row) => row.original);
 
   // Events that touch a day, including multi-day events.
   const eventsOnDay = useCallback(
@@ -658,7 +711,9 @@ export default function AdminEvents() {
       form.startAt &&
       new Date(form.endAt) < new Date(form.startAt)
     ) {
-      toast.warning("Check the dates", { description: "The end time must be after the start time." });
+      toast.warning("Check the dates", {
+        description: "The end time must be after the start time.",
+      });
       return;
     }
     setSaving(true);
@@ -682,7 +737,9 @@ export default function AdminEvents() {
       fetchEvents();
       toast.success("Saved");
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to save event" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to save event",
+      });
     } finally {
       setSaving(false);
     }
@@ -707,7 +764,9 @@ export default function AdminEvents() {
       toast.success("Deleted");
       return true;
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to delete event" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to delete event",
+      });
       return false;
     }
   };
@@ -717,7 +776,9 @@ export default function AdminEvents() {
       await api.put(`/events/${event._id}`, { isActive: !event.isActive });
       fetchEvents();
     } catch (err) {
-      toast.error("Error", { description: err.response?.data?.message || "Failed to update event" });
+      toast.error("Error", {
+        description: err.response?.data?.message || "Failed to update event",
+      });
     }
   };
 
@@ -888,9 +949,23 @@ export default function AdminEvents() {
         </h2>
       )}
 
-      <AdminTabs label="Calendar view" value={viewMode} onChange={setViewMode} items={VIEWS.map(item => ({ id: item.key, label: item.label }))} className="lg:mx-auto" />
+      <AdminTabs
+        label="Calendar view"
+        value={viewMode}
+        onChange={setViewMode}
+        items={VIEWS.map((item) => ({ id: item.key, label: item.label }))}
+        className="lg:mx-auto"
+      />
 
-      <AdminButton onClick={() => openAddForDay(viewMode === "list" ? new Date() : currentDate)} className="ml-auto"><Plus size={15} />Create event</AdminButton>
+      <AdminButton
+        onClick={() =>
+          openAddForDay(viewMode === "list" ? new Date() : currentDate)
+        }
+        className="ml-auto"
+      >
+        <Plus size={15} />
+        Create event
+      </AdminButton>
     </div>
   );
 
@@ -1031,12 +1106,30 @@ export default function AdminEvents() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-[12.5px]">
             <thead>
-              <tr className="border-b border-zinc-100 text-[11px] text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
-                <th className="px-5 py-3 font-semibold">Event</th>
-                <th className="px-5 py-3 font-semibold">Schedule</th>
-                <th className="px-5 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 text-right font-semibold">Actions</th>
-              </tr>
+              {eventsTable.getHeaderGroups().map((group) => (
+                <tr
+                  key={group.id}
+                  className={
+                    "border-b border-zinc-100 text-[11px] text-zinc-400 dark:border-zinc-800 dark:text-zinc-500"
+                  }
+                >
+                  {group.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      scope="col"
+                      colSpan={header.colSpan}
+                      className={header.column.columnDef.meta?.headerClassName}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
             </thead>
             <tbody>
               {paged.map((event) => (
@@ -1138,12 +1231,11 @@ export default function AdminEvents() {
       <DataPagination
         page={Math.min(page, totalPages)}
         totalPages={totalPages}
-        onPageChange={setPage}
+        onPageChange={(value) => eventsTable.setPageIndex(value - 1)}
         perPage={perPage}
-        onPerPageChange={(n) => {
-          setPerPage(n);
-          setPage(1);
-        }}
+        onPerPageChange={(pageSize) =>
+          eventsTable.setPagination({ pageIndex: 0, pageSize })
+        }
         totalItems={filtered.length}
         itemLabel="events"
       />
@@ -1187,13 +1279,41 @@ export default function AdminEvents() {
 
         <main className="workspace-page mx-auto grid max-w-[1500px] gap-4 p-4 sm:p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
           <div className="order-first space-y-4 xl:col-span-2">
-            <PageHeader title="Calendar" description="Manage community events, schedules, and reminders." />
+            <PageHeader
+              title="Calendar"
+              description="Manage community events, schedules, and reminders."
+            />
             <AdminStatGrid columns={3}>
               {[
-                { label: "Total events", value: counts.total, icon: Calendar, caption: "community activities", detail: "Published and draft activities" },
-                { label: "Published", value: counts.active, icon: Power, caption: "visible events", detail: "Available in the community calendar" },
-                { label: "Upcoming", value: counts.upcoming, icon: CalendarDays, caption: "scheduled activities", detail: "Activities that have not started" },
-              ].map((item, index) => <AdminStatCard key={item.label} {...item} featured={index === 0} loading={loading} />)}
+                {
+                  label: "Total events",
+                  value: counts.total,
+                  icon: Calendar,
+                  caption: "community activities",
+                  detail: "Published and draft activities",
+                },
+                {
+                  label: "Published",
+                  value: counts.active,
+                  icon: Power,
+                  caption: "visible events",
+                  detail: "Available in the community calendar",
+                },
+                {
+                  label: "Upcoming",
+                  value: counts.upcoming,
+                  icon: CalendarDays,
+                  caption: "scheduled activities",
+                  detail: "Activities that have not started",
+                },
+              ].map((item, index) => (
+                <AdminStatCard
+                  key={item.label}
+                  {...item}
+                  featured={index === 0}
+                  loading={loading}
+                />
+              ))}
             </AdminStatGrid>
           </div>
           {/* left rail */}

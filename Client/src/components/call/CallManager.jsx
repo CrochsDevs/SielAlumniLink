@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2 } from 'lucide-react';
 import { getSocket } from '../../realtime/socket';
+import { acquireCall, releaseCall } from '../../realtime/callActivity';
 
 // Free public STUN for NAT traversal. Note: strict corporate/school
 // NATs may still need a TURN server (follow-up infra) — P2P works
@@ -29,6 +30,7 @@ const CallManager = ({ getDisplayName }) => {
   }, [active]);
 
   const cleanup = useCallback(() => {
+    releaseCall('direct');
     activeRef.current = null;
     callIdRef.current = null;
     pendingIceRef.current = [];
@@ -48,6 +50,8 @@ const CallManager = ({ getDisplayName }) => {
     setMuted(false);
     setVideoOff(false);
   }, []);
+
+  useEffect(() => () => cleanup(), [cleanup]);
 
   const attachStreams = useCallback((pc, localStream, kind) => {
     localStreamRef.current = localStream;
@@ -80,6 +84,7 @@ const CallManager = ({ getDisplayName }) => {
   // Outgoing call — exposed globally for thread headers.
   const startCall = useCallback(async (toAuthId, displayName, kind) => {
     if (callIdRef.current || activeRef.current || startingRef.current || !toAuthId) return;
+    if (!acquireCall('direct')) return;
     startingRef.current = true;
     try {
       const localStream = await navigator.mediaDevices.getUserMedia({
@@ -122,7 +127,7 @@ const CallManager = ({ getDisplayName }) => {
 
     const onSignal = async ({ fromAuthId, fromEmail, kind, data }) => {
       if (kind === 'invite') {
-        if (callIdRef.current || activeRef.current || startingRef.current) {
+        if (callIdRef.current || activeRef.current || startingRef.current || !acquireCall('direct')) {
           socket.emit('call:signal', { toAuthId: fromAuthId, kind: 'decline', data: { callId: data?.callId } });
           return;
         }

@@ -2,7 +2,38 @@ import { ConversationModel, MessageModel } from './messages.models.js';
 import AuthModel from '../auth/auth.models.js';
 import UserModel from '../users/users.models.js';
 import ConnectionModel from '../connections/connections.models.js';
-import { emitToUser } from '../../realtime/socket.js';
+import { emitToUser, removeGroupCallMember } from '../../realtime/socket.js';
+import { createGroupMembersService, MAX_GROUP_MEMBERS } from './group-members.js';
+import { groupRoles } from './group-admin.js';
+
+const groupMembers = createGroupMembersService({ conversations: ConversationModel, connections: ConnectionModel, accounts: AuthModel, profiles: UserModel });
+const groupAction = handler => async (req, res) => {
+  try { res.status(200).json({ success: true, data: await handler(req) }); }
+  catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Unable to update group members. Please try again.' }); }
+};
+export const listGroupMembers = groupAction(req => groupMembers.list(req.params.id, req.user._id));
+export const groupCandidates = groupAction(req => groupMembers.candidates(req.params.id, req.user._id));
+export const addGroupMembers = groupAction(async req => {
+  const data = await groupMembers.add(req.params.id, req.user._id, req.body?.authIds);
+  for (const member of data.members) emitToUser(member.authId, 'conversation:members', data);
+  return data;
+});
+export const promoteGroupAdmin = groupAction(async req => {
+  await ConversationModel.promoteAdmin(req.params.id, req.user._id, req.body?.authId);
+  const data = await groupMembers.list(req.params.id, req.user._id);
+  for (const member of data.members) emitToUser(member.authId, 'conversation:members', data);
+  return data;
+});
+const exitGroup = async (req, targetId) => {
+  const group = await ConversationModel.exitGroup(req.params.id, req.user._id, targetId);
+  await removeGroupCallMember(String(group._id), targetId);
+  const data = { conversationId: String(group._id), removedAuthId: targetId, memberCount: group.participants.length, ...groupRoles(group) };
+  emitToUser(targetId, 'conversation:removed', { conversationId: data.conversationId });
+  for (const member of group.participants) emitToUser(member.authId, 'conversation:members', data);
+  return data;
+};
+export const leaveGroup = groupAction(req => exitGroup(req, String(req.user._id)));
+export const removeGroupMember = groupAction(req => exitGroup(req, req.params.authId));
 
 const isMember = (convo, authId) =>
   (convo.participants || []).map((p) => String(p.authId)).includes(String(authId));
@@ -29,6 +60,7 @@ const enrich = async (convo, myAuthId) => {
     return {
       _id: convo._id,
       isGroup: true,
+      ...groupRoles(convo),
       name: convo.name || 'Group Chat',
       email: '',
       authId: '',
@@ -177,7 +209,7 @@ export const sendMessage = async (req, res) => {
     }
 
     const other = (convo.participants || []).find((p) => String(p.authId) !== String(req.user._id));
-    if (other && !(await canMessage(req.user, other.authId))) {
+    if (!convo.isGroup && other && !(await canMessage(req.user, other.authId))) {
       return res.status(403).json({
         success: false,
         message: NOT_CONNECTED_MESSAGE
@@ -252,7 +284,7 @@ export const createGroup = async (req, res) => {
         message: 'Invite at least 2 people to start a group chat'
       });
     }
-    if (invited.length > 20) {
+    if (invited.length + 1 > MAX_GROUP_MEMBERS) {
       return res.status(400).json({
         success: false,
         message: 'Maximum 20 members per group'
@@ -290,7 +322,7 @@ export const createGroup = async (req, res) => {
     const convo = await ConversationModel.createGroup({ name, members });
     res.status(201).json({
       success: true,
-      data: { _id: convo._id, name: convo.name },
+      data: { _id: convo._id, name: convo.name, ...groupRoles(convo) },
       message: 'Group chat created'
     });
   } catch (error) {
@@ -298,6 +330,17 @@ export const createGroup = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+export const renameGroup = async (req, res) => {
+  try {
+    const group = await ConversationModel.renameGroup(req.params.id, req.user._id, req.body?.name);
+    const data = { conversationId: String(group._id), name: group.name };
+    for (const member of group.participants) emitToUser(member.authId, 'conversation:renamed', data);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Unable to rename the group. Please try again.' });
   }
 };
 

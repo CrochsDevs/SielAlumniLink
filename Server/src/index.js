@@ -6,8 +6,10 @@ import { initSocket } from "../realtime/socket.js";
 import { createServer } from "http";
 import app from "./app.js";
 import { ensureFeedIndexes } from '../modules/feed/feed.service.js';
+import { ensureNotificationRetention } from '../modules/notifications/notifications.retention.js';
 
 await connectDB();
+await ensureNotificationRetention(client.db('SielAlumni'));
 await ensureSearchIndexes(client.db('SielAlumni'));
 await ensureFeedIndexes(client.db('SielAlumni'));
 await AuthModel.markPasswordSetupRequiredForExistingUsers();

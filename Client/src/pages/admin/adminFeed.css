@@ -1,0 +1,13 @@
+.admin-workspace main.admin-feed-page {
+  --alumni-card-shadow: 0 0 6px 1px rgb(0 0 0 / 12%), 0 0 18px 2px rgb(0 0 0 / 16%);
+}
+
+.dark .admin-workspace main.admin-feed-page {
+  --alumni-card-shadow: 0 0 8px 1px rgb(0 0 0 / 28%), 0 0 20px 2px rgb(0 0 0 / 40%);
+}
+
+/* Leave room inside the scrolling rails so card shadows stay visible. */
+.admin-workspace .admin-feed-page > .admin-feed-rail {
+  margin: -16px;
+  padding: 16px;
+}

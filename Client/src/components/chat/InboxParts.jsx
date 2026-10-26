@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   Send,
   ArrowLeft,
   MessageSquareOff,
+  MessageSquare,
   Users,
   Plus,
   Check,
@@ -13,7 +14,7 @@ import {
   ImagePlus,
   Paperclip,
 } from "lucide-react";
-import { gooeyToast as toast } from 'goey-toast';
+import { gooeyToast as toast } from "goey-toast";
 import { useChat } from "../../context/useChat.js";
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
@@ -21,6 +22,10 @@ import { formatTime } from "./messageFormat";
 import MessageThread from "./MessageThread";
 import EmojiPicker from "emoji-picker-react";
 import ChatAvatar from "./ChatAvatar";
+import EditGroupName from "./EditGroupName";
+import GroupMembers from "./GroupMembers";
+import GroupCallButtons from "../call/GroupCallButtons";
+import { FeedDialog } from "../feed/FeedComposer";
 
 // Loads only the people the current user is connected with
 const useConnectedPeople = (open) => {
@@ -68,6 +73,7 @@ const useConnectedPeople = (open) => {
 };
 
 const useInboxPage = () => {
+  const { user } = useAuth();
   const {
     convos,
     threads,
@@ -78,22 +84,69 @@ const useInboxPage = () => {
     createGroupChat,
     openChat,
   } = useChat();
-  const [activeId, setActiveId] = useState(null);
+  const accountId = user?.authId || user?._id;
+  const storageKey = accountId
+    ? `messages:last-conversation:${accountId}`
+    : null;
+  const savedId = useMemo(() => {
+    try {
+      return storageKey ? localStorage.getItem(storageKey) : null;
+    } catch {
+      return null;
+    }
+  }, [storageKey]);
+  const [selection, setSelection] = useState({ storageKey: null, id: null });
+  const activeId = selection.storageKey === storageKey ? selection.id : null;
+  const setActiveId = useCallback(
+    (id) => {
+      const conversationId = id == null ? null : String(id);
+      setSelection({ storageKey, id: conversationId });
+      // Going back to the mobile list keeps the last conversation for the next visit.
+      if (storageKey && conversationId) {
+        try {
+          localStorage.setItem(storageKey, conversationId);
+        } catch {
+          // Conversation selection still works when browser storage is unavailable.
+        }
+      }
+    },
+    [storageKey],
+  );
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
+  const [chatFilter, setChatFilter] = useState("all");
   const [showEmoji, setShowEmoji] = useState(false);
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupEmails, setGroupEmails] = useState([]); // now an array
   const [groupSaving, setGroupSaving] = useState(false);
 
+  // Initialize when the asynchronous list arrives. A deliberate null selection
+  // keeps the mobile list open; later messages must not change the selected chat.
+  if (
+    storageKey &&
+    convos.length &&
+    (selection.storageKey !== storageKey ||
+      (selection.id && !convos.some((c) => String(c._id) === selection.id)))
+  ) {
+    const remembered = convos.find((c) => String(c._id) === savedId);
+    const latest = convos.reduce((recent, conversation) =>
+      (Date.parse(conversation.time) || 0) > (Date.parse(recent.time) || 0)
+        ? conversation
+        : recent,
+    );
+    setSelection({ storageKey, id: String((remembered || latest)._id) });
+  }
+
   useEffect(() => {
     if (activeId) loadThread(activeId);
   }, [activeId, loadThread]);
 
   const active = convos.find((c) => String(c._id) === String(activeId));
-  const filtered = convos.filter((c) =>
-    `${c.name} ${c.email}`.toLowerCase().includes(query.toLowerCase()),
+  const filtered = convos.filter(
+    (c) =>
+      (chatFilter !== "groups" || c.isGroup) &&
+      `${c.name} ${c.email}`.toLowerCase().includes(query.toLowerCase()),
   );
 
   const send = (e) => {
@@ -108,7 +161,10 @@ const useInboxPage = () => {
   const sendFile = (file, kind) => {
     if (!file || !activeId) return;
     if (file.size > 1_500_000) {
-      toast.error("Error", { description: "File too large (max 1.5MB for now — Cloudinary coming soon)" });
+      toast.error("Error", {
+        description:
+          "File too large (max 1.5MB for now — Cloudinary coming soon)",
+      });
       return;
     }
     const reader = new FileReader();
@@ -132,7 +188,9 @@ const useInboxPage = () => {
     e.preventDefault();
     const emails = groupEmails;
     if (emails.length < 2) {
-      toast.error("Error", { description: "Add at least 2 connected Sieles (3+ people total)" });
+      toast.error("Error", {
+        description: "Add at least 2 connected Sieles (3+ people total)",
+      });
       return;
     }
     setGroupSaving(true);
@@ -143,6 +201,7 @@ const useInboxPage = () => {
     setGroupSaving(false);
     if (created) {
       const full = {
+        ...created,
         _id: created._id,
         name: groupName.trim() || "Group Chat",
         isGroup: true,
@@ -167,6 +226,8 @@ const useInboxPage = () => {
     send,
     showEmoji,
     setShowEmoji,
+    chatFilter,
+    setChatFilter,
     groupOpen,
     setGroupOpen,
     groupName,
@@ -199,18 +260,12 @@ const GroupModal = ({
     );
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
+    <FeedDialog
+      title="New group chat"
+      onClose={onClose}
+      busy={groupSaving}
+      header={<div className="flex items-center gap-2 text-[15px] font-bold"><Users className="h-4 w-4 text-brand" /><h3>New group chat</h3></div>}
     >
-      <div
-        className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="flex items-center gap-2 text-[15px] font-extrabold text-zinc-900 dark:text-zinc-100">
-          <Users className="h-4 w-4 text-brand" />
-          New group chat
-        </h2>
         <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
           3 or more connects can chat together. Add at least 2 connected Sieles.
         </p>
@@ -287,6 +342,7 @@ const GroupModal = ({
           <div className="flex gap-2 pt-1">
             <button
               type="button"
+              disabled={groupSaving}
               onClick={onClose}
               className="h-10 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[13px] font-bold text-zinc-600 dark:text-zinc-300"
             >
@@ -301,12 +357,14 @@ const GroupModal = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </FeedDialog>
   );
 };
 
 const ConvoList = ({
+  workspace = false,
+  chatFilter,
+  setChatFilter,
   filtered,
   activeId,
   setActiveId,
@@ -323,8 +381,47 @@ const ConvoList = ({
   closeGroup,
 }) => (
   // min-h-0 + overflow-hidden: lets the list below shrink and scroll instead of growing the page
-  <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
-    <div className="shrink-0 border-b border-zinc-100 dark:border-zinc-800 p-3">
+  <div className="inbox-conversations flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
+    {workspace && (
+      <div className="inbox-titlebar">
+        <h1>Messages</h1>
+        <button
+          type="button"
+          onClick={() => setGroupOpen(true)}
+          aria-label="New group chat"
+          title="New group chat"
+        >
+          <Plus size={20} />
+        </button>
+      </div>
+    )}
+    <div
+      className="inbox-filters flex gap-2 px-3 pt-3"
+      role="group"
+      aria-label="Conversation filters"
+    >
+      {[
+        ["all", "All chats"],
+        ["groups", "Groups"],
+      ].map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={chatFilter === value}
+          onClick={() => setChatFilter(value)}
+          className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${chatFilter === value ? "bg-brand text-white" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
+        >
+          {workspace &&
+            (value === "groups" ? (
+              <Users size={16} />
+            ) : (
+              <MessageSquare size={16} />
+            ))}
+          {label}
+        </button>
+      ))}
+    </div>
+    <div className="inbox-search shrink-0 border-b border-zinc-100 dark:border-zinc-800 p-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
         <input
@@ -334,16 +431,26 @@ const ConvoList = ({
           className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
         />
       </div>
-      <button
-        type="button"
-        onClick={() => setGroupOpen(true)}
-        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 py-2 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-brand hover:text-brand"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        New group chat
-      </button>
+      {!workspace && (
+        <button
+          type="button"
+          onClick={() => setGroupOpen(true)}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-600 py-2 text-[12px] font-bold text-zinc-500 dark:text-zinc-400 transition hover:border-brand hover:text-brand"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New group chat
+        </button>
+      )}
     </div>
-    <ul className="min-h-0 max-h-[calc(100vh-16rem)] flex-1 overflow-y-auto overscroll-contain p-1.5">
+    {workspace && (
+      <div className="inbox-section-label">
+        <span>
+          {chatFilter === "groups" ? "Group conversations" : "Conversations"}
+        </span>
+        <span>{filtered.length}</span>
+      </div>
+    )}
+    <ul className="inbox-conversation-list min-h-0 max-h-[calc(100vh-16rem)] flex-1 overflow-y-auto overscroll-contain p-1.5">
       {filtered.map((c) => {
         const isActive = String(activeId) === String(c._id);
         return (
@@ -351,7 +458,8 @@ const ConvoList = ({
             <button
               type="button"
               onClick={() => setActiveId(String(c._id))}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+              aria-pressed={isActive}
+              className={`inbox-conversation-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
                 isActive
                   ? "bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-200/60 dark:ring-brand"
                   : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
@@ -393,10 +501,14 @@ const ConvoList = ({
         <li className="flex flex-col items-center p-8 text-center">
           <MessageSquareOff className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
           <p className="mt-2 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400">
-            No conversations yet
+            {chatFilter === "groups"
+              ? "No groups found"
+              : "No conversations yet"}
           </p>
           <p className="text-[11.5px] text-zinc-400 dark:text-zinc-500">
-            Visit someone's profile and press Message.
+            {chatFilter === "groups"
+              ? "Groups you join will appear here. You can also create a new group."
+              : "Visit someone's profile and press Message."}
           </p>
         </li>
       )}
@@ -417,6 +529,7 @@ const ConvoList = ({
 );
 
 const ThreadPane = ({
+  workspace = false,
   active,
   activeId,
   setActiveId,
@@ -430,6 +543,7 @@ const ThreadPane = ({
   unsendChatMessage,
   sendFile,
 }) => {
+  const { user } = useAuth();
   const messages = threads[activeId] || [];
   const scrollRef = useRef(null);
   const emojiWrapRef = useRef(null);
@@ -461,7 +575,7 @@ const ThreadPane = ({
 
   if (!active) {
     return (
-      <div className="hidden flex-1 flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-zinc-950/50 p-8 text-center md:flex">
+      <div className="inbox-empty hidden flex-1 flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-zinc-950/50 p-8 text-center md:flex">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950 text-brand dark:text-brand">
           <Send className="h-6 w-6" />
         </span>
@@ -477,8 +591,8 @@ const ThreadPane = ({
 
   return (
     // min-h-0 + overflow-hidden: the messages area below becomes the scroll container
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
+    <div className="inbox-thread flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white dark:bg-zinc-900">
+      <div className="inbox-thread-header flex shrink-0 items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800 px-4 py-3">
         <button
           type="button"
           onClick={() => setActiveId(null)}
@@ -489,7 +603,9 @@ const ThreadPane = ({
         </button>
         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
           <ChatAvatar convo={active} />
-          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-brand" />
+          {!workspace && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-brand" />
+          )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
@@ -501,9 +617,20 @@ const ThreadPane = ({
             ) : null}
           </span>
           <span className="block text-[11px] font-medium text-brand dark:text-brand">
-            Active now
+            {workspace
+              ? active.isGroup
+                ? "Group conversation"
+                : "Direct message"
+              : "Active now"}
           </span>
         </span>
+        {active.isGroup && (
+          <EditGroupName key={active._id} conversation={active} />
+        )}
+        {active.isGroup && (
+          <GroupMembers key={`members-${active._id}`} conversation={active} />
+        )}
+        <GroupCallButtons conversation={active} />
         {!active.isGroup && active.authId && (
           <span className="flex shrink-0 gap-0.5">
             <button
@@ -534,19 +661,28 @@ const ThreadPane = ({
 
       <div
         ref={scrollRef}
-        className="min-h-0 max-h-[calc(100vh-21rem)] flex-1 space-y-2 overflow-y-auto overscroll-contain bg-[#f4f6f4] dark:bg-zinc-950 p-4"
+        className="inbox-message-list min-h-0 max-h-[calc(100vh-21rem)] flex-1 space-y-2 overflow-y-auto overscroll-contain bg-[#f4f6f4] dark:bg-zinc-950 p-4"
       >
         {messages.length === 0 && (
           <p className="py-8 text-center text-[12px] text-zinc-400 dark:text-zinc-500">
             No messages yet — say hello! 👋
           </p>
         )}
-        <MessageThread messages={messages} isGroup={active.isGroup} convoId={activeId} onEdit={editChatMessage} onUnsend={unsendChatMessage} />
+        <MessageThread
+          messages={messages}
+          isGroup={active.isGroup}
+          convoId={activeId}
+          onEdit={editChatMessage}
+          onUnsend={unsendChatMessage}
+          layout={workspace ? "stream" : "bubbles"}
+          user={user}
+          conversation={active}
+        />
       </div>
 
       <form
         onSubmit={send}
-        className="relative flex shrink-0 items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 p-3"
+        className="inbox-composer relative flex shrink-0 items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 p-3"
       >
         <div ref={emojiWrapRef} className="relative shrink-0">
           <button
@@ -607,7 +743,7 @@ const ThreadPane = ({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={`Message ${active.isGroup ? "group" : active.name.split(" ")[0]}...`}
-          className="h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
+          className="inbox-message-input h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
         />
         <button
           type="submit"
