@@ -6,7 +6,7 @@
   --alumni-card-border: #bbd2c1;
   --alumni-tab: #d0e1d3;
   --alumni-heading: #19472f;
-  --alumni-card-shadow: 0 3px 10px rgb(30 62 40 / 4%);
+  --alumni-card-shadow: var(--student-card-shadow);
 }
 .dark .student-career-page {
   background: #111b15;
@@ -16,5 +16,5 @@
   --alumni-card-border: #304237;
   --alumni-tab: #293e30;
   --alumni-heading: #e4f2e7;
-  --alumni-card-shadow: 0 2px 6px rgb(0 0 0 / 5%);
+  --alumni-card-shadow: var(--student-card-shadow);
 }

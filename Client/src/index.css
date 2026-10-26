@@ -244,6 +244,7 @@
   border-color: #b9c7bf;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%), 0 5px 12px rgb(0 0 0 / 10%);
 }
+
 .dark .workspace-search-input {
   border-color: #64756b;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
@@ -254,6 +255,28 @@
   outline-offset: 2px;
 }
 
+/* Student cards use the same elevation as admin cards, while keeping their palette.
+   Scope this to screen panels so form controls and printable resumes stay separate. */
+@media screen {
+  .member-workspace[data-workspace-role="student"] {
+    --student-card-shadow: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
+    --student-card-hover-shadow: 0 0 8px 1px rgb(0 0 0 / 12%), 0 8px 22px rgb(0 0 0 / 18%);
+    --alumni-card-shadow: var(--student-card-shadow);
+    --alumni-card-hover-shadow: var(--student-card-hover-shadow);
+  }
+  .dark .member-workspace[data-workspace-role="student"] {
+    --student-card-shadow: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
+    --student-card-hover-shadow: 0 0 10px 1px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 48%);
+  }
+  .member-workspace[data-workspace-role="student"] main.workspace-page :is(section, article, aside, nav, div, p, form):is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):is(.bg-white.border, .shadow-sm):not(:where(dialog *, [role="dialog"] *, .portfolio-resume, .portfolio-resume *, .opportunity-prose *, .workspace-page-header, [role="tabpanel"], .career-listing, aside.career-filter-panel)) {
+    box-shadow: var(--student-card-shadow);
+  }
+  @media (hover: hover) {
+    .member-workspace[data-workspace-role="student"] main.workspace-page :is(section, article, div):is(.bg-white.border, .shadow-sm):is(.hover\:shadow-sm, .hover\:shadow-md):hover:not(:where(dialog *, [role="dialog"] *, .portfolio-resume, .portfolio-resume *, .opportunity-prose *, .workspace-page-header, [role="tabpanel"])) {
+      box-shadow: var(--student-card-hover-shadow);
+    }
+  }
+}
 /* Carry the admin card depth through alumni panels, including colored cards.
    Avatars, controls, dialogs and printable documents keep their own elevation. */
 @media screen {

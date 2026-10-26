@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { gooeyToast as toast } from 'goey-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import clsuLogo from '../assets/logo/clsu_logo.png';
+import './login.css';
 
 const errorToast = (message) => toast.error(message);
 
@@ -10,6 +12,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login, requestMagicLink, error: authError } = useAuth();
   const [authMode, setAuthMode] = useState('magic');
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [magicMessage, setMagicMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,10 +65,10 @@ const Login = () => {
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-emerald-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-emerald-950/30 flex items-center justify-center p-4 font-sans">
+      <div className="login-page min-h-screen bg-gradient-to-br from-zinc-50 via-white to-emerald-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-emerald-950/30 flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 sm:p-6 relative overflow-hidden">
+          <div className="login-panel bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 sm:p-6 relative overflow-hidden">
 
             <div className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-brand/8 via-transparent to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
@@ -99,7 +102,7 @@ const Login = () => {
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[10.5px] font-semibold text-zinc-700 dark:text-zinc-200">Password</label>
+                        <label htmlFor="login-password" className="block text-[10.5px] font-semibold text-zinc-700 dark:text-zinc-200">Password</label>
                         <Link
                           to="/forgot-password"
                           className="text-[10px] font-medium text-brand hover:text-brand transition-colors hover:underline underline-offset-2"
@@ -107,15 +110,22 @@ const Login = () => {
                           Forgot password?
                         </Link>
                       </div>
+                      <div className="login-password-wrap">
                       <input
-                        type="password"
+                        id="login-password"
+                        type={showPassword ? 'text' : 'password'}
                         name="password"
+                        autoComplete="current-password"
                         value={formData.password}
                         onChange={handleChange}
                         required
                         placeholder="Enter your password"
-                        className="w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
+                        className="login-password-input w-full h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
                       />
+                      <button type="button" onClick={() => setShowPassword(visible => !visible)} className="login-password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} aria-controls="login-password">
+                        {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                      </button>
+                      </div>
                     </div>
 
                     <button
@@ -136,7 +146,7 @@ const Login = () => {
 
                     <button
                       type="button"
-                      onClick={() => setAuthMode('magic')}
+                      onClick={() => { setAuthMode('magic'); setShowPassword(false); }}
                       className="w-full h-7 text-[10.5px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 transition-colors"
                     >
                       Use single-use login instead
@@ -235,7 +245,7 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-brand via-brand to-brand rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden flex flex-col justify-center items-center text-center">
+          <div className="login-panel bg-gradient-to-br from-brand via-brand to-brand rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden flex flex-col justify-center items-center text-center">
 
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand/30 rounded-full blur-[80px] pointer-events-none"></div>
             <div className="absolute top-0 right-0 w-48 h-48 bg-brand/20 rounded-full blur-3xl pointer-events-none"></div>
