@@ -1,5 +1,30 @@
 .mentorship-page {
   --mentorship-space: 1.25rem;
+  --mentorship-field-border: #bdcbc3;
+  --mentorship-field-background: #ffffff;
+  --mentorship-field-shadow: 0 2px 6px rgb(15 23 42 / 13%), inset 0 1px 2px rgb(15 23 42 / 5%);
+}
+
+.dark .mentorship-page {
+  --mentorship-field-border: #4c5e53;
+  --mentorship-field-background: #181c19;
+  --mentorship-field-shadow: 0 2px 7px rgb(0 0 0 / 40%), inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.mentorship-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]) {
+  border-color: var(--mentorship-field-border);
+  background-color: var(--mentorship-field-background);
+  box-shadow: var(--mentorship-field-shadow);
+}
+
+.mentorship-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):hover:not(:disabled) {
+  border-color: #7f9b89;
+}
+
+.mentorship-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):focus-visible {
+  outline: none;
+  border-color: #009639;
+  box-shadow: 0 0 0 3px rgb(0 150 57 / 17%), var(--mentorship-field-shadow);
 }
 
 .mentorship-page .mentorship-tabs {
@@ -40,7 +65,10 @@
 }
 
 .mentorship-person-card {
+  position: relative;
   display: flex;
+  width: 100%;
+  max-width: 22.5rem;
   min-width: 0;
   height: 100%;
   flex-direction: column;
@@ -49,15 +77,56 @@
   transition: box-shadow .18s, border-color .18s;
 }
 
-.mentorship-person-body { padding: 1.25rem; }
-.mentorship-person-actions { min-height: 6.75rem; margin-top: auto; padding: 1rem 1.25rem; }
+.mentorship-recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.mentorship-recommendation-grid-single { grid-template-columns: minmax(0, 22.5rem); }
+.mentorship-recommendation-grid .mentorship-person-card { max-width: none; }
+
+.mentorship-directory-grid {
+  max-width: 69.5rem;
+  columns: 3 18rem;
+  column-gap: 1rem;
+}
+
+.mentorship-directory-grid .mentorship-person-card {
+  display: flex;
+  max-width: none;
+  height: auto;
+  margin-bottom: 1rem;
+  break-inside: avoid;
+  vertical-align: top;
+}
+
+.mentorship-profile-shortcut {
+  position: absolute;
+  right: .5rem;
+  top: .5rem;
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: .375rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.mentorship-profile-shortcut:hover { background: rgb(0 150 57 / 7%); color: #009639; }
+.mentorship-person-card:has(.mentorship-profile-shortcut) .mentorship-person-body > :first-child { padding-right: 1rem; }
+
+.mentorship-person-body { padding: 1rem; }
+.mentorship-person-actions { margin-top: auto; padding: .75rem 1rem; }
 
 .mentorship-tag {
   display: inline-flex;
   align-items: center;
   gap: .375rem;
   border-radius: .5rem;
-  padding: .375rem .625rem;
+  padding: .25rem .5rem;
   font-size: .6875rem;
   font-weight: 500;
   line-height: 1rem;
@@ -66,14 +135,14 @@
 .mentorship-action-primary,
 .mentorship-action-secondary {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 2.25rem;
   min-width: 0;
   align-items: center;
   justify-content: center;
   gap: .375rem;
   border: 1px solid transparent;
   border-radius: .625rem;
-  padding: .625rem .5rem;
+  padding: .5rem;
   font-size: .75rem;
   font-weight: 600;
   line-height: 1rem;
@@ -88,13 +157,48 @@
 .mentorship-action-primary:disabled,
 .mentorship-action-secondary:disabled { cursor: not-allowed; opacity: .55; }
 
-.mentorship-page .mentorship-progress-overview {
+.mentorship-progress-summary { display: grid; }
+.mentorship-progress-mentor {
+  min-width: 0;
+  border-bottom: 1px solid hsl(var(--border));
+  background: rgb(0 150 57 / 4%);
+}
+.mentorship-progress-stats { display: grid; min-width: 0; gap: 1rem; }
+.mentorship-progress-counts {
   display: grid;
-  gap: var(--mentorship-space);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 1rem;
+}
+@media (min-width: 1024px) {
+  .mentorship-progress-summary { grid-template-columns: 240px minmax(0, 1fr); }
+  .mentorship-progress-mentor { border-bottom: 0; border-right: 1px solid hsl(var(--border)); }
 }
 
-.mentorship-page .mentorship-progress-overview > :last-child {
-  box-shadow: var(--student-card-shadow);
+.mentorship-student-goals {
+  display: grid;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.mentorship-student-goals:has(form) { align-items: start; }
+.mentorship-student-goal { display: flex; flex-direction: column; }
+.mentorship-student-goal .mentorship-goal-body { display: flex; flex: 1; flex-direction: column; padding: 1.25rem; }
+.mentorship-student-goal .mentorship-goal-description { margin-left: 0; margin-bottom: 1rem; font-size: .8125rem; line-height: 1.5rem; }
+.mentorship-student-goal .mentorship-goal-actions { margin-top: auto; padding-left: 0; border-top: 1px solid hsl(var(--border)); padding-top: 1rem; }
+.mentorship-student-goal details { margin-top: 0; margin-left: 0; margin-bottom: 1rem; }
+.mentorship-student-goal .mentorship-goal-actions :is(button, a) { min-height: 2.5rem; padding-inline: .75rem; font-size: .75rem; }
+.mentorship-student-goal form { padding: 1.25rem; }
+
+.mentorship-progress-guide { display: grid; gap: 1rem; }
+
+@media (min-width: 768px) {
+  .mentorship-progress-guide { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1280px) {
+  .mentorship-student-goals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (hover: hover) {
@@ -106,15 +210,16 @@
 
 @media (min-width: 1280px) {
   .mentorship-matching-layout { grid-template-columns: 280px minmax(0, 1fr); }
-  .mentorship-page .mentorship-progress-overview { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
-  .mentorship-page .mentorship-progress-overview > :first-child { flex-direction: column; align-items: stretch; justify-content: center; }
 }
 
 @media (max-width: 639px) {
   .mentorship-page .mentorship-tabs { gap: .25rem; padding: .375rem; }
   .mentorship-tab { flex-direction: column; gap: .5rem; padding: .75rem .25rem; text-align: center; }
   .mentorship-person-body { padding: 1rem; }
-  .mentorship-person-actions { padding: 1rem; }
+  .mentorship-person-actions { padding: .75rem 1rem; }
+  .mentorship-action-primary,
+  .mentorship-action-secondary { min-height: 2.75rem; }
+  .mentorship-student-goal .mentorship-goal-actions :is(button, a) { min-height: 2.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

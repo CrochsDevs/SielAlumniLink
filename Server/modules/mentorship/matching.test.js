@@ -42,7 +42,7 @@ function fixture() {
     auth: [student, other, alumni],
     users: [
       { _id: 'student', authId: student._id, skills: ['Teaching'], interests: ['software'] },
-      { _id: 'alumnus', authId: alumni._id, ...mentors[1], password: 'private', contactNumber: 'private' },
+      { _id: 'alumnus', authId: alumni._id, ...mentors[1], bannerImage: 'https://res.cloudinary.com/example/image/upload/mentor-banner.jpg', password: 'private', contactNumber: 'private' },
       { _id: 'wrong-role', authId: other._id, role: 'alumni', skills: ['JavaScript'] },
     ],
     student_portfolios: [{ _id: student._id, skills: ['JavaScript'] }],
@@ -70,6 +70,15 @@ test('service uses portfolio skills and authoritative alumni accounts; returns o
   assert.equal(result.matches[0].mentor.password, undefined);
   assert.equal(result.matches[0].mentor.contactNumber, undefined);
   assert.equal(result.matches[0].mentor.email, 'mentor@example.test');
+  assert.equal(result.matches[0].mentor.bannerImage, 'https://res.cloudinary.com/example/image/upload/mentor-banner.jpg');
+});
+
+test('recommendations preserve uploaded banners after preference updates and return null when no banner exists', async () => {
+  const { service, student, records } = fixture();
+  const result = await service.save(student, preferences);
+  assert.equal(result.matches[0].mentor.bannerImage, records.users[1].bannerImage);
+  delete records.users[1].bannerImage;
+  assert.equal((await service.get(student)).matches[0].mentor.bannerImage, null);
 });
 test('saved preferences persist per authenticated student and ignore supplied identity', async () => {
   const { service, student, other, records } = fixture();

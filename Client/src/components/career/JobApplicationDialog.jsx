@@ -1,3 +1,4 @@
+import ProgressBar from "../ui/progress-bar";
 import useJobDeadline, { deadlinePassed, deadlineLabel } from "./useJobDeadline";
 import JobDescription from "./JobDescription";
 import { useChat } from "../../context/useChat";
@@ -167,9 +168,9 @@ export function JobApplicationDialog({
       onClose={onClose}
     >
       <div className="relative mb-6 border-b border-zinc-100 pb-5 dark:border-zinc-800">
-        <div role="progressbar" aria-label="Application progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentStep * 50} aria-valuetext={`Step ${currentStep + 1} of 3: ${stepLabels[currentStep]}`}
-          className="absolute left-[16.6667%] right-[16.6667%] top-[15px] h-[3px] overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-          <div className="h-full rounded-full bg-brand transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${currentStep * 50}%` }} />
+        <div className="absolute left-[16.6667%] right-[16.6667%] top-[15px]">
+          <ProgressBar label="Application progress" value={currentStep * 50} segments={2}
+            valueText={`Step ${currentStep + 1} of 3: ${stepLabels[currentStep]}`} />
         </div>
         <ol aria-label="Application steps" className="relative grid grid-cols-3 gap-2">
           {stepLabels.map((label, index) => (

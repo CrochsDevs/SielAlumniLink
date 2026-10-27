@@ -1,3 +1,4 @@
+import ProgressBar from "../../components/ui/progress-bar";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Briefcase, Clock3, Pencil, Plus, Search, Trash2 } from "lucide-react";
@@ -294,21 +295,7 @@ export default function StudentInternship() {
                         {record.hoursCompleted} / {record.requiredHours} hours
                       </span>
                     </div>
-                    <div
-                      role="progressbar"
-                      aria-label={`${record.company} hours`}
-                      aria-valuenow={record.hoursCompleted}
-                      aria-valuemax={record.requiredHours}
-                      aria-valuemin={0}
-                      className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
-                    >
-                      <div
-                        className="h-full bg-brand"
-                        style={{
-                          width: `${(record.hoursCompleted / record.requiredHours) * 100}%`,
-                        }}
-                      />
-                    </div>
+                    <ProgressBar label={`${record.company} hours`} value={record.hoursCompleted} max={record.requiredHours} className="mt-3" />
                     <p className="mt-4 whitespace-pre-wrap break-words text-xs leading-6 text-zinc-600 dark:text-zinc-300">
                       <strong>Evaluation: </strong>
                       {record.evaluation || "Not recorded yet"}
@@ -397,12 +384,7 @@ export default function StudentInternship() {
                   / {total} hrs
                 </span>
               </p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                <div
-                  className="h-full bg-brand"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
+              <ProgressBar label="Total OJT hours completed" value={completed} max={total} className="mt-3" />
               <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                 {percent}% completed · {Math.max(0, total - completed)} hours
                 remaining

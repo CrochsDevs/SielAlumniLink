@@ -1,3 +1,4 @@
+import ProgressBar from "../../components/ui/progress-bar";
 import { createElement } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -180,19 +181,7 @@ export default function StudentDashboard() {
                           {portfolioSections} / 6 sections
                         </dd>
                       </div>
-                      <div
-                        role="progressbar"
-                        aria-label="Portfolio sections filled"
-                        aria-valuemin={0}
-                        aria-valuemax={6}
-                        aria-valuenow={portfolioSections}
-                        className="mt-3 h-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
-                      >
-                        <div
-                          className="h-full bg-brand"
-                          style={{ width: `${(portfolioSections / 6) * 100}%` }}
-                        />
-                      </div>
+                      <ProgressBar label="Portfolio sections filled" value={portfolioSections} max={6} segments={6} className="mt-3" />
                     </div>
                     <div className="flex items-center justify-between gap-3 py-4">
                       <dt className="text-xs text-zinc-500 dark:text-zinc-400">

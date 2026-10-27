@@ -109,6 +109,7 @@ const mentors = [
   batch: "2022",
   location: "Nueva Ecija",
 }));
+mentors[0].bannerImage = process.env.SIEL_MENTOR_BANNER_URL || "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="360" height="64"><rect width="360" height="64" fill="#009639"/></svg>');
 const connections = [
   {
     requesterEmail: user.email,
@@ -126,6 +127,13 @@ const connections = [
     status: "pending",
   },
 ];
+const matchingMentors = Array.from({ length: 16 }, (_, index) => {
+  const mentor = mentors[index % mentors.length];
+  return index < mentors.length ? mentor : { ...mentor,
+    _id: mentor._id + "-" + index, name: mentor.name + " " + index, email: index + "-" + mentor.email,
+  };
+});
+let recommendationCount = 3;
 let mutations = 0,
   failFirst = false;
 listeners.set("Runtime.exceptionThrown", ({ exceptionDetails }) =>
@@ -139,8 +147,8 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
   else if (route === "/mentorship/matches") data = {
     preferences: { interests: ['Software development', 'Design systems'], careerGoals: 'Prepare for my first software engineering role.' },
     profile: { skills: ['React', 'JavaScript', 'Research'], program: user.program },
-    candidateCount: mentors.length,
-    matches: mentors.map((mentor, index) => ({ mentor: { ...mentor, headline: mentor.bio }, score: 85 - index * 9,
+    candidateCount: matchingMentors.length,
+    matches: matchingMentors.slice(0, recommendationCount).map((mentor, index) => ({ mentor: { ...mentor, bannerImage: undefined, headline: mentor.bio }, score: 85 - index * 9,
       reasons: ['Shared skills: ' + mentor.skills.join(', '), 'Experience related to your career interests'] })),
   };
   else if (route === "/mentorship/me") data = [{
@@ -211,13 +219,34 @@ try {
     url: "http://localhost:5173/student/mentorship",
   });
   await until(`document.querySelector('[aria-label="Recommended mentors"] article')`);
+  await until(`document.querySelector('[aria-label="Recommended mentors"] article img')?.complete && document.querySelector('[aria-label="Recommended mentors"] article img')?.naturalWidth > 0`);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Recommended mentors"] article img').getAttribute('src')`), mentors[0].bannerImage, 'Recommendations must use the same saved banner as the mentor directory even when the matches response omits it');
   await photo("mentorship-recommendations-desktop", 1440, false);
-  await evaluate(`document.querySelector('[aria-controls="mentor-preferences-form"]').click()`);
+  await photo("mentorship-recommendations-wide", 1536, false);
   await photo("mentorship-preferences-desktop", 1440, false);
   await photo("mentorship-recommendations-mobile", 390, false);
   await photo("mentorship-recommendations-mobile-dark", 390, true);
-  failFirst = true;
+  // Recommendations always show twelve mentors per page.
+  recommendationCount = 15;
+  await evaluate("window.previousDesignDocument=true");
   await send("Page.reload");
+  await until(`!window.previousDesignDocument && document.querySelector('nav[aria-label="Student mentorship workspace"]')`);
+  const pager = '[aria-label="Recommended mentor pagination"]';
+  await until(`document.querySelectorAll('[aria-label="Recommended mentors"] article').length===12 && document.querySelector('${pager}')?.textContent.includes('of 15')`);
+  assert.equal(await evaluate(`document.querySelector('${pager} [role="combobox"]')`), null);
+  assert.equal(await evaluate(`document.querySelector('${pager} [aria-label="Previous page"]').disabled`), true);
+  await evaluate(`document.querySelector('${pager} [aria-label="Next page"]').click()`);
+  await until(`document.querySelectorAll('[aria-label="Recommended mentors"] article').length===3`);
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Recommended mentors"] article h3').textContent`), matchingMentors[12].name);
+  assert.equal(await evaluate(`document.querySelector('${pager} [aria-label="Next page"]').disabled`), true);
+  await photo("mentorship-pagination-mobile-dark", 390, true);
+  await evaluate(`document.querySelector('${pager} [aria-label="Previous page"]').click()`);
+  await until(`document.querySelectorAll('[aria-label="Recommended mentors"] article').length===12`);
+  recommendationCount = 3;
+  failFirst = true;
+  await evaluate("window.previousDesignDocument=true");
+  await send("Page.reload");
+  await until(`!window.previousDesignDocument && document.querySelector('nav[aria-label="Student mentorship workspace"]')`);
   await until(`document.querySelector('[aria-label="Recommended mentors"] article')`);
   await click("Browse all mentors");
   await until(`document.querySelector('[role=alert]')`);
@@ -225,6 +254,11 @@ try {
   await click("Refresh mentors");
   await until(`document.querySelectorAll('article').length===4`);
   await photo("mentorship-desktop", 1440, false);
+  assert.equal(await evaluate(`Array.from(document.querySelectorAll('.mentorship-directory-grid article')).every(card=>{
+    const body=card.querySelector('.mentorship-person-body').getBoundingClientRect();
+    const footer=card.querySelector('.mentorship-person-actions').getBoundingClientRect();
+    return footer.top-body.bottom<=1;
+  })`), true, 'Directory cards must not stretch to create blank space above their actions');
   await photo("mentorship-mobile-dark", 390, true);
   await evaluate(
     `document.querySelector('nav[aria-label="Mentor views"] button:nth-child(2)').click()`,
@@ -254,7 +288,9 @@ try {
   await click("Clear filters");
   await until(`document.querySelectorAll('article').length===4`);
   await photo("mentorship-mobile", 390, false);
+  await evaluate("window.previousDesignDocument=true");
   await send("Page.reload");
+  await until(`!window.previousDesignDocument && document.querySelector('nav[aria-label="Student mentorship workspace"]')`);
   await until(`document.querySelector('[aria-label="Recommended mentors"] article')`);
   await click("Browse all mentors");
   await until(`document.querySelectorAll('article').length===4`);
@@ -271,7 +307,7 @@ try {
   await photo("mentorship-progress-small-mobile", 320, false);
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Passed: failure/retry, alumni-only discovery, connection tabs, skill search, request submission and reload, mobile/desktop layouts and dark mode. Mock APIs only. Artifacts: " +
+    "Passed: fixed twelve-per-page recommendations, page boundaries, failure/retry, alumni-only discovery, connection tabs, skill search, request submission and reload, mobile/desktop layouts and dark mode. Mock APIs only. Artifacts: " +
       artifacts,
   );
 } finally {

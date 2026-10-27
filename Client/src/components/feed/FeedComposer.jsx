@@ -1,3 +1,4 @@
+import ProgressBar from "../ui/progress-bar";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -517,11 +518,7 @@ export default function FeedComposer({
                             {photo.status === "uploading" && (
                               <>
                                 <span>Uploading… {photo.percent}%</span>
-                                <progress
-                                  value={photo.percent}
-                                  max={100}
-                                  className="h-1.5 w-full accent-brand"
-                                />
+                                <ProgressBar value={photo.percent} label="Photo upload progress" className="mt-2" />
                               </>
                             )}
                             {photo.status === "uploaded" && "Photo ready"}

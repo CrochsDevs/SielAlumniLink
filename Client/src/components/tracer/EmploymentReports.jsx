@@ -1,3 +1,4 @@
+import ProgressBar from "../ui/progress-bar";
 import {
   flexRender,
   getCoreRowModel,
@@ -364,19 +365,7 @@ export default function EmploymentReports() {
                           {item.count} · {item.percentage}%
                         </span>
                       </div>
-                      <div
-                        role="meter"
-                        aria-label={item.industry}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={item.percentage}
-                        className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
-                      >
-                        <div
-                          className="h-full rounded-full bg-brand"
-                          style={{ width: `${item.percentage}%` }}
-                        />
-                      </div>
+                      <ProgressBar role="meter" label={item.industry} value={item.percentage} />
                     </div>
                   ))}
                 </div>

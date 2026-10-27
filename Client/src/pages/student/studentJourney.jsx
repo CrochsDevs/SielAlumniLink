@@ -1,3 +1,4 @@
+import ProgressBar from "../../components/ui/progress-bar";
 import { createElement, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -243,19 +244,15 @@ export default function StudentJourney() {
                     >
                       <div
                         aria-hidden="true"
-                        className="absolute h-3 rounded-full bg-[#e6eff8] dark:bg-zinc-800"
+                        className="absolute"
                         style={{
                           top: 82,
                           left: `${50 / Math.max(1, milestones.length)}%`,
                           right: `${50 / milestones.length}%`,
                         }}
                       >
-                        <div
-                          className="h-full rounded-full bg-brand"
-                          style={{
-                            width: `${(currentIndex < 0 ? (doneCount > 0 ? 1 : 0) : currentIndex / Math.max(1, milestones.length - 1)) * 100}%`,
-                          }}
-                        />
+                        <ProgressBar label="Journey timeline progress" segments={1}
+                          value={(currentIndex < 0 ? (doneCount > 0 ? 1 : 0) : currentIndex / Math.max(1, milestones.length - 1)) * 100} />
                       </div>
                       <ol
                         className="relative grid"
@@ -472,19 +469,7 @@ export default function StudentJourney() {
                         {progress}%
                       </span>
                     </div>
-                    <div
-                      role="progressbar"
-                      aria-label="Journey progress"
-                      aria-valuemin={0}
-                      aria-valuemax={milestones.length}
-                      aria-valuenow={doneCount}
-                      className="mt-3 h-2 overflow-hidden rounded-full bg-[#e6eff8] dark:bg-zinc-700"
-                    >
-                      <div
-                        className="h-full rounded-full bg-brand"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
+                    <ProgressBar label="Journey progress" value={doneCount} max={milestones.length} segments={milestones.length || 4} className="mt-3" />
                     <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
                       {doneCount} completed · {remaining} remaining
                     </p>

@@ -1,3 +1,5 @@
+import StatCard from "../../components/ui/stat-card";
+import ProgressBar from "../../components/ui/progress-bar";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -8,6 +10,8 @@ import {
   Pencil,
   Search,
   RotateCcw,
+  BarChart3,
+  CircleAlert,
 } from "lucide-react";
 import DevelopmentShell, {
   DevelopmentStatus,
@@ -153,39 +157,31 @@ export default function StudentCompetency() {
         {summary && (
           <section
             aria-label="Assessment summary"
-            className={`${card} grid divide-y divide-zinc-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-zinc-800`}
+            className="min-w-0"
           >
+            <dl className="grid gap-4 sm:grid-cols-3">
             {[
               [
                 "Assessed",
                 `${summary.assessedCount} / ${framework.length}`,
-                "Competencies you have reviewed",
+                "Competencies you have reviewed", ClipboardList, "positive",
               ],
               [
                 "Average level",
                 summary.averageLevel === null
                   ? "Not assessed"
                   : `${summary.averageLevel} / 4`,
-                "Across your assessed competencies",
+                "Across your assessed competencies", BarChart3, "blue",
               ],
               [
                 "Skill gaps",
                 String(summary.focusCount),
-                "Skills below your target level",
+                "Skills below your target level", CircleAlert, "warning",
               ],
-            ].map(([label, value, note]) => (
-              <div key={label} className="px-5 py-4">
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {label}
-                </p>
-                <p className="mt-1.5 text-xl font-semibold tracking-tight">
-                  {value}
-                </p>
-                <p className="mt-1 text-[10px] leading-5 text-zinc-400">
-                  {note}
-                </p>
-              </div>
+            ].map(([label, value, note, icon, tone]) => (
+              <StatCard key={label} label={label} value={value} note={note} icon={icon} tone={tone} />
             ))}
+            </dl>
           </section>
         )}
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -315,26 +311,9 @@ export default function StudentCompetency() {
                       </div>
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0 flex-1 basis-36">
-                          <div
-                            className="flex max-w-[208px] gap-1.5"
-                            role="meter"
-                            aria-label={`${item.name} self-assessed level`}
-                            aria-valuemin={0}
-                            aria-valuemax={4}
-                            aria-valuenow={assessment?.rating || 0}
-                            aria-valuetext={
-                              assessment
-                                ? LEVELS[assessment.rating - 1].label
-                                : "Not assessed"
-                            }
-                          >
-                            {LEVELS.map((level) => (
-                              <span
-                                key={level.value}
-                                className={`h-1.5 flex-1 rounded-full ${level.value <= (assessment?.rating || 0) ? "bg-brand" : "bg-zinc-100 dark:bg-zinc-800"}`}
-                              />
-                            ))}
-                          </div>
+                          <ProgressBar role="meter" label={`${item.name} self-assessed level`}
+                            value={assessment?.rating || 0} max={4} segments={4} className="max-w-[208px]"
+                            valueText={assessment ? LEVELS[assessment.rating - 1].label : "Not assessed"} />
                           <p className="mt-2 text-[10px] text-zinc-400">
                             {assessment
                               ? `Level ${assessment.rating} / 4 | Target: ${LEVELS[assessment.target - 1].label}`
@@ -347,7 +326,7 @@ export default function StudentCompetency() {
                           onClick={() => open(item)}
                           className={
                             assessment
-                              ? "inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-xs font-semibold disabled:opacity-50 dark:border-zinc-700"
+                              ? "inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-[#009630] bg-[#009630] px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:border-[#007a27] hover:bg-[#007a27] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#009630] focus-visible:ring-offset-2 disabled:opacity-50 dark:focus-visible:ring-offset-zinc-900"
                               : button
                           }
                         >

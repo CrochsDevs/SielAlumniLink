@@ -28,14 +28,14 @@ export function createMatchingService(db) {
     }).map(mentor => ({
       _id: String(mentor._id), name: mentor.name || 'Alumni',
       email: accountById.get(String(mentor.authId)).email,
-      program: mentor.program || '', profilePicture: mentor.profilePicture || null,
+      program: mentor.program || '', profilePicture: mentor.profilePicture || null, bannerImage: mentor.bannerImage || null,
       skills: mentor.skills, interests: mentor.interests, bio: mentor.bio,
       employmentHistory: mentor.employmentHistory,
     }));
     const preferences = { interests: saved?.interests ?? (Array.isArray(profile?.interests) ? profile.interests : []), careerGoals: saved?.careerGoals ?? '' };
     const student = { ...profile, skills: portfolio?.skills ?? profile?.skills };
     const matches = rankMentors(student, mentors, preferences).map(({ mentor, ...match }) => ({
-      ...match, mentor: { _id: mentor._id, name: mentor.name, email: mentor.email, program: mentor.program, profilePicture: mentor.profilePicture,
+      ...match, mentor: { _id: mentor._id, name: mentor.name, email: mentor.email, program: mentor.program, profilePicture: mentor.profilePicture, bannerImage: mentor.bannerImage,
         headline: (Array.isArray(mentor.employmentHistory) ? mentor.employmentHistory : []).find(job => job?.current)?.position || mentor.program || 'CLSU alumni' },
     }));
     return { preferences, matches, profile: { skills: Array.isArray(student.skills) ? student.skills : [], program: profile?.program || '' }, candidateCount: mentors.length, method: 'content-based-tfidf-v1' };

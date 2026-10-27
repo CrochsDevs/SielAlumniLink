@@ -1,3 +1,4 @@
+import ProgressBar from "../../components/ui/progress-bar";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { BarChart3, ArrowRight } from "lucide-react";
@@ -8,27 +9,8 @@ import DevelopmentShell, {
 } from "../../components/student/DevelopmentShell";
 
 function ReadinessProgress({ value, max, label }) {
-  const progress = Math.max(0, Math.min(1, value / max));
-  return (
-    <div
-      className="flex w-full max-w-[260px] gap-2"
-      role="meter"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={max}
-      aria-valuenow={value}
-      aria-valuetext={`${value} out of ${max} points`}
-    >
-      {[0, 1, 2, 3].map((segment) => (
-        <span key={segment} className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-zinc-300 dark:bg-zinc-600">
-          <span
-            className="block h-full rounded-full bg-brand"
-            style={{ width: `${Math.max(0, Math.min(1, progress * 4 - segment)) * 100}%` }}
-          />
-        </span>
-      ))}
-    </div>
-  );
+  return <ProgressBar role="meter" value={value} max={max} label={label}
+    valueText={`${value} out of ${max} points`} className="max-w-[260px]" />;
 }
 
 export default function StudentReadiness() {

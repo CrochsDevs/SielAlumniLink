@@ -1,0 +1,44 @@
+.app-stat-card {
+  min-width: 0;
+  border: 1px solid #bdcbc3;
+  border-radius: .875rem;
+  padding: 1rem;
+  background: #f8faf9;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 12%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+.app-stat-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  color: #59665f;
+  font-size: .75rem;
+  font-weight: 500;
+  line-height: 1.125rem;
+}
+
+.app-stat-icon { display: inline-flex; width: 2rem; height: 2rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: .625rem; }
+.app-stat-icon-positive { background: #e5f7ed; color: #047857; }
+.app-stat-icon-blue { background: #eaf1fd; color: #2563eb; }
+.app-stat-icon-warning { background: #fff4d7; color: #b45309; }
+.app-stat-icon-neutral { background: #edf0ee; color: #64746b; }
+.app-stat-value { margin: .5rem 0 0; color: #18251e; font-size: 1.5rem; font-weight: 600; line-height: 1.875rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.app-stat-note { margin: .375rem 0 0; color: #758279; font-size: .6875rem; line-height: 1.125rem; }
+.app-stat-card-compact { padding: .75rem; }
+.app-stat-card-compact .app-stat-icon { width: 1.75rem; height: 1.75rem; }
+
+.dark .app-stat-card { border-color: #4c5e53; background: #1c231f; box-shadow: 0 2px 6px rgb(0 0 0 / 30%), inset 0 1px 0 rgb(255 255 255 / 4%); }
+.dark .app-stat-label { color: #bbc9c0; }
+.dark .app-stat-value { color: #f2f7f4; }
+.dark .app-stat-note { color: #92a69a; }
+.dark .app-stat-icon-positive { background: #064e3b; color: #6ee7b7; }
+.dark .app-stat-icon-blue { background: #172d50; color: #93c5fd; }
+.dark .app-stat-icon-warning { background: #493116; color: #fcd34d; }
+.dark .app-stat-icon-neutral { background: #303c34; color: #b3c5b9; }
+
+@media (max-width: 639px) {
+  .app-stat-card-compact .app-stat-icon { display: none; }
+  .app-stat-card-compact .app-stat-label { font-size: .6875rem; }
+}

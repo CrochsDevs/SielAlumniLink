@@ -18,6 +18,7 @@ const DataPagination = ({
   perPage,
   onPerPageChange,
   perPageOptions = [5, 10, 20, 50],
+  showPerPage = true,
   totalItems,
   itemLabel = "items",
 }) => {
@@ -48,7 +49,7 @@ const DataPagination = ({
       </p>
 
       <div className="flex items-center gap-2">
-        <Select
+        {showPerPage && <Select
           value={String(perPage)}
           onValueChange={(v) => onPerPageChange(Number(v))}
         >
@@ -62,7 +63,7 @@ const DataPagination = ({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select>}
 
         <div className="flex items-center gap-1">
           <Button

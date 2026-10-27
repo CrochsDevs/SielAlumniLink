@@ -203,7 +203,7 @@ try {
   failedLoad = false;
   await click("Try again");
   await until(`document.body.textContent.includes('Why this mentor?')`);
-  await evaluate(`document.querySelector('[aria-controls="mentor-preferences-form"]').click()`);
+  assert.equal(await evaluate(`document.querySelectorAll('[aria-label="Connection status: Connected"]').length`), 0);
   await photo("matching-desktop", 1440, false);
   await photo("matching-mobile-dark", 390, true);
   await photo("matching-small-mobile", 320, false);
@@ -225,10 +225,11 @@ try {
   );
   assert.equal(
     await evaluate(
-      `Array.from(document.querySelectorAll('button')).find(button => button.textContent.trim() === 'Request sent').disabled`,
+      `Boolean(document.querySelector('article [aria-label="Connection status: Request sent"]')) && !Array.from(document.querySelectorAll('article button')).some(button => ['Request sent', 'Connect', 'Message', 'View progress'].includes(button.textContent.trim()))`,
     ),
     true,
   );
+  assert.equal(await evaluate(`document.querySelectorAll('[aria-label="Connection status: Connected"]').length`), 0);
   await click("Browse all mentors");
   await until(`document.body.textContent.includes('Explore all mentors')`);
   await click("Back to recommendations");
@@ -244,11 +245,17 @@ try {
   ];
   await send("Page.reload");
   await until(`document.querySelector('a[href="/student/requests"]')`);
+  assert.equal(await evaluate(`document.querySelectorAll('[aria-label="Connection status: Connected"]').length`), 0);
   connections[0].status = "accepted";
   await send("Page.reload");
   await until(
     `Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === 'Message')`,
   );
+  assert.equal(await evaluate(`document.querySelectorAll('[aria-label="Connection status: Connected"]').length`), 1);
+  connections = [];
+  await evaluate(`window.dispatchEvent(new Event('focus'))`);
+  await until(`!document.querySelector('[aria-label="Connection status: Connected"]') && Array.from(document.querySelectorAll('article button')).some(button=>button.textContent.trim()==='Connect')`);
+  assert.equal(await evaluate(`Array.from(document.querySelectorAll('article button')).some(button=>button.textContent.trim()==='View progress')`), false);
   empty = true;
   await click("Browse all mentors");
   await click("Back to recommendations");

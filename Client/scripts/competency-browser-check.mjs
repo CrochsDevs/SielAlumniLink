@@ -142,6 +142,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     responseCode = 200,
     message;
   if (route === "/auth/me" || route === "/users/me") data = account;
+  else if (route === "/tracer/access") data = { updateRequired: false, quarter: "test", nextUpdateAt: new Date(Date.now() + 86400000).toISOString() };
   else if (route === "/conversations" && request.method === "POST") {
     openedStudentEmail = JSON.parse(request.postData).email;
     data = {
@@ -571,6 +572,8 @@ try {
       artifacts,
   );
 } finally {
+  listeners.delete("Fetch.requestPaused");
+  await send("Fetch.disable").catch(() => {});
   await send("Browser.close").catch(() => {});
   socket.close();
 }

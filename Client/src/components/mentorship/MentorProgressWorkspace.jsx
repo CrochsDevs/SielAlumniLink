@@ -1,3 +1,5 @@
+import StatCard from "../ui/stat-card";
+import ProgressBar from "../ui/progress-bar";
 import { useState } from 'react';
 import { ArrowLeft, ArrowUpRight, CheckCircle2, Search, Target, Users } from 'lucide-react';
 import ProfileAvatar from '../profile/ProfileAvatar';
@@ -16,9 +18,7 @@ function Progress({ tracker }) {
       <span className={`text-xs ${muted}`}>{tracker.summary.completed} of {tracker.summary.total} goals confirmed</span>
       <span className="text-sm font-semibold tabular-nums text-brand dark:text-brand">{tracker.summary.percent}%</span>
     </div>
-    <div role="progressbar" aria-label={`${tracker.student.name}'s confirmed goals`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={tracker.summary.percent} className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-      <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${tracker.summary.percent}%` }} />
-    </div>
+    <ProgressBar label={`${tracker.student.name}'s confirmed goals`} value={tracker.summary.total ? tracker.summary.completed / tracker.summary.total * 100 : 0} segments={tracker.summary.total} />
   </div>;
 }
 
@@ -55,12 +55,9 @@ export default function MentorProgressWorkspace({ trackers, renderGoals, dirty, 
   </div>;
 
   return <div className="space-y-5">
-    <div className="grid grid-cols-3 gap-2 sm:gap-3">
-      {[[Users, trackers.length, 'Total mentees', 'Connected to you'], [Target, active, 'Working on goals', 'Have goals in progress'], [CheckCircle2, finished, 'All goals completed', 'Confirmed by you']].map(([Icon, value, label, caption]) => <div key={label} className={`${panel} flex items-start gap-4 p-3 sm:p-5`}>
-        <span className="hidden rounded-xl bg-emerald-50 p-2.5 sm:block text-brand dark:bg-emerald-950 dark:text-brand"><Icon size={19} /></span>
-        <div><p className={`text-[10px] font-medium sm:text-xs ${muted}`}>{label}</p><p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{value}</p><p className={`mt-1 hidden text-[11px] sm:block ${muted}`}>{caption}</p></div>
-      </div>)}
-    </div>
+    <dl className="grid gap-3 sm:grid-cols-3">
+      {[[Users, trackers.length, 'Total mentees', 'Connected to you', 'blue'], [Target, active, 'Working on goals', 'Have goals in progress', 'warning'], [CheckCircle2, finished, 'All goals completed', 'Confirmed by you', 'positive']].map(([icon, value, label, note, tone]) => <StatCard key={label} label={label} value={value} note={note} icon={icon} tone={tone} />)}
+    </dl>
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
       <div><h3 className="text-sm font-semibold">Mentee overview</h3><p className={`mt-1 text-xs ${muted}`}>A separate journey for every mentee.</p></div>
       <div className="flex w-full flex-wrap gap-2 sm:w-auto">

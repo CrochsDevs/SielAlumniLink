@@ -141,6 +141,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     if (request.method !== "OPTIONS") {
       const input = request.postData ? JSON.parse(request.postData) : {};
       if (route === "/auth/me" || route === "/users/me") data = user;
+      else if (route === "/tracer/access") data = { updateRequired: false, quarter: "test", nextUpdateAt: new Date(Date.now() + 86400000).toISOString() };
       else if (route === "/users") data = [mentor, secondMentor];
       else if (route === "/connections/me") data = connections;
       else if (route === "/development/mentees") data = [student];
@@ -205,17 +206,22 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     });
   } catch (error) {
     runtimeErrors.push(error.message);
-    await send("Fetch.failRequest", { requestId, errorReason: "Failed" });
+    await send("Fetch.failRequest", { requestId, errorReason: "Failed" }).catch(() => {});
   }
 });
 const click = (label, scope = "document") =>
   evaluate(
     `Array.from(${scope}.querySelectorAll('button')).find(button=>button.textContent.trim()===${JSON.stringify(label)}).click()`,
   );
-const fill = (label, value) =>
-  evaluate(
-    `(()=>{const input=document.querySelector('[aria-label='+${JSON.stringify(JSON.stringify(label))}+']');const prototype=input.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLTextAreaElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`,
-  );
+const openEditor = async title => {
+  const selector = `[data-mentorship-goal]`;
+  await evaluate(`(()=>{const card=Array.from(document.querySelectorAll(${JSON.stringify(selector)})).find(card=>card.querySelector('h3')?.textContent.trim()===${JSON.stringify(title)});const button=card?.querySelector('button[aria-controls^="goal-editor-"]');if(button?.getAttribute('aria-expanded')==='false')button.click();})()`);
+  await until(`Array.from(document.querySelectorAll('[data-mentorship-goal]')).find(card=>card.querySelector('h3')?.textContent.trim()===${JSON.stringify(title)})?.querySelector('form')`);
+};
+const fill = async (label, value) => {
+  if(label.startsWith('Note for ') || label.startsWith('Status for ')) await openEditor(label.replace(/^(Note|Status) for /, ''));
+  return evaluate(`(()=>{const input=document.querySelector('[aria-label='+${JSON.stringify(JSON.stringify(label))}+']');const prototype=input.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLTextAreaElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`);
+};
 const goal = (key) =>
   `document.querySelector('[data-mentorship-goal="${key}"]')`;
 const photo = async (name, width, dark) => {
@@ -241,10 +247,15 @@ const photo = async (name, width, dark) => {
 const navigate = async (route) => {
   await evaluate("window.oldMentorshipDocument=true");
   await send("Page.navigate", { url: "http://localhost:5173" + route });
-  await until(
-    `!window.oldMentorshipDocument&&Array.from(document.querySelectorAll('button')).some(button=>button.textContent.trim()==='Progress tracker')`,
-  );
-  await click("Progress tracker");
+  if (route.startsWith('/student')) {
+    await until(`!window.oldMentorshipDocument && document.querySelector('nav[aria-label="Student mentorship workspace"]')`);
+    await evaluate(`document.querySelector('nav[aria-label="Student mentorship workspace"] button:nth-child(3)').click()`);
+  } else {
+    await until(`!window.oldMentorshipDocument && document.querySelector('nav[aria-label="Mentor workspace"]')`);
+    await click('Progress tracker');
+    await until(`document.querySelector('[data-mentee-progress]')`);
+    await evaluate(`document.querySelector('[aria-label="View progress for Alex Santos"]').click()`);
+  }
   await until(`document.querySelectorAll('[data-mentorship-goal]').length===3`);
 };
 try {
@@ -253,20 +264,17 @@ try {
   await send("Fetch.enable", {
     patterns: [{ urlPattern: "http://localhost:3002/api/*" }],
   });
-  await send("Page.navigate", {
-    url: "http://localhost:5173/student/mentorship",
-  });
-  await until(
-    `document.querySelector('nav[aria-label="Student mentorship workspace"]')`,
-  );
-  await click("Progress tracker");
-  await until(`document.querySelectorAll('[data-mentorship-goal]').length===3`);
+  await navigate("/student/mentorship");
   assert.equal(
     await evaluate(
       `document.querySelector('[role="progressbar"]').getAttribute('aria-valuenow')`,
     ),
     "0",
   );
+  const emptyTrack = await evaluate(`(()=>{const track=document.querySelector('.mentorship-confirmed-track');return Array.from(track.children).map(segment=>({height:segment.getBoundingClientRect().height,border:getComputedStyle(segment).borderTopWidth,fillWidth:segment.firstElementChild.getBoundingClientRect().width}));})()`);
+  assert.equal(emptyTrack.length, 3, 'Show one segment per mentorship goal');
+  assert.ok(emptyTrack.every(segment=>segment.height>=8 && segment.border!=='0px'), 'Empty segments must remain visible');
+  assert.ok(emptyTrack.every(segment=>segment.fillWidth===0), 'Zero confirmed goals must not show filled segments');
   await photo("student-progress-desktop", 1440, false);
   await photo("student-progress-mobile-dark", 390, true);
   await photo("student-progress-small-mobile", 320, false);
@@ -298,12 +306,8 @@ try {
   await until(
     `${goal("resume_building")}.textContent.includes('Not Started')`,
   );
-  assert.equal(
-    await evaluate(
-      `document.querySelector('[aria-label="Note for Resume Building"]').value`,
-    ),
-    "",
-  );
+  await openEditor('Resume Building');
+  assert.equal(await evaluate(`document.querySelector('[aria-label="Note for Resume Building"]').value`), "");
   await fill("Select mentorship connection", connections[0]._id);
   await until(
     `${goal("resume_building")}.textContent.includes('In Progress')`,
@@ -317,6 +321,7 @@ try {
   );
   user = mentor;
   await navigate("/alumni/mentorship");
+  await openEditor('Resume Building');
   assert.ok(
     await evaluate(`document.body.textContent.includes('Alex Santos')`),
   );
@@ -351,6 +356,7 @@ try {
     ),
     "100",
   );
+  assert.equal(await evaluate(`Array.from(document.querySelectorAll('.mentorship-progress-segment')).every(segment=>segment.firstElementChild.getBoundingClientRect().width >= segment.clientWidth - 1)`), true, 'All segments fill when all three goals are confirmed');
   assert.ok(
     await evaluate(
       `${goal("resume_building")}.textContent.includes('Jamie Reyes')`,
@@ -364,9 +370,11 @@ try {
   await until(
     `${goal("resume_building")}.textContent.includes('mentorship partner')`,
   );
+  await click("Cancel", goal("resume_building"));
+  await until(`Array.from(document.querySelectorAll('button')).find(button=>button.textContent.trim()==='Refresh progress')?.disabled===false`);
   await click("Refresh progress");
   await until(
-    `!document.querySelector('[role="alert"]')&&document.querySelectorAll('[data-mentorship-goal]').length===3`,
+    `!document.querySelector('[aria-label="Mentorship progress tracker"] [role="alert"]')&&document.querySelectorAll('[data-mentorship-goal]').length===3`,
   );
   empty = true;
   await click("Refresh progress");
@@ -384,7 +392,12 @@ try {
     "Passed: three default goals, student updates, error/retry, duplicate submission guard, connection isolation, reload persistence, mentor shared updates, 100% completion, stale-edit conflict, empty state, and desktop/mobile layouts. API fixtures only. Screenshots: " +
       artifacts,
   );
+} catch (error) {
+  console.error(await evaluate("document.body.innerText"));
+  throw error;
 } finally {
+  listeners.delete("Fetch.requestPaused");
+  await send("Fetch.disable").catch(() => {});
   await send("Browser.close").catch(() => {});
   socket.close();
 }

@@ -9,6 +9,8 @@ import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
 import MentorshipProgressTracker from "../../components/mentorship/MentorshipProgressTracker";
 import MentorMatching from "../../components/mentorship/MentorMatching";
+import { mentorConnectionStates } from "../../components/mentorship/connectionStates";
+import { getSocket } from "../../realtime/socket";
 const card = "rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
 export default function StudentMentorship() {
@@ -22,7 +24,9 @@ export default function StudentMentorship() {
   const [progressPartner, setProgressPartner] = useState('');
   const [editCareer, setEditCareer] = useState(false);
   const [mentors, setMentors] = useState([]);
-  const [states, setStates] = useState({});
+  const ownerKey = String(user?.authId || user?._id || user?.email || "");
+  const [connectionState, setConnectionState] = useState({ owner: "", states: {} });
+  const states = connectionState.owner === ownerKey ? connectionState.states : {};
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [view, setView] = useState("all");
@@ -36,6 +40,24 @@ export default function StudentMentorship() {
   const pending = useRef(false);
   useEffect(() => {
     let active = true;
+    let generation = 0;
+    const applyConnections = connections => setConnectionState({ owner: ownerKey, states: mentorConnectionStates(connections, { authId: ownerKey, email: user?.email }) });
+    const refreshConnections = async () => {
+      const request = ++generation;
+      try {
+        const response = await api.get("/connections/me");
+        if (active && request === generation) {
+          applyConnections(response.data.data || []);
+          setError("");
+        }
+      } catch {
+        if (active && request === generation) {
+          applyConnections([]);
+          setError("Unable to verify connection status. Please refresh mentors.");
+        }
+      }
+    };
+    const initialRequest = ++generation;
     Promise.all([api.get("/users", {
       params: {
         role: "alumni"
@@ -43,23 +65,26 @@ export default function StudentMentorship() {
     }), api.get("/connections/me")]).then(([usersRes, connsRes]) => {
       if (!active) return;
       setMentors((usersRes.data.data || []).filter(mentor => mentor.email && mentor.email !== user?.email && mentor.role?.toLowerCase() === "alumni"));
-      const map = {};
-      (connsRes.data.data || []).forEach(connection => {
-        if (!["accepted", "pending"].includes(connection.status)) return;
-        const outgoing = connection.requesterEmail === user?.email;
-        map[outgoing ? connection.recipientEmail : connection.requesterEmail] = connection.status === "accepted" ? "connected" : outgoing ? "pending" : "incoming";
-      });
-      setStates(map);
-      setError("");
+      if (initialRequest === generation) {
+        applyConnections(connsRes.data.data || []);
+        setError("");
+      }
     }).catch(() => {
       if (active) setError("Unable to load mentors and connection requests. Please try again.");
     }).finally(() => {
       if (active) setLoading(false);
     });
+    const socket = getSocket();
+    socket.on("feed:changed", refreshConnections);
+    socket.on("connect", refreshConnections);
+    window.addEventListener("focus", refreshConnections);
     return () => {
       active = false;
+      socket.off("feed:changed", refreshConnections);
+      socket.off("connect", refreshConnections);
+      window.removeEventListener("focus", refreshConnections);
     };
-  }, [user?.email, attempt]);
+  }, [ownerKey, user?.email, attempt]);
   const connect = async mentor => {
     if (pending.current) return;
     pending.current = true;
@@ -70,10 +95,10 @@ export default function StudentMentorship() {
       await api.post("/connections", {
         email: mentor.email
       });
-      setStates(previous => ({
-        ...previous,
-        [mentor.email]: "pending"
-      }));
+      setConnectionState(previous => ({ owner: ownerKey, states: {
+        ...(previous.owner === ownerKey ? previous.states : {}),
+        [mentor.email.trim().toLowerCase()]: "pending"
+      } }));
       setNotice(`Request sent to ${mentor.name || mentor.email}. You can message them once they accept.`);
     } catch (err) {
       setError(err.response?.data?.message || "Unable to send the request. Please try again.");
@@ -89,10 +114,10 @@ export default function StudentMentorship() {
       setError("Unable to open the conversation. Please try again.");
     }
   };
-  const connected = mentors.filter(mentor => states[mentor.email] === "connected").length;
-  const requested = mentors.filter(mentor => ["pending", "incoming"].includes(states[mentor.email])).length;
+  const connected = mentors.filter(mentor => states[mentor.email?.trim().toLowerCase()] === "connected").length;
+  const requested = mentors.filter(mentor => ["pending", "incoming"].includes(states[mentor.email?.trim().toLowerCase()])).length;
   const programs = [...new Set(mentors.map(mentor => mentor.program).filter(Boolean))].sort();
-  const filtered = mentors.filter(mentor => (!program || mentor.program === program) && (view === "all" || (view === "connected" ? states[mentor.email] === "connected" : ["pending", "incoming"].includes(states[mentor.email]))) && [mentor.name, mentor.email, mentor.program, ...(mentor.skills || [])].filter(Boolean).join(" ").toLowerCase().includes(query.trim().toLowerCase()));
+  const filtered = mentors.filter(mentor => (!program || mentor.program === program) && (view === "all" || (view === "connected" ? states[mentor.email?.trim().toLowerCase()] === "connected" : ["pending", "incoming"].includes(states[mentor.email?.trim().toLowerCase()]))) && [mentor.name, mentor.email, mentor.program, ...(mentor.skills || [])].filter(Boolean).join(" ").toLowerCase().includes(query.trim().toLowerCase()));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -132,7 +157,7 @@ export default function StudentMentorship() {
             </button>
           ))}
         </nav>
-        {workspace === "matching" ? <MentorMatching key={user?.email} states={states} connect={connect} message={message} sending={sending} connectionsLoading={loading} connectionError={error} notice={notice} initialEdit={editCareer} onBrowse={() => {
+        {workspace === "matching" ? <MentorMatching key={user?.email} mentorProfiles={mentors} states={states} connect={connect} message={message} sending={sending} connectionsLoading={loading} connectionError={error} notice={notice} initialEdit={editCareer} onBrowse={() => {
         setWorkspace('mentors');
         setView('all');
         setQuery('');
@@ -228,9 +253,9 @@ export default function StudentMentorship() {
                         <ArrowRight size={14} />
                       </button>
                     </div>}
-                  <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="mentorship-directory-grid">
                     {paged.map(mentor => <StudentMentorCard key={mentor._id} mentor={mentor}
-                      status={states[mentor.email]} connect={connect} message={message} sending={sending} disabled={!!error}
+                      status={states[mentor.email?.trim().toLowerCase()]} connect={connect} message={message} sending={sending} disabled={!!error}
                       onProgress={item => {
                         setProgressPartner(item.authId || "");
                         setWorkspace("progress");
