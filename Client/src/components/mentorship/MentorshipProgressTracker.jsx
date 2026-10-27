@@ -199,6 +199,7 @@ export default function MentorshipProgressTracker({
           </p>
           {onFindMentors && <button type="button" onClick={onFindMentors} className={`${button} mt-5`}>Find a mentor<ArrowRight size={15} /></button>}
         </div> : !error && selected && user?.role === 'alumni' ? <MentorProgressWorkspace trackers={trackers} initialPartnerAuthId={initialPartnerAuthId} dirty={dirty} onSelect={() => setMessage('')} renderGoals={tracker => tracker.goals.map(goal => <GoalCard key={`${tracker.connectionId}:${goal.key}:${goal.revision}:${goal.status}`} goal={goal} connectionId={tracker.connectionId} onSaved={onSaved} isMentor onDirty={onDirty} />)} /> : !error && selected && <>
+            <div className="mentorship-progress-overview">
             <div className={`${card} flex flex-wrap items-center justify-between gap-4 p-5`}>
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
@@ -254,7 +255,8 @@ export default function MentorshipProgressTracker({
               </div>
               <p className="mt-3 text-xs leading-5 text-emerald-100/80">Your activities start progress automatically. The percentage increases when your mentor confirms a finished goal.</p>
             </div>
-            <div className="space-y-4">
+            </div>
+            <div className="space-y-5">
               {selected.goals.map(goal => <GoalCard key={`${selected.connectionId}:${goal.key}:${goal.revision}:${goal.status}`} goal={goal} connectionId={selected.connectionId} onSaved={onSaved} isMentor={user?.role === 'alumni'} onDirty={onDirty} onCareerPlanning={onCareerPlanning} />)}
             </div>
             <details className="rounded-xl border border-zinc-200 bg-white px-5 py-4 text-sm dark:border-zinc-800 dark:bg-zinc-900"><summary className="cursor-pointer font-medium text-zinc-600 dark:text-zinc-300">How does progress work?</summary><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-zinc-500 dark:text-zinc-400"><li>Save your portfolio details or career goals. Your tracker picks them up automatically.</li><li>Use Log practice to record interview preparation. Add a note if you want feedback.</li><li>Your mentor reviews your work and confirms each completed goal.</li></ol></details>

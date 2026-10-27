@@ -1,7 +1,7 @@
 import { createElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Briefcase, FileText, CalendarDays,
+  LayoutDashboard, Briefcase, FileText, CalendarDays, Route, BarChart3,
   ClipboardList, Trophy, UserPlus, MessageSquare, Settings, LogOut, X,
 } from "lucide-react";
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
@@ -13,11 +13,13 @@ let sidebarScrollTop = 0;
 const menuGroups = [
   { label: "Overview", items: [
     { to: "/alumni", label: "Dashboard", icon: LayoutDashboard, end: true, aliases: ["/feed"] },
+    { to: "/alumni/journey", label: "Journey", icon: Route, aliases: ["/student/journey"] },
   ] },
   { label: "Career & Growth", items: [
     { to: "/alumni/career", label: "Career", icon: Briefcase },
     { to: "/alumni/employment", label: "Employment", icon: Briefcase },
     { to: "/alumni/mentorship", label: "Mentorship", icon: ClipboardList },
+    { to: "/alumni/readiness", label: "Readiness", icon: BarChart3, aliases: ["/student/readiness"] },
   ] },
   { label: "Community", items: [
     { to: "/alumni/success", label: "Success Stories", icon: Trophy, aliases: ["/stories"] },

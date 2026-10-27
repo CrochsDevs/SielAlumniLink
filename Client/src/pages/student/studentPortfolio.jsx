@@ -546,7 +546,7 @@ export default function StudentPortfolio() {
                 </p>
               )}
               <Link
-                to="/student/accounts"
+                to={user?.role === "alumni" ? "/alumni/accounts" : "/student/accounts"}
                 className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-brand dark:text-brand"
               >
                 Update profile details

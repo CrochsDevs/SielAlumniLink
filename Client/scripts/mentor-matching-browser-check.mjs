@@ -156,7 +156,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     });
   } catch (error) {
     runtimeErrors.push(error.message);
-    await send("Fetch.failRequest", { requestId, errorReason: "Failed" });
+    await send("Fetch.failRequest", { requestId, errorReason: "Failed" }).catch(() => {});
   }
 });
 const click = (label) =>
@@ -199,15 +199,16 @@ try {
   await send("Page.navigate", {
     url: "http://localhost:5173/student/mentorship",
   });
-  await until(`document.body.textContent.includes('Retry matching')`);
+  await until(`document.body.textContent.includes('Try again')`);
   failedLoad = false;
-  await click("Retry matching");
-  await until(`document.body.textContent.includes('Why this match')`);
+  await click("Try again");
+  await until(`document.body.textContent.includes('Why this mentor?')`);
+  await evaluate(`document.querySelector('[aria-controls="mentor-preferences-form"]').click()`);
   await photo("matching-desktop", 1440, false);
   await photo("matching-mobile-dark", 390, true);
   await photo("matching-small-mobile", 320, false);
   await fill("mentor-goals", "Become a software engineer");
-  await click("Save & update matches");
+  await click("Update recommendations");
   await until(`document.body.textContent.includes('Fixture save failed')`);
   assert.equal(
     await evaluate(`document.getElementById('mentor-goals').value`),
@@ -216,7 +217,7 @@ try {
   await evaluate(
     `(() => { const button = document.querySelector('form button[type=submit]'); button.click(); button.click(); })()`,
   );
-  await until(`document.body.textContent.includes('Preferences saved')`);
+  await until(`document.body.textContent.includes('career direction is saved')`);
   assert.equal(saves, 2);
   await click("Connect");
   await until(
@@ -228,9 +229,9 @@ try {
     ),
     true,
   );
-  await click("Find mentors");
-  await until(`document.body.textContent.includes('Discover')`);
-  await click("AI Mentor Matching");
+  await click("Browse all mentors");
+  await until(`document.body.textContent.includes('Explore all mentors')`);
+  await click("Back to recommendations");
   await until(
     `document.getElementById('mentor-goals')?.value === 'Become a software engineer'`,
   );
@@ -249,9 +250,9 @@ try {
     `Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === 'Message')`,
   );
   empty = true;
-  await click("Find mentors");
-  await click("AI Mentor Matching");
-  await until(`document.body.textContent.includes('No matching profiles yet')`);
+  await click("Browse all mentors");
+  await click("Back to recommendations");
+  await until(`document.body.textContent.includes('find the right mentor')`);
   assert.deepEqual(runtimeErrors, []);
   console.log(
     "Passed: load retry, ranking display, save failure recovery, duplicate submission guard, persistence on remount, connect/pending/incoming/accepted states, empty matches, desktop and mobile layouts. API fixtures only. Screenshots: " +
@@ -261,6 +262,8 @@ try {
   console.error(await evaluate("document.body.innerText"), runtimeErrors);
   throw error;
 } finally {
+  listeners.delete("Fetch.requestPaused");
+  await send("Fetch.disable").catch(() => {});
   await send("Browser.close").catch(() => {});
   socket.close();
 }

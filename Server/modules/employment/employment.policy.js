@@ -27,8 +27,56 @@ export function employmentState(profile) {
     location: isWorking(status) ? current?.location || '' : '',
     startDate: isWorking(status) ? jobMonth(current?.startDate) : '',
     employmentHistory: history,
-    historyRevision: createHash('sha256').update(JSON.stringify(history)).digest('hex'),
+    historyRevision: createHash('sha256').update(JSON.stringify([status, history])).digest('hex'),
     employmentUpdatedAt: profile.employmentUpdatedAt || null,
+  };
+}
+
+export function assertEmploymentRevision(profile, revision) {
+  if (revision !== employmentState(profile).historyRevision) {
+    throw Object.assign(new Error('Your employment records changed. Refresh and try again.'), { status: 409 });
+  }
+}
+
+export function removePastEmployment(profile, index, now = new Date()) {
+  const history = employmentState(profile).employmentHistory;
+  if (!Number.isInteger(index) || index < 0 || index >= history.length) {
+    throw Object.assign(new Error('Experience not found'), { status: 404 });
+  }
+  if (history[index].current) fail('End your current employment before removing a current role.');
+  return { employmentHistory: history.filter((_, i) => i !== index), employmentUpdatedAt: now };
+}
+
+// Profile experience editing uses the same rules and model as the employment page.
+export function changeExperience(profile, input, now = new Date()) {
+  assertEmploymentRevision(profile, input?.revision);
+  const { action, index, entry } = input;
+  if (!['add', 'edit', 'remove'].includes(action)) fail('Invalid experience action');
+  const state = employmentState(profile);
+  const history = state.employmentHistory;
+  if (action !== 'add' && (!Number.isInteger(index) || index < 0 || index >= history.length)) {
+    throw Object.assign(new Error('Experience not found'), { status: 404 });
+  }
+  if (action === 'remove') return removePastEmployment(profile, index, now);
+  if (!entry || typeof entry !== 'object' || typeof entry.current !== 'boolean') fail('Invalid experience');
+  if (entry.current) {
+    if (!isWorking(entry.employmentStatus)) fail('Select Employed or Self-employed for a current role');
+    // A past role changed to current replaces that past entry; a change to an
+    // existing current company/position preserves the previous career step.
+    const source = action === 'edit' && !history[index].current
+      ? { ...profile, employmentHistory: history.filter((_, i) => i !== index) }
+      : profile;
+    return updateEmployment(source, { ...entry, currentCompany: entry.company }, now);
+  }
+  if (action === 'add') return addPastEmployment(profile, entry, now);
+  const validated = addPastEmployment({}, entry, now).employmentHistory[0];
+  const updated = history.map((job, i) => i === index
+    ? { ...job, ...validated, _id: job._id || validated._id, createdAt: job.createdAt || validated.createdAt, updatedAt: now, period: '' }
+    : job);
+  const endedCurrent = history[index].current && !updated.some(job => job.current);
+  return {
+    employmentHistory: updated, employmentUpdatedAt: now,
+    ...(endedCurrent && isWorking(state.employmentStatus) ? { employmentStatus: 'Unemployed' } : {}),
   };
 }
 

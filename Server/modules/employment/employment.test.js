@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { employmentState, updateEmployment, addPastEmployment, employmentReport } from './employment.policy.js';
+import { employmentState, updateEmployment, addPastEmployment, employmentReport, changeExperience } from './employment.policy.js';
 
 const now = new Date('2026-10-14T08:00:00Z');
 const job = { currentCompany: 'Example Ltd', position: 'Engineer', industry: 'Engineering', location: 'Manila', startDate: '2025-01', employmentStatus: 'Employed' };
@@ -111,13 +111,13 @@ test('own employment workflow persists across reads and cannot target another ac
   let profile = { _id: 'profile-a', authId: 'auth-a', employmentHistory: [] };
   t.mock.method(UserModel, 'findByAuthId', async id => { assert.equal(id, 'auth-a'); return profile; });
   t.mock.method(EmploymentModel, 'updateProfile', async (old, update) => { assert.equal(old._id, 'profile-a'); profile = { ...old, ...update }; return profile; });
-  const req = { user: { _id: 'auth-a', role: 'alumni' }, body: { ...job, authId: 'victim', _id: 'victim', role: 'admin' } };
+  const req = { user: { _id: 'auth-a', role: 'alumni' }, body: { ...job, revision: employmentState(profile).historyRevision, authId: 'victim', _id: 'victim', role: 'admin' } };
   let res = response(); await saveEmployment(req, res);
   assert.equal(res.statusCode, 200);
   assert.equal(profile.authId, 'auth-a');
   res = response(); await getEmployment(req, res);
   assert.equal(res.body.data.currentCompany, 'Example Ltd');
-  req.body = { company: 'Past', position: 'Intern', startDate: '2023-01', endDate: '2023-06' };
+  req.body = { company: 'Past', position: 'Intern', startDate: '2023-01', endDate: '2023-06', revision: employmentState(profile).historyRevision };
   res = response(); await addExperience(req, res);
   assert.equal(res.body.data.employmentHistory.length, 2);
   req.params = { index: '1' }; req.body = { revision: employmentState(profile).historyRevision };
@@ -143,4 +143,103 @@ test('report controller filters reports and rejects object filters', async t => 
   assert.equal(res.body.data.summary.totalAlumni, 1);
   res = response(); await getReport({ query: { batch: { $ne: '' } } }, res);
   assert.equal(res.statusCode, 400);
+});
+
+const { updateMyProfile, updateMyExperience, getMyProfile } = await import('../users/users.controllers.js');
+const experience = { ...job, company: job.currentCompany, current: true };
+const edit = (profile, action, entry, index) => changeExperience(profile, {
+  action, entry, index, revision: employmentState(profile).historyRevision,
+}, now);
+
+test('profile experience keeps status, role transitions and reports consistent', () => {
+  const first = { employmentStatus: 'Unemployed', ...edit({ employmentStatus: 'Unemployed' }, 'add', experience) };
+  assert.equal(employmentState(first).employmentStatus, 'Employed');
+  assert.equal(employmentState(first).currentCompany, job.currentCompany);
+  assert.equal(employmentReport([first]).summary.employed, 1);
+  const second = { ...first, ...edit(first, 'edit', { ...experience, position: 'Senior Engineer', startDate: '2026-01' }, 0) };
+  assert.equal(second.employmentHistory.length, 2);
+  assert.equal(second.employmentHistory[0].position, 'Engineer');
+  assert.equal(second.employmentHistory[0].endDate, '2026-01');
+  assert.equal(second.employmentHistory[1].current, true);
+  const ended = { ...second, ...edit(second, 'edit', { ...experience, position: 'Senior Engineer', startDate: '2026-01', endDate: '2026-09', current: false }, 1) };
+  assert.equal(ended.employmentStatus, 'Unemployed');
+  assert.equal(ended.employmentHistory[1].endDate, '2026-09');
+  assert.equal(employmentReport([ended]).summary.employed, 0);
+  assert.equal(employmentState(ended).currentCompany, '');
+});
+
+test('profile edits validate current and past roles and preserve existing role IDs', () => {
+  for (const change of [{ startDate: '2099-01' }, { industry: '' }, { company: '' }, { current: 'true' }, { employmentStatus: 'Unemployed' }]) {
+    assert.throws(() => edit({}, 'add', { ...experience, ...change }), error => error.status === 400);
+  }
+  const first = edit({}, 'add', { ...experience, employmentStatus: 'Self-employed' });
+  const corrected = edit(first, 'edit', { ...experience, industry: 'Technology', employmentStatus: 'Self-employed' }, 0);
+  assert.equal(corrected.employmentHistory.length, 1);
+  assert.equal(corrected.employmentHistory[0]._id, first.employmentHistory[0]._id);
+  assert.equal(corrected.employmentStatus, 'Self-employed');
+  assert.throws(() => edit(first, 'remove', undefined, 0), error => error.status === 400);
+  assert.throws(() => edit(first, 'edit', { ...experience, current: false, endDate: '2020-01' }, 0), error => error.status === 400);
+  assert.throws(() => edit(first, 'add', { ...experience, current: false, endDate: '2099-01' }), error => error.status === 400);
+  const added = { ...first, ...edit(first, 'add', { ...experience, company: 'Previous', current: false, startDate: '2022-01', endDate: '2022-06' }) };
+  const past = edit(added, 'edit', { ...experience, company: 'Corrected previous', current: false, startDate: '2022-01', endDate: '2022-07' }, 1);
+  assert.equal(past.employmentHistory[1]._id, added.employmentHistory[1]._id);
+  assert.equal(past.employmentHistory[0].current, true);
+  assert.equal(edit({ ...added, ...past }, 'remove', undefined, 1).employmentHistory.length, 1);
+});
+
+test('general profile writes cannot bypass employment validation through arrays or Mongo operators', async t => {
+  const write = t.mock.method(UserModel, 'updateById', async () => assert.fail('must not write'));
+  const fields = ['employmentHistory', 'employmentHistory.0.current', 'employmentStatus', 'employmentRevision', 'employmentUpdatedAt', 'historyRevision'];
+  for (const field of fields) {
+    for (const operator of [null, '$set', '$push', '$pull', '$addToSet', '$inc', '$unset']) {
+      const body = operator ? { [operator]: { [field]: [] } } : { [field]: [] };
+      const res = response();
+      await updateMyProfile({ user: { _id: 'own', role: 'alumni' }, body }, res);
+      assert.equal(res.statusCode, 400, JSON.stringify(body));
+    }
+  }
+  assert.equal(write.mock.callCount(), 0);
+});
+
+test('profile experience endpoint owns its records and returns the shared revision for students and alumni', async t => {
+  let profile = { _id: 'own-profile', authId: 'own-account', employmentStatus: 'Unemployed', employmentHistory: [] };
+  t.mock.method(UserModel, 'findByAuthId', async id => { assert.equal(id, 'own-account'); return profile; });
+  t.mock.method(EmploymentModel, 'updateProfile', async (old, patch) => { assert.equal(old._id, 'own-profile'); profile = { ...old, ...patch }; return profile; });
+  for (const role of ['student', 'alumni']) {
+    const req = { user: { _id: 'own-account', role }, body: {
+      action: 'add', entry: experience, revision: employmentState(profile).historyRevision,
+      authId: 'victim', _id: 'victim', role: 'admin',
+    } };
+    const res = response();
+    await updateMyExperience(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.data.role, role);
+    assert.equal(res.body.data.authId, 'own-account');
+    assert.equal(res.body.data.employmentStatus, 'Employed');
+    assert.equal(res.body.data.historyRevision, employmentState(profile).historyRevision);
+    const read = response();
+    await getMyProfile(req, read);
+    assert.equal(read.body.data.historyRevision, res.body.data.historyRevision);
+  }
+});
+
+test('both editing screens reject stale or missing revisions including status-only changes', async t => {
+  const old = { _id: 'profile', employmentStatus: 'Unemployed', employmentHistory: [] };
+  const current = { ...old, employmentStatus: 'Studying' };
+  assert.notEqual(employmentState(old).historyRevision, employmentState(current).historyRevision);
+  t.mock.method(UserModel, 'findByAuthId', async () => current);
+  const write = t.mock.method(EmploymentModel, 'updateProfile', async () => assert.fail('must not write'));
+  for (const revision of [undefined, employmentState(old).historyRevision]) {
+    for (const [controller, body] of [
+      [saveEmployment, job], [addExperience, { company: 'Past', position: 'Intern', startDate: '2022-01', endDate: '2022-06' }],
+      [updateMyExperience, { action: 'add', entry: experience }],
+      [updateMyExperience, { action: 'edit', index: 0, entry: experience }],
+      [updateMyExperience, { action: 'remove', index: 0 }],
+    ]) {
+      const res = response();
+      await controller({ user: { _id: 'own', role: 'alumni' }, body: { ...body, revision } }, res);
+      assert.equal(res.statusCode, 409);
+    }
+  }
+  assert.equal(write.mock.callCount(), 0);
 });

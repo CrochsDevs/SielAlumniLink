@@ -25,6 +25,7 @@ const EMPTY = {
 };
 export default function StudentInternship() {
   const { user } = useAuth();
+  const alumni = user?.role === "alumni";
   const state = useDevelopment();
   const [view, setView] = useState("records");
   const [query, setQuery] = useState("");
@@ -46,7 +47,7 @@ export default function StudentInternship() {
             .map((item) => ({
               ...item,
               source: "University",
-              target: "/student/career",
+              target: alumni ? "/alumni/career" : "/student/career",
             })),
           ...referrals.data.data
             .filter((item) => item.type === "internship")
@@ -55,7 +56,7 @@ export default function StudentInternship() {
               company: item.organization,
               description: item.description,
               source: "Alumni referral",
-              target: "/student/referrals",
+              target: alumni ? "/alumni/referral" : "/student/referrals",
             })),
         ]);
       })
@@ -69,7 +70,7 @@ export default function StudentInternship() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [alumni]);
   const records = state.data?.internships || [];
   const total = records.reduce((sum, record) => sum + record.requiredHours, 0);
   const completed = records.reduce(
@@ -198,7 +199,7 @@ export default function StudentInternship() {
               ))}
             </div>
             <Link
-              to="/student/readiness"
+              to={alumni ? "/alumni/readiness" : "/student/readiness"}
               className="mt-6 block text-xs font-semibold text-brand dark:text-brand"
             >
               View readiness score

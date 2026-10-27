@@ -8,6 +8,8 @@ import {
   updateEmployment,
   addPastEmployment,
   employmentReport,
+  changeExperience,
+  assertEmploymentRevision,
 } from "../../Server/modules/employment/employment.policy.js";
 
 const artifacts = path.join(os.tmpdir(), "SielAlumni-employment-check");
@@ -80,6 +82,7 @@ let profile = { ...user, employmentHistory: [] };
 let reports;
 let failNextSave = false;
 let requestError;
+let closing = false;
 listeners.set("Runtime.exceptionThrown", ({ exceptionDetails }) =>
   runtimeErrors.push(
     exceptionDetails.exception?.description || exceptionDetails.text,
@@ -92,16 +95,24 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     let data = [];
     let responseCode = 200;
     let message = "";
+    try {
     if (request.method !== "OPTIONS") {
       const body = request.postData ? JSON.parse(request.postData) : {};
-      if (route === "/auth/me" || route === "/users/me")
-        data = { ...profile, ...user };
+      if (route === "/users/me/experience" && request.method === "PUT") {
+        profile = { ...profile, ...changeExperience(profile, body) };
+        data = { ...profile, ...user, historyRevision: employmentState(profile).historyRevision };
+      } else if (route === "/auth/me" || route === "/users/me") {
+        assert.notEqual(request.method, "PUT", "Employment changes must use the validated endpoint");
+        data = { ...profile, ...user, historyRevision: employmentState(profile).historyRevision };
+      }
+      else if (route === "/tracer/access") data = { updateRequired: false, quarter: "test", nextUpdateAt: new Date(Date.now() + 86400000).toISOString() };
       else if (route === "/employment/me" && request.method === "PUT") {
         if (failNextSave) {
           failNextSave = false;
           responseCode = 500;
           message = "Fixture save failed";
         } else {
+          assertEmploymentRevision(profile, body.revision);
           profile = { ...profile, ...updateEmployment(profile, body) };
           data = employmentState(profile);
         }
@@ -121,6 +132,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
           },
         ];
       else if (route === "/employment/history" && request.method === "POST") {
+        assertEmploymentRevision(profile, body.revision);
         profile = { ...profile, ...addPastEmployment(profile, body) };
         data = employmentState(profile);
       } else if (
@@ -141,6 +153,11 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
       else if (route === "/notifications") data = [];
       else if (route === "/notifications/unread-count") data = { count: 0 };
     }
+    } catch (error) {
+      if (!error.status) throw error;
+      responseCode = error.status;
+      message = error.message;
+    }
     await send("Fetch.fulfillRequest", {
       requestId,
       responseCode,
@@ -159,8 +176,9 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
       ).toString("base64"),
     });
   } catch (error) {
+    if (closing) return;
     requestError = error;
-    await send("Fetch.failRequest", { requestId, errorReason: "Failed" });
+    await send("Fetch.failRequest", { requestId, errorReason: "Failed" }).catch(() => {});
   }
 });
 const click = (label) =>
@@ -369,13 +387,96 @@ try {
   );
   await click("Employment Reports");
   await until(`document.body.textContent.includes('Industry distribution')`);
+  // The profile editor and employment page must agree and reject stale tabs.
+  user = { ...user, role: "alumni" };
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/alumni/profile" });
+  await until(`document.querySelectorAll('[aria-label="Edit experience"]').length === 2`);
+  const experienceSection = `Array.from(document.querySelectorAll('main section')).find(s=>s.querySelector('h3')?.textContent.trim()==='Experience')`;
+  await evaluate(`Array.from((${experienceSection}).querySelectorAll('button')).find(b=>b.textContent.trim()==='Add').click()`);
+  await until(`document.querySelector('[aria-label="Add experience form"]')`);
+  const profileFill = async (selector, value) => evaluate(`(()=>{
+    const el=document.querySelector(${JSON.stringify(selector)});
+    Object.getOwnPropertyDescriptor(el.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype,'value').set.call(el,${JSON.stringify(value)});
+    el.dispatchEvent(new Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));
+  })()`);
+  const addGroup = '[aria-label="Add experience form"]';
+  for (const [selector, value] of [
+    ['[placeholder="Position"]', 'Profile Developer'], ['[placeholder="Company"]', 'Profile Studio'],
+    ['[aria-label="Industry"]', 'Technology'], ['input[type="month"]', '2099-01'],
+  ]) await profileFill(`${addGroup} ${selector}`, value);
+  await evaluate(`document.querySelector('${addGroup} input[type="checkbox"]').click()`);
+  await click("Add Experience");
+  await until(`document.body.textContent.includes('Start month cannot be in the future')`);
+  assert.equal(profile.employmentHistory.length, 2);
+  await profileFill(`${addGroup} input[type="month"]`, '2025-01');
+  await click("Add Experience");
+  await until(`!document.querySelector('${addGroup}') && document.querySelectorAll('[aria-label="Edit experience"]').length === 3`);
+  assert.equal(profile.employmentStatus, 'Employed');
+  assert.equal(employmentReport([profile]).summary.employed, 1);
+  assert.equal(employmentState(profile).currentCompany, 'Profile Studio');
+  await photo('profile-career-mobile', 390, false);
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/alumni/employment" });
+  await until(`document.querySelector('[aria-label="Current company"]')?.value==='Profile Studio'`);
+  // Another tab saves after this screen loaded.
+  profile = { ...profile, ...updateEmployment(profile, { ...employmentState(profile), industry: 'Design' }) };
+  await fill('Location', 'Stale location');
+  await submit();
+  await until(`document.querySelector('[role="alert"]')?.textContent.includes('records changed')`);
+  assert.equal(employmentState(profile).location, '');
+  await click('Refresh');
+  await until(`document.querySelector('[aria-label="Industry"]')?.value==='Design'`);
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/alumni/profile" });
+  await until(`document.querySelectorAll('[aria-label="Edit experience"]').length === 3`);
+  await evaluate(`document.querySelectorAll('[aria-label="Edit experience"]')[2].click()`);
+  const editGroup = '[aria-label="Edit experience form"]';
+  await until(`document.querySelector('${editGroup} input[type="month"]')?.value==='2025-01'`);
+  await profileFill(`${editGroup} [aria-label="Industry"]`, 'Engineering');
+  await click('Save Changes');
+  await until(`!document.querySelector('${editGroup}')`);
+  assert.equal(profile.employmentHistory.length, 3);
+  assert.equal(employmentState(profile).industry, 'Engineering');
+  await evaluate(`document.querySelectorAll('[aria-label="Edit experience"]')[2].click()`);
+  await until(`document.querySelector('${editGroup}')`);
+  profile = { ...profile, ...updateEmployment(profile, { ...employmentState(profile), position: 'Concurrent Architect', startDate: '2026-09' }) };
+  await profileFill(`${editGroup} [aria-label="Position"]`, 'Stale title');
+  await click('Save Changes');
+  await until(`!document.querySelector('${editGroup}') && document.querySelectorAll('[aria-label="Edit experience"]').length===4`);
+  assert.equal(employmentState(profile).position, 'Concurrent Architect');
+  await evaluate(`document.querySelectorAll('[aria-label="Edit experience"]')[3].click()`);
+  await until(`document.querySelector('${editGroup}')`);
+  await evaluate(`document.querySelector('${editGroup} input[type="checkbox"]').click()`);
+  await evaluate(`(()=>{const el=document.querySelectorAll('${editGroup} input[type="month"]')[1];Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,'2026-10');el.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  await click('Save Changes');
+  await until(`!document.querySelector('${editGroup}')`);
+  assert.equal(profile.employmentStatus, 'Unemployed');
+  assert.equal(profile.employmentHistory.filter(job=>job.current).length, 0);
+  await evaluate(`document.querySelectorAll('[aria-label="Remove experience"]')[3].click()`);
+  await until(`document.querySelector('.swal2-confirm')`);
+  await evaluate(`document.querySelector('.swal2-confirm').click()`);
+  await until(`document.querySelectorAll('[aria-label="Edit experience"]').length===3`);
+  assert.equal(profile.employmentHistory.length, 3);
+  // A student retains the ability to record validated experience on their own profile.
+  user = { ...user, role: 'student' };
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/student/profile" });
+  await until(`document.querySelectorAll('[aria-label="Edit experience"]').length===3`);
+  await evaluate(`document.querySelectorAll('[aria-label="Edit experience"]')[0].click()`);
+  await until(`document.querySelector('${editGroup}')`);
+  await profileFill(`${editGroup} [aria-label="Location"]`, 'Student record correction');
+  await click('Save Changes');
+  await until(`!document.querySelector('${editGroup}')`);
+  assert.equal(profile.employmentHistory[0].location, 'Student record correction');
+  assert.equal(profile.employmentStatus, 'Unemployed');
+  assert.equal(employmentReport([profile]).summary.employed, 0);
   if (requestError) throw requestError;
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Passed: alumni updates, reload persistence, role changes, save errors, past-role add/remove, unemployment, report filters, career history, CSV, merged Tracer tabs, legacy URL redirect, and mobile/desktop layouts. API fixtures only. Screenshots: " +
+    "Passed: profile add/edit/end/remove, shared employment status, stale-tab conflicts, student experience, alumni updates, reload persistence, role changes, save errors, past-role add/remove, unemployment, report filters, career history, CSV, merged Tracer tabs, legacy URL redirect, and mobile/desktop layouts. API fixtures only. Screenshots: " +
       artifacts,
   );
 } finally {
+  closing = true;
+  listeners.delete("Fetch.requestPaused");
+  await send("Fetch.disable").catch(() => {});
   await send("Browser.close").catch(() => {});
   socket.close();
 }

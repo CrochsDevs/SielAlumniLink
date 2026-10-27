@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { goalSnapshot } from "../../Server/modules/mentorship/mentorship.policy.js";
 
 // Uses a separate headless browser and API fixtures. No real alumni responses
 // are read or written. Start Edge/Chrome with remote debugging on port 9232.
@@ -126,7 +127,7 @@ const connections = [
   },
 ];
 let mutations = 0,
-  failFirst = true;
+  failFirst = false;
 listeners.set("Runtime.exceptionThrown", ({ exceptionDetails }) =>
   runtimeErrors.push(exceptionDetails.text),
 );
@@ -135,6 +136,18 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
   let data = [],
     responseCode = 200;
   if (route === "/auth/me" || route === "/users/me") data = user;
+  else if (route === "/mentorship/matches") data = {
+    preferences: { interests: ['Software development', 'Design systems'], careerGoals: 'Prepare for my first software engineering role.' },
+    profile: { skills: ['React', 'JavaScript', 'Research'], program: user.program },
+    candidateCount: mentors.length,
+    matches: mentors.map((mentor, index) => ({ mentor: { ...mentor, headline: mentor.bio }, score: 85 - index * 9,
+      reasons: ['Shared skills: ' + mentor.skills.join(', '), 'Experience related to your career interests'] })),
+  };
+  else if (route === "/mentorship/me") data = [{
+    connectionId: 'layout-connection', student: user, mentor: mentors[1],
+    ...goalSnapshot([{ goalKey: 'resume_building', status: 'completed', updatedByRole: 'alumni', note: 'Reviewed your resume and project examples.' }, { goalKey: 'career_planning', status: 'in_progress', note: 'Discuss software engineering career paths.' }]),
+  }];
+  else if (route === "/notifications/unread-count") data = { count: 0 };
   else if (route === "/users") {
     if (failFirst) {
       responseCode = 503;
@@ -197,6 +210,16 @@ try {
   await send("Page.navigate", {
     url: "http://localhost:5173/student/mentorship",
   });
+  await until(`document.querySelector('[aria-label="Recommended mentors"] article')`);
+  await photo("mentorship-recommendations-desktop", 1440, false);
+  await evaluate(`document.querySelector('[aria-controls="mentor-preferences-form"]').click()`);
+  await photo("mentorship-preferences-desktop", 1440, false);
+  await photo("mentorship-recommendations-mobile", 390, false);
+  await photo("mentorship-recommendations-mobile-dark", 390, true);
+  failFirst = true;
+  await send("Page.reload");
+  await until(`document.querySelector('[aria-label="Recommended mentors"] article')`);
+  await click("Browse all mentors");
   await until(`document.querySelector('[role=alert]')`);
   failFirst = false;
   await click("Refresh mentors");
@@ -232,18 +255,28 @@ try {
   await until(`document.querySelectorAll('article').length===4`);
   await photo("mentorship-mobile", 390, false);
   await send("Page.reload");
+  await until(`document.querySelector('[aria-label="Recommended mentors"] article')`);
+  await click("Browse all mentors");
   await until(`document.querySelectorAll('article').length===4`);
   assert.ok(
     await evaluate(
       `document.querySelector('article').textContent.includes('Request sent')`,
     ),
   );
+  assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('article')).boxShadow`), 'none');
+  await evaluate(`document.querySelector('[aria-label="Student mentorship workspace"] button:nth-child(3)').click()`);
+  await until(`document.querySelectorAll('[data-mentorship-goal]').length===3`);
+  await photo("mentorship-progress-desktop", 1440, false);
+  await photo("mentorship-progress-mobile-dark", 390, true);
+  await photo("mentorship-progress-small-mobile", 320, false);
   assert.deepEqual(runtimeErrors, []);
   console.log(
     "Passed: failure/retry, alumni-only discovery, connection tabs, skill search, request submission and reload, mobile/desktop layouts and dark mode. Mock APIs only. Artifacts: " +
       artifacts,
   );
 } finally {
+  listeners.delete("Fetch.requestPaused");
+  await send("Fetch.disable").catch(() => {});
   await send("Browser.close").catch(() => {});
   socket.close();
 }

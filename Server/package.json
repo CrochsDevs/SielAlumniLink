@@ -7,6 +7,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "test:career": "node --test --test-isolation=none modules/development/development.test.js modules/development/competency.test.js modules/development/certificates.test.js modules/employment/employment.test.js modules/mentorship/mentorship.test.js modules/mentorship/matching.test.js",
+    "test:career:integration": "node --test --test-isolation=none modules/development/development.integration.test.js modules/development/career-progression.integration.test.js",
     "test:notifications": "node --test --test-isolation=none modules/notifications/notifications.test.js",
     "test:notifications:integration": "node --test --test-isolation=none modules/notifications/notifications.integration.test.js",
     "test:mentorship": "node --test --test-isolation=none modules/mentorship/mentorship.test.js modules/mentorship/matching.test.js",

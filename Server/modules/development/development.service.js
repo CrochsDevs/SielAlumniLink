@@ -53,10 +53,24 @@ export const createDevelopmentService = db => {
     if (completed.length) setAuto('internship', completed.map(item => item.endDate ? `${item.endDate}T00:00:00Z` : item.updatedAt).sort((a, b) => new Date(a) - new Date(b))[0], 'Self-reported internship');
     const graduatedAt = profile?.graduatedAt || user.graduatedAt;
     if (graduatedAt) { setAuto('graduated', graduatedAt, 'University graduation record'); setAuto('alumni', graduatedAt, 'Account graduation'); }
-    if (['Employed', 'Self-employed'].includes(tracer?.status)) setAuto('employed', tracer.employmentDate || tracer.updatedAt || tracer.respondedAt, 'Tracer response');
-    const employment = profile?.employmentHistory?.find(item => item.company && (item.startDate || item.start));
-    if (employment) setAuto('employed', employment.startDate || employment.start, 'Profile employment record');
-    if (Object.keys(auto).length) await records.updateOne({ _id: authId }, { $set: auto, $setOnInsert: { createdAt: new Date() } }, { upsert: true });
+    const employmentDates = [
+      ...[tracer, ...(Array.isArray(tracer?.responseHistory) ? tracer.responseHistory : [])]
+        .filter(item => ['Employed', 'Self-employed'].includes(item?.status))
+        .map(item => ({ date: dateString(item.employmentDate || item.recordedAt || item.updatedAt || item.respondedAt), source: 'Tracer response' })),
+      ...(Array.isArray(profile?.employmentHistory) ? profile.employmentHistory : [])
+        .filter(item => item?.company)
+        .map(item => ({ date: dateString(item.startDate || item.start), source: 'Profile employment record' })),
+    ].filter(item => item.date && item.date <= new Date().toISOString().slice(0, 10))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (employmentDates.length) setAuto('employed', employmentDates[0].date, employmentDates[0].source);
+    if (Object.keys(auto).length) {
+      // A simultaneous snapshot must not overwrite an already recorded milestone.
+      const saved = await records.findOneAndUpdate({ _id: authId }, [{ $set: {
+        ...Object.fromEntries(Object.entries(auto).map(([key, value]) => [key, { $ifNull: [`$${key}`, { $literal: value }] }])),
+        createdAt: { $ifNull: ['$createdAt', new Date()] },
+      } }], { upsert: true, returnDocument: 'after' });
+      Object.assign(milestones, saved.milestones);
+    }
     let currentAssigned = false;
     const timeline = MILESTONES.map(([key, title, desc]) => {
       const entry = milestones[key];

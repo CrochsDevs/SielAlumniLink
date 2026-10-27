@@ -169,6 +169,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
     const input = request.postData ? JSON.parse(request.postData) : {};
     if (request.method === "OPTIONS") data = null;
     else if (route === "/auth/me" || route === "/users/me") data = account;
+    else if (route === "/tracer/access") data = { updateRequired: false, quarter: "test", nextUpdateAt: new Date(Date.now() + 86400000).toISOString() };
     else if (route === "/users") data = [alumni];
     else if (route === "/jobs")
       data = [
@@ -390,45 +391,30 @@ try {
   await click("Timeline");
   await photo("journey", 390, true);
   await navigate("/student/portfolio");
-  const addEntry = async (index, value) => {
-    await evaluate(
-      "Array.from(document.querySelectorAll('main section')[" +
-        index +
-        "].querySelectorAll('button')).find(button=>button.textContent.trim()==='Add').click()",
-    );
-    await evaluate(
-      "(()=>{const field=document.querySelectorAll('main section')[" +
-        index +
-        "].querySelector('input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(field," +
-        JSON.stringify(value) +
-        ");field.dispatchEvent(new Event('input',{bubbles:true}));})()",
-    );
-    await evaluate(
-      "Array.from(document.querySelectorAll('main section')[" +
-        index +
-        "].querySelectorAll('button')).find(button=>button.textContent.trim()==='Add').click()",
-    );
-    await until(
-      "!document.querySelectorAll('main section')[" +
-        index +
-        "].querySelector('input')",
-    );
+  await click("Edit details");
+  const addEntry = async (section, value) => {
+    await until(`document.querySelector('#${section} button[aria-label^="Add "]:not(:disabled)')`);
+    await evaluate(`document.querySelector('#${section} button[aria-label^="Add "]').click()`);
+    await until("document.querySelector('dialog input')");
+    await setValue("dialog input", value);
+    await click("Save entry", "document.querySelector('dialog')");
+    await until("!document.querySelector('dialog')");
   };
-  for (const [index, value] of [
-    [0, "SQL"],
-    [1, "Certificate A"],
-    [1, "Certificate B"],
-    [2, "Career Seminar"],
-    [3, "Capstone Project"],
-    [4, "Research Paper"],
+  for (const [section, value] of [
+    ["skills", "SQL"],
+    ["certifications", "Certificate A"],
+    ["certifications", "Certificate B"],
+    ["seminars", "Career Seminar"],
+    ["projects", "Capstone Project"],
+    ["research", "Research Paper"],
   ])
-    await addEntry(index, value);
+    await addEntry(section, value);
   mentorCount = 1;
   await navigate("/student/readiness");
   await until("document.body.textContent.includes('Highly Prepared')");
   assert.equal(snapshot().readiness.score, 82);
   assert.equal(
-    await evaluate("document.querySelector('main strong').textContent"),
+    await evaluate("document.querySelector('[aria-label=\"Overall employment readiness\"]').getAttribute('aria-valuenow')"),
     "82",
   );
   for (const width of [320, 390, 768, 1024, 1440])
@@ -438,6 +424,17 @@ try {
     await evaluate("document.body.textContent.includes('Certificate A')"),
   );
   await photo("portfolio", 390, true);
+  account = { ...student, role: "alumni" };
+  await navigate("/alumni/journey");
+  await click("Resources");
+  assert.ok(await evaluate(`Boolean(document.querySelector('main a[href="/alumni/career"]'))`));
+  assert.equal(await evaluate(`document.querySelectorAll('main a[href="/student/career"], main a[href="/student/mentorship"]').length`), 0);
+  await navigate("/student/portfolio");
+  await until("document.body.textContent.includes('Certificate A')");
+  assert.ok(await evaluate(`Boolean(document.querySelector('main a[href="/alumni/accounts"]'))`));
+  await navigate("/alumni/readiness");
+  await until(`document.querySelector('[aria-label="Overall employment readiness"]')?.getAttribute('aria-valuenow') === '82'`);
+  account = student;
   await navigate("/student/referrals");
   await until("document.querySelector('article')");
   await click("Apply directly", "document.querySelector('article')");
@@ -473,7 +470,7 @@ try {
   assert.equal(applications[0].status, "accepted");
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Passed: internship failure/retry and reload, saved academic dates, attendance, portfolio records, dynamic 82/100 readiness, referral double-submit guard and review, plus mobile/desktop themes.",
+    "Passed: internship failure/retry and reload, saved academic dates, attendance, portfolio records, dynamic 82/100 readiness, alumni record access and navigation, referral double-submit guard and review, plus mobile/desktop themes.",
   );
 } finally {
   await send("Browser.close").catch(() => {});

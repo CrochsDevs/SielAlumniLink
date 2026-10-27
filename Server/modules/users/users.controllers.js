@@ -6,6 +6,8 @@ import bcrypt from 'bcryptjs';
 import { ConversationModel } from '../messages/messages.models.js';
 import { emitToUser } from '../../realtime/socket.js';
 import { contactUpdates } from './profile-contact.js';
+import { EmploymentModel } from '../employment/employment.models.js';
+import { changeExperience, employmentState } from '../employment/employment.policy.js';
 
 const SYNCABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
@@ -158,7 +160,7 @@ export const getMyProfile = async (req, res) => {
     const { password, ...safeUser } = user;
     res.status(200).json({
       success: true,
-      data: { ...safeUser, role: req.user.role }
+      data: { ...safeUser, role: req.user.role, historyRevision: employmentState(user).historyRevision }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -446,7 +448,12 @@ export const updateUserRole = async (req, res) => {
 // by sync / admins.
 export const updateMyProfile = async (req, res) => {
   try {
-    const { name, program, batch, location, bio, skills, employmentHistory, education, interests } = req.body;
+    const employmentFields = ['employmentHistory', 'employmentStatus', 'employmentRevision', 'employmentUpdatedAt', 'historyRevision'];
+    const touchesEmployment = fields => Object.keys(fields || {}).some(key => employmentFields.includes(key.split('.')[0]));
+    if (touchesEmployment(req.body) || Object.entries(req.body).some(([key, value]) => key.startsWith('$') && touchesEmployment(value))) {
+      return res.status(400).json({ success: false, message: 'Use the experience or employment form to update employment records.' });
+    }
+    const { name, program, batch, location, bio, skills, education, interests } = req.body;
 
     let updateData;
     try {
@@ -507,7 +514,6 @@ export const updateMyProfile = async (req, res) => {
         return res.status(400).json({ success: false, message: 'You can add up to 10 skills only' });
       }
     }
-    if (employmentHistory !== undefined) updateData.employmentHistory = employmentHistory;
     if (education !== undefined) updateData.education = education;
     if (interests !== undefined) {
       if (!Array.isArray(interests) || interests.length > 20) {
@@ -579,6 +585,19 @@ export const updateMyProfile = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+// Experience edits retain the existing own-profile access for students and alumni.
+export const updateMyExperience = async (req, res) => {
+  try {
+    const profile = await UserModel.findByAuthId(req.user._id);
+    if (!profile) return res.status(404).json({ success: false, message: 'Profile not found' });
+    const updated = await EmploymentModel.updateProfile(profile, changeExperience(profile, req.body));
+    const { password, ...safeProfile } = updated;
+    res.status(200).json({ success: true, data: { ...safeProfile, role: req.user.role, historyRevision: employmentState(updated).historyRevision } });
+  } catch (error) {
+    res.status(error.status || 500).json({ success: false, message: error.message });
   }
 };
 

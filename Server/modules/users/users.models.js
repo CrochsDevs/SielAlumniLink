@@ -1,10 +1,9 @@
 import { client } from '../../config/db.js';
 import { nameGrams } from '../search/search.names.js';
 
-const db = client.db('SielAlumni');
+export const createUserModel = db => {
 const usersCollection = db.collection('users');
-
-export const UserModel = {
+return {
   async create(userData) {
     const newUser = {
       ...userData,
@@ -22,13 +21,8 @@ export const UserModel = {
 
   async findByAuthId(authId) {
     const { ObjectId } = await import('mongodb');
-    const query = { authId };
-    if (typeof authId === 'string' && /^[0-9a-fA-F]{24}$/.test(authId)) {
-      query.$or = [
-        { authId: authId },
-        { authId: new ObjectId(authId) },
-      ];
-    }
+    const value = String(authId);
+    const query = { authId: ObjectId.isValid(value) ? { $in: [value, new ObjectId(value)] } : authId };
     return await usersCollection.findOne(query);
   },
 
@@ -96,5 +90,8 @@ export const UserModel = {
     return { ...userProfile, _id: result.insertedId };
   }
 };
+};
+
+export const UserModel = createUserModel(client.db('SielAlumni'));
 
 export default UserModel;

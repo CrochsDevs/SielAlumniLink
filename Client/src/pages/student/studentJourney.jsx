@@ -61,6 +61,13 @@ const accentButton =
 
 export default function StudentJourney() {
   const { user } = useAuth();
+  const alumni = user?.role === "alumni";
+  const resources = alumni ? [
+    { title: "Community connections", description: "Stay connected with alumni and mentors.", path: "/alumni/requests", icon: Users },
+    { title: "Internship records", description: "Review and update the experience saved during your studies.", path: "/student/internship", icon: ListChecks },
+    { title: "Career opportunities", description: "Explore opportunities for your next career step.", path: "/alumni/career", icon: GraduationCap },
+    { title: "Employment history", description: "Record your current role and track your career progression.", path: "/alumni/employment", icon: GraduationCap },
+  ] : RESOURCES;
   const state = useDevelopment();
   const milestones = state.data?.timeline || [];
   const [recordOpen, setRecordOpen] = useState(false);
@@ -536,7 +543,7 @@ export default function StudentJourney() {
               )}
               {activeTab === "resources" && (
                 <div className="grid gap-3 p-5 sm:p-6">
-                  {RESOURCES.map((resource) => (
+                  {resources.map((resource) => (
                     <Link
                       key={resource.path}
                       to={resource.path}

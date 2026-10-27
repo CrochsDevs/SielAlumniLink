@@ -37,6 +37,11 @@ import {
 import SkillInput from "../../components/profile/SkillInput";
 import { normalizeSkill } from "../../components/profile/skillSuggestions";
 
+const emptyExperience = {
+  position: "", company: "", industry: "", location: "", startDate: "", endDate: "",
+  current: false, employmentStatus: "Employed",
+};
+
 const UserProfile = ({ profileRole = "alumni" }) => {
   const { user, refreshUser } = useAuth();
   const { openChatByEmail } = useChat();
@@ -77,14 +82,8 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const [showAddEdu, setShowAddEdu] = useState(false);
   const [editingExp, setEditingExp] = useState(null);
   const [editingEdu, setEditingEdu] = useState(null);
-  const [editExpForm, setEditExpForm] = useState({
-    position: "",
-    company: "",
-    location: "",
-    startDate: "",
-    endDate: "",
-    current: false,
-  });
+  const [editExpForm, setEditExpForm] = useState(emptyExperience);
+  const experiencePending = useRef(false);
   const [editEduForm, setEditEduForm] = useState({
     school: "",
     degree: "",
@@ -103,14 +102,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
     bio: "",
     skills: [],
   });
-  const [expForm, setExpForm] = useState({
-    position: "",
-    company: "",
-    location: "",
-    startDate: "",
-    endDate: "",
-    current: false,
-  });
+  const [expForm, setExpForm] = useState(emptyExperience);
   const [eduForm, setEduForm] = useState({
     school: "",
     degree: "",
@@ -198,7 +190,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       })
       .catch(() => {});
     api
-      .get(`/users/${user?._id || user?.authId}`)
+      .get("/users/me")
       .then((res) => {
         if (cancelled) return;
         const p = res.data.data || {};
@@ -217,6 +209,8 @@ const UserProfile = ({ profileRole = "alumni" }) => {
           bio: p.bio || "",
           skills: p.skills || [],
           employmentHistory: p.employmentHistory || [],
+          historyRevision: p.historyRevision,
+          employmentStatus: p.employmentStatus,
           education: p.education || [],
         });
         savedImages.current = {
@@ -305,60 +299,46 @@ const UserProfile = ({ profileRole = "alumni" }) => {
     }
   };
 
-  const addExperience = async () => {
-    if (saving) return;
-    if (!expForm.position.trim() || !expForm.company.trim()) {
-      toast.warning("Missing details", {
-        description: "Please enter a position and company.",
-      });
-      return;
-    }
-    if (!expForm.startDate || (!expForm.current && !expForm.endDate)) {
-      toast.warning("Missing date", {
-        description:
-          'Please select a start date and an end date, or check "I currently work here".',
-      });
-      return;
-    }
-    if (!expForm.current && expForm.endDate < expForm.startDate) {
-      toast.warning("Invalid dates", {
-        description: "End date must be on or after the start date.",
-      });
-      return;
-    }
+  const saveExperience = async (action, index, entry) => {
+    if (saving || experiencePending.current || !form.historyRevision) return;
+    experiencePending.current = true;
     setSaving(true);
     try {
-      const response = await api.put("/users/me", {
-        $push: {
-          employmentHistory: {
-            ...expForm,
-            endDate: expForm.current ? "" : expForm.endDate,
-          },
-        },
+      const { data } = await api.put("/users/me/experience", {
+        action, index, entry, revision: form.historyRevision,
       });
-      setForm((prev) => ({
-        ...prev,
-        employmentHistory: response.data.data.employmentHistory || [],
+      setForm(previous => ({ ...previous,
+        employmentHistory: data.data.employmentHistory || [],
+        employmentStatus: data.data.employmentStatus,
+        historyRevision: data.data.historyRevision,
       }));
-      await refreshUser();
+      setEditingExp(null);
       setShowAddExp(false);
-      setExpForm({
-        position: "",
-        company: "",
-        location: "",
-        startDate: "",
-        endDate: "",
-        current: false,
-      });
-      toast.success("Added", { description: "Experience added." });
+      setExpForm(emptyExperience);
+      await refreshUser();
+      toast.success("Saved", { description: "Employment records updated." });
     } catch (err) {
-      toast.error("Error", {
-        description: err.response?.data?.message || "Failed to add",
+      toast.error("Unable to save experience", {
+        description: err.response?.data?.message || "Please try again.",
       });
+      if (err.response?.status === 409) {
+        // Reload the list and require a new selection before editing by index.
+        setEditingExp(null);
+        try {
+          const { data } = await api.get("/users/me");
+          setForm(previous => ({ ...previous,
+            employmentHistory: data.data.employmentHistory || [],
+            employmentStatus: data.data.employmentStatus,
+            historyRevision: data.data.historyRevision,
+          }));
+        } catch { /* Keep the stale revision so a retry cannot overwrite newer data. */ }
+      }
     } finally {
+      experiencePending.current = false;
       setSaving(false);
     }
   };
+  const addExperience = () => saveExperience("add", undefined, expForm);
 
   const removeProfileEntry = async (field, index, label) => {
     if (saving || deletionPending.current) return;
@@ -401,8 +381,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
         ...prev,
         [field]: response.data.data[field] || [],
       }));
-      if (field === "employmentHistory") setEditingExp(null);
-      else setEditingEdu(null);
+      setEditingEdu(null);
       await refreshUser();
       toast.success(
         `${label === "experience" ? "Experience" : "Education"} deleted`,
@@ -416,8 +395,19 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       setSaving(false);
     }
   };
-  const removeExperience = (index) =>
-    removeProfileEntry("employmentHistory", index, "experience");
+  const removeExperience = async (index) => {
+    if (saving || deletionPending.current) return;
+    deletionPending.current = true;
+    try {
+      const result = await Swal.fire({
+        title: "Delete experience?", text: "This will remove the past role from your employment history.",
+        icon: "warning", showCancelButton: true, confirmButtonText: "Delete", focusCancel: true,
+      });
+      if (result.isConfirmed) await saveExperience("remove", index);
+    } finally {
+      deletionPending.current = false;
+    }
+  };
 
   const addEducation = async () => {
     if (saving) return;
@@ -452,58 +442,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const removeEducation = (index) =>
     removeProfileEntry("education", index, "education");
 
-  const updateExperience = async (index) => {
-    if (saving) return;
-    if (!editExpForm.position.trim() || !editExpForm.company.trim()) {
-      toast.warning("Missing details", {
-        description: "Please enter a position and company.",
-      });
-      return;
-    }
-    if (
-      !editExpForm.startDate ||
-      (!editExpForm.current && !editExpForm.endDate)
-    ) {
-      toast.warning("Missing date", {
-        description:
-          'Please select a start date and an end date, or check "I currently work here".',
-      });
-      return;
-    }
-    if (!editExpForm.current && editExpForm.endDate < editExpForm.startDate) {
-      toast.warning("Invalid dates", {
-        description: "End date must be on or after the start date.",
-      });
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await api.get("/users/me");
-      const history = res.data.data?.employmentHistory || [];
-      history[index] = {
-        ...history[index],
-        ...editExpForm,
-        endDate: editExpForm.current ? "" : editExpForm.endDate,
-        period: "",
-      };
-      const response = await api.put("/users/me", {
-        employmentHistory: history,
-      });
-      setForm((prev) => ({
-        ...prev,
-        employmentHistory: response.data.data.employmentHistory || [],
-      }));
-      await refreshUser();
-      setEditingExp(null);
-      toast.success("Updated", { description: "Experience updated." });
-    } catch (err) {
-      toast.error("Error", {
-        description: err.response?.data?.message || "Failed to update",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const updateExperience = index => saveExperience("edit", index, editExpForm);
 
   const updateEducation = async (index) => {
     if (saving) return;
@@ -1103,7 +1042,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                 </div>
 
                 {showAddExp && (
-                  <div className="mt-4 grid gap-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 sm:grid-cols-2">
+                  <div role="group" aria-label="Add experience form" className="mt-4 grid gap-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 p-4 sm:grid-cols-2">
                     <input
                       value={expForm.position}
                       onChange={(e) =>
@@ -1128,13 +1067,21 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       placeholder="Location"
                       className={inputClass}
                     />
+                    <input aria-label="Industry" placeholder={expForm.current ? "Industry (required)" : "Industry"}
+                      value={expForm.industry} onChange={e => setExpForm({ ...expForm, industry: e.target.value })} className={inputClass} />
+                    {expForm.current && <label className="text-xs sm:col-span-2">Employment type
+                      <select aria-label="Employment type" value={expForm.employmentStatus}
+                        onChange={e => setExpForm({ ...expForm, employmentStatus: e.target.value })} className={inputClass}>
+                        <option>Employed</option><option>Self-employed</option>
+                      </select>
+                    </label>}
                     <div className="grid grid-cols-2 gap-2.5 sm:col-span-2">
                       <label className="min-w-0">
                         <span className="mb-1.5 block text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-                          Start Date
+                          Start month
                         </span>
                         <input
-                          type="date"
+                          type="month"
                           value={expForm.startDate}
                           onChange={(e) =>
                             setExpForm({
@@ -1147,10 +1094,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       </label>
                       <label className="min-w-0">
                         <span className="mb-1.5 block text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-                          End Date
+                          End month
                         </span>
                         <input
-                          type="date"
+                          type="month"
                           value={expForm.current ? "" : expForm.endDate}
                           min={expForm.startDate || undefined}
                           onChange={(e) =>
@@ -1175,7 +1122,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                     <button
                       type="button"
                       onClick={addExperience}
-                      disabled={saving}
+                      disabled={saving || !form.historyRevision}
                       className="h-10 rounded-xl bg-brand text-[13px] font-bold text-white transition hover:bg-brand disabled:opacity-50 sm:col-span-2"
                     >
                       {saving ? "Adding..." : "Add Experience"}
@@ -1239,10 +1186,12 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                                     setEditExpForm({
                                       position: job.position || job.role || "",
                                       company: job.company || "",
+                                      industry: job.industry || "",
+                                      employmentStatus: form.employmentStatus === "Self-employed" ? "Self-employed" : "Employed",
                                       location: job.location || "",
                                       startDate:
-                                        job.startDate?.slice(0, 10) || "",
-                                      endDate: job.endDate?.slice(0, 10) || "",
+                                        job.startDate?.slice(0, 7) || "",
+                                      endDate: job.endDate?.slice(0, 7) || "",
                                       current: job.current || false,
                                     });
                                   }}
@@ -1254,7 +1203,8 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                                 <button
                                   type="button"
                                   onClick={() => removeExperience(i)}
-                                  disabled={saving}
+                                  disabled={saving || !!job.current}
+                                  title={job.current ? "End this role before removing it" : "Remove past experience"}
                                   className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-red-50 hover:text-red-600 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
                                   aria-label="Remove experience"
                                 >
@@ -1305,13 +1255,24 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                                 placeholder="Location"
                                 className={`${inputClass} sm:col-span-2`}
                               />
+                              <input aria-label="Industry" placeholder={editExpForm.current ? "Industry (required)" : "Industry"}
+                                value={editExpForm.industry} onChange={e => setEditExpForm({ ...editExpForm, industry: e.target.value })} className={inputClass} />
+                              {editExpForm.current && <label className="text-xs sm:col-span-2">Employment type
+                                <select aria-label="Employment type" value={editExpForm.employmentStatus}
+                                  onChange={e => setEditExpForm({ ...editExpForm, employmentStatus: e.target.value })} className={inputClass}>
+                                  <option>Employed</option><option>Self-employed</option>
+                                </select>
+                              </label>}
+                              {job.current && !editExpForm.current && <p className="text-xs text-zinc-500 sm:col-span-2">
+                                Ending your only current role sets your employment status to Unemployed.
+                              </p>}
                               <div className="grid grid-cols-2 gap-2.5 sm:col-span-2">
                                 <label className="min-w-0">
                                   <span className="mb-1.5 block text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-                                    Start Date
+                                    Start month
                                   </span>
                                   <input
-                                    type="date"
+                                    type="month"
                                     value={editExpForm.startDate}
                                     onChange={(e) =>
                                       setEditExpForm({
@@ -1324,10 +1285,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                                 </label>
                                 <label className="min-w-0">
                                   <span className="mb-1.5 block text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
-                                    End Date
+                                    End month
                                   </span>
                                   <input
-                                    type="date"
+                                    type="month"
                                     value={
                                       editExpForm.current
                                         ? ""
@@ -1362,7 +1323,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                               <button
                                 type="button"
                                 onClick={() => updateExperience(i)}
-                                disabled={saving}
+                                disabled={saving || !form.historyRevision}
                                 className="h-10 rounded-xl bg-brand text-[13px] font-bold text-white hover:bg-brand disabled:opacity-50"
                               >
                                 {saving ? "Saving..." : "Save Changes"}
@@ -1370,7 +1331,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                               <button
                                 type="button"
                                 onClick={() => setEditingExp(null)}
-                                disabled={saving}
+                                disabled={saving || !form.historyRevision}
                                 className="h-10 rounded-xl border border-zinc-200 dark:border-zinc-700 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 disabled:opacity-50"
                               >
                                 Cancel

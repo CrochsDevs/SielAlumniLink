@@ -7,6 +7,30 @@ import DevelopmentShell, {
   developmentCard as card,
 } from "../../components/student/DevelopmentShell";
 
+function ReadinessProgress({ value, max, label }) {
+  const progress = Math.max(0, Math.min(1, value / max));
+  return (
+    <div
+      className="flex w-full max-w-[260px] gap-2"
+      role="meter"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      aria-valuetext={`${value} out of ${max} points`}
+    >
+      {[0, 1, 2, 3].map((segment) => (
+        <span key={segment} className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-zinc-300 dark:bg-zinc-600">
+          <span
+            className="block h-full rounded-full bg-brand"
+            style={{ width: `${Math.max(0, Math.min(1, progress * 4 - segment)) * 100}%` }}
+          />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function StudentReadiness() {
   const { user } = useAuth();
   const state = useDevelopment();
@@ -28,46 +52,22 @@ export default function StudentReadiness() {
         {readiness && !state.loading && (
           <>
             <section
-              className={`${card} flex flex-col items-center gap-5 sm:flex-row`}
+              className={`${card} space-y-5`}
             >
-              <div className="relative h-44 w-44 shrink-0">
-                <svg
-                  viewBox="0 0 200 200"
-                  className="h-full w-full"
-                  aria-hidden="true"
-                >
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r="86"
-                    fill="none"
-                    strokeWidth="12"
-                    className="stroke-zinc-100 dark:stroke-zinc-800"
-                  />
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r="86"
-                    fill="none"
-                    stroke="#009639"
-                    strokeWidth="12"
-                    strokeLinecap="round"
-                    strokeDasharray={540.35}
-                    strokeDashoffset={540.35 * (1 - readiness.score / 100)}
-                    transform="rotate(-90 100 100)"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <strong className="text-4xl">{readiness.score}</strong>
-                  <span className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    / 100
-                  </span>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Overall progress</p>
+                  <h2 className="mt-2 text-base font-semibold">Employment readiness</h2>
                 </div>
+                <span className="rounded-md bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-brand dark:bg-emerald-950">
+                  {readiness.level}
+                </span>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-brand dark:text-brand">
-                  {readiness.level}
-                </h2>
+                <ReadinessProgress value={readiness.score} max={100} label="Overall employment readiness" />
+                <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">{readiness.score} / 100 points | Target: 100</p>
+              </div>
+              <div className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
                 <p className="mt-2 max-w-lg text-sm leading-6 text-zinc-500 dark:text-zinc-400">
                   Each factor contributes up to 20 points. This score is a
                   progress guide, not a guarantee of employment. Self-reported
@@ -92,13 +92,11 @@ export default function StudentReadiness() {
                       {factor.points}/20
                     </span>
                   </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                    <div
-                      className="h-full bg-brand"
-                      style={{ width: `${(factor.points / 20) * 100}%` }}
-                    />
+                  <div className="mt-5">
+                    <ReadinessProgress value={factor.points} max={20} label={`${factor.label} progress`} />
+                    <p className="mt-2 text-[10px] text-zinc-400">{factor.points} / 20 points | Target: 20</p>
                   </div>
-                  <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-4 border-t border-zinc-100 pt-4 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                     {factor.value} / {factor.target}{" "}
                     {factor.key === "internship"
                       ? "% of required hours"

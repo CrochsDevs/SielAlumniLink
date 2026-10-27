@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Route, FolderKanban, Briefcase, Users, Award,
   BadgeCheck, BarChart3, Share2, CalendarDays, Trophy,
-  MessageSquare, Settings, LogOut, X,
+  MessageSquare, UserPlus, Settings, LogOut, X,
 } from "lucide-react";
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
 import ProfileAvatar from "../../../components/profile/ProfileAvatar";
@@ -29,6 +29,7 @@ const menuGroups = [
   { label: "Community", items: [
     { to: "/student/events", label: "Events", icon: CalendarDays, aliases: ["/activities"] },
     { to: "/student/success", label: "Success Stories", icon: Trophy, aliases: ["/stories"] },
+    { to: "/student/requests", label: "Requests", icon: UserPlus },
     { to: "/student/message", label: "Messages", icon: MessageSquare },
   ] },
 ];

@@ -93,7 +93,9 @@ export default function AlumniEmployment() {
     }
   }, []);
   useEffect(() => {
-    void load();
+    let active = true;
+    Promise.resolve().then(() => { if (active) void load(); });
+    return () => { active = false; };
   }, [load]);
   const mutate = async (task, success) => {
     if (pending.current) return;
@@ -229,7 +231,7 @@ export default function AlumniEmployment() {
                     onSubmit={(event) => {
                       event.preventDefault();
                       void mutate(
-                        () => api.put("/employment/me", form),
+                        () => api.put("/employment/me", { ...form, revision: record.historyRevision }),
                         "Employment updated.",
                       );
                     }}
@@ -402,7 +404,7 @@ export default function AlumniEmployment() {
             onSubmit={(event) => {
               event.preventDefault();
               void mutate(
-                () => api.post("/employment/history", past),
+                () => api.post("/employment/history", { ...past, revision: record.historyRevision }),
                 "Past experience added.",
               );
             }}

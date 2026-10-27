@@ -7,6 +7,7 @@ import {
   updateUser, 
   updateUserRole,
   updateMyProfile,
+  updateMyExperience,
   graduateUser,
   syncUsers,
   deleteUser,
@@ -25,6 +26,7 @@ router.get('/', getUsers);
 
 // Own profile: any authenticated user (must come before '/:id' routes)
 router.put('/me', updateMyProfile);
+router.put('/me/experience', updateMyExperience);
 router.get('/me', getMyProfile);
 
 router.get('/:id', getUserById);

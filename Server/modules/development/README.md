@@ -93,3 +93,35 @@ The integration test creates and removes only a randomly named
 `SielAlumni_development_test_*` database. It covers saved history, account ownership,
 reload through a fresh service, scoring, validation, and concurrent applications
 for all three referral types. It does not alter application accounts or records.
+
+Career progression regression checks (from `Server`):
+
+```sh
+npm run test:career
+npm run test:career:integration
+```
+
+The career integration suite uses a separate `SielAlumni_career_test_*` database
+and removes it afterward. It verifies mixed string/ObjectId profile references,
+the admin graduation controller, retention of saved student records after
+graduation, employment transitions, report totals, and simultaneous employment
+writes. Employment writes increment an internal revision so updates in the same
+millisecond still conflict safely; existing profiles initialize it on first save.
+
+For a newly recorded employment milestone, Journey selects the earliest valid
+work date across profile history and employed/self-employed tracer observations,
+including past observations when the latest response is non-working. Existing
+historical milestones remain unchanged. Automatic milestones use atomic
+first-write preservation when snapshots arrive concurrently.
+
+Alumni navigation exposes Journey and Readiness. Shared portfolio, internship,
+and certificate pages retain alumni access to saved student records. Their
+career, referral, account-settings, and participation links use the appropriate
+alumni destinations.
+
+Browser checks: `Client/scripts/development-browser-check.mjs` and
+`Client/scripts/employment-browser-check.mjs`, using isolated Edge sessions on
+ports 9228 and 9231 respectively. They use API fixtures for saving/reloading
+records, failure recovery, student-to-alumni navigation, readiness, applications,
+employment changes, reports/CSV, and mobile/light/dark layouts. Database tests
+exercise real persistence separately; browser fixtures do not change live users.

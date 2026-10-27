@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Search, ArrowUpRight } from "lucide-react";
 import useDevelopment from "../../hooks/useDevelopment";
+import { useAuth } from "../../context/useAuth";
 import DevelopmentShell, {
   DevelopmentStatus,
 } from "../../components/student/DevelopmentShell";
@@ -17,6 +18,7 @@ const date = (value) =>
     year: "numeric",
   });
 export default function StudentCertificates() {
+  const { user } = useAuth();
   const state = useDevelopment();
   const certificates = state.data?.digitalCertificates || [];
   const [query, setQuery] = useState("");
@@ -112,7 +114,7 @@ export default function StudentCertificates() {
                       </button>
                     ) : (
                       <Link
-                        to="/student/journey"
+                        to={user?.role === "alumni" ? "/alumni/journey" : "/student/journey"}
                         className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand"
                       >
                         View participation records

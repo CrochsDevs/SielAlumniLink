@@ -1,27 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Users, Plus, Check, Clock, MessageSquare, ArrowUpRight, GraduationCap, MapPin, ArrowRight, LoaderCircle, SlidersHorizontal, Compass, Target } from "lucide-react";
+import { Search, Users, Check, ArrowRight, LoaderCircle, SlidersHorizontal, Compass, Target } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { useChat } from "../../context/useChat.js";
 import DevelopmentShell from "../../components/student/DevelopmentShell";
-import ProfileAvatar from "../../components/profile/ProfileAvatar";
+import StudentMentorCard from "../../components/mentorship/StudentMentorCard";
+import "./studentMentorship.css";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
 import MentorshipProgressTracker from "../../components/mentorship/MentorshipProgressTracker";
 import MentorMatching from "../../components/mentorship/MentorMatching";
-const card = "rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
+const card = "rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
-function MentorBanner({
-  src
-}) {
-  const [failedUrl, setFailedUrl] = useState(null);
-  return <div aria-hidden="true" className="relative h-16 shrink-0 overflow-hidden bg-[#d9e5e1] dark:bg-[#233b35]">
-      <div className="absolute -left-12 -top-28 h-56 w-56 rounded-full bg-[#aac5bb]/60 dark:bg-[#35584b]/60" />
-      <div className="absolute -bottom-24 right-0 h-52 w-52 rounded-full border-[28px] border-[#c2d5ce] dark:border-[#2c493f]" />
-      <div className="absolute inset-x-0 bottom-0 h-7 bg-white/10" />
-      {src && src !== failedUrl && <img src={src} alt="" loading="lazy" onError={() => setFailedUrl(src)} className="absolute inset-0 h-full w-full object-cover" />}
-    </div>;
-}
 export default function StudentMentorship() {
   const {
     user
@@ -29,7 +18,6 @@ export default function StudentMentorship() {
   const {
     openChatByEmail
   } = useChat();
-  const navigate = useNavigate();
   const [workspace, setWorkspace] = useState("matching");
   const [progressPartner, setProgressPartner] = useState('');
   const [editCareer, setEditCareer] = useState(false);
@@ -114,8 +102,9 @@ export default function StudentMentorship() {
     setView("all");
     setPage(1);
   };
+  const activeWorkspace = workspace === "mentors" && view === "all" ? "matching" : workspace;
   return <DevelopmentShell title="Mentorship">
-      <main className="mx-auto max-w-7xl space-y-5 p-3 sm:p-6 workspace-page">
+      <main className="mx-auto max-w-7xl space-y-6 p-3 sm:p-6 workspace-page mentorship-page">
         <header className="flex flex-col gap-5 border-b border-zinc-200 pb-5 pt-1 sm:flex-row sm:items-end sm:justify-between dark:border-zinc-800 workspace-page-header">
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -125,29 +114,23 @@ export default function StudentMentorship() {
               Find guidance, connect with a mentor, and take your next step.
             </p>
           </div>
-          {workspace === "mentors" && <label className="relative block w-full sm:w-80 sm:shrink-0">
-              <span className="sr-only">Search mentors</span>
-              <Search size={16} className="pointer-events-none absolute left-3 top-3 text-zinc-400" />
-              <input type="search" value={query} onChange={event => {
-            setQuery(event.target.value);
-            setPage(1);
-          }} placeholder="Search name, program, or skill" className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-xs text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
-            </label>}
         </header>
-        <nav aria-label="Student mentorship workspace" className="grid grid-cols-3 gap-1 rounded-2xl border border-zinc-200 bg-white p-1.5 dark:border-zinc-800 dark:bg-zinc-900">
-          {[["matching", "Find a mentor", "Recommendations & alumni profiles", Compass], ["mentors", "My mentors", "Your connections & requests", Users], ["progress", "My progress", "Goals & next steps", Target]].map(([id, label, description, Icon]) => <button key={id} type="button" aria-pressed={id === 'matching' ? workspace === 'matching' || workspace === 'mentors' && view === 'all' : workspace === id && (id !== 'mentors' || view !== 'all')} onClick={() => {
-          setWorkspace(id);
-          setEditCareer(false);
-          if (id === 'mentors') {
-            setView('connected');
-            setQuery('');
-            setProgram('');
-            setPage(1);
-          }
-        }} className={`flex min-h-16 min-w-0 items-center justify-center gap-3 rounded-xl px-2 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:justify-start sm:px-4 ${(id === 'matching' ? workspace === 'matching' || workspace === 'mentors' && view === 'all' : workspace === id && (id !== 'mentors' || view !== 'all')) ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}>
-              <Icon size={21} className="hidden shrink-0 sm:block" />
-              <span><span className="block text-xs font-semibold sm:text-sm">{label}</span><span className="mt-1 hidden text-xs font-normal text-zinc-500 lg:block dark:text-zinc-400">{description}</span></span>
-            </button>)}
+        <nav aria-label="Student mentorship workspace" className="mentorship-tabs grid grid-cols-3 rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          {[["matching", "Find a mentor", "Discover alumni who can guide you", Compass], ["mentors", "My mentors", "Connections and pending requests", Users], ["progress", "My progress", "Goals, activities, and feedback", Target]].map(([id, label, description, Icon]) => (
+            <button key={id} type="button" aria-pressed={activeWorkspace === id} onClick={() => {
+              setWorkspace(id);
+              setEditCareer(false);
+              if (id === "mentors") {
+                setView("connected");
+                setQuery("");
+                setProgram("");
+                setPage(1);
+              }
+            }} className={`mentorship-tab ${activeWorkspace === id ? "text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${activeWorkspace === id ? "bg-brand/10" : "bg-zinc-100 dark:bg-zinc-800"}`}><Icon size={19} /></span>
+              <span className="min-w-0"><span className="block text-xs font-semibold sm:text-sm">{label}</span><span className="mt-1 hidden text-xs leading-5 text-zinc-500 lg:block dark:text-zinc-400">{description}</span></span>
+            </button>
+          ))}
         </nav>
         {workspace === "matching" ? <MentorMatching key={user?.email} states={states} connect={connect} message={message} sending={sending} connectionsLoading={loading} connectionError={error} notice={notice} initialEdit={editCareer} onBrowse={() => {
         setWorkspace('mentors');
@@ -167,7 +150,8 @@ export default function StudentMentorship() {
       }} /> : <div className="space-y-5">
             <section className="min-w-0 space-y-4" aria-label="Alumni mentors">
               <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">{view === 'all' ? 'Explore all mentors' : view === 'connected' ? 'Your mentors' : 'Your connection requests'}</h2><p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{view === 'connected' ? 'Start a conversation or continue working on your goals.' : 'Explore an alumni profile before sending a connection request.'}</p></div><button type="button" onClick={() => setWorkspace('matching')} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand dark:text-brand">{view === 'all' ? 'Back to recommendations' : 'Find another mentor'}<ArrowRight size={15} /></button></div>
-              <div className={`${card} flex flex-wrap items-center justify-between gap-3 px-4 py-3`}>
+              <div className={`${card} overflow-hidden`}>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-4 pt-2 dark:border-zinc-800 sm:px-5">
                 <nav aria-label="Mentor views" className="flex max-w-full gap-4 overflow-x-auto">
                   {[["all", "All mentors", mentors.length], ["connected", "Connected", connected], ["pending", "Requests", requested]].map(([id, label, count]) => <button key={id} type="button" aria-pressed={view === id} onClick={() => {
                 setView(id);
@@ -179,17 +163,28 @@ export default function StudentMentorship() {
                       </span>
                     </button>)}
                 </nav>
-                <label className="flex min-w-0 max-w-full items-center gap-2 text-zinc-400">
+                </div>
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
+                  <label className="relative block min-w-0 flex-1">
+                    <span className="sr-only">Search mentors</span>
+                    <Search size={17} className="pointer-events-none absolute left-3.5 top-3.5 text-zinc-400" />
+                    <input type="search" value={query} onChange={event => {
+                      setQuery(event.target.value);
+                      setPage(1);
+                    }} placeholder="Search name, program, or skill" className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-950" />
+                  </label>
+                <label className="flex min-w-0 items-center gap-2 text-zinc-400 sm:w-64">
                   <SlidersHorizontal size={14} />
                   <span className="sr-only">Filter by program</span>
                   <select value={program} onChange={event => {
                 setProgram(event.target.value);
                 setPage(1);
-              }} className="h-9 min-w-0 max-w-[230px] rounded-lg border border-zinc-200 bg-zinc-50 px-2 text-[11px] text-zinc-600 outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              }} className="h-11 min-w-0 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-600 outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
                     <option value="">All programs</option>
                     {programs.map(value => <option key={value}>{value}</option>)}
                   </select>
                 </label>
+                </div>
               </div>
               {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
                   {error}{" "}
@@ -233,64 +228,13 @@ export default function StudentMentorship() {
                         <ArrowRight size={14} />
                       </button>
                     </div>}
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {paged.map(mentor => {
-                const status = states[mentor.email] || "none";
-                const currentJob = mentor.employmentHistory?.find(job => job.current);
-                const headline = currentJob ? [currentJob.position, currentJob.company].filter(Boolean).join(" at ") : mentor.program || "CLSU alumni";
-                const connectButton = "inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full border border-brand px-4 text-xs font-semibold text-brand transition hover:bg-emerald-50 hover:ring-1 hover:ring-brand disabled:opacity-50 dark:border-brand dark:text-brand dark:hover:bg-emerald-950";
-                return <article key={mentor._id} className={`${card} flex min-w-0 flex-col overflow-hidden transition hover:border-zinc-300 hover:shadow-md dark:hover:border-zinc-600`}>
-                          <MentorBanner src={mentor.bannerImage} />
-                          <div className="relative flex flex-1 flex-col items-center px-3 pb-3 text-center">
-                            <button type="button" aria-label={`View ${mentor.name || "alumni"} profile`} onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="-mt-8 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-emerald-50 text-xl font-semibold text-brand ring-1 ring-zinc-100 transition hover:ring-brand focus-visible:outline-none focus-visible:ring-2 dark:border-zinc-900 dark:bg-emerald-950 dark:text-brand dark:ring-zinc-800">
-                              <ProfileAvatar user={mentor} fallback="A" />
-                            </button>
-                            <h2 className="mt-2 w-full break-words text-sm font-semibold tracking-tight">
-                              <button type="button" onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="max-w-full hover:text-brand hover:underline dark:hover:text-brand">
-                                {mentor.name || "Alumni"}
-                              </button>
-                            </h2>
-                            <p className="mt-1.5 line-clamp-2 min-h-9 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
-                              {headline}
-                            </p>
-                            {mentor.location && <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-zinc-400">
-                                <MapPin size={12} className="shrink-0" />
-                                {mentor.location}
-                              </p>}
-                            <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                              <GraduationCap size={14} className="shrink-0 text-brand dark:text-brand" />
-                              CLSU alumni
-                              {mentor.batch && ` | Batch ${mentor.batch}`}
-                            </p>
-                            <div className="mt-auto w-full pt-3">
-                              {status !== "none" && <p className={`mb-2 inline-flex items-center justify-center gap-1.5 text-[10px] font-medium ${status === "connected" ? "text-brand dark:text-brand" : "text-amber-700 dark:text-amber-300"}`}>
-                                  {status === "connected" ? <Check size={12} /> : <Clock size={12} />}
-                                  {status === "connected" ? "Connected" : status === "incoming" ? "Wants to connect" : "Request sent"}
-                                </p>}
-                              {status === 'connected' && <button type="button" onClick={() => {
-                        setProgressPartner(mentor.authId || '');
-                        setWorkspace('progress');
-                      }} className="mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white"><Target size={15} />View progress</button>}
-                              {status === "connected" ? <button type="button" onClick={() => message(mentor)} className={connectButton}>
-                                  <MessageSquare size={15} />
-                                  Message
-                                </button> : status === "incoming" ? <Link to="/student/requests" className={connectButton}>
-                                  Review request
-                                </Link> : status === "pending" ? <button type="button" disabled className="inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full border border-zinc-200 text-xs font-medium text-zinc-400 dark:border-zinc-700">
-                                  <Clock size={14} />
-                                  Request sent
-                                </button> : <button type="button" disabled={sending !== null || !!error} onClick={() => connect(mentor)} className={connectButton}>
-                                  {sending === mentor.email ? <LoaderCircle size={15} className="animate-spin" /> : <Plus size={16} />}
-                                  {sending === mentor.email ? "Sending..." : "Connect"}
-                                </button>}
-                              <button type="button" onClick={() => navigate(`/alumni/profile/${mentor._id}`)} className="mt-1 inline-flex min-h-7 items-center justify-center gap-1 px-2 text-[11px] font-medium text-zinc-500 hover:text-brand dark:text-zinc-400 dark:hover:text-brand">
-                                View profile
-                                <ArrowUpRight size={12} />
-                              </button>
-                            </div>
-                          </div>
-                        </article>;
-              })}
+                  <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {paged.map(mentor => <StudentMentorCard key={mentor._id} mentor={mentor}
+                      status={states[mentor.email]} connect={connect} message={message} sending={sending} disabled={!!error}
+                      onProgress={item => {
+                        setProgressPartner(item.authId || "");
+                        setWorkspace("progress");
+                      }} />)}
                   </div>
                   {!!filtered.length && <div className={`${card} overflow-hidden`}>
                       <DataPagination page={currentPage} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={value => {

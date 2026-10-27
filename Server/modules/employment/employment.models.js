@@ -1,17 +1,22 @@
 import { client } from '../../config/db.js';
 
-const db = client.db('SielAlumni');
+export const createEmploymentModel = db => {
 const profiles = db.collection('users');
 
-export const EmploymentModel = {
+return {
   async updateProfile(profile, data) {
     // A concurrent profile edit must not replace a newer employment history.
+    const updatedAt = new Date();
     const result = await profiles.updateOne(
-      { _id: profile._id, updatedAt: profile.updatedAt ?? { $exists: false } },
-      { $set: { ...data, updatedAt: new Date() } },
+      {
+        _id: profile._id,
+        updatedAt: profile.updatedAt ?? { $exists: false },
+        employmentRevision: profile.employmentRevision ?? { $exists: false },
+      },
+      { $set: { ...data, updatedAt }, $inc: { employmentRevision: 1 } },
     );
     if (!result.matchedCount) throw Object.assign(new Error('Your profile changed. Refresh and try again.'), { status: 409 });
-    return { ...profile, ...data };
+    return { ...profile, ...data, updatedAt, employmentRevision: (profile.employmentRevision || 0) + 1 };
   },
   async alumniProfiles() {
     // The login account owns the role. Lookup also includes alumni without a directory profile.
@@ -27,3 +32,6 @@ export const EmploymentModel = {
     ]).toArray();
   },
 };
+};
+
+export const EmploymentModel = createEmploymentModel(client.db('SielAlumni'));
