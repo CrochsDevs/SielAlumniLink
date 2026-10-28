@@ -1,5 +1,6 @@
 import { createElement, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, X } from 'lucide-react';
+import { scrollAfterViewChange } from '../../lib/scroll';
 import './AccountSettingsNavigation.css';
 
 export default function AccountSettingsNavigation({ groups, value, onChange, footer }) {
@@ -9,6 +10,11 @@ export default function AccountSettingsNavigation({ groups, value, onChange, foo
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
   const selected = groups.flatMap(group => group.tabs).find(tab => tab.key === value);
+  const selectSection = (key) => {
+    onChange(key);
+    setOpen(false);
+    scrollAfterViewChange(triggerRef.current);
+  };
   useLayoutEffect(() => {
     if (!open) return;
     const dialog = dialogRef.current;
@@ -47,7 +53,7 @@ export default function AccountSettingsNavigation({ groups, value, onChange, foo
         <nav aria-label={group.label} className="space-y-1 p-2">
           {group.tabs.map(tab => {
             const active = value === tab.key;
-            return <button key={tab.key} type="button" onClick={() => onChange(tab.key)} aria-current={active ? 'page' : undefined}
+            return <button key={tab.key} type="button" onClick={() => selectSection(tab.key)} aria-current={active ? 'page' : undefined}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-muted'}`}>
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                 {tab.icon && createElement(tab.icon, { size: 16, 'aria-hidden': true })}
@@ -90,7 +96,7 @@ export default function AccountSettingsNavigation({ groups, value, onChange, foo
             {group.tabs.map(tab => {
               const active = tab.key === value;
               return <button key={tab.key} type="button" aria-current={active ? 'page' : undefined}
-                onClick={() => { onChange(tab.key); setOpen(false); }}
+                onClick={() => selectSection(tab.key)}
                 className={`flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${active ? 'bg-primary/10' : 'hover:bg-muted'}`}>
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`} aria-hidden="true">
                   {tab.icon && createElement(tab.icon, { size: 19 })}

@@ -1,4 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
+import { scrollAfterViewChange } from "../../lib/scroll";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,6 +24,21 @@ const DataPagination = ({
   totalItems,
   itemLabel = "items",
 }) => {
+  const paginationRef = useRef(null);
+  const previous = useRef({ page, perPage });
+  useLayoutEffect(() => {
+    const changed = previous.current.page !== page || previous.current.perPage !== perPage;
+    previous.current = { page, perPage };
+    if (changed && paginationRef.current) scrollAfterViewChange(paginationRef.current);
+  }, [page, perPage]);
+  const changePage = (nextPage) => {
+    if (nextPage !== page) onPageChange(nextPage);
+    scrollAfterViewChange(paginationRef.current);
+  };
+  const changePerPage = (value) => {
+    onPerPageChange(Number(value));
+    scrollAfterViewChange(paginationRef.current);
+  };
   if (totalItems === 0) return null;
 
   const start = (page - 1) * perPage + 1;
@@ -38,7 +55,7 @@ const DataPagination = ({
   }
 
   return (
-    <div className="data-pagination flex flex-col gap-3 border-t border-zinc-100 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+    <div ref={paginationRef} className="data-pagination flex flex-col gap-3 border-t border-zinc-100 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-[11.5px] text-zinc-500">
         Showing{" "}
         <span className="font-bold text-zinc-800">
@@ -51,7 +68,7 @@ const DataPagination = ({
       <div className="flex items-center gap-2">
         {showPerPage && <Select
           value={String(perPage)}
-          onValueChange={(v) => onPerPageChange(Number(v))}
+          onValueChange={changePerPage}
         >
           <SelectTrigger className="h-8 w-[70px] text-[11.5px]">
             <SelectValue />
@@ -71,7 +88,7 @@ const DataPagination = ({
             size="icon"
             className="h-8 w-8"
             disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
+            onClick={() => changePage(page - 1)}
             aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -91,7 +108,7 @@ const DataPagination = ({
                 size="icon"
                 aria-current={p === page ? "page" : undefined}
                 className={`h-8 w-8 text-[12px] ${p === page ? "bg-brand hover:bg-brand" : ""}`}
-                onClick={() => onPageChange(p)}
+                onClick={() => changePage(p)}
               >
                 {p}
               </Button>
@@ -102,7 +119,7 @@ const DataPagination = ({
             size="icon"
             className="h-8 w-8"
             disabled={page >= totalPages}
-            onClick={() => onPageChange(page + 1)}
+            onClick={() => changePage(page + 1)}
             aria-label="Next page"
           >
             <ChevronRight className="h-4 w-4" />

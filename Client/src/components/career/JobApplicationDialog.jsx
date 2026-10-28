@@ -160,6 +160,7 @@ export function JobApplicationDialog({
   const stepLabels = ["Job details", "Your application", "Submitted"];
   return (
     <FeedDialog
+      scrollKey={step}
       wide
       title={
         step === "success" ? "Application submitted" : "Your next opportunity"
@@ -584,7 +585,7 @@ export function JobApplicantsDialog({ job, onClose }) {
     };
   }, [job._id, attempt]);
   return (
-    <FeedDialog title={selectedApplication ? "Application details" : `Applicants for ${job.title}`} onClose={onClose}>
+    <FeedDialog scrollKey={selectedApplication?._id || "list"} title={selectedApplication ? "Application details" : `Applicants for ${job.title}`} onClose={onClose}>
       {selectedApplication ? <>
         <button type="button" onClick={() => { setSelectedApplication(null); setContactError(""); requestAnimationFrame(() => document.getElementById(`view-application-${lastViewButton.current}`)?.focus()); }} className="mb-5 inline-flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-brand dark:text-zinc-400"><ArrowLeft size={15} />Back to applicants</button>
         <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/40">

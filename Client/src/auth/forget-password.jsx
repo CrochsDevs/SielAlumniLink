@@ -5,6 +5,7 @@ import './forget-password.css';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/axios';
 import VerificationCodeInput from './VerificationCodeInput';
+import { scrollToTop } from '../lib/scroll';
 
 const COOLDOWN_KEY = 'siel-password-reset-cooldown';
 const readCooldown = () => {
@@ -47,8 +48,9 @@ const ForgetPassword = () => {
     }, [cooldown.until]);
     useEffect(() => () => clearTimeout(redirectTimer.current), []);
     useEffect(() => {
-        if (step === 2) otpRef.current?.focus();
-        else if (step > 1) headingRef.current?.focus();
+        if (step === 2) otpRef.current?.focus({ preventScroll: true });
+        else if (step > 1) headingRef.current?.focus({ preventScroll: true });
+        scrollToTop();
     }, [step]);
 
     const handleSendOTP = async (e, isResend = false) => {

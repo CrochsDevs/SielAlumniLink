@@ -1,5 +1,6 @@
 import ProgressBar from "../ui/progress-bar";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { scrollToTop } from "../../lib/scroll";
 import { useNavigate } from "react-router-dom";
 import {
   Briefcase,
@@ -96,6 +97,7 @@ export function FeedDialog({
   header,
   wide = false,
   className = "",
+  scrollKey,
 }) {
   const ref = useRef(null);
   const titleId = useId();
@@ -109,6 +111,9 @@ export function FeedDialog({
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+  useLayoutEffect(() => {
+    if (scrollKey !== undefined && ref.current) scrollToTop(ref.current);
+  }, [scrollKey]);
   return (
     <dialog
       ref={ref}

@@ -69,6 +69,7 @@ import ForgetPassword from "./auth/forget-password";
 import MagicLinkVerification from "./auth/magic-link-verify";
 import SetupPassword from "./auth/setup-password";
 import { Roles } from "./utils/roles";
+import { scrollToTop } from "./lib/scroll";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -662,10 +663,15 @@ function MemberPages() {
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, search, key } = useLocation();
   useLayoutEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  }, [pathname]);
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => { window.history.scrollRestoration = previous; };
+  }, []);
+  useLayoutEffect(() => {
+    scrollToTop();
+  }, [pathname, search, key]);
   return null;
 }
 
