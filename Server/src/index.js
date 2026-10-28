@@ -7,8 +7,10 @@ import { createServer } from "http";
 import app from "./app.js";
 import { ensureFeedIndexes } from '../modules/feed/feed.service.js';
 import { ensureNotificationRetention } from '../modules/notifications/notifications.retention.js';
+import { ensureAuthSecurityIndexes } from '../modules/auth/auth-limits.js';
 
 await connectDB();
+await ensureAuthSecurityIndexes(client.db('SielAlumni'));
 await ensureNotificationRetention(client.db('SielAlumni'));
 await ensureSearchIndexes(client.db('SielAlumni'));
 await ensureFeedIndexes(client.db('SielAlumni'));

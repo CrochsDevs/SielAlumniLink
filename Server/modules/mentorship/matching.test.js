@@ -49,7 +49,7 @@ function fixture() {
     mentor_match_preferences: [],
   };
   const equal = (a, b) => String(a) === String(b);
-  const matches = (record, query) => Object.entries(query).every(([key, value]) => value?.$in ? value.$in.some(item => equal(record[key], item)) : equal(record[key], value));
+  const matches = (record, query) => Object.entries(query).every(([key, value]) => value === null ? record[key] == null : value?.$in ? value.$in.some(item => equal(record[key], item)) : equal(record[key], value));
   const db = { collection: name => ({
     findOne: async query => records[name].find(record => matches(record, query)) || null,
     find: query => ({ toArray: async () => records[name].filter(record => matches(record, query)) }),
@@ -69,7 +69,8 @@ test('service uses portfolio skills and authoritative alumni accounts; returns o
   assert.ok(result.matches[0].reasons.some(reason => reason.includes('JavaScript')));
   assert.equal(result.matches[0].mentor.password, undefined);
   assert.equal(result.matches[0].mentor.contactNumber, undefined);
-  assert.equal(result.matches[0].mentor.email, 'mentor@example.test');
+  assert.equal(result.matches[0].mentor.email, undefined);
+  assert.ok(result.matches[0].mentor.authId);
   assert.equal(result.matches[0].mentor.bannerImage, 'https://res.cloudinary.com/example/image/upload/mentor-banner.jpg');
 });
 
@@ -79,6 +80,14 @@ test('recommendations preserve uploaded banners after preference updates and ret
   assert.equal(result.matches[0].mentor.bannerImage, records.users[1].bannerImage);
   delete records.users[1].bannerImage;
   assert.equal((await service.get(student)).matches[0].mentor.bannerImage, null);
+});
+
+test('disabled alumni cannot appear in mentor recommendations', async () => {
+  const { service, student, alumni } = fixture();
+  alumni.disabledAt = new Date();
+  const result = await service.get(student);
+  assert.equal(result.candidateCount, 0);
+  assert.deepEqual(result.matches, []);
 });
 test('saved preferences persist per authenticated student and ignore supplied identity', async () => {
   const { service, student, other, records } = fixture();

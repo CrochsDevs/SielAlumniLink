@@ -24,7 +24,7 @@ export const createConnection = async (req, res) => {
     const recipient = recipientAuthId
       ? await AuthModel.findById(recipientAuthId)
       : await AuthModel.findByEmail(email);
-    if (!recipient) {
+    if (!recipient || recipient.disabledAt) {
       return res.status(404).json({
         success: false,
         message: 'User not found'

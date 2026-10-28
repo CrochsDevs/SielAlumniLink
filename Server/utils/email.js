@@ -26,9 +26,10 @@ const sendAuthEmail = async (to, message) => {
         });
         console.log('Authentication email sent successfully');
         return { success: true };
-    } catch (error) {
-        console.error('Authentication email error:', error.message);
-        return { success: false, error: error.message };
+    } catch {
+        // Provider errors may contain the message body or authentication secrets.
+        console.error('Authentication email delivery failed');
+        return { success: false };
     }
 };
 

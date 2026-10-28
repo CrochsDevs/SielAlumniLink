@@ -31,8 +31,8 @@ return {
     return await usersCollection.findOne({ _id: new ObjectId(id) });
   },
 
-  async findAll() {
-    return await usersCollection.find({}).toArray();
+  async findAll(projection) {
+    return await usersCollection.find({}, projection ? { projection } : {}).toArray();
   },
 
   async updateById(id, updateData) {
@@ -76,6 +76,12 @@ return {
     const { ObjectId } = await import('mongodb');
     const result = await usersCollection.deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount > 0;
+  },
+
+  async deleteByAuthId(authId) {
+    const { ObjectId } = await import('mongodb');
+    const value = String(authId);
+    return usersCollection.deleteMany({ authId: ObjectId.isValid(value) ? { $in: [value, new ObjectId(value)] } : authId });
   },
 
   async createUserProfile(authUserId, profileData) {

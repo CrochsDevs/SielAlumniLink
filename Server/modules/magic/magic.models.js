@@ -25,6 +25,10 @@ export const MagicLinkModel = {
     return await magicLinkCollection.deleteMany({ email });
   },
 
+  async deleteToken(token) {
+    return await magicLinkCollection.deleteOne({ token });
+  },
+
   async claimToken(token) {
     return await magicLinkCollection.findOneAndUpdate(
       { token, usedAt: null },

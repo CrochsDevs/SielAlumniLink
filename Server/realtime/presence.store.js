@@ -3,12 +3,12 @@
 // which is correct (all sockets drop on restart anyway).
 // Persistent history (logins/logouts) lives in activity_logs.
 
-const online = new Map(); // authId -> { email, connectedAt }
+const online = new Set(); // auth IDs only; presence never stores login emails.
 const lastSeen = new Map(); // authId -> Date (updated on disconnect)
 
 export const PresenceStore = {
-  markOnline(authId, email) {
-    online.set(String(authId), { email, connectedAt: new Date() });
+  markOnline(authId) {
+    online.add(String(authId));
     lastSeen.delete(String(authId));
   },
 
@@ -27,14 +27,10 @@ export const PresenceStore = {
     return lastSeen.get(String(authId)) || null;
   },
 
-  // { online: [{ authId, email, connectedAt }], lastSeen: { authId: ISOString } }
+  // Administrator directory payload: IDs/status only, never login credentials.
   snapshot() {
     return {
-      online: [...online.entries()].map(([authId, info]) => ({
-        authId,
-        email: info.email,
-        connectedAt: info.connectedAt,
-      })),
+      online: [...online].map(authId => ({ authId })),
       lastSeen: Object.fromEntries(
         [...lastSeen.entries()].map(([authId, date]) => [authId, date.toISOString()])
       ),

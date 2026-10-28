@@ -1,8 +1,6 @@
 
-import jwt from 'jsonwebtoken';
+import { verifySessionToken, sessionMatches } from '../modules/auth/session-token.js';
 import AuthModel from '../modules/auth/auth.models.js';
-
-const JWT_SECRET = process.env.JWT_SECRET;
 
 export const optionalProtect = async (req, res, next) => {
     try {
@@ -13,10 +11,10 @@ export const optionalProtect = async (req, res, next) => {
             return next();
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await AuthModel.findByEmail(decoded.email);
+        const decoded = verifySessionToken(token);
+        const user = await AuthModel.findById(decoded.sub);
 
-        req.user = user || null;
+        req.user = sessionMatches(decoded, user) ? user : null;
         next();
     } catch {
         req.user = null;
@@ -40,10 +38,10 @@ export const protect = async (req, res, next) => {
             });
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await AuthModel.findByEmail(decoded.email);
+        const decoded = verifySessionToken(token);
+        const user = await AuthModel.findById(decoded.sub);
 
-        if (!user) {
+        if (!sessionMatches(decoded, user)) {
             return res.status(401).json({
                 success: false,
                 message: 'User not found'

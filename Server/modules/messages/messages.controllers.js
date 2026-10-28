@@ -107,28 +107,33 @@ export const listConversations = async (req, res) => {
 // Get or create a conversation with someone (by their email).
 export const openConversation = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
+    const { email, recipientAuthId } = req.body;
+    if ((email !== undefined && typeof email !== 'string') ||
+        (recipientAuthId !== undefined && (typeof recipientAuthId !== 'string' || !/^[a-f\d]{24}$/i.test(recipientAuthId)))) {
+      return res.status(400).json({ success: false, message: 'Invalid conversation recipient' });
+    }
+    if (!email && !recipientAuthId) {
       return res.status(400).json({
         success: false,
         message: 'Please provide the recipient email'
       });
     }
-    if (email.toLowerCase() === String(req.user.email).toLowerCase()) {
+    if (email && email.toLowerCase() === String(req.user.email).toLowerCase()) {
       return res.status(400).json({
         success: false,
         message: 'You cannot message yourself'
       });
     }
 
-    const recipient = await AuthModel.findByEmail(email);
-    if (!recipient) {
+    const recipient = recipientAuthId ? await AuthModel.findById(recipientAuthId) : await AuthModel.findByEmail(email);
+    if (!recipient || recipient.disabledAt) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
+    if (String(recipient._id) === String(req.user._id)) return res.status(400).json({ success: false, message: 'You cannot message yourself' });
     if (!(await canMessage(req.user, recipient._id))) {
       return res.status(403).json({
         success: false,

@@ -44,6 +44,7 @@ export function buildPeoplePipeline(options, viewer) {
     { $set: { accountId: { $convert: { input: '$authId', to: 'objectId', onError: null, onNull: null } } } },
     { $lookup: { from: 'auth', localField: 'accountId', foreignField: '_id', as: 'account' } },
     { $unwind: '$account' },
+    { $match: { 'account.disabledAt': null } },
     { $set: { role: { $toLower: '$account.role' }, authId: { $toString: '$account._id' } } },
     { $match: { role: role || { $in: ['student', 'alumni'] } } },
     { $sort: { updatedAt: -1, _id: 1 } },

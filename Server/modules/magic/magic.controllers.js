@@ -1,14 +1,13 @@
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
 import MagicLinkModel from './magic.models.js';
 import UserModel from '../users/users.models.js';
 import AuthModel from '../auth/auth.models.js';
 import ActivityModel from '../activity/activity.models.js';
 import Roles from '../../constant/roles.js';
 import { sendMagicLinkEmail } from '../../utils/email.js';
+import { authEmail } from '../auth/auth.validation.js';
+import { signSessionToken, activeAccount, sessionVersion } from '../auth/session-token.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRE = '7d';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 
@@ -22,12 +21,12 @@ const generateToken = () => {
 
 export const sendMagicLink = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = authEmail(req.body?.email);
 
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email'
+        message: 'Please provide a valid email address'
       });
     }
 
@@ -35,19 +34,18 @@ export const sendMagicLink = async (req, res) => {
     if (!user) {
       // Email-only records (CAIS users collection, no login yet):
       // auto-create the login record on first magic-link request.
-      // Role defaults to alumni; admin/CAIS sync corrects it later.
+      // Preserve the authoritative imported role; never guess elevated access.
       const profile = await UserModel.findByEmail(email);
-      if (!profile) {
-        return res.status(404).json({
-          success: false,
-          message: 'No account found with this email.'
-        });
+      const role = String(profile?.role || '').toLowerCase();
+      if (!profile || ![Roles.STUDENT, Roles.ALUMNI].includes(role)) {
+        return res.status(200).json({ success: true, message: 'If an account exists, a login link has been sent.' });
       }
-      const newAuth = await AuthModel.createSyncedUser({ email, role: Roles.ALUMNI });
+      const newAuth = await AuthModel.createSyncedUser({ email, role });
       // Link the existing profile to the new login record.
       await UserModel.updateById(String(profile._id), { authId: newAuth._id });
       user = newAuth;
     }
+    if (!activeAccount(user)) return res.status(200).json({ success: true, message: 'If an account exists, a login link has been sent.' });
 
     const token = generateToken();
     const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000);
@@ -58,25 +56,31 @@ export const sendMagicLink = async (req, res) => {
       email,
       token,
       expiresAt,
-      usedAt: null
+      usedAt: null,
+      authId: user._id,
+      sessionVersion: sessionVersion(user)
     });
 
     const loginUrl = `${FRONTEND_URL}/verify-magic-link?token=${token}`;
     const emailResult = await sendMagicLinkEmail(email, loginUrl);
 
     if (!emailResult.success) {
-      console.log('Magic link for development:', loginUrl);
+      await MagicLinkModel.deleteToken(token);
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists, a login link has been sent.'
+      });
     }
 
     res.status(200).json({
       success: true,
       message: 'If an account exists, a login link has been sent.'
     });
-  } catch (error) {
-    console.error('Send magic link error:', error);
+  } catch {
+    console.error('Login link request failed');
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Unable to process the login link request. Please try again later.'
     });
   }
 };
@@ -90,7 +94,7 @@ export const verifyMagicLink = async (req, res) => {
   try {
     const { token } = req.query;
 
-    if (!token) {
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) {
       return invalidMagicLink(res, 'Invalid or missing token');
     }
 
@@ -104,7 +108,7 @@ export const verifyMagicLink = async (req, res) => {
     }
 
     const user = await AuthModel.findByEmail(magicLink.email);
-    if (!user) {
+    if (!activeAccount(user) || String(magicLink.authId) !== String(user._id) || magicLink.sessionVersion !== sessionVersion(user)) {
       return invalidMagicLink(res, 'User not found');
     }
 
@@ -115,11 +119,7 @@ export const verifyMagicLink = async (req, res) => {
       passwordSetupRequired: !hasUsableLocalPassword(user)
     };
 
-    const jwtToken = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRE }
-    );
+    const jwtToken = signSessionToken(user);
 
     res.cookie('token', jwtToken, {
       httpOnly: true,
@@ -138,11 +138,11 @@ export const verifyMagicLink = async (req, res) => {
         user: publicUser
       }
     });
-  } catch (error) {
-    console.error('Verify magic link error:', error);
+  } catch {
+    console.error('Login link verification failed');
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Unable to verify the login link. Please try again later.'
     });
   }
 };

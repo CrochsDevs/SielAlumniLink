@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
-import { frontendOrigins } from '../config/cors.js';
-import jwt from 'jsonwebtoken';
+import { frontendOrigins, allowedSocketOrigin } from '../config/cors.js';
+import { verifySessionToken, sessionMatches } from '../modules/auth/session-token.js';
+import { sessionEvents } from '../modules/auth/session-events.js';
 import AuthModel from '../modules/auth/auth.models.js';
 import PresenceStore from './presence.store.js';
 import { initializeMeetings } from '../modules/meetings/meetings.socket.js';
@@ -10,15 +11,13 @@ import UserModel from '../modules/users/users.models.js';
 import ConnectionModel from '../modules/connections/connections.models.js';
 import { ConversationModel, MessageModel } from '../modules/messages/messages.models.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 let io = null;
 let groupCalls = null;
 export const removeGroupCallMember = (id, authId) => groupCalls?.removeMember(id, authId);
 
 const broadcastPresence = () => {
   if (io) {
-    io.emit('presence:update', PresenceStore.snapshot());
+    io.to('role:admin').emit('presence:update', PresenceStore.snapshot());
   }
 };
 
@@ -36,14 +35,16 @@ const authenticate = async (socket, next) => {
       return next(new Error('Missing auth token'));
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await AuthModel.findByEmail(decoded.email);
+    const decoded = verifySessionToken(token);
+    const user = await AuthModel.findById(decoded.sub);
 
-    if (!user) {
+    if (!sessionMatches(decoded, user)) {
       return next(new Error('User not found'));
     }
 
     socket.user = user;
+    socket.sessionToken = token;
+    socket.sessionExpiresAt = decoded.exp * 1000;
     next();
   } catch {
     next(new Error('Invalid auth token'));
@@ -52,6 +53,7 @@ const authenticate = async (socket, next) => {
 
 export const initSocket = (server) => {
   io = new Server(server, {
+    allowRequest: (req, callback) => callback(null, allowedSocketOrigin(req.headers.origin)),
     cors: {
       origin: frontendOrigins,
       credentials: true,
@@ -59,6 +61,12 @@ export const initSocket = (server) => {
   });
 
   io.use(authenticate);
+  const revoke = authId => {
+    io.to(`user:${authId}`).emit('auth:revoked');
+    io.in(`user:${authId}`).disconnectSockets(true);
+  };
+  sessionEvents.on('revoked', revoke);
+  server.once('close', () => sessionEvents.off('revoked', revoke));
   const meetings = initializeMeetings(io);
   groupCalls = createGroupCallRuntime(io, {
     emitToUser,
@@ -109,15 +117,37 @@ export const initSocket = (server) => {
   });
 
   io.on('connection', (socket) => {
+    if (socket.sessionExpiresAt <= Date.now()) { socket.disconnect(true); return; }
+    const validate = async () => {
+      try {
+        const claims = verifySessionToken(socket.sessionToken);
+        const current = await AuthModel.findById(claims.sub);
+        if (!sessionMatches(claims, current) || current.role !== socket.user.role) throw new Error('Session revoked');
+        socket.user = current;
+        return true;
+      } catch {
+        socket.emit('auth:revoked'); socket.disconnect(true); return false;
+      }
+    };
+    socket.use(async (_packet, next) => {
+      if (await validate()) next();
+      else next(new Error('Authentication required'));
+    });
+    const timer = setInterval(() => { void validate(); }, 30000);
+    timer.unref();
+    const expires = socket.sessionExpiresAt;
+    const expiryTimer = setTimeout(() => { void validate(); }, Math.max(1, expires - Date.now() + 1));
+    expiryTimer.unref();
+    socket.on('disconnect', () => { clearInterval(timer); clearTimeout(expiryTimer); });
     meetings.attach(socket);
     groupCalls.attach(socket);
     const authId = String(socket.user._id);
     // Personal room so the server can push to all of a user's tabs.
     socket.join(`user:${authId}`);
     if (String(socket.user.role).toLowerCase() === 'admin') socket.join('role:admin');
-    PresenceStore.markOnline(socket.user._id, socket.user.email);
+    PresenceStore.markOnline(socket.user._id);
 
-    // Tell everyone (including the newcomer) who is online.
+    // Only the administrator directory consumes the global presence list.
     broadcastPresence();
 
     // WebRTC call signaling relay (voice/video). The server never

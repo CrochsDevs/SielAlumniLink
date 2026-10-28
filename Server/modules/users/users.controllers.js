@@ -6,8 +6,11 @@ import bcrypt from 'bcryptjs';
 import { ConversationModel } from '../messages/messages.models.js';
 import { emitToUser } from '../../realtime/socket.js';
 import { contactUpdates } from './profile-contact.js';
+import { profileOperations } from './profile-operations.js';
 import { EmploymentModel } from '../employment/employment.models.js';
 import { changeExperience, employmentState } from '../employment/employment.policy.js';
+import MagicLinkModel from '../magic/magic.models.js';
+import { visibleProfile, profileProjection } from './profile-visibility.js';
 
 const SYNCABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
@@ -87,6 +90,10 @@ export const syncUsers = async (req, res) => {
       const existingAuth = await AuthModel.findByEmail(email);
 
       if (existingAuth) {
+        if (existingAuth.disabledAt) {
+          summary.skipped.push({ email, reason: 'Account is disabled' });
+          continue;
+        }
         // Keep existing password/state; only refresh synced fields.
         if (existingAuth.role !== role) {
           await AuthModel.updateRoleById(existingAuth._id, role);
@@ -120,23 +127,18 @@ export const syncUsers = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await UserModel.findAll();
+    const users = await UserModel.findAll(profileProjection);
     const safeUsers = await Promise.all(users.map(async (user) => {
-      const { password, ...rest } = user;
-      // Role lives on the profile; auth record is the fallback.
-      let role = user.role || null;
-      if (!role && user.authId) {
-        const auth = await AuthModel.findById(user.authId);
-        role = auth?.role || null;
-      }
-      return { ...rest, role };
+      const auth = user.authId ? await AuthModel.findById(user.authId) : user.email ? await AuthModel.findByEmail(user.email) : null;
+      if (auth?.disabledAt) return null;
+      return visibleProfile({ ...user, role: auth?.role || user.role || null }, req.user);
     }));
 
     // Optional role filter (?role=alumni) — used by mentorship discovery.
     const { role } = req.query;
     const data = role
-      ? safeUsers.filter((u) => (u.role || '').toLowerCase() === String(role).toLowerCase())
-      : safeUsers;
+      ? safeUsers.filter((u) => u && (u.role || '').toLowerCase() === String(role).toLowerCase())
+      : safeUsers.filter(Boolean);
 
     res.status(200).json({
       success: true,
@@ -157,7 +159,7 @@ export const getMyProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'Profile not found' });
     }
-    const { password, ...safeUser } = user;
+    const safeUser = visibleProfile(user, req.user, { detail: true });
     res.status(200).json({
       success: true,
       data: { ...safeUser, role: req.user.role, historyRevision: employmentState(user).historyRevision }
@@ -183,13 +185,10 @@ export const getUserById = async (req, res) => {
       });
     }
     
-    const { password, ...safeUser } = user;
-
-    let role = user.role || null;
-    if (!role && user.authId) {
-      const auth = await AuthModel.findById(user.authId);
-      role = auth?.role || null;
-    }
+    const auth = user.authId ? await AuthModel.findById(user.authId) : user.email ? await AuthModel.findByEmail(user.email) : null;
+    if (auth?.disabledAt) return res.status(404).json({ success: false, message: 'User not found' });
+    const role = auth?.role || user.role || null;
+    const safeUser = visibleProfile({ ...user, role }, req.user, { detail: true });
 
     res.status(200).json({
       success: true,
@@ -318,6 +317,16 @@ export const deleteUser = async (req, res) => {
       });
     }
     
+    const auth = user.authId ? await AuthModel.findById(user.authId) : await AuthModel.findByEmail(user.email);
+    if (auth && String(auth._id) === String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'You cannot delete your own administrator account' });
+    }
+    if (auth) {
+      // Disable first: even a later cleanup failure must leave login revoked.
+      await AuthModel.disableById(auth._id);
+      await MagicLinkModel.deleteByEmail(auth.email);
+      await UserModel.deleteByAuthId(auth._id);
+    }
     await UserModel.deleteById(id);
     
     res.status(200).json({
@@ -448,9 +457,12 @@ export const updateUserRole = async (req, res) => {
 // by sync / admins.
 export const updateMyProfile = async (req, res) => {
   try {
+    let mongoOps;
+    try { mongoOps = profileOperations(req.body); }
+    catch (error) { return res.status(400).json({ success: false, message: error.message }); }
     const employmentFields = ['employmentHistory', 'employmentStatus', 'employmentRevision', 'employmentUpdatedAt', 'historyRevision'];
     const touchesEmployment = fields => Object.keys(fields || {}).some(key => employmentFields.includes(key.split('.')[0]));
-    if (touchesEmployment(req.body) || Object.entries(req.body).some(([key, value]) => key.startsWith('$') && touchesEmployment(value))) {
+    if (touchesEmployment(req.body)) {
       return res.status(400).json({ success: false, message: 'Use the experience or employment form to update employment records.' });
     }
     const { name, program, batch, location, bio, skills, education, interests } = req.body;
@@ -461,13 +473,6 @@ export const updateMyProfile = async (req, res) => {
     } catch (error) {
       return res.status(400).json({ success: false, message: error.message });
     }
-
-    // Handle MongoDB operators ($push, $addToSet, $pull, etc.)
-    const mongoOps = {};
-    if (req.body.$push) mongoOps.$push = req.body.$push;
-    if (req.body.$addToSet) mongoOps.$addToSet = req.body.$addToSet;
-    if (req.body.$pull) mongoOps.$pull = req.body.$pull;
-    if (req.body.$set) mongoOps.$set = req.body.$set;
 
     if (name !== undefined) {
       if (!String(name).trim()) {
@@ -525,24 +530,6 @@ export const updateMyProfile = async (req, res) => {
     const profile = await UserModel.findByAuthId(req.user._id);
     if (!profile) {
       return res.status(404).json({ success: false, message: "Profile not found" });
-    }
-
-    for (const [operator, fields] of Object.entries(mongoOps)) {
-      if (Object.keys(fields).some(field => ['_id', 'authId', 'role', 'email', 'academicStatus', 'graduatedAt', 'createdAt'].includes(field.split('.')[0]))) {
-        return res.status(403).json({ success: false, message: 'Account identity and graduation fields are managed by administrators' });
-      }
-      if (Object.keys(fields).some((field) => field.startsWith('skills.')) ||
-          (Object.hasOwn(fields, 'skills') && !['$push', '$addToSet', '$pull'].includes(operator))) {
-        return res.status(400).json({ success: false, message: 'Use the skills array to replace skills' });
-      }
-      if (['$push', '$addToSet'].includes(operator) && Object.hasOwn(fields, 'skills')) {
-        const value = fields.skills;
-        const additions = typeof value === 'string' ? [value] : value?.$each;
-        if (!Array.isArray(additions) || additions.some((skill) => typeof skill !== 'string' || !skill.trim())) {
-          return res.status(400).json({ success: false, message: 'Skills must be non-empty strings' });
-        }
-        mongoOps[operator] = { ...fields, skills: { $each: additions.map((skill) => skill.trim()) } };
-      }
     }
 
     const hasUpdates = Object.keys(updateData).length > 0 || Object.keys(mongoOps).length > 0;

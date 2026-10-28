@@ -31,6 +31,8 @@ import reportRoutes from "../modules/reports/reports.routes.js";
 //SYLLABUS INTEGRATION API
 
 const app = express();
+// Configure exact proxy IPs/CIDRs when deployed behind a reverse proxy.
+if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
 
 app.use(
   cors({

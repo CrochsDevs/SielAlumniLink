@@ -5,3 +5,6 @@ export const frontendOrigins = [
     ? []
     : ['http://localhost:5173', 'http://localhost:5174']),
 ];
+
+// Browser WebSocket handshakes must include an exact configured Origin.
+export const allowedSocketOrigin = origin => typeof origin === 'string' && frontendOrigins.includes(origin);
