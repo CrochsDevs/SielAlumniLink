@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/useAuth';
+import React, { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 
 const SetupPassword = () => {
   const navigate = useNavigate();
   const { user, setupPassword, loading: authLoading } = useAuth();
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (authLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-[#e6e6e6]">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Setting up your password...</h1>
           <p className="mt-4">Loading...</p>
@@ -31,15 +31,15 @@ const SetupPassword = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    setError("");
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       return;
     }
 
@@ -48,20 +48,28 @@ const SetupPassword = () => {
     setLoading(false);
 
     if (result.success) {
-      navigate('/');
+      navigate("/");
       return;
     }
 
-    setError(result.error || 'Password setup failed');
+    setError(result.error || "Password setup failed");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white px-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#e6e6e6`] px-6">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-zinc-900/5 border border-zinc-100">
         <div className="flex justify-center mb-5">
           <div className="h-12 w-12 rounded-xl bg-brand flex items-center justify-center shadow-md shadow-brand/20">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6 text-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
@@ -72,13 +80,22 @@ const SetupPassword = () => {
           Set your password
         </h1>
         <p className="text-center text-[12px] text-zinc-500 mb-6 leading-relaxed">
-          Your CAIS login credentials are synced. Create a SielAlumni password to continue.
+          Your CAIS login credentials are synced. Create a SielAlumni password
+          to continue.
         </p>
 
         {error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[12px] leading-relaxed mb-5">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-4 h-4 mt-0.5 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -123,7 +140,7 @@ const SetupPassword = () => {
             disabled={loading}
             className="w-full h-9 rounded-lg bg-brand text-white text-[12.5px] font-semibold tracking-wide transition-all duration-200 hover:bg-brand disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
           >
-            {loading ? 'Setting up password...' : 'Set password'}
+            {loading ? "Setting up password..." : "Set password"}
           </button>
         </form>
       </div>

@@ -1,19 +1,69 @@
 .login-page {
-  --login-panel-shadow: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
-  --login-field-shadow: 0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%), 0 5px 12px rgb(0 0 0 / 10%);
+  --login-panel-shadow:
+    0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
+  --login-field-shadow:
+    0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%),
+    0 5px 12px rgb(0 0 0 / 10%);
 }
 .dark .login-page {
-  --login-panel-shadow: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
-  --login-field-shadow: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
+  --login-panel-shadow:
+    0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
+  --login-field-shadow:
+    0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%),
+    0 5px 12px rgb(0 0 0 / 28%);
 }
-.login-page .login-panel { box-shadow: var(--login-panel-shadow); }
-.login-page input:is([type="email"], [type="password"], .login-password-input) { border-color: #b9c7bf; box-shadow: var(--login-field-shadow); }
-.dark .login-page input:is([type="email"], [type="password"], .login-password-input) { border-color: #64756b; }
-.login-page input:is([type="email"], [type="password"], .login-password-input):focus { border-color: #009639; outline: 2px solid #009639; outline-offset: 2px; }
-.login-password-wrap { position: relative; }
-.login-password-wrap > input { padding-right: 38px; }
-.login-password-toggle { position: absolute; inset: 2px 3px 2px auto; display: grid; place-items: center; width: 28px; border-radius: 6px; color: #718077; }
-.login-password-toggle:hover { background: #edf4ef; color: #009639; }
-.dark .login-password-toggle { color: #b2c2b8; }
-.dark .login-password-toggle:hover { background: #304638; color: #a4e3b8; }
-.login-password-toggle:focus-visible { outline: 2px solid #009639; outline-offset: 1px; }
+.login-page .login-card {
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: var(--login-panel-shadow);
+}
+.login-page .login-panel {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.login-page input:is([type="email"], [type="password"], .login-password-input) {
+  border-color: #b9c7bf;
+  box-shadow: var(--login-field-shadow);
+}
+.dark
+  .login-page
+  input:is([type="email"], [type="password"], .login-password-input) {
+  border-color: #64756b;
+}
+.login-page
+  input:is([type="email"], [type="password"], .login-password-input):focus {
+  border-color: #009639;
+  outline: 2px solid #009639;
+  outline-offset: 2px;
+}
+.login-password-wrap {
+  position: relative;
+}
+.login-password-wrap > input {
+  padding-right: 38px;
+}
+.login-password-toggle {
+  position: absolute;
+  inset: 2px 3px 2px auto;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  border-radius: 6px;
+  color: #718077;
+}
+.login-password-toggle:hover {
+  background: #edf4ef;
+  color: #009639;
+}
+.dark .login-password-toggle {
+  color: #b2c2b8;
+}
+.dark .login-password-toggle:hover {
+  background: #304638;
+  color: #a4e3b8;
+}
+.login-password-toggle:focus-visible {
+  outline: 2px solid #009639;
+  outline-offset: 1px;
+}

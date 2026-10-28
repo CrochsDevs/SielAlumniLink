@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
-import Swal from 'sweetalert2';
-import { useAuth } from '../context/useAuth';
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
+import Swal from "sweetalert2";
+import { useAuth } from "../context/useAuth";
 
 const Logout = () => {
   const navigate = useNavigate();
@@ -15,14 +15,14 @@ const Logout = () => {
     done.current = true;
 
     Swal.fire({
-      title: 'Log out?',
-      text: 'Are you sure you want to log out of SielAlumni?',
-      icon: 'warning',
+      title: "Log out?",
+      text: "Are you sure you want to log out of SielAlumni?",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'Yes, log out',
-      cancelButtonText: 'Stay logged in',
-      confirmButtonColor: '#009639',
-      cancelButtonColor: '#71717a',
+      confirmButtonText: "Yes, log out",
+      cancelButtonText: "Stay logged in",
+      confirmButtonColor: "#009639",
+      cancelButtonColor: "#71717a",
       reverseButtons: true,
     }).then(async (result) => {
       if (!result.isConfirmed) {
@@ -34,9 +34,9 @@ const Logout = () => {
       try {
         await logout();
       } catch (err) {
-        console.error('Logout failed:', err);
+        console.error("Logout failed:", err);
       } finally {
-        navigate('/login', { replace: true });
+        navigate("/login", { replace: true });
       }
     });
   }, [logout, navigate]);
@@ -46,10 +46,8 @@ const Logout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-emerald-50/30 flex items-center justify-center p-6 font-sans">
-
+    <div className="min-h-screen bg-[#e6e6e6] flex items-center justify-center p-6 font-sans">
       <div className="w-full max-w-[320px] text-center">
-
         {/* Logo + spinner */}
         <div className="relative mx-auto mb-6 h-20 w-20">
           {/* Green glow */}
@@ -75,8 +73,14 @@ const Logout = () => {
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-1.5 mt-5">
           <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
-          <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse" style={{ animationDelay: '150ms' }}></span>
-          <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse" style={{ animationDelay: '300ms' }}></span>
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"
+            style={{ animationDelay: "150ms" }}
+          ></span>
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"
+            style={{ animationDelay: "300ms" }}
+          ></span>
         </div>
       </div>
     </div>
