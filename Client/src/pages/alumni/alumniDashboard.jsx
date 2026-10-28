@@ -68,19 +68,17 @@ const AlumniDashboard = () => {
       const byEmail = new Map(
         (usersRes.data.data || []).map((p) => [normalize(p.email), p]),
       );
-      const emails = (connsRes.data.data || [])
+      const byAuthId = new Map((usersRes.data.data || []).filter(p => p.authId).map(p => [String(p.authId), p]));
+      const peers = (connsRes.data.data || [])
         .filter((c) => c.status === "accepted")
-        .map((c) =>
-          normalize(c.requesterEmail) === normalize(user?.email)
-            ? c.recipientEmail
-            : c.requesterEmail,
-        );
+        .map(c => {
+          const outgoing = String(c.requesterAuthId) === String(user?.authId) || normalize(c.requesterEmail) === normalize(user?.email);
+          const authId = outgoing ? c.recipientAuthId : c.requesterAuthId;
+          const email = outgoing ? c.recipientEmail : c.requesterEmail;
+          return { email, authId, ...(byAuthId.get(String(authId)) || byEmail.get(normalize(email)) || { name: email }) };
+        });
       setConnections(
-        [...new Set(emails)]
-          .filter(Boolean)
-          .map(
-            (email) => byEmail.get(normalize(email)) || { email, name: email },
-          ),
+        [...new Map(peers.map(person => [person.authId || person.email, person])).values()],
       );
     } catch (err) {
       setConnectionsError(
@@ -100,8 +98,10 @@ const AlumniDashboard = () => {
         api.get("/users"),
       ]);
       const roleByEmail = {};
+      const roleByAuthId = {};
       (usersRes.data.data || []).forEach((u) => {
         roleByEmail[u.email] = u;
+        if (u.authId) roleByAuthId[String(u.authId)] = u;
       });
       const mine = String(user?.email);
       const accepted = (connsRes.data.data || []).filter(
@@ -109,15 +109,12 @@ const AlumniDashboard = () => {
       );
       setMentees(
         accepted
-          .map((c) =>
-            c.requesterEmail === mine ? c.recipientEmail : c.requesterEmail,
-          )
-          .filter((email) => roleByEmail[email]?.role === "student")
-          .map((email) => ({
-            email,
-            name: roleByEmail[email]?.name || email,
-            profilePicture: roleByEmail[email]?.profilePicture || null,
-          })),
+          .map(c => {
+            const outgoing = String(c.requesterAuthId) === String(user?.authId) || c.requesterEmail === mine;
+            const email = outgoing ? c.recipientEmail : c.requesterEmail;
+            const authId = outgoing ? c.recipientAuthId : c.requesterAuthId;
+            return { email, authId, ...(roleByAuthId[String(authId)] || roleByEmail[email]) };
+          }).filter(person => person.role === 'student'),
       );
       const pending = await api
         .get("/connections/requests")
@@ -173,7 +170,7 @@ const AlumniDashboard = () => {
       const list = (usersRes.data.data || [])
         .filter(
           (u) =>
-            u.email &&
+            (u.authId || u.email) &&
             u.role === "alumni" &&
             String(u._id) !== String(user?._id) &&
             (!u.authId || String(u.authId) !== String(user?.authId)) &&
@@ -265,7 +262,7 @@ const AlumniDashboard = () => {
   const handleConnect = async (person) => {
     if (connectPending.current) return;
     connectPending.current = true;
-    setConnecting(person.email);
+    setConnecting(person.authId || person.email);
     try {
       const recipient = /^[a-f\d]{24}$/i.test(String(person.authId || ""))
         ? { recipientAuthId: String(person.authId) }
@@ -613,7 +610,7 @@ const AlumniDashboard = () => {
                           onClick={() => handleConnect(person)}
                           className="alumni-suggested-connect"
                         >
-                          {connecting === person.email ? "..." : "+ connect"}
+                          {connecting === (person.authId || person.email) ? "..." : "+ connect"}
                         </button>
                       </div>
                     </li>

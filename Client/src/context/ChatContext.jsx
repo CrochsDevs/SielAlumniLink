@@ -365,7 +365,7 @@ export const ChatProvider = ({ children }) => {
   const openChatByEmail = useCallback(
     async (email) => {
       try {
-        const res = await api.post("/conversations", { email });
+        const res = await api.post("/conversations", typeof email === 'string' ? { email } : email);
         const convo = {
           ...res.data.data,
           initial: toInitial(res.data.data.name, res.data.data.email),
@@ -385,6 +385,8 @@ export const ChatProvider = ({ children }) => {
     },
     [openChat],
   );
+
+  const openChatByAuthId = useCallback(authId => openChatByEmail({ recipientAuthId: String(authId) }), [openChatByEmail]);
 
   const closeChat = useCallback((id) => {
     setOpenChats((prev) => prev.filter((w) => String(w.id) !== String(id)));
@@ -485,6 +487,7 @@ export const ChatProvider = ({ children }) => {
         threads,
         openChat,
         openChatByEmail,
+        openChatByAuthId,
         refreshConvos,
         loadThread,
         sendChat,

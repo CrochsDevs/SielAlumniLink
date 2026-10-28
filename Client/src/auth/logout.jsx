@@ -33,10 +33,17 @@ const Logout = () => {
       setSigningOut(true);
       try {
         await logout();
-      } catch (err) {
-        console.error("Logout failed:", err);
-      } finally {
         navigate("/login", { replace: true });
+      } catch (err) {
+        setSigningOut(false);
+        await Swal.fire({
+          title: "Logout incomplete",
+          text: err.response?.data?.message || "Unable to complete logout. Please try again.",
+          icon: "error",
+          confirmButtonText: "OK",
+          confirmButtonColor: "hsl(var(--primary))",
+        });
+        navigate(-1);
       }
     });
   }, [logout, navigate]);

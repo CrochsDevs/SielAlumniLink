@@ -10,7 +10,7 @@ import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
 import MentorshipProgressTracker from "../../components/mentorship/MentorshipProgressTracker";
 import MentorMatching from "../../components/mentorship/MentorMatching";
-import { mentorConnectionStates } from "../../components/mentorship/connectionStates";
+import { mentorConnectionStates, mentorKey } from "../../components/mentorship/connectionStates";
 import { getSocket } from "../../realtime/socket";
 const card = "rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 const primary = "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white transition hover:bg-brand disabled:opacity-50";
@@ -19,7 +19,7 @@ export default function StudentMentorship() {
     user
   } = useAuth();
   const {
-    openChatByEmail
+    openChatByEmail, openChatByAuthId
   } = useChat();
   const [workspace, setWorkspace] = useState("matching");
   const [progressPartner, setProgressPartner] = useState('');
@@ -65,7 +65,7 @@ export default function StudentMentorship() {
       }
     }), api.get("/connections/me")]).then(([usersRes, connsRes]) => {
       if (!active) return;
-      setMentors((usersRes.data.data || []).filter(mentor => mentor.email && mentor.email !== user?.email && mentor.role?.toLowerCase() === "alumni"));
+      setMentors((usersRes.data.data || []).filter(mentor => (mentor.authId || mentor.email) && String(mentor.authId || mentor.email) !== String(user?.authId || user?.email) && mentor.role?.toLowerCase() === "alumni"));
       if (initialRequest === generation) {
         applyConnections(connsRes.data.data || []);
         setError("");
@@ -85,20 +85,20 @@ export default function StudentMentorship() {
       socket.off("connect", refreshConnections);
       window.removeEventListener("focus", refreshConnections);
     };
-  }, [ownerKey, user?.email, attempt]);
+  }, [ownerKey, user?.email, user?.authId, attempt]);
   const connect = async mentor => {
     if (pending.current) return;
     pending.current = true;
-    setSending(mentor.email);
+    setSending(mentorKey(mentor));
     setError("");
     setNotice("");
     try {
       await api.post("/connections", {
-        email: mentor.email
+        ...(mentor.authId ? { recipientAuthId: String(mentor.authId) } : { email: mentor.email })
       });
       setConnectionState(previous => ({ owner: ownerKey, states: {
         ...(previous.owner === ownerKey ? previous.states : {}),
-        [mentor.email.trim().toLowerCase()]: "pending"
+        [mentorKey(mentor)]: "pending"
       } }));
       setNotice(`Request sent to ${mentor.name || mentor.email}. You can message them once they accept.`);
     } catch (err) {
@@ -110,15 +110,16 @@ export default function StudentMentorship() {
   };
   const message = async mentor => {
     try {
-      await openChatByEmail(mentor.email);
+      if (mentor.authId) await openChatByAuthId(mentor.authId);
+      else await openChatByEmail(mentor.email);
     } catch {
       setError("Unable to open the conversation. Please try again.");
     }
   };
-  const connected = mentors.filter(mentor => states[mentor.email?.trim().toLowerCase()] === "connected").length;
-  const requested = mentors.filter(mentor => ["pending", "incoming"].includes(states[mentor.email?.trim().toLowerCase()])).length;
+  const connected = mentors.filter(mentor => states[mentorKey(mentor)] === "connected").length;
+  const requested = mentors.filter(mentor => ["pending", "incoming"].includes(states[mentorKey(mentor)])).length;
   const programs = [...new Set(mentors.map(mentor => mentor.program).filter(Boolean))].sort();
-  const filtered = mentors.filter(mentor => (!program || mentor.program === program) && (view === "all" || (view === "connected" ? states[mentor.email?.trim().toLowerCase()] === "connected" : ["pending", "incoming"].includes(states[mentor.email?.trim().toLowerCase()]))) && [mentor.name, mentor.email, mentor.program, ...(mentor.skills || [])].filter(Boolean).join(" ").toLowerCase().includes(query.trim().toLowerCase()));
+  const filtered = mentors.filter(mentor => (!program || mentor.program === program) && (view === "all" || (view === "connected" ? states[mentorKey(mentor)] === "connected" : ["pending", "incoming"].includes(states[mentorKey(mentor)]))) && [mentor.name, mentor.email, mentor.program, ...(mentor.skills || [])].filter(Boolean).join(" ").toLowerCase().includes(query.trim().toLowerCase()));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const currentPage = Math.min(page, totalPages);
   const paged = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -256,7 +257,7 @@ export default function StudentMentorship() {
                     </div>}
                   <div className="mentorship-directory-grid">
                     {paged.map(mentor => <StudentMentorCard key={mentor._id} mentor={mentor}
-                      status={states[mentor.email?.trim().toLowerCase()]} connect={connect} message={message} sending={sending} disabled={!!error}
+                      status={states[mentorKey(mentor)]} connect={connect} message={message} sending={sending} disabled={!!error}
                       onProgress={item => {
                         setProgressPartner(item.authId || "");
                         setWorkspace("progress");

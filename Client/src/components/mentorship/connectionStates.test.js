@@ -29,3 +29,8 @@ test("incoming and legacy email connections retain their correct status", () => 
   assert.equal(mentorConnectionStates([{ ...incoming, status: "accepted" }], user)[own.recipientEmail], "connected");
   assert.equal(mentorConnectionStates([{ requesterEmail: " STUDENT@EXAMPLE.TEST ", recipientEmail: own.recipientEmail, status: "accepted" }], user)[own.recipientEmail], "connected");
 });
+
+test('account IDs support mentor cards without directory emails', () => {
+  const states = mentorConnectionStates([{ requesterAuthId: user.authId, recipientAuthId: 'mentor-account', status: 'accepted' }], user);
+  assert.equal(states['mentor-account'], 'connected');
+});

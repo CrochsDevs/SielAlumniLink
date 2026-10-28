@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AuthContext } from "./auth-context.js";
 import api from "../utils/axios";
-import { connectSocket, disconnectSocket } from "../realtime/socket";
+import { connectSocket, disconnectSocket, getSocket } from "../realtime/socket";
 
 const authErrorMessage = (err, fallback) => {
   if (err.response?.data?.message) return err.response.data.message;
@@ -23,6 +23,19 @@ export const AuthProvider = ({ children }) => {
   const magicVerificationStarted = useRef(false);
   const authCheckVersion = useRef(0);
   const chatOwnerId = user?.authId || user?._id;
+  useEffect(() => {
+    const expired = () => {
+      ++authCheckVersion.current;
+      disconnectSocket();
+      setUser(null);
+      setLoading(false);
+      setError('Your session ended. Please sign in again.');
+    };
+    const socket = getSocket();
+    socket.on('auth:revoked', expired);
+    window.addEventListener('auth:expired', expired);
+    return () => { socket.off('auth:revoked', expired); window.removeEventListener('auth:expired', expired); };
+  }, []);
 
   const checkAuth = useCallback(async () => {
     if (didCheckAuth.current || magicVerificationStarted.current) {
@@ -72,7 +85,7 @@ export const AuthProvider = ({ children }) => {
 
   // Presence socket follows auth state: online while logged in.
   useEffect(() => {
-    if (user) {
+    if (user && !user.passwordSetupRequired) {
       connectSocket();
     } else if (!loading) {
       disconnectSocket();
@@ -172,6 +185,7 @@ export const AuthProvider = ({ children }) => {
         confirmPassword,
       });
       if (response.data.success) {
+        setError(null);
         setUser(response.data.data.user);
         setLoading(false);
         return { success: true };
@@ -188,26 +202,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const signup = async (name, email, password) => {
-    try {
-      setError(null);
-      const response = await api.post("/auth/signup", {
-        name,
-        email,
-        password,
-      });
-      if (response.data.success) {
-        ++authCheckVersion.current;
-        setUser(response.data.data.user);
-        setLoading(false);
-        return { success: true };
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Signup failed");
-      return { success: false, error: err.response?.data?.message };
-    }
-  };
-
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
@@ -221,8 +215,10 @@ export const AuthProvider = ({ children }) => {
       }
       disconnectSocket();
       setUser(null);
+      setError(null);
     } catch (err) {
-      console.error("Logout error:", err);
+      setError(err.response?.data?.message || "Unable to complete logout. Please try again.");
+      throw err;
     }
   }, [chatOwnerId]);
 
@@ -249,7 +245,6 @@ export const AuthProvider = ({ children }) => {
         requestMagicLink,
         verifyMagicLink,
         setupPassword,
-        signup,
         logout,
         refreshUser,
         isAuthenticated: !!user,

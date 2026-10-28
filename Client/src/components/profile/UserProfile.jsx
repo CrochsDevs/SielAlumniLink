@@ -44,7 +44,7 @@ const emptyExperience = {
 
 const UserProfile = ({ profileRole = "alumni" }) => {
   const { user, refreshUser } = useAuth();
-  const { openChatByEmail } = useChat();
+  const { openChatByEmail, openChatByAuthId } = useChat();
   const { id } = useParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -112,9 +112,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
 
   const isOwn = !id || String(id) === String(user?._id);
   const profileEmail = profile?.email;
+  const profileAuthId = profile?.authId;
 
   const fetchConnectionState = useCallback(async () => {
-    if (isOwn || !profileEmail) return;
+    if (isOwn || (!profileAuthId && !profileEmail)) return;
     try {
       const res = await api.get("/connections/me");
       setConnectionsCount(
@@ -122,8 +123,8 @@ const UserProfile = ({ profileRole = "alumni" }) => {
       );
       const found = (res.data.data || []).find(
         (c) =>
-          c.requesterEmail === profileEmail ||
-          c.recipientEmail === profileEmail,
+          (profileAuthId && [c.requesterAuthId, c.recipientAuthId].map(String).includes(String(profileAuthId))) ||
+          (profileEmail && (c.requesterEmail === profileEmail || c.recipientEmail === profileEmail)),
       );
       if (found)
         setConnectState(found.status === "accepted" ? "connected" : "pending");
@@ -131,7 +132,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
     } catch {
       // ignore
     }
-  }, [isOwn, profileEmail]);
+  }, [isOwn, profileEmail, profileAuthId]);
 
   useEffect(() => {
     if (isOwn || !id) return;
@@ -227,10 +228,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   }, [isOwn, user?._id, user?.authId, user?.name]);
 
   const handleConnect = async () => {
-    if (connectState !== "none" || !profile?.email) return;
+    if (connectState !== "none" || (!profile?.authId && !profile?.email)) return;
     setConnectLoading(true);
     try {
-      await api.post("/connections", { email: profile.email });
+      await api.post("/connections", profile.authId ? { recipientAuthId: String(profile.authId) } : { email: profile.email });
       setConnectState("pending");
       toast.success("Request sent", { description: "They will be notified." });
     } catch (err) {
@@ -420,7 +421,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
     setSaving(true);
     try {
       const response = await api.put("/users/me", {
-        $push: { education: eduForm },
+        addEducation: eduForm,
       });
       setForm((prev) => ({
         ...prev,
@@ -490,7 +491,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
     setAddingSkill(true);
     try {
       const response = await api.put("/users/me", {
-        $addToSet: { skills: skill },
+        addSkill: skill,
       });
       setForm((prev) => ({ ...prev, skills: response.data.data.skills || [] }));
       setNewSkill("");
@@ -509,7 +510,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
   const removeSkill = async (skill) => {
     try {
       await api.put("/users/me", {
-        $pull: { skills: skill },
+        removeSkill: skill,
       });
       setForm((prev) => ({
         ...prev,
@@ -820,10 +821,10 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                             {person.location}
                           </span>
                         )}
-                        <span className="flex items-center gap-1">
+                        {(isOwn ? person?.email : person?.contactEmail) && <span className="flex items-center gap-1">
                           <Mail className="h-3.5 w-3.5" />
-                          {person?.email || `${profileRole}@clsu.edu.ph`}
-                        </span>
+                          {isOwn ? person.email : person.contactEmail}
+                        </span>}
                       </p>
                     </>
                   )}
@@ -880,7 +881,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                         <button
                           type="button"
                           onClick={() =>
-                            profile?.email && openChatByEmail(profile.email)
+                            profile?.authId ? openChatByAuthId(profile.authId) : profile?.email && openChatByEmail(profile.email)
                           }
                           className="rounded-full border border-zinc-300 px-5 py-2 text-[13px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand"
                         >

@@ -10,6 +10,7 @@ import {
 import api from "../../utils/axios";
 import StudentMentorCard from "./StudentMentorCard";
 import DataPagination from "../ui/data-pagination";
+import { mentorKey } from './connectionStates';
 const card =
   "rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900";
 const button =
@@ -395,7 +396,7 @@ export default function MentorMatching({
                 mentor={displayMentor}
                 score={score}
                 reasons={reasons}
-                status={states[mentor.email?.trim().toLowerCase()]}
+                status={states[mentorKey(mentor)]}
                 connect={connect}
                 message={message}
                 sending={sending}

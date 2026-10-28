@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, BadgeCheck, Check, Clock, GraduationCap, LoaderCircle, MapPin, MessageSquare, Plus, Sparkles, Target } from "lucide-react";
 import ProfileAvatar from "../profile/ProfileAvatar";
+import { mentorKey } from './connectionStates';
 
 export default function StudentMentorCard({ mentor, status, score, reasons, connect, message, onProgress, sending, disabled }) {
   const [failedBanner, setFailedBanner] = useState(null);
@@ -60,8 +61,8 @@ export default function StudentMentorCard({ mentor, status, score, reasons, conn
           {connected ? <button type="button" className="mentorship-action-primary" onClick={() => message(mentor)}><MessageSquare size={15} />Message</button>
             : incoming ? <Link to="/student/requests" className="mentorship-action-primary">Review request</Link>
             : !pending && <button type="button" className="mentorship-action-primary" disabled={disabled || !!sending} onClick={() => connect(mentor)}>
-              {sending === mentor.email ? <LoaderCircle size={15} className="animate-spin" /> : <Plus size={15} />}
-              {sending === mentor.email ? "Sending…" : "Connect"}
+              {sending === mentorKey(mentor) ? <LoaderCircle size={15} className="animate-spin" /> : <Plus size={15} />}
+              {sending === mentorKey(mentor) ? "Sending…" : "Connect"}
             </button>}
           {connected && onProgress
             ? <button type="button" className="mentorship-action-secondary" onClick={() => onProgress(mentor)}><Target size={15} />View progress</button>
