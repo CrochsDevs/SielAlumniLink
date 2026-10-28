@@ -249,7 +249,8 @@ export default function ReferralBoard({ embedded = false }) {
               <Handshake size={14} />
               The alumni advantage
             </p>}
-            <Heading className="text-2xl font-semibold tracking-tight">
+            <Heading className={`text-2xl font-semibold tracking-tight ${!embedded ? "workspace-page-title flex items-center gap-3" : ""}`}>
+              {!embedded && <Handshake size={28} className="shrink-0 text-brand" aria-hidden="true" />}
               {!embedded ? "Referrals" : canPost
                 ? "Open a door. Make a difference."
                 : "Your next opportunity starts here."}

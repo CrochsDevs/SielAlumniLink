@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import PageTitle from "../../components/ui/PageTitle";
 import { Search, Users, Check, ArrowRight, LoaderCircle, SlidersHorizontal, Compass, Target } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { useChat } from "../../context/useChat.js";
@@ -132,9 +133,9 @@ export default function StudentMentorship() {
       <main className="mx-auto max-w-7xl space-y-6 p-3 sm:p-6 workspace-page mentorship-page">
         <header className="flex flex-col gap-5 border-b border-zinc-200 pb-5 pt-1 sm:flex-row sm:items-end sm:justify-between dark:border-zinc-800 workspace-page-header">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <PageTitle icon={Users}>
               Mentorship
-            </h1>
+            </PageTitle>
             <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
               Find guidance, connect with a mentor, and take your next step.
             </p>

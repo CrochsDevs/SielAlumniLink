@@ -1,5 +1,5 @@
-.student-career-page {
-  background: #e6eee7;
+.student-page.student-career-page {
+  background: #f4f4f5;
 }
 .student-career-board {
   --alumni-card: #e3eee4;
@@ -8,8 +8,8 @@
   --alumni-heading: #19472f;
   --alumni-card-shadow: var(--student-card-shadow);
 }
-.dark .student-career-page {
-  background: #111b15;
+.dark .student-page.student-career-page {
+  background: #09090b;
 }
 .dark .student-career-board {
   --alumni-card: #1b2920;

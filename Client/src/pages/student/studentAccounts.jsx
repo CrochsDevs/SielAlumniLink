@@ -312,7 +312,7 @@ const StudentAccounts = () => {
 
         <main className="mx-auto max-w-5xl p-4 sm:p-6 workspace-page">
           {/* Page header */}
-          <PageHeader title="Account settings" description="Manage your profile, security, and preferences.">
+          <PageHeader icon={UserRound} title="Account settings" description="Manage your profile, security, and preferences.">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-semibold text-brand dark:bg-emerald-950 dark:text-brand">{(user?.name || "A").charAt(0).toUpperCase()}</span>
               <div className="min-w-0"><p className="truncate text-sm font-semibold">{user?.name}</p><p className="break-all text-xs">{user?.email} &middot; {user?.role}</p></div>

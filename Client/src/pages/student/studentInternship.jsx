@@ -135,8 +135,8 @@ export default function StudentInternship() {
         <div
           className={(`${card} mb-4 flex flex-wrap items-center justify-between gap-3`) + " workspace-page-header"}
         >
-          <h1 className="flex items-center gap-2 text-base font-bold">
-            <Briefcase size={20} className="text-brand" />
+          <h1 className="workspace-page-title flex items-center gap-3 text-base font-bold">
+            <Briefcase size={28} className="shrink-0 text-brand" aria-hidden="true" />
             Internship Board
           </h1>
           <nav aria-label="Internship views" className="flex gap-4">

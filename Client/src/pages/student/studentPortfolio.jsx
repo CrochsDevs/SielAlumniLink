@@ -1,4 +1,5 @@
 import { createElement, useRef, useState } from "react";
+import PageTitle from "../../components/ui/PageTitle";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
@@ -264,9 +265,9 @@ export default function StudentPortfolio() {
         <header className="border-b border-zinc-200 pb-5 pt-1 dark:border-zinc-800 workspace-page-header">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+              <PageTitle icon={FolderKanban}>
                 Portfolio
-              </h1>
+              </PageTitle>
               <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
                 Build a formal resume from your profile, experience, and
                 achievements.

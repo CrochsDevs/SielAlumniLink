@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Download, FileCheck2, LoaderCircle, Maximize2, Printer, ZoomIn } from "lucide-react";
+import { BadgeCheck, Download, FileCheck2, Info, LoaderCircle, Maximize2, Printer, ZoomIn } from "lucide-react";
 import { FeedDialog } from "../feed/FeedComposer";
 import api from "../../utils/axios";
 import "./CertificatePreview.css";
@@ -15,6 +15,10 @@ function CertificatePreviewContent({ certificate, onClose }) {
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [zoomed, setZoomed] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState("");
+  const printImage = useRef(null);
+  const printPending = useRef(false);
   useEffect(() => {
     let active = true, objectUrl;
     const controller = new AbortController();
@@ -40,7 +44,28 @@ function CertificatePreviewContent({ certificate, onClose }) {
     setReady(false);
     setError("");
     setZoomed(false);
+    setPrintError("");
     setAttempt((value) => value + 1);
+  };
+
+  const printCertificate = async () => {
+    if (!ready || error || printPending.current || !printImage.current) return;
+    printPending.current = true;
+    setPrinting(true);
+    setPrintError("");
+    const image = printImage.current;
+    try {
+      // The print copy mounts after the preview loads; wait for its own decode
+      // so an immediate click cannot open a blank print preview.
+      await image.decode();
+      if (!image.isConnected || printImage.current !== image) return;
+      window.print();
+    } catch {
+      if (image.isConnected) setPrintError("Unable to prepare the certificate for printing. Please try again.");
+    } finally {
+      printPending.current = false;
+      if (image.isConnected) setPrinting(false);
+    }
   };
 
   return (
@@ -62,7 +87,10 @@ function CertificatePreviewContent({ certificate, onClose }) {
       }
     >
       <div className="certificate-preview-toolbar">
-        <span className="certificate-preview-number" title={certificate.certificateNumber}>{certificate.certificateNumber}</span>
+        <div className="certificate-preview-document">
+          <span className="certificate-preview-verified"><BadgeCheck size={15} />Confirmed participation</span>
+          <span className="certificate-preview-number" title={certificate.certificateNumber}>ID: {certificate.certificateNumber}</span>
+        </div>
         <button
           type="button"
           disabled={!ready || !!error}
@@ -97,16 +125,17 @@ function CertificatePreviewContent({ certificate, onClose }) {
         )}
       </div>
       <footer className="certificate-preview-footer">
-        <p>For a PDF copy, choose <strong>Save as PDF</strong> in the print dialog.</p>
+        <div className="certificate-preview-help"><Info size={17} /><p>Keep a copy of your achievement.<span>Choose <strong>Save as PDF</strong> in the print dialog for a PDF copy.</span></p></div>
         <div className="certificate-preview-actions">
-          {ready && !error && <a href={url} download={`${certificate.certificateNumber}.svg`} className="certificate-preview-action"><Download size={16} />Download SVG</a>}
-          <button type="button" disabled={!ready || !!error} onClick={() => window.print()} className="certificate-preview-action is-primary"><Printer size={16} />Print / Save as PDF</button>
+          {ready && !error ? <a href={url} download={`${certificate.certificateNumber}.svg`} className="certificate-preview-action"><Download size={16} />Download SVG</a> : <button type="button" disabled className="certificate-preview-action"><Download size={16} />Download SVG</button>}
+          <button type="button" disabled={!ready || !!error || printing} onClick={printCertificate} className="certificate-preview-action is-primary">{printing ? <LoaderCircle size={16} className="animate-spin" /> : <Printer size={16} />}{printing ? "Preparing print…" : "Print / Save as PDF"}</button>
         </div>
+        {printError && <p role="alert" className="certificate-preview-print-error">{printError}</p>}
       </footer>
       {ready && !error && createPortal(
         <div className="digital-certificate-print">
           <style media="print">{"@page { size: A4 landscape; margin: 10mm; }"}</style>
-          <img src={url} alt={`Certificate for ${certificate.recipientName}`} />
+          <img ref={printImage} src={url} alt={`Certificate for ${certificate.recipientName}`} />
         </div>,
         document.body,
       )}

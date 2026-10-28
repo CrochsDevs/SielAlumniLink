@@ -1,4 +1,5 @@
 import ProgressBar from "../../components/ui/progress-bar";
+import PageTitle from "../../components/ui/PageTitle";
 import { createElement } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -7,6 +8,7 @@ import {
   FileText,
   Briefcase,
   Users,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import useDevelopment from "../../hooks/useDevelopment";
@@ -47,7 +49,7 @@ export default function StudentDashboard() {
       <main className="mx-auto max-w-7xl space-y-5 p-3 sm:p-6 workspace-page">
         <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 pt-1 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 workspace-page-header">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <PageTitle icon={LayoutDashboard}>Dashboard</PageTitle>
             <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
               Welcome back, {user?.name?.split(" ")[0] || "Student"}. Here are
               the latest updates from your community.

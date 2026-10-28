@@ -6,6 +6,7 @@ import FeedImages from "../feed/FeedImages";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import { profilePath } from "../search/searchLinks";
 import api from "../../utils/axios";
+import "./StoryReader.css";
 import {
   readingTime,
   secondaryButton,
@@ -48,7 +49,8 @@ export default function StoryReader({
     }
   };
   return (
-    <FeedDialog title="Read success story" busy={busy} onClose={onClose} wide>
+    <FeedDialog title="Read success story" busy={busy} onClose={onClose} wide className="story-reader-dialog" header={<div className="story-reader-heading"><BookOpen size={23} aria-hidden="true" /><div><p>Read success story</p><span>Alumni experiences, milestones, and lessons</span></div></div>}>
+      <div className="story-reader-content" tabIndex={0} role="region" aria-label="Story content">
       {loading ? (
         <p role="status" className="py-10 text-center text-sm text-zinc-500">
           Loading story…
@@ -68,10 +70,10 @@ export default function StoryReader({
             >
               {storyTopic(post).singular}
             </span>
-            <h3 className="mt-4 break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+            <h3 className="story-reader-title mt-4 break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
               {post.title}
             </h3>
-            <div className="mb-6 mt-5 flex items-center gap-3">
+            <div className="story-reader-author mb-6 mt-5 flex items-center gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                 <ProfileAvatar user={post.author} />
               </span>
@@ -96,8 +98,8 @@ export default function StoryReader({
                 </p>
               </div>
             </div>
-            <FeedImages images={post.images || []} />
-            <div className="mt-6 space-y-7">
+            <div className="story-reader-media"><FeedImages images={post.images || []} /></div>
+            <div className="story-reader-sections mt-6 space-y-7">
               {storySections(post).map(([title, body]) => (
                 <section key={title}>
                   <h4 className="mb-3 text-sm font-semibold text-brand dark:text-brand">
@@ -109,49 +111,8 @@ export default function StoryReader({
                 </section>
               ))}
             </div>
-            <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
-              {post.author?._id && (
-                <Link
-                  to={profilePath(post.author)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand dark:text-brand"
-                >
-                  Meet the author
-                  <ArrowUpRight size={14} />
-                </Link>
-              )}
-              {post.isMine && onEdit && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onEdit(post)}
-                  className={secondaryButton}
-                >
-                  <PenLine size={14} />
-                  Edit story
-                </button>
-              )}
-              {(post.isMine || isAdmin) && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setConfirming(true)}
-                  className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-red-600 dark:text-zinc-400"
-                >
-                  <Trash2 size={14} />
-                  Delete story
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={busy}
-                className={secondaryButton}
-              >
-                Close story
-              </button>
-            </footer>
             {confirming && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/40">
+              <div className="story-reader-confirmation mt-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/40">
                 <p className="text-sm font-medium">
                   Delete this story from the community?
                 </p>
@@ -186,6 +147,18 @@ export default function StoryReader({
           </>
         )
       )}
+      </div>
+      {post && !loading && !error && <footer className="story-reader-footer">
+        {post.author?._id && <Link to={profilePath(post.author)} className="story-reader-author-link">Meet the author<ArrowUpRight size={14} /></Link>}
+        <div className="story-reader-actions">
+          {post.isMine && onEdit && <button type="button" disabled={busy} onClick={() => onEdit(post)} className={secondaryButton}><PenLine size={14} />Edit story</button>}
+          {(post.isMine || isAdmin) && <button type="button" disabled={busy} onClick={() => {
+            setConfirming(true);
+            requestAnimationFrame(() => document.querySelector('.story-reader-confirmation')?.scrollIntoView({ block: 'nearest' }));
+          }} className="story-reader-delete"><Trash2 size={14} />Delete story</button>}
+          <button type="button" onClick={onClose} disabled={busy} className="story-reader-close">Close story</button>
+        </div>
+      </footer>}
     </FeedDialog>
   );
 }

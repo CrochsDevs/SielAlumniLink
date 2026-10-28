@@ -1,7 +1,7 @@
 import { certificateSvg } from "../../Server/modules/development/certificates.template.js";
 // Run with isolated Edge/Chrome on port 9235. API fixtures never change real student records.
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
@@ -276,6 +276,41 @@ try {
   await until(`document.body.textContent.includes('No matching certificates')`);
   await click("Clear filters");
   await until(`document.querySelector('article[data-certificate]')`);
+  const issuedCertificates = certificates;
+  certificates = Array.from({ length: 25 }, (_, index) => ({
+    ...issuedCertificates[0], _id: `pagination-${index + 1}`,
+    title: `Pagination certificate ${index + 1}`,
+    activityType: index % 2 === 0 ? 'seminar' : 'training',
+    certificateNumber: `SL-PAGINATION-${index + 1}`,
+  }));
+  await navigate('/student/certificate');
+  await until(`document.querySelectorAll('article[data-certificate]').length === 12`);
+  assert.equal(await evaluate(`document.querySelector('nav[aria-label="Certificate pagination"] button[aria-label="Previous page"]').disabled`), true);
+  await evaluate(`document.querySelector('nav[aria-label="Certificate pagination"] button[aria-label="Next page"]').click()`);
+  await until(`document.querySelector('article[data-certificate]')?.dataset.certificate === 'pagination-13'`);
+  assert.equal(await evaluate(`document.querySelectorAll('article[data-certificate]').length`), 12);
+  await evaluate(`document.querySelector('nav[aria-label="Certificate pagination"] button[aria-label="Next page"]').click()`);
+  await until(`document.querySelector('article[data-certificate]')?.dataset.certificate === 'pagination-25'`);
+  assert.equal(await evaluate(`document.querySelectorAll('article[data-certificate]').length`), 1);
+  assert.equal(await evaluate(`document.querySelector('nav[aria-label="Certificate pagination"] button[aria-label="Next page"]').disabled`), true);
+  await evaluate(`document.querySelector('nav[aria-label="Certificate pagination"] button[aria-label="Previous page"]').click()`);
+  await until(`document.querySelector('article[data-certificate]')?.dataset.certificate === 'pagination-13'`);
+  await setValue('main select', 'training', 'HTMLSelectElement');
+  await until(`document.querySelector('nav[aria-label="Certificate pagination"] [aria-current="page"]')?.textContent === '1'`);
+  assert.equal(await evaluate(`document.querySelectorAll('article[data-certificate]').length`), 12);
+  await click('Clear filters');
+  await click('3', `document.querySelector('nav[aria-label="Certificate pagination"]')`);
+  await setValue('main input[type="search"]', 'Pagination certificate 25');
+  await until(`document.querySelectorAll('article[data-certificate]').length === 1`);
+  assert.equal(await evaluate(`document.querySelector('nav[aria-label="Certificate pagination"] [aria-current="page"]').textContent`), '1');
+  await setValue('main input[type="search"]', 'no matching certificate fixture');
+  await until(`!document.querySelector('nav[aria-label="Certificate pagination"]')`);
+  await click('Clear filters');
+  await until(`document.querySelectorAll('article[data-certificate]').length === 12`);
+  await photo('certificate-pagination-mobile', 390, false);
+  certificates = issuedCertificates;
+  await navigate('/student/certificate');
+  await until(`document.querySelectorAll('article[data-certificate]').length === 1`);
   failNextDownload = true;
   await click("View certificate");
   await until(`document.querySelector('.certificate-preview-stage [role=alert]')`);
@@ -306,6 +341,22 @@ try {
   const downloadedSvg = await evaluate(`fetch(document.querySelector('dialog img').src).then(response => response.text())`);
   assert.ok(downloadedSvg.includes('Certificate of Appreciation'));
   assert.ok(downloadedSvg.includes('data:image/png;base64,'));
+  const downloadDirectory = await mkdtemp(path.join(artifacts, 'download-'));
+  await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloadDirectory, eventsEnabled: true });
+  const downloadFinished = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Certificate download did not finish')), 15000);
+    listeners.set('Browser.downloadProgress', event => {
+      if (event.state === 'completed' || event.state === 'canceled') {
+        clearTimeout(timeout);
+        listeners.delete('Browser.downloadProgress');
+        if (event.state === 'completed') resolve();
+        else reject(new Error('Certificate download canceled'));
+      }
+    });
+  });
+  await evaluate(`document.querySelector('dialog a[download]').click()`);
+  await downloadFinished;
+  assert.equal(await readFile(path.join(downloadDirectory, 'SL-1234567890ABCDEF.svg'), 'utf8'), downloadedSvg, 'Saved file matches the loaded certificate');
   // Measure actual rendered text bounds, including maximum-length wide names
   // and unbroken activity/organizer strings, before checking printed output.
   for (const details of [certificates[0], {
@@ -334,7 +385,18 @@ try {
   await evaluate(
     `window.__printCalls=0;window.print=()=>{window.__printCalls++;}`,
   );
+  // A failed print-image decode must show a retryable error, not print a blank page.
+  await evaluate(`document.querySelector('.digital-certificate-print img').decode=()=>Promise.reject(new Error('fixture decode failure'))`);
   await click("Print / Save as PDF");
+  await until(`document.querySelector('.certificate-preview-print-error')`);
+  assert.equal(await evaluate("window.__printCalls"), 0);
+  await evaluate(`delete document.querySelector('.digital-certificate-print img').decode`);
+  // Hold image decoding to verify rapid repeated clicks produce only one print call.
+  await evaluate(`(() => { const image=document.querySelector('.digital-certificate-print img'); image.decode=()=>new Promise(resolve=>{window.__finishPrintDecode=resolve;}); const button=document.querySelector('.certificate-preview-actions .is-primary'); button.click();button.click(); })()`);
+  await until(`window.__finishPrintDecode`);
+  assert.equal(await evaluate("window.__printCalls"), 0);
+  await evaluate(`window.__finishPrintDecode(); delete document.querySelector('.digital-certificate-print img').decode`);
+  await until(`window.__printCalls===1`);
   assert.equal(await evaluate("window.__printCalls"), 1);
   await send("Emulation.setEmulatedMedia", { media: "print" });
   assert.equal(
@@ -378,7 +440,7 @@ try {
   );
   assert.deepEqual(runtimeErrors, []);
   console.log(
-    "Passed: attendance issuance, retry and double-submit guard, student filters, preview retry, responsive modal, zoom/fit, Escape and focus restoration, SVG download, one-page PDF, and portfolio inclusion. Mock APIs only. Artifacts: " +
+    "Passed: attendance issuance, retry and double-submit guard, student filters, preview retry, responsive modal, zoom/fit, Escape and focus restoration, saved SVG file, print readiness/error/repeated-click handling, one-page PDF, and portfolio inclusion. Mock APIs only. Artifacts: " +
       artifacts,
   );
 } finally {

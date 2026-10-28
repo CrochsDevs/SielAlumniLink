@@ -519,7 +519,7 @@ function AppRoutes() {
         path="/student/journey"
         element={
           <ProtectedRoute
-            allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}
+            allowedRoles={[Roles.STUDENT]}
           >
             <StudentJourney />
           </ProtectedRoute>
@@ -603,7 +603,7 @@ function AppRoutes() {
         path="/alumni/journey"
         element={
           <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
-            <StudentJourney />
+            <Navigate to="/alumni" replace />
           </ProtectedRoute>
         }
       />

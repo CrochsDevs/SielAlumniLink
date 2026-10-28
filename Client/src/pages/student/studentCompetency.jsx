@@ -1,4 +1,5 @@
 import StatCard from "../../components/ui/stat-card";
+import PageTitle from "../../components/ui/PageTitle";
 import ProgressBar from "../../components/ui/progress-bar";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -73,7 +74,6 @@ export default function StudentCompetency() {
   const assessments = Object.fromEntries(
     (summary?.assessments || []).map((item) => [item.key, item]),
   );
-  const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [editor, setEditor] = useState(null);
@@ -87,7 +87,6 @@ export default function StudentCompetency() {
   const disabled = state.loading || state.busy || !summary;
   const filtered = framework.filter(
     (item) =>
-      (category === "all" || item.category === category) &&
       `${item.name} ${item.description}`
         .toLowerCase()
         .includes(query.trim().toLowerCase()) &&
@@ -121,7 +120,6 @@ export default function StudentCompetency() {
       setEditor(null);
   };
   const resetFilters = () => {
-    setCategory("all");
     setStatus("all");
     setQuery("");
   };
@@ -131,7 +129,7 @@ export default function StudentCompetency() {
       <main className="mx-auto max-w-7xl space-y-5 p-3 sm:p-6 workspace-page">
         <header className="flex flex-col gap-4 border-b border-zinc-200 pb-5 pt-1 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 workspace-page-header">
           <div>
-            <h1>Competency</h1>
+            <PageTitle icon={ClipboardList}>Competency</PageTitle>
             <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
               Assess technical, communication, and leadership skills, then
               review skill gaps and mentor feedback.
@@ -190,23 +188,7 @@ export default function StudentCompetency() {
             aria-label="Competency assessments"
           >
             <div className={`${card} p-4`}>
-              <nav
-                aria-label="Competency categories"
-                className="flex gap-5 overflow-x-auto border-b border-zinc-100 dark:border-zinc-800"
-              >
-                {CATEGORIES.map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={category === id}
-                    onClick={() => setCategory(id)}
-                    className={`shrink-0 border-b-2 pb-3 text-xs font-medium ${category === id ? "border-brand text-brand dark:text-brand" : "border-transparent text-zinc-500 dark:text-zinc-400"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </nav>
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3">
                 <label className="relative min-w-0 flex-1 basis-48">
                   <span className="sr-only">Search competencies</span>
                   <Search
@@ -218,7 +200,7 @@ export default function StudentCompetency() {
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search competencies"
-                    className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900"
+                    className="h-10 w-full rounded-lg border border-[#bdcbc3] bg-white pl-9 pr-3 text-xs shadow-[0_2px_6px_rgba(15,23,42,0.18),inset_0_1px_2px_rgba(15,23,42,0.05)] outline-none transition-shadow focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-zinc-600 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.04)]"
                   />
                 </label>
                 <label>
@@ -226,7 +208,7 @@ export default function StudentCompetency() {
                   <select
                     value={status}
                     onChange={(event) => setStatus(event.target.value)}
-                    className="h-10 max-w-full rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                    className="h-10 max-w-full rounded-lg border border-[#bdcbc3] bg-white px-3 text-xs shadow-[0_2px_6px_rgba(15,23,42,0.18),inset_0_1px_2px_rgba(15,23,42,0.05)] outline-none transition-shadow focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-zinc-600 dark:bg-zinc-900 dark:shadow-[0_2px_6px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.04)]"
                   >
                     <option value="all">All statuses</option>
                     <option value="unassessed">Not assessed</option>
@@ -246,7 +228,7 @@ export default function StudentCompetency() {
                     {filtered.length}{" "}
                     {filtered.length === 1 ? "competency" : "competencies"}
                   </p>
-                  {(category !== "all" || status !== "all" || query) && (
+                  {(status !== "all" || query) && (
                     <button
                       type="button"
                       onClick={resetFilters}
@@ -264,7 +246,7 @@ export default function StudentCompetency() {
                     />
                     <h2 className="mt-3">No matching competencies</h2>
                     <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      Choose another category or assessment status.
+                      Try another search or assessment status.
                     </p>
                     <button
                       type="button"

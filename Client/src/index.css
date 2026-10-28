@@ -290,7 +290,7 @@
   }
   @media (min-width: 1024px) {
     .member-workspace[data-workspace-role="alumni"] .alumni-dashboard-rail {
-      /* Room for card shadows inside the independently scrolling columns. */
+      /* Keep room around the dashboard side-card shadows. */
       margin: -20px;
       padding: 20px;
     }

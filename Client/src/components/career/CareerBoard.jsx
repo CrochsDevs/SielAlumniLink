@@ -861,6 +861,7 @@ export default function CareerBoard({
       {marketplace && (
         <>
           <PageHeader
+            icon={Briefcase}
             title={isAdmin ? "Job Posts" : "Career Board"}
             description={
               isAdmin

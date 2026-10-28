@@ -6,6 +6,7 @@ import {
   PenLine,
   RefreshCw,
   Search,
+  Trophy,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { getSocket } from "../../realtime/socket";
@@ -14,6 +15,8 @@ import { postImageUrl } from "../../utils/feedImages";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import StoryComposer from "./StoryComposer";
 import StoryReader from "./StoryReader";
+import PageTitle from "../ui/PageTitle";
+import "./SuccessStoriesBoard.css";
 import {
   STORY_TOPICS,
   card,
@@ -31,7 +34,7 @@ function StoryCover({ post }) {
   const photo = post.images?.[0];
   return (
     <div
-      className={`relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br ${topic.cover}`}
+      className={`story-cover relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br ${topic.cover}`}
       aria-hidden="true"
     >
       <div className="absolute -bottom-12 -left-10 h-48 w-48 rounded-full border-[24px] border-white/30 dark:border-white/5" />
@@ -223,9 +226,9 @@ export default function SuccessStoriesBoard() {
   return (
     <section
       aria-label="Alumni success stories"
-      className="space-y-6 font-sans text-zinc-900 [&_dialog]:font-sans dark:text-zinc-100"
+      className={`${user?.role === "student" ? "student-success-stories " : ""}space-y-6 font-sans text-zinc-900 [&_dialog]:font-sans dark:text-zinc-100`}
     >
-      <header className="workspace-page-header flex flex-wrap items-start justify-between gap-4"><div><h1>Success stories</h1><p className="mt-2 max-w-2xl">Discover alumni journeys, milestones, and lessons for your future.</p></div>{canPublish && <button type="button" disabled={restricted} onClick={() => setComposerOpen(true)} className={primaryButton}><PenLine size={16} />Share your story</button>}</header>
+      <header className="workspace-page-header flex flex-wrap items-start justify-between gap-4"><div><PageTitle icon={Trophy}>Success stories</PageTitle><p className="mt-2 max-w-2xl">Discover alumni journeys, milestones, and lessons for your future.</p></div>{canPublish && <button type="button" disabled={restricted} onClick={() => setComposerOpen(true)} className={primaryButton}><PenLine size={16} />Share your story</button>}</header>
       {notice && (
         <p
           role="status"
@@ -243,7 +246,7 @@ export default function SuccessStoriesBoard() {
           stories.
         </p>
       )}
-      <section className={`${card} p-4`} aria-label="Story filters">
+      <section className={`${card} story-filters p-4`} aria-label="Story filters">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <nav
             aria-label="Story topics"
@@ -281,7 +284,7 @@ export default function SuccessStoriesBoard() {
             event.preventDefault();
             change("q", query.trim());
           }}
-          className="mt-4 flex gap-2"
+          className="story-search-form mt-4 flex gap-2"
         >
           <div className="relative min-w-0 flex-1">
             <Search
@@ -374,12 +377,12 @@ export default function SuccessStoriesBoard() {
               </button>
             </div>
           )}
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="story-gallery grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {posts.map((post) => (
               <article
                 key={post._id}
                 data-success-story={post._id}
-                className={`${card} group flex min-w-0 flex-col overflow-hidden transition hover:border-zinc-300 hover:shadow-sm dark:hover:border-zinc-700`}
+                className={`${card} story-gallery-card group flex min-w-0 flex-col overflow-hidden transition hover:border-zinc-300 hover:shadow-sm dark:hover:border-zinc-700`}
               >
                 <button
                   type="button"
@@ -389,7 +392,7 @@ export default function SuccessStoriesBoard() {
                 >
                   <StoryCover post={post} />
                 </button>
-                <div className="flex flex-1 flex-col p-5">
+                <div className="story-card-body flex flex-1 flex-col p-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span
                       className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${storyTopic(post).style}`}
@@ -401,7 +404,7 @@ export default function SuccessStoriesBoard() {
                       {readingTime(post)} min read
                     </span>
                   </div>
-                  <h3 className="mt-3 break-words text-lg font-semibold leading-6 tracking-tight">
+                  <h3 className="story-card-title mt-3 break-words text-lg font-semibold leading-6 tracking-tight">
                     <button
                       type="button"
                       onClick={() => open(post._id)}
@@ -410,11 +413,11 @@ export default function SuccessStoriesBoard() {
                       {post.title}
                     </button>
                   </h3>
-                  <p className="mb-5 mt-3 line-clamp-3 break-words text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+                  <p className="story-excerpt mb-5 mt-3 line-clamp-3 break-words text-xs leading-6 text-zinc-500 dark:text-zinc-400">
                     {storySections(post)[0]?.[1]}
                   </p>
                   <div className="mt-auto">
-                    <div className="flex items-center gap-2.5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                    <div className="story-author flex items-center gap-2.5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
                         <ProfileAvatar user={post.author} />
                       </span>
@@ -432,7 +435,7 @@ export default function SuccessStoriesBoard() {
                     <button
                       type="button"
                       onClick={() => open(post._id)}
-                      className="mt-4 inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-brand dark:text-brand"
+                      className="story-read-button mt-4 inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-brand dark:text-brand"
                     >
                       Read story
                       <ArrowRight size={15} />

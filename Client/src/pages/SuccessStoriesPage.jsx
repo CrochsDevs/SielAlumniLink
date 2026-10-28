@@ -25,7 +25,7 @@ export default function SuccessStoriesPage() {
         : AlumniTopbar;
   return (
     <div
-      className={`${user?.role === "student" ? "student-page " : ""}min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}
+      className={`${user?.role === "student" ? "student-page bg-zinc-100 " : "bg-zinc-50 "}min-h-screen text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}
     >
       <Sidebar
         user={user}

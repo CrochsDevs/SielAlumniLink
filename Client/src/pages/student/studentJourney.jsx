@@ -1,4 +1,5 @@
 import ProgressBar from "../../components/ui/progress-bar";
+import PageTitle from "../../components/ui/PageTitle";
 import { createElement, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -129,9 +130,9 @@ export default function StudentJourney() {
                 </span>{" "}
                 My journey
               </p>
-              <h1 className="mt-1.5 text-lg font-bold tracking-tight sm:text-xl">
+              <PageTitle icon={GraduationCap} className="mt-1.5">
                 Student Journey
-              </h1>
+              </PageTitle>
             </div>
             <button
               type="button"
