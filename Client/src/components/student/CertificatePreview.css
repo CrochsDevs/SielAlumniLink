@@ -25,7 +25,7 @@ dialog.certificate-preview-dialog[open] {
 .certificate-preview-dialog button[aria-label="Close dialog"] { width: 36px; height: 36px; border: 1px solid #d5dfd8; background: #fff; box-shadow: 0 2px 5px rgb(15 23 42 / 10%); }
 .certificate-preview-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .certificate-preview-heading > div { min-width: 0; }
-.certificate-preview-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 1px solid #b6dcc5; border-radius: 12px; background: #ccead7; color: #008332; box-shadow: 0 2px 5px rgb(15 23 42 / 10%); }
+.certificate-preview-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 1px solid var(--color-primary-border); border-radius: 12px; background: var(--color-primary-tint); color: var(--color-primary-hover); box-shadow: 0 2px 5px rgb(15 23 42 / 10%); }
 .certificate-preview-title { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.5; }
 .certificate-preview-recipient { margin: 3px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #71717a; font-size: 12px; }
 .certificate-preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; padding: 10px 20px; background: #fff; border-bottom: 1px solid #d5dfd8; }
@@ -41,17 +41,17 @@ dialog.certificate-preview-dialog[open] {
 .certificate-preview-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; color: #52525b; text-align: center; font-size: 13px; }
 .certificate-preview-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; flex: none; padding: 14px 20px; border-top: 1px solid #d5dfd8; background: #fff; box-shadow: 0 -2px 8px rgb(15 23 42 / 5%); }
 .certificate-preview-help { display: flex; align-items: flex-start; gap: 8px; flex: 1; min-width: 180px; }
-.certificate-preview-help > svg { flex: none; margin-top: 2px; color: #008332; }
+.certificate-preview-help > svg { flex: none; margin-top: 2px; color: var(--color-primary-hover); }
 .certificate-preview-help p { max-width: 350px; color: #334b3d; font-size: 12px; line-height: 1.6; }
 .certificate-preview-help p > span { display: block; margin-top: 2px; color: #64746b; font-size: 11px; }
 .certificate-preview-print-error { flex-basis: 100%; color: #b91c1c; font-size: 12px; }
 .certificate-preview-footer strong { font-weight: 600; }
 .certificate-preview-actions { display: flex; gap: 10px; flex: none; }
 .certificate-preview-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 14px; border: 1px solid #bdcbc3; border-radius: 9px; background: #fff; color: #27272a; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 6px rgb(15 23 42 / 14%); }
-.certificate-preview-action.is-primary { border-color: #009630; background: #009630; color: #fff; }
+.certificate-preview-action.is-primary { border-color: hsl(var(--primary)); background: hsl(var(--primary)); color: #fff; }
 .certificate-preview-action:hover { filter: brightness(.96); }
 .certificate-preview-dialog button:disabled { opacity: .45; cursor: not-allowed; }
-.certificate-preview-dialog :is(button, a):focus-visible { outline: 2px solid #008332; outline-offset: 3px; }
+.certificate-preview-dialog :is(button, a):focus-visible { outline: 2px solid var(--color-primary-hover); outline-offset: 3px; }
 .dark dialog.certificate-preview-dialog, .dark .certificate-preview-dialog > div:first-child, .dark .certificate-preview-toolbar, .dark .certificate-preview-footer { border-color: #3f3f46; }
 .dark dialog.certificate-preview-dialog, .dark .certificate-preview-dialog > div:first-child, .dark .certificate-preview-footer { background: #1c231f; }
 .dark .certificate-preview-toolbar { background: #202023; }

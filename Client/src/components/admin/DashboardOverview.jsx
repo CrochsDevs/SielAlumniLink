@@ -246,7 +246,7 @@ export function TracerPanel({ data }) {
           }
           className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full"
           style={{
-            background: `conic-gradient(#009639 ${rate * 3.6}deg, var(--tracer-track, #b9d4c2) 0deg)`,
+            background: `conic-gradient(hsl(var(--primary)) ${rate * 3.6}deg, var(--tracer-track, #b9d4c2) 0deg)`,
           }}
         >
           <div className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full bg-white dark:bg-zinc-900">
@@ -297,7 +297,7 @@ export function CommunityPanel({ data }) {
         aria-label={`${m.accepted} accepted, ${m.pending} pending, ${m.rejected} rejected`}
       >
         {[
-          ["accepted", "#009639"],
+          ["accepted", "hsl(var(--primary))"],
           ["pending", "#e9ae42"],
           ["rejected", "#8b96a5"],
         ].map(([key, color]) => (

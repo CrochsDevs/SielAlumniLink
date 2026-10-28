@@ -33,7 +33,7 @@ const MagicLinkVerification = () => {
   }, [token, navigate, verifyMagicLink]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#e6e6e6] px-6">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--auth-background)] px-6">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-zinc-900/5 border border-zinc-100">
         <div className="flex justify-center mb-5">
           <div className="h-12 w-12 rounded-xl bg-brand flex items-center justify-center shadow-md shadow-brand/20">

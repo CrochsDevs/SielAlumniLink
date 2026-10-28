@@ -59,7 +59,7 @@ const STATUS_LABELS = {
   upcoming: "Upcoming",
 };
 const accentButton =
-  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-brand/25 bg-brand/5 px-3 text-xs font-semibold text-brand transition hover:bg-brand/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] dark:text-brand";
+  "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-brand/25 bg-brand/5 px-3 text-xs font-semibold text-brand transition hover:bg-brand/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-brand";
 
 export default function StudentJourney() {
   const { user } = useAuth();
@@ -297,7 +297,7 @@ export default function StudentJourney() {
                                   selectedIndex === index ? null : index,
                                 )
                               }
-                              className={`relative mx-auto mb-4 mt-4 flex h-12 w-12 items-center justify-center rounded-full border-4 shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#009639] ${milestone.state === "done" ? "border-white bg-brand text-white dark:border-zinc-900" : milestone.state === "current" ? "border-brand bg-white text-brand dark:bg-zinc-900 dark:text-brand" : "border-[#e9f1f9] bg-white text-slate-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500"}`}
+                              className={`relative mx-auto mb-4 mt-4 flex h-12 w-12 items-center justify-center rounded-full border-4 shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary ${milestone.state === "done" ? "border-white bg-brand text-white dark:border-zinc-900" : milestone.state === "current" ? "border-brand bg-white text-brand dark:bg-zinc-900 dark:text-brand" : "border-[#e9f1f9] bg-white text-slate-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500"}`}
                             >
                               {index === 0 ? (
                                 <Rocket size={21} strokeWidth={1.8} />

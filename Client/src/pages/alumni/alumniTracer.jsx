@@ -75,9 +75,9 @@ const REVIEW_FIELDS = [
 const inputClass =
   "h-12 w-full rounded-xl border border-solid border-zinc-400 bg-zinc-50 px-3 text-[13px] text-zinc-900 placeholder:text-zinc-500 outline-none transition hover:border-zinc-500 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60 [color-scheme:light] dark:border-zinc-500 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:hover:border-zinc-400 dark:focus:border-brand dark:[color-scheme:dark] [&>option]:bg-white dark:[&>option]:bg-zinc-800";
 const secondaryButton =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:px-5 sm:text-sm";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:px-5 sm:text-sm";
 const primaryButton =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-brand bg-brand px-4 text-sm font-bold text-black transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-not-allowed disabled:opacity-55  sm:px-5";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-brand bg-brand px-4 text-sm font-bold text-black transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-55  sm:px-5";
 
 function Field({ name, label, optional = false, error, children }) {
   return (
@@ -469,7 +469,7 @@ export default function AlumniTracer() {
                 disabled={saving}
                 onClick={() => setModalOpen(false)}
                 aria-label="Close tracer study"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#009639] disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
               >
                 <X size={22} />
               </button>
@@ -555,7 +555,7 @@ export default function AlumniTracer() {
                         disabled={stepId > step || saving}
                         aria-current={stepId === step ? "step" : undefined}
                         aria-label={`Step ${index + 1}: ${stepId === 2 && form.status === "Self-employed" ? "Business Details" : STEPS[stepId][0]}`}
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#009639] disabled:cursor-default sm:h-12 sm:w-12 sm:text-xl ${stepId <= step ? "border-brand bg-brand text-black " : "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"}`}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-default sm:h-12 sm:w-12 sm:text-xl ${stepId <= step ? "border-brand bg-brand text-black " : "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"}`}
                       >
                         {index + 1}
                       </button>

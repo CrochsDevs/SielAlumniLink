@@ -21,7 +21,7 @@ const Logout = () => {
       showCancelButton: true,
       confirmButtonText: "Yes, log out",
       cancelButtonText: "Stay logged in",
-      confirmButtonColor: "#009639",
+      confirmButtonColor: "hsl(var(--primary))",
       cancelButtonColor: "#71717a",
       reverseButtons: true,
     }).then(async (result) => {
@@ -46,7 +46,7 @@ const Logout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#e6e6e6] flex items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-[var(--auth-background)] flex items-center justify-center p-6 font-sans">
       <div className="w-full max-w-[320px] text-center">
         {/* Logo + spinner */}
         <div className="relative mx-auto mb-6 h-20 w-20">
@@ -54,7 +54,7 @@ const Logout = () => {
           <div className="absolute inset-0 rounded-full bg-brand blur-2xl opacity-40 scale-125"></div>
 
           {/* Spinner ring */}
-          <div className="absolute inset-0 rounded-full border-[3px] border-zinc-200 border-t-[#009639] animate-spin"></div>
+          <div className="absolute inset-0 rounded-full border-[3px] border-zinc-200 border-t-primary animate-spin"></div>
 
           {/* Center icon */}
           <div className="absolute inset-[10px] rounded-full bg-white flex items-center justify-center shadow-md">

@@ -319,7 +319,7 @@ export default function TracerResponses() {
           aria-label="Tracer study responses"
           aria-describedby="tracer-scroll-hint"
           tabIndex={0}
-          className="max-h-[600px] overflow-auto overscroll-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#009639]"
+          className="max-h-[600px] overflow-auto overscroll-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
         >
           <table
             className="table-fixed text-left text-[12.5px]"

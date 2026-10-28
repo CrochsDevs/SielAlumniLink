@@ -85,7 +85,7 @@
 }
 .meeting-toolbar > button[aria-pressed="true"] { color: #fff; background: #30343a; }
 .meeting-toolbar > .meeting-leave { margin-left: auto; min-width: 96px; }
-.meeting-room :is(button, a, input):focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.meeting-room :is(button, a, input):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 @media (min-width: 1024px) {
   .meeting-room.has-panel.is-joined .meeting-layout { grid-template-columns: minmax(0, 1fr) 320px; }
   .meeting-side-panel { position: sticky; top: 16px; max-height: calc(100dvh - 190px); overflow-y: auto; }

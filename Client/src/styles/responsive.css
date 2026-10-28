@@ -1,0 +1,91 @@
+/* Shared screen layout. Document and certificate print layouts stay independent. */
+@media screen {
+  html, body, #root { min-width: 0; min-height: 100%; }
+  body { overflow-wrap: break-word; }
+  :where(input, select, textarea) { min-width: 0; max-width: 100%; }
+  :where(img, video) { max-width: 100%; }
+
+  .member-workspace { min-width: 0; }
+  .member-workspace main.workspace-page {
+    max-width: var(--workspace-max-width);
+    padding: var(--page-padding) !important;
+  }
+  .member-workspace main.workspace-page[class*="space-y-"] > :not([hidden]) ~ :not([hidden]) {
+    margin-top: var(--section-gap);
+  }
+  .workspace-panel {
+    min-width: 0;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--panel-radius);
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    box-shadow: var(--shadow-panel);
+  }
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--content-card-min)), 1fr));
+    gap: var(--section-gap);
+  }
+  /* Fit cards to their available column width, including space taken by side rails. */
+  .member-workspace .dashboard-operations {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--summary-card-min)), 1fr));
+    gap: var(--section-gap);
+  }
+  .member-workspace .member-topbar:not(:where(.messages-workspace .member-topbar)) {
+    max-width: var(--workspace-max-width);
+    padding-inline: var(--page-padding);
+  }
+  .member-workspace :is(.student-sidebar, .alumni-sidebar, .admin-sidebar) {
+    width: var(--sidebar-width);
+    max-width: calc(100vw - var(--dialog-gutter));
+  }
+  :where(.member-workspace main.workspace-page .grid > *, .member-workspace main.workspace-page .flex > *) {
+    min-width: 0;
+  }
+  .member-workspace .workspace-page-header {
+    gap: var(--section-gap);
+    flex-wrap: wrap;
+  }
+  .member-workspace .workspace-page-header > * { min-width: 0; max-width: 100%; }
+  .member-workspace .page-header-actions { flex-wrap: wrap; }
+  .member-workspace .data-pagination > div { flex-wrap: wrap; }
+  .member-workspace .data-pagination > div > div { flex-wrap: wrap; }
+
+  /* Preserve table columns and scroll within their panel, not the whole page. */
+  .member-workspace :is(.overflow-x-auto, .overflow-auto) { min-width: 0; max-width: 100%; }
+  .member-workspace main :is(.overflow-hidden, .admin-panel):has(> table) { overflow-x: auto; }
+
+  :where(dialog:not(.career-filter-drawer), [role="dialog"]:not(.career-filter-drawer)) {
+    max-width: calc(100vw - 2 * var(--dialog-gutter));
+    max-height: calc(100dvh - 2 * var(--dialog-gutter));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .login-page, .password-recovery { background: var(--auth-background); }
+  .login-page .login-card, .password-recovery .recovery-card {
+    border-radius: var(--panel-radius);
+    box-shadow: var(--shadow-panel);
+  }
+
+  @media (min-width: 1024px) {
+    .member-workspace .lg\:pl-64 { padding-left: var(--sidebar-width); }
+    .member-workspace .lg\:ml-64 { margin-left: var(--sidebar-width); }
+  }
+  @media (max-width: 639px) {
+    .member-workspace .member-topbar:not(:where(.messages-workspace .member-topbar)) {
+      margin-bottom: var(--mobile-topbar-gap);
+    }
+    .member-workspace .workspace-page-header { align-items: flex-start; }
+    .member-workspace .page-header-actions { width: 100%; }
+    .member-workspace .page-header-actions > :is(button, a) { flex: 1 1 auto; }
+    .member-workspace .data-pagination { padding-inline: var(--page-padding); }
+  }
+  @media (pointer: coarse) {
+    .member-workspace :is(.member-topbar, .student-sidebar, .alumni-sidebar, .admin-sidebar, .data-pagination) :is(button, a) {
+      min-height: var(--touch-target);
+    }
+    body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+      font-size: 16px; /* Prevent focus zoom on mobile browsers. */
+    }
+  }
+}

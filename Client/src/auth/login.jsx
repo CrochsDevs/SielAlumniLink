@@ -82,13 +82,18 @@ const Login = () => {
         </div>
       )}
 
-      <div className="login-page min-h-screen bg-[#e6e6e6] flex items-center justify-center p-4 font-sans">
-        <div className="login-card w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2">
+      <div className="login-page min-h-screen bg-[var(--auth-background)] flex items-center justify-center p-4 font-sans">
+        <div className="login-card w-full max-w-md lg:max-w-4xl grid grid-cols-1 lg:grid-cols-2">
           <div className="login-panel bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 sm:p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-brand/8 via-transparent to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
               <div className="text-center mb-5">
+                <img
+                  src={clsuLogo}
+                  alt="Central Luzon State University logo"
+                  className="mx-auto mb-4 h-16 w-16 object-contain lg:hidden"
+                />
                 <h1 className="text-[19px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-1">
                   Get started with{" "}
                   <span className="text-brand">SielAlumni</span>
@@ -362,7 +367,7 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="login-panel bg-gradient-to-br from-brand via-brand to-brand rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden flex flex-col justify-center items-center text-center">
+          <div className="login-panel bg-gradient-to-br from-brand via-brand to-brand rounded-xl border border-zinc-100 shadow-sm p-5 sm:p-6 relative overflow-hidden hidden lg:flex flex-col justify-center items-center text-center">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand/30 rounded-full blur-[80px] pointer-events-none"></div>
             <div className="absolute top-0 right-0 w-48 h-48 bg-brand/20 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand/40 rounded-full blur-3xl pointer-events-none"></div>

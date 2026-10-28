@@ -1,12 +1,12 @@
 .opportunity-modal-heading { display: flex; align-items: center; gap: 13px; min-width: 0; padding-block: 4px 12px; }
-.opportunity-heading-icon { display: grid; place-items: center; width: 50px; height: 50px; flex-shrink: 0; background: #009639; border-radius: 15px; color: white; box-shadow: 0 5px 14px #00963925; }
-.opportunity-modal-heading .opportunity-eyebrow { margin: 0 0 4px; color: #008332; font-size: 9px; font-weight: 700; letter-spacing: .12em; }
+.opportunity-heading-icon { display: grid; place-items: center; width: 50px; height: 50px; flex-shrink: 0; background: hsl(var(--primary)); border-radius: 15px; color: white; box-shadow: 0 5px 14px hsl(var(--primary) / 0.145); }
+.opportunity-modal-heading .opportunity-eyebrow { margin: 0 0 4px; color: var(--color-primary-hover); font-size: 9px; font-weight: 700; letter-spacing: .12em; }
 .opportunity-modal-heading h3 { margin: 0; font-size: 21px; line-height: 1.3; font-weight: 700; letter-spacing: -.025em; }
 .opportunity-modal-heading p:last-child { margin-top: 5px; font-size: 12px; color: #71717a; line-height: 1.5; }
 .opportunity-form { border-top: 1px solid #e4e4e7; padding-top: 20px; }
 .opportunity-section { min-width: 0; border: 1px solid #dedee3; border-radius: 14px; padding: 20px; background: #fafafa; }
 .opportunity-section-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
-.opportunity-section-heading > span:first-child { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; color: #008332; background: #e7f4ec; }
+.opportunity-section-heading > span:first-child { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; color: var(--color-primary-hover); background: #e7f4ec; }
 .opportunity-section-heading h4 { font-size: 13px; font-weight: 700; margin: 0; }
 .opportunity-section-heading p { margin-top: 3px; font-size: 11px; line-height: 1.5; color: #71717a; }
 .opportunity-form .opportunity-section input:not([type="checkbox"]), .opportunity-form .opportunity-section select { background-color: white; }
@@ -15,18 +15,18 @@
 .opportunity-date-control { display: flex; gap: 8px; margin-top: 8px; }
 .opportunity-date-control input { flex: 1; min-width: 0; }
 .opportunity-date-control input::-webkit-calendar-picker-indicator { display: none; }
-.opportunity-date-button { display: inline-flex; flex-shrink: 0; gap: 7px; align-items: center; justify-content: center; padding: 0 14px; min-height: 40px; border-radius: 8px; background: #009639; color: white; font-size: 12px; font-weight: 600; transition: background .15s; }
+.opportunity-date-button { display: inline-flex; flex-shrink: 0; gap: 7px; align-items: center; justify-content: center; padding: 0 14px; min-height: 40px; border-radius: 8px; background: hsl(var(--primary)); color: white; font-size: 12px; font-weight: 600; transition: background .15s; }
 .opportunity-date-button:hover { background: #007d30; }
 .opportunity-duration-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.opportunity-duration-options button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 6px 13px; border: 1px solid #008c35; border-radius: 8px; background: #009639; color: white; font-size: 11px; font-weight: 600; transition: background .15s, box-shadow .15s; }
+.opportunity-duration-options button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 6px 13px; border: 1px solid #008c35; border-radius: 8px; background: hsl(var(--primary)); color: white; font-size: 11px; font-weight: 600; transition: background .15s, box-shadow .15s; }
 .opportunity-duration-options button:hover { background: #007d30; }
-.opportunity-duration-options button[aria-pressed="true"] { background: #006e2a; box-shadow: 0 0 0 2px #f1faf4, 0 0 0 3px #009639; }
+.opportunity-duration-options button[aria-pressed="true"] { background: #006e2a; box-shadow: 0 0 0 2px #f1faf4, 0 0 0 3px hsl(var(--primary)); }
 .opportunity-date-button:focus-visible, .opportunity-duration-options button:focus-visible { outline: 2px solid #006e2a; outline-offset: 3px; }
 .opportunity-duration-options button:disabled, .opportunity-date-button:disabled { opacity: .5; cursor: not-allowed; }
 .opportunity-deadline-note { display: flex; gap: 7px; margin-top: 13px; font-size: 11px; line-height: 1.6; color: #40794f; }
 .opportunity-deadline-note svg { flex-shrink: 0; margin-top: 1px; }
 .opportunity-visibility { display: flex; align-items: center; gap: 12px; padding: 15px 17px; border: 1px solid #dedee3; border-radius: 12px; cursor: pointer; }
-.opportunity-visibility-icon { display: grid; place-items: center; flex-shrink: 0; color: #009639; }
+.opportunity-visibility-icon { display: grid; place-items: center; flex-shrink: 0; color: hsl(var(--primary)); }
 .opportunity-visibility > span:nth-child(2) { flex: 1; }
 .opportunity-visibility strong { display: block; font-size: 12px; font-weight: 600; }
 .opportunity-visibility > span:nth-child(2) > span { display: block; margin-top: 3px; font-size: 11px; line-height: 1.5; color: #71717a; }
@@ -47,9 +47,9 @@
 .opportunity-audience-section .opportunity-visibility { border: 0; border-radius: 0; }
 .opportunity-visibility-switch { width: 36px; height: 20px; padding: 3px; border-radius: 20px; background: #a1a1aa; flex-shrink: 0; transition: background .15s; }
 .opportunity-visibility-switch > span { display: block; width: 14px; height: 14px; background: white; border-radius: 50%; transition: transform .15s; box-shadow: 0 1px 3px #0002; }
-.opportunity-visibility-switch[aria-checked="true"] { background: #009639; }
+.opportunity-visibility-switch[aria-checked="true"] { background: hsl(var(--primary)); }
 .opportunity-visibility-switch[aria-checked="true"] > span { transform: translateX(16px); }
-.opportunity-visibility-switch:focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.opportunity-visibility-switch:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .dark .opportunity-audience-section { border-color: #52525b; }
 @media (max-width: 480px) {
   .opportunity-heading-icon { width: 40px; height: 40px; border-radius: 12px; }

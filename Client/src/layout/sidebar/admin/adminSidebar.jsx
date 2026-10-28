@@ -141,7 +141,7 @@ export default function AdminSidebar({
                   end={item.end}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `admin-menu-item ${isActive || (item.to === "/admin" && location.pathname === "/admin/dashboard") ? "is-active !bg-[#009639] !border-[#009639] !text-white" : ""}`
+                    `admin-menu-item ${isActive || (item.to === "/admin" && location.pathname === "/admin/dashboard") ? "is-active !bg-primary !border-primary !text-white" : ""}`
                   }
                 >
                   {createElement(item.icon, {
@@ -160,7 +160,7 @@ export default function AdminSidebar({
             to="/admin/settings"
             onClick={() => setMobileOpen(false)}
             className={({ isActive }) =>
-              `admin-menu-item ${isActive ? "is-active !bg-[#009639] !border-[#009639] !text-white" : ""}`
+              `admin-menu-item ${isActive ? "is-active !bg-primary !border-primary !text-white" : ""}`
             }
           >
             <Settings size={16} strokeWidth={1.7} aria-hidden="true" />

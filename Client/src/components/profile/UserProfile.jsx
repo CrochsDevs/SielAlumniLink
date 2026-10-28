@@ -671,7 +671,7 @@ const UserProfile = ({ profileRole = "alumni" }) => {
                       ? undefined
                       : {
                           backgroundImage:
-                            "radial-gradient(circle at 15% 30%, rgba(255,255,255,0.18) 0 2px, transparent 3px), radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0 2px, transparent 3px), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.15) 0 2px, transparent 3px), radial-gradient(circle at 85% 65%, rgba(255,255,255,0.18) 0 2px, transparent 3px), linear-gradient(to bottom right, #0F4C3A, #009639, #009639)",
+                            "radial-gradient(circle at 15% 30%, rgba(255,255,255,0.18) 0 2px, transparent 3px), radial-gradient(circle at 30% 70%, rgba(255,255,255,0.12) 0 2px, transparent 3px), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.15) 0 2px, transparent 3px), radial-gradient(circle at 85% 65%, rgba(255,255,255,0.18) 0 2px, transparent 3px), linear-gradient(to bottom right, #0F4C3A, hsl(var(--primary)), hsl(var(--primary)))",
                         }
                   }
                 >

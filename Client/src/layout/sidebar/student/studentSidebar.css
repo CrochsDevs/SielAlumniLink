@@ -1,6 +1,6 @@
 .student-sidebar {
   --sidebar-ink: #62676a;
-  --sidebar-active: #009639;
+  --sidebar-active: hsl(var(--primary));
   --sidebar-surface: #fafafa;
   --sidebar-line: #e4e4e7;
   background: var(--sidebar-surface);
@@ -15,8 +15,8 @@
 .student-brand-link { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .student-brand-logo { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; }
 .student-brand-logo img { width: 40px; height: 40px; object-fit: contain; }
-.student-brand-name { display: block; color: #009639; font-size: 16px; line-height: 1.5; font-weight: 650; letter-spacing: -0.6px; }
-.student-brand-name > span { color: #009639; }
+.student-brand-name { display: block; color: hsl(var(--primary)); font-size: 16px; line-height: 1.5; font-weight: 650; letter-spacing: -0.6px; }
+.student-brand-name > span { color: hsl(var(--primary)); }
 .student-brand-caption { display: block; margin-top: 1px; color: #607c68; font-size: 9px; letter-spacing: 0.1px; }
 .student-sidebar-close { padding: 6px; border-radius: 8px; color: var(--sidebar-ink); }
 .student-sidebar-close:hover { background: #eeeeef; }
@@ -41,15 +41,15 @@
 }
 .student-menu-item > svg { flex-shrink: 0; color: #64846e; }
 .student-menu-item > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.student-sidebar .student-menu-item:hover { background: #f0f0f1; color: #009639; }
+.student-sidebar .student-menu-item:hover { background: #f0f0f1; color: hsl(var(--primary)); }
 .student-sidebar .student-menu-item.is-active { font-weight: 600; }
 .student-menu-item.is-active > svg { color: inherit; }
 .student-menu-item.is-active::after { content: ''; position: absolute; right: 11px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-.student-sidebar :is(a, button):focus-visible { outline: 2px solid #009639; outline-offset: 2px; }
+.student-sidebar :is(a, button):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 .student-sidebar-bottom { flex-shrink: 0; padding: 10px 16px 16px; border-top: 1px solid var(--sidebar-line); }
 .student-sidebar-account { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 11px 8px; border: 1px solid #e4e4e7; border-radius: 12px; background: #f1f2f2; }
 .student-account-link { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; }
-.student-account-avatar { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; border: 1px solid #c8ddcb; border-radius: 50%; background: #dbe9da; color: #009639; font-size: 11px; font-weight: 600; }
+.student-account-avatar { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; border: 1px solid #c8ddcb; border-radius: 50%; background: #dbe9da; color: hsl(var(--primary)); font-size: 11px; font-weight: 600; }
 .student-account-details { min-width: 0; }
 .student-account-details > strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #35503e; font-size: 11px; font-weight: 600; }
 .student-account-details > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; color: #89968c; font-size: 9px; }

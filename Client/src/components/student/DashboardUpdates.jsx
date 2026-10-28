@@ -14,6 +14,7 @@ import AlumniFeed from "../feed/AlumniFeed";
 import ActivityAccess from "./ActivityAccess";
 import { JobApplicationDialog } from "../career/JobApplicationDialog";
 import { ReferralDetails } from "../career/ReferralDialogs";
+import { descriptionText } from "../career/description";
 
 const tabs = [
   ["all", "All updates"],
@@ -53,13 +54,13 @@ function DashboardListings({ filter, query, refreshKey }) {
         .filter((item) => item.isActive !== false)
         .map((item) => ({ source, item })),
     )
-    .filter(({ item }) =>
+    .filter(({ source, item }) =>
       [
         item.title,
         item.company,
         item.organization,
         item.organizer,
-        item.description,
+        source === "jobs" ? descriptionText(item.description || "", item.descriptionFormat) : item.description,
         item.location,
         ...(item.tags || []),
       ]
@@ -193,7 +194,7 @@ function DashboardListings({ filter, query, refreshKey }) {
               )}
               {item.description && (
                 <p className="line-clamp-3 break-words text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-                  {item.description}
+                  {source === "jobs" ? descriptionText(item.description || "", item.descriptionFormat) : item.description}
                 </p>
               )}
               {source === "events" ? (

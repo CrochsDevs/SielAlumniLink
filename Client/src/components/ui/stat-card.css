@@ -1,7 +1,7 @@
 .app-stat-card {
   min-width: 0;
   border: 1px solid #bdcbc3;
-  border-radius: .875rem;
+  border-radius: var(--panel-radius);
   padding: 1rem;
   background: #f8faf9;
   box-shadow: 0 2px 6px rgb(15 23 42 / 12%), inset 0 1px 0 rgb(255 255 255 / 90%);
@@ -29,7 +29,7 @@
 .app-stat-card-compact { padding: .75rem; }
 .app-stat-card-compact .app-stat-icon { width: 1.75rem; height: 1.75rem; }
 
-.student-page .app-stat-card { background: #ccead7; }
+.student-page .app-stat-card { background: var(--color-primary-tint); }
 .student-page .app-stat-note { color: #52665a; }
 
 .dark .app-stat-card { border-color: #4c5e53; background: #1c231f; box-shadow: 0 2px 6px rgb(0 0 0 / 30%), inset 0 1px 0 rgb(255 255 255 / 4%); }

@@ -1,12 +1,12 @@
 .opportunity-editor { border: 1px solid #a1a1aa; border-radius: 8px; background: #fafafa; overflow: hidden; color: #18181b; }
-.opportunity-editor:focus-within { border-color: #009639; box-shadow: 0 0 0 3px #00963920; }
+.opportunity-editor:focus-within { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.125); }
 .opportunity-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; padding: 8px; border-bottom: 1px solid #d4d4d8; background: #f4f4f5; }
 .opportunity-toolbar select { max-width: 130px; min-height: 32px; padding: 4px; border: 1px solid #a1a1aa; border-radius: 5px; background: transparent; font-size: 12px; }
 .opportunity-tool { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; border-radius: 5px; }
 .opportunity-tool:hover { background: #e4e4e7; }
-.opportunity-tool[aria-pressed="true"] { background: #00963920; color: #007c2f; }
+.opportunity-tool[aria-pressed="true"] { background: hsl(var(--primary) / 0.125); color: #007c2f; }
 .opportunity-tool:disabled { opacity: .35; cursor: not-allowed; }
-.opportunity-tool:focus-visible { outline: 2px solid #009639; outline-offset: 1px; }
+.opportunity-tool:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 1px; }
 .opportunity-prose { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
 .opportunity-prose p { margin: .5em 0; white-space: pre-wrap; }
 .opportunity-prose p:empty::before { content: "\00a0"; }

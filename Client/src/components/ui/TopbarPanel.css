@@ -1,0 +1,32 @@
+@media (max-width: 639px) {
+  /* Native dialogs escape sticky headers, backdrop filters and stacking contexts. */
+  dialog.topbar-panel {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    color: hsl(var(--foreground));
+  }
+  .topbar-panel .topbar-panel-heading {
+    flex-shrink: 0;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+  .topbar-panel > :not(.topbar-panel-list) { flex-shrink: 0; }
+  .topbar-panel .topbar-panel-list {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+}

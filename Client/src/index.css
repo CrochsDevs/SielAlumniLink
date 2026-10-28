@@ -1,55 +1,9 @@
+@import "./styles/design-tokens.css";
 @config "../tailwind.config.js";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 142.8 100% 29.411765%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 142.8 100% 29.411765%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 142.8 100% 29.411765%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 142.8 100% 29.411765%;
-  }
-}
 
 @layer base {
   * {
@@ -86,52 +40,18 @@
 /* Shared student/alumni page frame. Print documents and dialogs keep their own layout. */
 @media screen {
   .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
-    --alumni-page-background: #f0f1f3;
     min-height: 100vh;
     background: var(--alumni-page-background);
-  }
-  .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
-    --alumni-page-background: #101318;
   }
   .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) > .min-h-screen {
     background: var(--alumni-page-background);
   }
-  .member-workspace.admin-workspace[data-workspace-role="admin"] {
-    --alumni-page-background: #f0f1f3;
-    --alumni-card: #fff;
-    --alumni-card-border: #e1e5e9;
-    --alumni-secondary: #fff;
-    --alumni-secondary-border: #e1e5e9;
-    --alumni-tab: #f5f7f6;
-    --alumni-heading: #20242a;
-    --alumni-card-shadow: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
-    --admin-muted: #7b8087;
-    --admin-toolbar: #f5f7f6;
-    --admin-table-heading: #f5f7f6;
-    --admin-control-hover: #e9ecef;
-    --admin-switch-off: #9ca3af;
-  }
-  .dark .member-workspace.admin-workspace[data-workspace-role="admin"] {
-    --alumni-page-background: #101318;
-    --alumni-card: #1c2027;
-    --alumni-card-border: #303742;
-    --alumni-secondary: #1c2027;
-    --alumni-secondary-border: #303742;
-    --alumni-tab: #252b34;
-    --alumni-heading: #f1f4f8;
-    --alumni-card-shadow: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
-    --admin-muted: #aab3c0;
-    --admin-toolbar: #252b34;
-    --admin-table-heading: #252b34;
-    --admin-control-hover: #303742;
-    --admin-switch-off: #66717f;
-  }
   .member-workspace main.workspace-page {
     width: 100%;
-    max-width: 80rem;
+    max-width: var(--workspace-max-width);
     min-width: 0;
     margin-inline: auto;
-    padding: 1rem !important;
+    padding: var(--page-padding) !important;
   }
   .member-workspace .workspace-page-header {
     margin-bottom: 1.5rem !important;
@@ -162,37 +82,17 @@
     letter-spacing: -0.025em;
   }
   @media (min-width: 640px) {
-    .member-workspace main.workspace-page { padding: 1.5rem !important; }
+    .member-workspace main.workspace-page { padding: var(--page-padding) !important; }
   }
 }
 
 /* Alumni surfaces share the Career palette; cards remain distinct from controls. */
 @media screen {
-  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
-    --alumni-card: #f5faf1;
-    --alumni-card-border: #d4dfd1;
-    --alumni-secondary: #f5f0e3;
-    --alumni-secondary-border: #e6dfcf;
-    --alumni-tab: #dfe9dc;
-    --alumni-heading: #101b14;
-    --alumni-card-shadow: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
-    --alumni-card-hover-shadow: 0 0 8px 1px rgb(0 0 0 / 12%), 0 8px 22px rgb(0 0 0 / 18%);
-  }
-  .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
-    --alumni-card: #181f1a;
-    --alumni-card-border: #303b33;
-    --alumni-secondary: #24231c;
-    --alumni-secondary-border: #3b3a2d;
-    --alumni-tab: #202e24;
-    --alumni-heading: #f4f4f5;
-    --alumni-card-shadow: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
-    --alumni-card-hover-shadow: 0 0 10px 1px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 48%);
-  }
   .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) main.workspace-page:not(.career-marketplace) {
     & :is(section, article, aside, div, p).bg-white.border:not(:where(dialog *, [role="dialog"] *, .workspace-page-header)) {
       background-color: var(--alumni-card);
       border-color: var(--alumni-card-border);
-      border-radius: 18px;
+      border-radius: var(--panel-radius);
       box-shadow: var(--alumni-card-shadow);
     }
     & :is(aside.bg-white.border, aside > .bg-white.border):not(:where(dialog *, [role="dialog"] *)) {
@@ -219,7 +119,7 @@
       border-radius: 10px;
     }
     & .alumni-section-tabs button[aria-pressed="true"] {
-      background: #009639;
+      background: hsl(var(--primary));
       color: #fff;
       box-shadow: 0 2px 5px rgb(20 82 56 / 12%);
     }
@@ -230,7 +130,7 @@
     & .alumni-survey-card {
       background: var(--alumni-card);
       border-color: var(--alumni-card-border);
-      border-radius: 18px;
+      border-radius: var(--panel-radius);
       box-shadow: var(--alumni-card-shadow);
     }
     & .alumni-survey-card:hover {
@@ -242,32 +142,22 @@
 
 .workspace-search-input {
   border-color: #b9c7bf;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%), 0 5px 12px rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-field);
 }
 
 .dark .workspace-search-input {
   border-color: #64756b;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
+  box-shadow: var(--shadow-field);
 }
 .workspace-search-input:focus {
-  border-color: #009639;
-  outline: 2px solid #009639;
+  border-color: hsl(var(--primary));
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 
 /* Student cards use the same elevation as admin cards, while keeping their palette.
    Scope this to screen panels so form controls and printable resumes stay separate. */
 @media screen {
-  .member-workspace[data-workspace-role="student"] {
-    --student-card-shadow: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
-    --student-card-hover-shadow: 0 0 8px 1px rgb(0 0 0 / 12%), 0 8px 22px rgb(0 0 0 / 18%);
-    --alumni-card-shadow: var(--student-card-shadow);
-    --alumni-card-hover-shadow: var(--student-card-hover-shadow);
-  }
-  .dark .member-workspace[data-workspace-role="student"] {
-    --student-card-shadow: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
-    --student-card-hover-shadow: 0 0 10px 1px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 48%);
-  }
   .member-workspace[data-workspace-role="student"] main.workspace-page :is(section, article, aside, nav, div, p, form):is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):is(.bg-white.border, .shadow-sm):not(:where(dialog *, [role="dialog"] *, .portfolio-resume, .portfolio-resume *, .opportunity-prose *, .workspace-page-header, [role="tabpanel"], .career-listing, aside.career-filter-panel)) {
     box-shadow: var(--student-card-shadow);
   }

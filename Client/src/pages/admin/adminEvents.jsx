@@ -249,7 +249,7 @@ function EventChip({ event, onOpen }) {
         onOpen(event);
       }}
       title={event.title}
-      className={`w-full truncate rounded-lg px-1.5 py-1 text-left text-[10.5px] font-semibold leading-tight transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#009639] ${c.card}`}
+      className={`w-full truncate rounded-lg px-1.5 py-1 text-left text-[10.5px] font-semibold leading-tight transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary ${c.card}`}
     >
       <span className="opacity-60">{formatTime(event.startAt)} </span>
       {event.title}
@@ -327,7 +327,7 @@ function MiniCalendar({ value, onSelect, hasEvents, highlightWeek }) {
                 type="button"
                 onClick={() => onSelect(startOfDay(day))}
                 aria-label={day.toDateString()}
-                className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#009639] ${
+                className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
                   selected
                     ? "bg-brand text-white"
                     : isToday
@@ -479,7 +479,7 @@ function TimeGrid({ days, eventsOnDay, onOpen, onCreate, onPickDay, now }) {
                         onOpen(it.ev);
                       }}
                       title={it.ev.title}
-                      className={`absolute z-10 overflow-hidden rounded-2xl p-2.5 text-left transition hover:z-20 hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#009639] ${c.card}`}
+                      className={`absolute z-10 overflow-hidden rounded-2xl p-2.5 text-left transition hover:z-20 hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${c.card}`}
                       style={{
                         top,
                         height: h,

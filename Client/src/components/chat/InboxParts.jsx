@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Search,
   Send,
@@ -74,6 +75,8 @@ const useConnectedPeople = (open) => {
 
 const useInboxPage = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedId = searchParams.get("conversation");
   const {
     convos,
     threads,
@@ -95,12 +98,18 @@ const useInboxPage = () => {
       return null;
     }
   }, [storageKey]);
-  const [selection, setSelection] = useState({ storageKey: null, id: null });
+  const [selection, setSelection] = useState({ storageKey: null, id: null, requestedId: null });
   const activeId = selection.storageKey === storageKey ? selection.id : null;
   const setActiveId = useCallback(
     (id) => {
       const conversationId = id == null ? null : String(id);
-      setSelection({ storageKey, id: conversationId });
+      setSelection({ storageKey, id: conversationId, requestedId });
+      // A selection made inside Messages replaces the header's explicit deep link.
+      setSearchParams(previous => {
+        const next = new URLSearchParams(previous);
+        next.delete("conversation");
+        return next;
+      }, { replace: true });
       // Going back to the mobile list keeps the last conversation for the next visit.
       if (storageKey && conversationId) {
         try {
@@ -110,7 +119,7 @@ const useInboxPage = () => {
         }
       }
     },
-    [storageKey],
+    [storageKey, setSearchParams, requestedId],
   );
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
@@ -127,20 +136,32 @@ const useInboxPage = () => {
     storageKey &&
     convos.length &&
     (selection.storageKey !== storageKey ||
+      selection.requestedId !== requestedId ||
       (selection.id && !convos.some((c) => String(c._id) === selection.id)))
   ) {
+    const requested = convos.find((c) => String(c._id) === requestedId);
     const remembered = convos.find((c) => String(c._id) === savedId);
     const latest = convos.reduce((recent, conversation) =>
       (Date.parse(conversation.time) || 0) > (Date.parse(recent.time) || 0)
         ? conversation
         : recent,
     );
-    setSelection({ storageKey, id: String((remembered || latest)._id) });
+    // Clearing a deep link must preserve an explicit selection or mobile Back.
+    // Router URL updates can commit after the local selection state changes.
+    const clearedRequest = selection.storageKey === storageKey && selection.requestedId && !requestedId &&
+      (!selection.id || convos.some(c => String(c._id) === selection.id));
+    setSelection({ storageKey, id: clearedRequest ? selection.id : String((requested || remembered || latest)._id), requestedId });
   }
 
   useEffect(() => {
-    if (activeId) loadThread(activeId);
-  }, [activeId, loadThread]);
+    if (!activeId) return;
+    loadThread(activeId);
+    try {
+      if (storageKey) localStorage.setItem(storageKey, activeId);
+    } catch {
+      // Explicit conversation links also work when browser storage is unavailable.
+    }
+  }, [activeId, loadThread, storageKey]);
 
   const active = convos.find((c) => String(c._id) === String(activeId));
   const filtered = convos.filter(

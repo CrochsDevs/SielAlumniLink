@@ -71,14 +71,14 @@ export default function StudentSidebar({ user, mobileOpen: controlledOpen, setMo
           <p className="student-menu-label">{group.label}</p>
           {group.items.map(item => {
             const active = matchesPath(item.to, item.end) || item.aliases?.some(path => matchesPath(path));
-            return <Link key={item.to} to={item.to} aria-current={active ? "page" : undefined} onClick={() => setMobileOpen(false)} className={`student-menu-item ${active ? "is-active !bg-[#009639] !border-[#009639] !text-white" : ""}`}>
+            return <Link key={item.to} to={item.to} aria-current={active ? "page" : undefined} onClick={() => setMobileOpen(false)} className={`student-menu-item ${active ? "is-active !bg-primary !border-primary !text-white" : ""}`}>
             {createElement(item.icon, { size: 16, strokeWidth: 1.7, "aria-hidden": true })}<span>{item.label}</span>
             </Link>;
           })}
         </nav>)}
       </div>
       <div className="student-sidebar-bottom">
-        <Link to="/student/accounts" aria-current={settingsActive ? "page" : undefined} onClick={() => setMobileOpen(false)} className={`student-menu-item ${settingsActive ? "is-active !bg-[#009639] !border-[#009639] !text-white" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></Link>
+        <Link to="/student/accounts" aria-current={settingsActive ? "page" : undefined} onClick={() => setMobileOpen(false)} className={`student-menu-item ${settingsActive ? "is-active !bg-primary !border-primary !text-white" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></Link>
         <div className="student-sidebar-account">
           <Link to="/student/profile" className="student-account-link" onClick={() => setMobileOpen(false)} aria-label="View your profile">
             <span className="student-account-avatar"><ProfileAvatar user={user} fallback="S" /></span>

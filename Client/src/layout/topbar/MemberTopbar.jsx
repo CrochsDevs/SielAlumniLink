@@ -1,6 +1,5 @@
 import GlobalSearch from "../../components/search/GlobalSearch";
-import ChatAvatar from "../../components/chat/ChatAvatar";
-import { formatTime } from "../../components/chat/messageFormat";
+import ChatsDropdown from "../../components/chat/ChatsDropdown";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -83,7 +82,9 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   } = useNotifications();
   const dropdownRef = useRef(null);
   const chatRef = useRef(null);
+  const chatButtonRef = useRef(null);
   const notifRef = useRef(null);
+  const notifButtonRef = useRef(null);
 
   useEffect(() => {
     let previousY = Math.max(0, window.scrollY);
@@ -202,6 +203,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
         <div className="flex items-center gap-1">
           <div className="relative" ref={chatRef}>
             <button
+              ref={chatButtonRef}
               type="button"
               onClick={() => setChatOpen((open) => !open)}
               className={`relative rounded-full p-2.5 transition ${chatOpen ? "bg-emerald-50 text-brand" : "text-zinc-500 hover:bg-emerald-50 hover:text-brand"}`}
@@ -221,68 +223,19 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
               )}
             </button>
 
-            {chatOpen && (
-              <div
-                id={`${memberRole}-topbar-chats`}
-                className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl shadow-zinc-900/5 z-20"
-              >
-                <div className="flex items-center justify-between px-4 py-3">
-                  <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-                    Chats
-                  </p>
-                  <Link
-                    to={`${homePath}/message`}
-                    onClick={() => setChatOpen(false)}
-                    className="text-[11.5px] font-semibold text-brand dark:text-brand hover:underline"
-                  >
-                    See all
-                  </Link>
-                </div>
-                <ul className="max-h-80 overflow-y-auto pb-1.5">
-                  {convos.map((c) => (
-                    <li key={c._id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          openChat(c);
-                          setChatOpen(false);
-                        }}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                      >
-                        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[13px] font-bold text-brand">
-                          <ChatAvatar convo={c} />
-                          {c.unread > 0 && (
-                            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
-                              {c.unread}
-                            </span>
-                          )}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">
-                            {c.name}
-                          </span>
-                          <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                            {c.preview}
-                          </span>
-                        </span>
-                        <span className="shrink-0 text-[10px] text-zinc-400">
-                          {formatTime(c.time)}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                  {convos.length === 0 && (
-                    <li className="px-4 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                      No conversations yet.
-                    </li>
-                  )}
-                </ul>
-              </div>
-            )}
+            {chatOpen && <ChatsDropdown
+              id={`${memberRole}-topbar-chats`}
+              conversations={convos}
+              messagePath={`${homePath}/message`}
+              triggerRef={chatButtonRef}
+              onClose={() => setChatOpen(false)}
+              onDesktopSelect={openChat}
+            />}
           </div>
 
           <div className="relative" ref={notifRef}>
             <button
+              ref={notifButtonRef}
               type="button"
               onClick={() => {
                 setNotifOpen(!notifOpen);
@@ -301,6 +254,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
             </button>
             {notifOpen && (
               <NotificationDropdown
+                triggerRef={notifButtonRef}
                 items={notifs}
                 onRead={markNotifRead}
                 onReadAll={markAllNotifsRead}

@@ -3,7 +3,7 @@ dialog.story-reader-dialog[open] { display: flex; flex-direction: column; }
 dialog.story-reader-dialog::backdrop { background: rgb(15 23 18 / 65%); backdrop-filter: blur(3px); }
 .story-reader-dialog > div:first-child { flex: none; margin: 0; padding: 14px 20px; border-bottom: 1px solid #d5dfd8; background: #f7fbf8; }
 .story-reader-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.story-reader-heading > svg { flex: none; color: #009630; }
+.story-reader-heading > svg { flex: none; color: hsl(var(--primary)); }
 .story-reader-heading p { font-size: 15px; font-weight: 600; line-height: 24px; }
 .story-reader-heading span { display: block; margin-top: 2px; color: #64746b; font-size: 11px; line-height: 18px; }
 .story-reader-dialog button[aria-label="Close dialog"] { width: 36px; height: 36px; border: 1px solid #c7d1cb; background: #fff; box-shadow: 0 2px 5px rgb(15 23 42 / 10%); }
@@ -16,16 +16,16 @@ dialog.story-reader-dialog::backdrop { background: rgb(15 23 18 / 65%); backdrop
 .story-reader-media > div.grid { max-height: 280px; aspect-ratio: 16 / 9; }
 .story-reader-sections { max-width: 65ch; margin-inline: auto; }
 .story-reader-sections section + section { padding-top: 20px; border-top: 1px solid #e1e9e4; }
-.story-reader-sections h4 { padding-left: 10px; border-left: 3px solid #009630; color: #00852b; font-size: 13px; }
+.story-reader-sections h4 { padding-left: 10px; border-left: 3px solid hsl(var(--primary)); color: var(--color-primary-hover); font-size: 13px; }
 .story-reader-sections p { font-size: 14px; line-height: 1.9; color: #45564b; }
 .story-reader-footer { display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 14px 20px; border-top: 1px solid #d5dfd8; background: #fff; box-shadow: 0 -2px 8px rgb(15 23 42 / 6%); }
-.story-reader-author-link { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; color: #00852b; font-size: 12px; font-weight: 600; }
+.story-reader-author-link { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; color: var(--color-primary-hover); font-size: 12px; font-weight: 600; }
 .story-reader-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .story-reader-actions > button { min-height: 40px; padding: 8px 12px; border: 1px solid #c7d1cb; border-radius: 9px; background: #fff; font-size: 12px; font-weight: 600; box-shadow: 0 2px 5px rgb(15 23 42 / 12%); }
-.story-reader-actions .story-reader-close { border-color: #009630; background: #009630; color: #fff; }
+.story-reader-actions .story-reader-close { border-color: hsl(var(--primary)); background: hsl(var(--primary)); color: #fff; }
 .story-reader-actions .story-reader-close:hover { background: #007a27; }
 .story-reader-actions .story-reader-delete { display: inline-flex; align-items: center; gap: 6px; color: #b91c1c; }
-.story-reader-dialog :is(button, a):focus-visible { outline: 2px solid #009630; outline-offset: 3px; }
+.story-reader-dialog :is(button, a):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .story-reader-dialog button:disabled { opacity: .5; cursor: not-allowed; }
 .dark dialog.story-reader-dialog, .dark .story-reader-footer { border-color: #4c5e53; background: #1c231f; }
 .dark .story-reader-dialog > div:first-child { border-color: #4c5e53; background: #202e25; }

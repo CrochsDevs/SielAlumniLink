@@ -1,13 +1,13 @@
 .alumni-employment-field {
   border-color: #b9c7bf;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%), 0 5px 12px rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-field);
 }
 .dark .alumni-employment-field {
   border-color: #64756b;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
+  box-shadow: var(--shadow-field);
 }
 .alumni-employment-field:focus {
-  border-color: #009639;
-  outline: 2px solid #009639;
+  border-color: hsl(var(--primary));
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }

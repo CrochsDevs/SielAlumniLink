@@ -23,8 +23,8 @@
 
 .mentorship-page :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, [role="combobox"]):focus-visible {
   outline: none;
-  border-color: #009639;
-  box-shadow: 0 0 0 3px rgb(0 150 57 / 17%), var(--mentorship-field-shadow);
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 17%), var(--mentorship-field-shadow);
 }
 
 .mentorship-page .mentorship-tabs {
@@ -45,16 +45,16 @@
 }
 
 .mentorship-tab[aria-pressed="true"] {
-  border-color: rgb(0 150 57 / 20%);
-  background: rgb(0 150 57 / 7%);
-  color: #009639;
+  border-color: hsl(var(--primary) / 20%);
+  background: hsl(var(--primary) / 7%);
+  color: hsl(var(--primary));
 }
 
 .mentorship-tab:focus-visible,
 .mentorship-avatar:focus-visible,
 .mentorship-action-primary:focus-visible,
 .mentorship-action-secondary:focus-visible {
-  outline: 2px solid #009639;
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 3px;
 }
 
@@ -115,7 +115,7 @@
   color: hsl(var(--muted-foreground));
 }
 
-.mentorship-profile-shortcut:hover { background: rgb(0 150 57 / 7%); color: #009639; }
+.mentorship-profile-shortcut:hover { background: hsl(var(--primary) / 7%); color: hsl(var(--primary)); }
 .mentorship-person-card:has(.mentorship-profile-shortcut) .mentorship-person-body > :first-child { padding-right: 1rem; }
 
 .mentorship-person-body { padding: 1rem; }
@@ -150,10 +150,10 @@
   transition: background-color .15s;
 }
 
-.mentorship-action-primary { background: #009639; color: white; }
+.mentorship-action-primary { background: hsl(var(--primary)); color: white; }
 .mentorship-action-primary:hover:not(:disabled) { background: #007f30; }
 .mentorship-action-secondary { border-color: hsl(var(--border)); color: hsl(var(--foreground)); }
-.mentorship-action-secondary:hover:not(:disabled) { background: rgb(0 150 57 / 5%); }
+.mentorship-action-secondary:hover:not(:disabled) { background: hsl(var(--primary) / 5%); }
 .mentorship-action-primary:disabled,
 .mentorship-action-secondary:disabled { cursor: not-allowed; opacity: .55; }
 
@@ -161,7 +161,7 @@
 .mentorship-progress-mentor {
   min-width: 0;
   border-bottom: 1px solid hsl(var(--border));
-  background: rgb(0 150 57 / 4%);
+  background: hsl(var(--primary) / 4%);
 }
 .mentorship-progress-stats { display: grid; min-width: 0; gap: 1rem; }
 .mentorship-progress-counts {
@@ -203,7 +203,7 @@
 
 @media (hover: hover) {
   .mentorship-person-card:hover {
-    border-color: rgb(0 150 57 / 35%);
+    border-color: hsl(var(--primary) / 35%);
     box-shadow: var(--student-card-hover-shadow);
   }
 }

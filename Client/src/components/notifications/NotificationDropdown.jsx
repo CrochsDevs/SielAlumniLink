@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../context/useAuth";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import { notificationTime, notificationText } from "./notificationFormat";
+import TopbarPanel from "../ui/TopbarPanel";
 
 // Notification links are authored for alumni pages — resolve them
 // to the equivalent page for the current role.
@@ -37,7 +38,7 @@ const kindIcons = {
 };
 
 // Shared notification dropdown panel (wired to useNotifications data).
-const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
+const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [filter, setFilter] = useState("All");
@@ -66,24 +67,10 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
   };
 
   return (
-    <div
-      role="region"
-      aria-label="Notifications"
-      className="absolute right-0 z-20 mt-2 w-[min(420px,calc(100vw-112px))] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 dark:border-zinc-700 dark:bg-zinc-900"
-    >
-      <div className="flex items-center justify-between px-4 py-3">
-        <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Notifications
-        </p>
-        <button
-          type="button"
-          onClick={onReadAll}
-          disabled={!items.some((item) => !item.read)}
-          className="text-[11.5px] font-semibold text-brand dark:text-brand hover:underline disabled:opacity-40"
-        >
-          Mark all read
-        </button>
-      </div>
+    <TopbarPanel title="Notifications" triggerRef={triggerRef} onClose={onClose}
+      className="notifications-panel w-[min(420px,calc(100vw-112px))] max-w-none"
+      action={<button type="button" onClick={onReadAll} disabled={!items.some(item => !item.read)}
+        className="text-[11.5px] font-semibold text-primary hover:underline disabled:opacity-40">Mark all read</button>}>
       <div
         aria-label="Filter notifications"
         className="flex flex-wrap gap-1.5 border-b border-zinc-100 px-4 pb-3 dark:border-zinc-800"
@@ -100,7 +87,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
           </button>
         ))}
       </div>
-      <ul className="max-h-[min(480px,60dvh)] overflow-y-auto">
+      <ul className="notifications-list topbar-panel-list max-h-[min(480px,60dvh)] overflow-y-auto">
         {visibleItems.map((item) => {
           const text = notificationText(item);
           const Icon = kindIcons[item.kind] || Bell;
@@ -167,7 +154,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose }) => {
           </li>
         )}
       </ul>
-    </div>
+    </TopbarPanel>
   );
 };
 

@@ -6,7 +6,7 @@
 }
 .alumni-career-page .career-marketplace {
   --career-title: #202823;
-  --career-green: #009639;
+  --career-green: hsl(var(--primary));
   --career-line: #dce3df;
   --career-surface: #fff;
   --career-soft: #f1f5f3;
@@ -37,7 +37,7 @@
 }
 .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"],
 .dark .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] {
-  border-bottom-color: #009639;
+  border-bottom-color: hsl(var(--primary));
   background: transparent;
   color: var(--career-title);
   box-shadow: none;
@@ -55,12 +55,12 @@
 .alumni-career-page .career-search:focus-within,
 .dark .alumni-career-page .career-search:focus-within {
   box-shadow: var(--alumni-card-shadow);
-  outline: 2px solid #009639;
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 .alumni-career-page aside.career-filter-panel,
 .dark .alumni-career-page aside.career-filter-panel {
-  border-radius: 12px;
+  border-radius: var(--panel-radius);
   background: var(--career-surface);
   box-shadow: var(--alumni-card-shadow);
 }
@@ -79,7 +79,7 @@
 }
 .alumni-career-page aside.career-filter-panel .career-filter-heading-icon {
   background: var(--career-soft);
-  color: #009639;
+  color: hsl(var(--primary));
 }
 .alumni-career-page .career-filter-option.is-selected,
 .alumni-career-page .career-filter-groups [data-filter-group="opportunities"] .career-filter-option.is-selected {
@@ -99,7 +99,7 @@
 .alumni-career-page .career-listing,
 .alumni-career-page .career-listing[data-career-category],
 .alumni-career-page .career-listing[data-career-card] {
-  --card-accent: #009639;
+  --card-accent: hsl(var(--primary));
   --card-tint: var(--career-soft);
   --card-surface: var(--career-surface);
   --card-footer: var(--career-surface);

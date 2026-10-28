@@ -13,6 +13,7 @@ import DevelopmentShell, {
 } from "../../components/student/DevelopmentShell";
 import ProfileAvatar from "../../components/profile/ProfileAvatar";
 import { FeedDialog } from "../../components/feed/FeedComposer";
+import { descriptionText } from "../../components/career/description";
 
 const EMPTY = {
   company: "",
@@ -48,7 +49,7 @@ export default function StudentInternship() {
             .map((item) => ({
               ...item,
               source: "University",
-              target: alumni ? "/alumni/career" : "/student/career",
+              target: `${alumni ? "/alumni/career" : "/student/career"}/${encodeURIComponent(item._id)}`,
             })),
           ...referrals.data.data
             .filter((item) => item.type === "internship")
@@ -348,13 +349,13 @@ export default function StudentInternship() {
                         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                           {item.company} · {item.source}
                         </p>
-                        <p className="mt-3 whitespace-pre-wrap text-xs leading-6 text-zinc-600 dark:text-zinc-300">
-                          {item.description}
+                        <p className="mt-3 line-clamp-4 break-words text-xs leading-6 text-zinc-600 dark:text-zinc-300">
+                          {descriptionText(item.description || "", item.descriptionFormat)}
                         </p>
                         <Link to={item.target} className={`${button} mt-4`}>
                           {item.source === "Alumni referral"
                             ? "Apply through referrals"
-                            : "View career board"}
+                            : "View opportunity"}
                         </Link>
                       </article>
                     ))

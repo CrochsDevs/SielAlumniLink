@@ -1,0 +1,148 @@
+/* Edit shared brand, colors, spacing and elevation here. Primary uses HSL channels for opacity utilities. */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 142.8 100% 29.411765%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: var(--primary);
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: var(--primary);
+  }
+}
+
+
+@layer base {
+  :root {
+    --color-primary: hsl(var(--primary));
+    --color-primary-hover: color-mix(in srgb, var(--color-primary) 82%, black);
+    --color-primary-soft: hsl(var(--primary) / 0.08);
+    --color-primary-tint: hsl(var(--primary) / 0.2);
+    --color-primary-border: hsl(var(--primary) / 0.2);
+    --color-primary-strong: color-mix(in srgb, var(--color-primary) 65%, black);
+    --workspace-max-width: 80rem;
+    --sidebar-width: 16rem;
+    --page-padding: clamp(0.75rem, 2.5vw, 1.5rem);
+    --section-gap: clamp(0.75rem, 1.5vw, 1.25rem);
+    --mobile-topbar-gap: 1rem;
+    --panel-radius: 0.75rem;
+    --control-height: 2.5rem;
+    --summary-card-min: 12rem;
+    --content-card-min: 18rem;
+    --touch-target: 2.75rem;
+    --dialog-gutter: 1rem;
+    --auth-background: #e6e6e6;
+    --shadow-panel: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
+    --shadow-panel-hover: 0 0 8px 1px rgb(0 0 0 / 12%), 0 8px 22px rgb(0 0 0 / 18%);
+    --shadow-field: 0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%), 0 5px 12px rgb(0 0 0 / 10%);
+  }
+  .dark {
+    --shadow-panel: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
+    --shadow-panel-hover: 0 0 10px 1px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 48%);
+    --shadow-field: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
+  }
+}
+
+/* Workspace palettes and role-specific surfaces. */
+@media screen {
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
+    --alumni-page-background: #f0f1f3;
+  }
+  .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
+    --alumni-page-background: #101318;
+  }
+  .member-workspace.admin-workspace[data-workspace-role="admin"] {
+    --alumni-page-background: #f0f1f3;
+    --alumni-card: #fff;
+    --alumni-card-border: #e1e5e9;
+    --alumni-secondary: #fff;
+    --alumni-secondary-border: #e1e5e9;
+    --alumni-tab: #f5f7f6;
+    --alumni-heading: #20242a;
+    --alumni-card-shadow: var(--shadow-panel);
+    --admin-muted: #7b8087;
+    --admin-toolbar: #f5f7f6;
+    --admin-table-heading: #f5f7f6;
+    --admin-control-hover: #e9ecef;
+    --admin-switch-off: #9ca3af;
+  }
+  .dark .member-workspace.admin-workspace[data-workspace-role="admin"] {
+    --alumni-page-background: #101318;
+    --alumni-card: #1c2027;
+    --alumni-card-border: #303742;
+    --alumni-secondary: #1c2027;
+    --alumni-secondary-border: #303742;
+    --alumni-tab: #252b34;
+    --alumni-heading: #f1f4f8;
+    --alumni-card-shadow: var(--shadow-panel);
+    --admin-muted: #aab3c0;
+    --admin-toolbar: #252b34;
+    --admin-table-heading: #252b34;
+    --admin-control-hover: #303742;
+    --admin-switch-off: #66717f;
+  }
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
+    --alumni-card: #f5faf1;
+    --alumni-card-border: #d4dfd1;
+    --alumni-secondary: #f5f0e3;
+    --alumni-secondary-border: #e6dfcf;
+    --alumni-tab: #dfe9dc;
+    --alumni-heading: #101b14;
+    --alumni-card-shadow: var(--shadow-panel);
+    --alumni-card-hover-shadow: var(--shadow-panel-hover);
+  }
+  .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
+    --alumni-card: #181f1a;
+    --alumni-card-border: #303b33;
+    --alumni-secondary: #24231c;
+    --alumni-secondary-border: #3b3a2d;
+    --alumni-tab: #202e24;
+    --alumni-heading: #f4f4f5;
+    --alumni-card-shadow: var(--shadow-panel);
+    --alumni-card-hover-shadow: var(--shadow-panel-hover);
+  }
+  .member-workspace[data-workspace-role="student"] {
+    --student-card-shadow: var(--shadow-panel);
+    --student-card-hover-shadow: var(--shadow-panel-hover);
+    --alumni-card-shadow: var(--student-card-shadow);
+    --alumni-card-hover-shadow: var(--student-card-hover-shadow);
+  }
+  .dark .member-workspace[data-workspace-role="student"] {
+    --student-card-shadow: var(--shadow-panel);
+    --student-card-hover-shadow: var(--shadow-panel-hover);
+  }
+}

@@ -1,8 +1,8 @@
 .admin-workspace {
-  --admin-radius: 16px;
-  --admin-control-radius: 10px;
-  --admin-primary: #009639;
-  --admin-primary-hover: #009639;
+  --admin-radius: var(--panel-radius);
+  --admin-control-radius: var(--radius);
+  --admin-primary: hsl(var(--primary));
+  --admin-primary-hover: hsl(var(--primary));
   --admin-ink: var(--alumni-heading, #19472f);
   --admin-muted: #526e5d;
   --admin-surface: var(--alumni-card, #e3eee4);
@@ -16,8 +16,8 @@
   --admin-tabs-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 5px rgb(0 0 0 / 14%), 0 6px 14px rgb(0 0 0 / 10%);
 }
 .dark .admin-workspace {
-  --admin-primary: #009639;
-  --admin-primary-hover: #009639;
+  --admin-primary: hsl(var(--primary));
+  --admin-primary-hover: hsl(var(--primary));
   --admin-muted: #afc8b8;
   --admin-toolbar: #22392a;
   --admin-table-heading: #2b4533;
@@ -83,11 +83,11 @@
   .admin-workspace .admin-tabs > :is(button, a):hover:not([aria-pressed="true"]):not([aria-current="page"]):not(:disabled) { background: var(--admin-control-hover); color: var(--admin-ink); }
   .admin-workspace .admin-tabs > :is(button, a):is([aria-pressed="true"], [aria-current="page"]):hover { background: var(--admin-primary-hover); color: white; }
 }
-.admin-workspace .admin-tabs > :is(button, a):focus-visible { outline: 2px solid #009639; outline-offset: 2px; }
+.admin-workspace .admin-tabs > :is(button, a):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 .admin-workspace .admin-tabs > button:disabled { opacity: .5; cursor: not-allowed; }
 .admin-workspace .admin-tab-count { padding: 0 5px; border-radius: 5px; background: rgb(54 102 69 / 10%); font-size: 10px; }
 .admin-workspace .admin-tabs > :is([aria-pressed="true"], [aria-current="page"]) .admin-tab-count { background: rgb(255 255 255 / 15%); }
-.admin-workspace .admin-tab-badge { color: #009639; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+.admin-workspace .admin-tab-badge { color: hsl(var(--primary)); font-size: 9px; font-weight: 600; text-transform: uppercase; }
 .admin-workspace .admin-tabs > :is([aria-pressed="true"], [aria-current="page"]) .admin-tab-badge { color: #c4ead1; }
 .admin-workspace .admin-tabs-vertical { flex-direction: column; width: 100%; align-items: stretch; overflow: visible; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .admin-workspace .admin-tabs-vertical > :is(button, a) { justify-content: flex-start; white-space: normal; }
@@ -172,7 +172,7 @@
   border-radius: var(--admin-control-radius);
   font-size: 12px;
 }
-.admin-workspace main :is(a, button, input, select, textarea):focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.admin-workspace main :is(a, button, input, select, textarea):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .admin-workspace .data-pagination { border-color: var(--admin-line); }
 .admin-workspace .data-pagination p { color: var(--admin-muted); }
 .admin-workspace .data-pagination p span { color: var(--admin-ink); font-weight: 600; }

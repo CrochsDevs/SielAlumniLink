@@ -1,3 +1,5 @@
+import ProfileAvatar from "../../components/profile/ProfileAvatar";
+import AccountSettingsNavigation from "../../components/ui/AccountSettingsNavigation";
 import PageHeader from "../../components/ui/PageHeader";
 import { createElement, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
@@ -310,82 +312,28 @@ const StudentAccounts = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="mx-auto max-w-5xl p-4 sm:p-6 workspace-page">
+        <main className="mx-auto max-w-5xl p-4 sm:p-6 workspace-page account-settings-page">
           {/* Page header */}
           <PageHeader icon={UserRound} title="Account settings" description="Manage your profile, security, and preferences.">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-semibold text-brand dark:bg-emerald-950 dark:text-brand">{(user?.name || "A").charAt(0).toUpperCase()}</span>
-              <div className="min-w-0"><p className="truncate text-sm font-semibold">{user?.name}</p><p className="break-all text-xs">{user?.email} &middot; {user?.role}</p></div>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 font-semibold text-primary"><ProfileAvatar user={user} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{user?.name}</p>
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="min-w-0 truncate text-xs" title={user?.email}>{user?.email}</p>
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary">{user?.role}</span>
+                </div>
+              </div>
             </div>
           </PageHeader>
 
           <div className="flex flex-col items-start gap-5 md:flex-row">
             {/* Sub-sidebar */}
-            <aside className="w-full shrink-0 overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:w-64">
-              {TAB_GROUPS.map((group, gi) => (
-                <div
-                  key={group.label}
-                  className={
-                    gi > 0
-                      ? "border-t border-zinc-100 dark:border-zinc-800"
-                      : ""
-                  }
-                >
-                  <p className="px-4 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    {group.label}
-                  </p>
-                  <nav className="space-y-1 p-2">
-                    {group.tabs.map(({ key, label, desc, icon: Icon }) => {
-                      const active = activeTab === key;
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setActiveTab(key)}
-                          aria-current={active ? "page" : undefined}
-                          className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all ${
-                            active
-                              ? "bg-brand/10 ring-1 ring-emerald-200/60 dark:ring-brand/60"
-                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                              active
-                                ? "bg-brand text-white shadow-sm"
-                                : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-                            }`}
-                          >
-                            {createElement(Icon, { className: "h-4 w-4" })}
-                          </span>
-                          <span className="min-w-0">
-                            <span
-                              className={`block truncate text-[12.5px] font-bold ${
-                                active
-                                  ? "text-brand dark:text-brand"
-                                  : "text-zinc-700 dark:text-zinc-200"
-                              }`}
-                            >
-                              {label}
-                            </span>
-                            <span className="block truncate text-[10.5px] text-zinc-400 dark:text-zinc-500">
-                              {desc}
-                            </span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </nav>
-                </div>
-              ))}
-              <div className="m-2 mt-1 rounded-2xl bg-emerald-50/70 p-3 text-[11px] leading-relaxed text-zinc-500 dark:bg-emerald-950/50 dark:text-zinc-300">
-                Your email is managed by your institution. Contact an admin to
-                change it.
-              </div>
-            </aside>
+            <AccountSettingsNavigation groups={TAB_GROUPS} value={activeTab} onChange={setActiveTab}
+              footer="Your email is managed by your institution. Contact an admin to change it." />
 
             {/* Content */}
-            <div className="w-full min-w-0 flex-1">
+            <div className="w-full min-w-0 flex-1 account-settings-content">
               {activeTab === "profile" && (
                 <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">

@@ -10,7 +10,7 @@
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--referral-line);
-  border-radius: 16px;
+  border-radius: var(--panel-radius);
   background: var(--referral-surface);
   color: var(--referral-ink);
   box-shadow: var(--alumni-card-shadow, 0 3px 14px rgb(24 59 35 / 8%));
@@ -46,7 +46,7 @@
 .referral-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--referral-line); }
 .referral-card-actions > button { display: inline-flex; flex: 1 1 100px; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 8px 10px; border: 1px solid transparent; border-radius: 9px; font-size: 11px; line-height: 18px; font-weight: 600; transition: background-color 160ms ease; }
 .referral-card-details { color: var(--referral-ink); background: var(--referral-soft); }
-.referral-card-primary { color: #fff; background: #009639; }
+.referral-card-primary { color: #fff; background: hsl(var(--primary)); }
 .referral-card-management { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--referral-line); }
 .referral-card-management > span { color: var(--referral-muted); font-size: 10px; font-weight: 500; }
 .referral-card-management-actions { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -54,14 +54,14 @@
 .referral-card-edit { color: var(--referral-ink); background: var(--referral-soft); }
 .referral-card-delete { color: #b42332; background: #fff1f2; }
 .dark .referral-card-delete { color: #fda4af; background: #40282e; }
-.referral-card-management-actions > button:focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.referral-card-management-actions > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .referral-detail-management { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e9e4; }
 .referral-detail-management > p { margin-bottom: 10px; font-size: 12px; font-weight: 600; }
 .referral-detail-management > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .referral-detail-management .referral-detail-delete { color: #b42332; border-color: #fecdd3; background: #fff1f2; }
 .dark .referral-detail-management { border-color: #34443a; }
 .dark .referral-detail-management .referral-detail-delete { color: #fda4af; border-color: #70414b; background: #40282e; }
-.referral-card-actions > button:focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.referral-card-actions > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 @media (hover: hover) {
   .referral-card:hover { border-color: #afc7b7; box-shadow: var(--alumni-card-hover-shadow, 0 6px 20px rgb(24 59 35 / 12%)); }
   .referral-card-details:hover { background: var(--referral-line); }

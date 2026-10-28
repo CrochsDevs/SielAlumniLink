@@ -12,7 +12,7 @@ const SetupPassword = () => {
 
   if (authLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#e6e6e6]">
+      <div className="flex justify-center items-center min-h-screen bg-[var(--auth-background)]">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Setting up your password...</h1>
           <p className="mt-4">Loading...</p>

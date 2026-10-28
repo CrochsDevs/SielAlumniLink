@@ -1,0 +1,32 @@
+.account-settings-content { min-width: 0; width: 100%; }
+dialog.account-settings-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 32rem;
+  max-height: min(90dvh, 42rem);
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 1.5rem 1.5rem 0 0;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+}
+.account-settings-sheet::backdrop { background: rgb(0 0 0 / 38%); backdrop-filter: blur(3px); }
+.account-settings-sheet-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@media (max-width: 767px) {
+  .account-settings-navigation { flex-shrink: 0; }
+  .account-settings-page .account-settings-content button[type="submit"] {
+    min-height: var(--touch-target);
+  }
+}
+@media (max-width: 639px) {
+  .account-settings-page .account-settings-content button[type="submit"] { width: 100%; }
+}

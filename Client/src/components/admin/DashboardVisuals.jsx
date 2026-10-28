@@ -12,7 +12,7 @@ export function CoverageGauge({ data }) {
       <svg viewBox="0 0 300 220" aria-hidden="true">
         {Array.from({ length: 26 }, (_, i) => {
           const angle = (150 + i * 240 / 25) * Math.PI / 180;
-          return <line key={i} x1={150 + 90 * Math.cos(angle)} y1={140 + 90 * Math.sin(angle)} x2={150 + 116 * Math.cos(angle)} y2={140 + 116 * Math.sin(angle)} stroke={responses != null && i < Math.round(rate * 26 / 100) ? '#009639' : 'var(--gauge-track)'} strokeWidth="11" strokeLinecap="round" />;
+          return <line key={i} x1={150 + 90 * Math.cos(angle)} y1={140 + 90 * Math.sin(angle)} x2={150 + 116 * Math.cos(angle)} y2={140 + 116 * Math.sin(angle)} stroke={responses != null && i < Math.round(rate * 26 / 100) ? 'hsl(var(--primary))' : 'var(--gauge-track)'} strokeWidth="11" strokeLinecap="round" />;
         })}
         <text x="150" y="143" textAnchor="middle" className="coverage-number">{responses == null ? '—' : `${rate}%`}</text>
         <text x="150" y="167" textAnchor="middle" className="coverage-caption">alumni responded</text>

@@ -1,8 +1,8 @@
 .group-call-header-actions { display: inline-flex; flex-shrink: 0; gap: 2px; }
 .group-call-header-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 32px; height: 32px; padding: 7px; border-radius: 50%; color: #6b7280; }
-.group-call-header-actions > button:hover { background: #e7f4eb; color: #009639; }
-.group-call-header-actions > button:focus-visible { outline: 2px solid #009639; outline-offset: 2px; }
-.group-call-header-actions > .group-call-join { padding-inline: 9px; border-radius: 7px; background: #009639; color: #fff; font-size: 11px; font-weight: 600; }
+.group-call-header-actions > button:hover { background: #e7f4eb; color: hsl(var(--primary)); }
+.group-call-header-actions > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+.group-call-header-actions > .group-call-join { padding-inline: 9px; border-radius: 7px; background: hsl(var(--primary)); color: #fff; font-size: 11px; font-weight: 600; }
 .dark .group-call-header-actions > button { color: #bdc7c0; }
 .dark .group-call-header-actions > .group-call-join { color: #fff; }
 .dark .group-call-header-actions > button:hover { background: #244531; color: #b8e5c5; }
@@ -22,13 +22,13 @@ dialog.group-call-dialog[open] { display: flex; flex-direction: column; overflow
 .group-call-controls > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; min-width: 42px; padding: 10px; border-radius: 12px; background: #e8eee9; color: #294334; font-size: 12px; font-weight: 600; }
 .group-call-controls > button[aria-pressed="false"] { background: #fce5e7; color: #ad3140; }
 .group-call-controls > .group-call-leave { background: #be3343; color: #fff; padding-inline: 16px; }
-.group-call-controls > button:focus-visible { outline: 2px solid #009639; outline-offset: 3px; }
+.group-call-controls > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .group-call-incoming { padding: 8px; text-align: center; }
-.group-call-incoming > span { display: grid; place-items: center; width: 64px; height: 64px; margin: auto; border-radius: 50%; background: #e6f5eb; color: #009639; }
+.group-call-incoming > span { display: grid; place-items: center; width: 64px; height: 64px; margin: auto; border-radius: 50%; background: #e6f5eb; color: hsl(var(--primary)); }
 .group-call-incoming > h3 { margin-top: 16px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
 .group-call-incoming > p { margin-top: 8px; font-size: 12px; line-height: 20px; color: #718077; }
 .group-call-incoming > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
 .group-call-incoming button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 16px; border-radius: 9px; font-size: 12px; font-weight: 600; }
 .group-call-decline { background: #fce5e7; color: #ad3140; }
-.group-call-accept { background: #009639; color: #fff; }
+.group-call-accept { background: hsl(var(--primary)); color: #fff; }
 @media (max-width: 767px) { .inbox-thread-header { flex-wrap: wrap; } .inbox-thread-header .group-call-header-actions { margin-left: auto; } }

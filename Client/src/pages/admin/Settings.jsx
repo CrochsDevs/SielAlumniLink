@@ -1,3 +1,4 @@
+import AccountSettingsNavigation from "../../components/ui/AccountSettingsNavigation";
 import { AdminTabs, AdminSwitch } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useState } from "react";
@@ -103,7 +104,7 @@ export default function Settings() {
         showCancelButton: true,
         confirmButtonText: "Yes, change it",
         cancelButtonText: "Cancel",
-        confirmButtonColor: "#009639",
+        confirmButtonColor: "hsl(var(--primary))",
         reverseButtons: true,
       });
       if (!confirm.isConfirmed) return;
@@ -150,7 +151,7 @@ export default function Settings() {
         icon: "success",
         showConfirmButton: true,
         confirmButtonText: "Stay logged in",
-        confirmButtonColor: "#009639",
+        confirmButtonColor: "hsl(var(--primary))",
         showDenyButton: true,
         denyButtonText: "Log out now",
         denyButtonColor: "#71717a",
@@ -188,19 +189,14 @@ export default function Settings() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="workspace-page p-4 sm:p-6">
+        <main className="workspace-page p-4 sm:p-6 account-settings-page">
           <PageHeader title="Settings" description="Manage your profile, account preferences, and security." />
           <div className="flex flex-col md:flex-row gap-5 items-start">
             {/* Sub-sidebar */}
-            <aside className="w-full md:w-60 shrink-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm p-2">
-              <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                Settings
-              </p>
-              <AdminTabs label="Settings sections" value={activeTab} onChange={switchTab} className="admin-tabs-vertical" items={TABS.map(item => ({ id: item.key, label: item.label, icon: item.icon }))} />
-            </aside>
+            <AccountSettingsNavigation groups={[{ label: "Settings", tabs: TABS }]} value={activeTab} onChange={switchTab} />
 
             {/* Content */}
-            <div className="flex-1 min-w-0 w-full">
+            <div className="flex-1 min-w-0 w-full account-settings-content">
               {/* ACCOUNT */}
               {activeTab === "account" && (
                 <div className="space-y-4">
