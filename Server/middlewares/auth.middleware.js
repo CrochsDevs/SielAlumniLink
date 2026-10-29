@@ -1,6 +1,7 @@
 
 import { verifySessionToken, sessionMatches } from '../modules/auth/session-token.js';
 import AuthModel from '../modules/auth/auth.models.js';
+import { requestAccountMatches, rejectChangedAccount } from '../modules/auth/request-account.js';
 
 export const optionalProtect = async (req, res, next) => {
     try {
@@ -15,6 +16,7 @@ export const optionalProtect = async (req, res, next) => {
         const user = await AuthModel.findById(decoded.sub);
 
         req.user = sessionMatches(decoded, user) ? user : null;
+        if (req.user && !requestAccountMatches(req, req.user)) return rejectChangedAccount(res);
         next();
     } catch {
         req.user = null;
@@ -48,6 +50,7 @@ export const protect = async (req, res, next) => {
             });
         }
 
+        if (!requestAccountMatches(req, user)) return rejectChangedAccount(res);
         req.user = user;
         next();
     } catch (error) {

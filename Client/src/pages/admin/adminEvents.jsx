@@ -541,7 +541,7 @@ export default function AdminEvents() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [viewMode, setViewMode] = useState("week");
+  const [viewMode, setViewMode] = useState("month");
   const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()));
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [now, setNow] = useState(() => new Date());

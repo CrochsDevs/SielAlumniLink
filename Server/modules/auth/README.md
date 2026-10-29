@@ -16,6 +16,14 @@ Deletion disables the auth record first, removes credentials/challenges, disconn
 
 Socket revocation events disconnect sessions on the current server immediately. Each socket packet also rechecks the database, with a 30-second background check and a token-expiry timer. In a deployment with multiple Socket.IO servers, configure a shared Socket.IO adapter for immediate room-wide disconnects across processes; without it, idle sockets on another process are removed by the background check. HTTP authorization and incoming socket packets check current database state independently.
 
+## Same-browser account synchronization
+
+Normal tabs in one browser profile share the httpOnly login cookie. After successful password login, magic-link verification, first-password setup or logout, the client sends a nonce-only notice through BroadcastChannel and a storage-event fallback. Other tabs disconnect their old socket and navigate through the role-aware entry page, reloading the account from `/auth/me` and discarding previous page/chat state. A same-tab switch between different accounts also navigates afresh. Returning to a tab rechecks the server identity to recover from missed notifications. Separate browser profiles/private contexts remain independent.
+
+The shared Axios client binds protected requests to the displayed account with `X-Account-Id`. Authenticated middleware and logout reject a mismatch with HTTP 409 / `SESSION_ACCOUNT_CHANGED` before a handler can modify or sign out the new cookie account. The client then reloads the session. The header does not grant access; cookie validation and role authorization remain mandatory. Session discovery/sign-in intentionally omit the binding, and delayed responses from a previous account are canceled. Auth responses always expose the authoritative auth ID even if no directory profile exists. Deploy the frontend/backend together so CORS permits the new header.
+
+Verify with `npm run test:auth-security` and `node scripts/security-followup-review.mjs` in Server, plus `node scripts/session-sync-browser-check.mjs` in Client with the local dev server running. The browser check uses mocked HTTP/socket traffic with real isolated cookie jars, BroadcastChannel/storage events, two normal tabs, focus recovery, magic-link/setup transitions and a separate private context. No production account or provider operations are performed.
+
 ## Request and challenge limits
 
 Limits use atomic MongoDB counters shared by server processes. They fail closed if storage is unavailable. Keys are HMACs; the collection does not store raw email/IP values. TTL cleanup is created during server startup.

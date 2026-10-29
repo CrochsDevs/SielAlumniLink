@@ -103,9 +103,9 @@ const server = createServer(app), io = initSocket(server);
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const base = `http://127.0.0.1:${server.address().port}`;
 const cookie = account => `token=${signSessionToken(account)}`;
-const request = async (endpoint, { body, token, method } = {}) => {
+const request = async (endpoint, { body, token, method, headers = {} } = {}) => {
   const res = await fetch(base + endpoint, { method: method || (body ? 'POST' : 'GET'),
-    headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Cookie: token } : {}) },
+    headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Cookie: token } : {}), ...headers },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   return { status: res.status, body: await res.json(), headers: res.headers };
@@ -216,6 +216,23 @@ try {
   fixed('Login failures and recovery responses do not reveal registered, disabled or passwordless accounts; failed delivery exposes no code');
 
   const logoutCookie = cookie(student), revoke = AuthModel.revokeSessionsById;
+  const expectedOldAccount = { 'X-Account-Id': String(admin._id) };
+  const oldName = profile.name, oldVersion = student.sessionVersion;
+  const staleWrite = await request('/api/users/me', { method: 'PUT', token: logoutCookie, headers: expectedOldAccount, body: { name: 'Wrong account write' } });
+  assert.equal(staleWrite.status, 409);
+  assert.equal(staleWrite.body.code, 'SESSION_ACCOUNT_CHANGED');
+  assert.equal(profile.name, oldName);
+  const staleLogout = await request('/api/auth/logout', { method: 'POST', token: logoutCookie, headers: expectedOldAccount });
+  assert.equal(staleLogout.status, 409);
+  assert.equal(staleLogout.headers.get('set-cookie'), null);
+  assert.equal(student.sessionVersion, oldVersion);
+  assert.equal((await request('/api/users/me', { token: logoutCookie, headers: { 'X-Account-Id': String(student._id) } })).status, 200);
+  const preflight = await fetch(base + '/api/users/me', { method: 'OPTIONS', headers: {
+    Origin: process.env.FRONTEND_URL, 'Access-Control-Request-Method': 'PUT', 'Access-Control-Request-Headers': 'content-type,x-account-id',
+  } });
+  assert.equal(preflight.status, 204);
+  assert.ok(preflight.headers.get('access-control-allow-headers').toLowerCase().includes('x-account-id'));
+  fixed('A stale tab cannot edit or log out the new cookie account; matching identities and CORS preflight still work');
   try {
     AuthModel.revokeSessionsById = async () => { throw new Error('Simulated revocation storage failure'); };
     const failedLogout = await request('/api/auth/logout', { method: 'POST', token: logoutCookie });
@@ -232,7 +249,7 @@ try {
   assert.equal((await request('/api/users/me', { token: logoutCookie })).status, 401);
   fixed('Failed logout reports 503 and permits retry; successful retry revokes copied sessions and disconnects sockets');
 
-  console.log(`Completed ${checks.length} follow-up regression checks covering all five findings. Real database/email/provider operations: 0.`);
+  console.log(`Completed ${checks.length} follow-up regression checks including the five findings and stale-tab request binding. Real database/email/provider operations: 0.`);
 } finally {
   release?.();
   for (const socket of sockets) socket.disconnect();

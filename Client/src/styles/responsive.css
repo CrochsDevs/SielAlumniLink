@@ -21,6 +21,13 @@
     color: hsl(var(--card-foreground));
     box-shadow: var(--shadow-panel);
   }
+  /* Native fields and custom dropdown triggers use the same shared elevation. */
+  .member-workspace main.workspace-page :is(
+    input:not(:where([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="hidden"], [type="button"], [type="submit"], [type="reset"], [type="image"])),
+    select, textarea, button[role="combobox"]
+  ) {
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--shadow-field);
+  }
   .responsive-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--content-card-min)), 1fr));

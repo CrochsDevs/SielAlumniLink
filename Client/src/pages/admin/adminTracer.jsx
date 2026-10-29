@@ -10,8 +10,8 @@ import EmploymentReports from "../../components/tracer/EmploymentReports";
 import ProgramAlignmentReport from "../../components/tracer/ProgramAlignmentReport";
 
 const views = [
-  { id: "alignment", label: "Program–Job Alignment" },
   { id: "responses", label: "Tracer Responses" },
+  { id: "alignment", label: "Program–Job Alignment" },
   { id: "employment", label: "Employment Reports" },
 ];
 
@@ -21,10 +21,10 @@ export default function AdminTracer() {
   const [searchParams, setSearchParams] = useSearchParams();
   const view = views.some((item) => item.id === searchParams.get("view"))
     ? searchParams.get("view")
-    : "alignment";
+    : "responses";
   const changeView = (id) => {
     const next = new URLSearchParams(searchParams);
-    if (id === "alignment") next.delete("view");
+    if (id === "responses") next.delete("view");
     else next.set("view", id);
     setSearchParams(next);
   };

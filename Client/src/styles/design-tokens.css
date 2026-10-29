@@ -69,11 +69,30 @@
     --shadow-panel: 0 0 8px 1px rgb(0 0 0 / 10%), 0 6px 18px rgb(0 0 0 / 16%);
     --shadow-panel-hover: 0 0 8px 1px rgb(0 0 0 / 12%), 0 8px 22px rgb(0 0 0 / 18%);
     --shadow-field: 0 0 0 1px rgb(0 0 0 / 5%), 0 2px 6px rgb(0 0 0 / 14%), 0 5px 12px rgb(0 0 0 / 10%);
+    --table-surface: #fff;
+    --table-header-surface: #e6e9ee;
+    --table-header-text: #384250;
+    --table-text: #303b49;
+    --table-muted: #677281;
+    --table-line: #e1e5e9;
+    --table-row-hover: #f3f8f5;
+    --table-scrollbar: #b8c0ca;
+    --table-cell-padding: 0.875rem 1rem;
+    --table-font-size: 0.8125rem;
+    --table-max-height: min(65dvh, 40rem);
   }
   .dark {
     --shadow-panel: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
     --shadow-panel-hover: 0 0 10px 1px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 48%);
     --shadow-field: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
+    --table-surface: #1c2027;
+    --table-header-surface: #303742;
+    --table-header-text: #f1f4f8;
+    --table-text: #d6dce5;
+    --table-muted: #aab3c0;
+    --table-line: #353d49;
+    --table-row-hover: #26342e;
+    --table-scrollbar: #616875;
   }
 }
 
@@ -96,7 +115,6 @@
     --alumni-card-shadow: var(--shadow-panel);
     --admin-muted: #7b8087;
     --admin-toolbar: #f5f7f6;
-    --admin-table-heading: #f5f7f6;
     --admin-control-hover: #e9ecef;
     --admin-switch-off: #9ca3af;
   }
@@ -111,7 +129,6 @@
     --alumni-card-shadow: var(--shadow-panel);
     --admin-muted: #aab3c0;
     --admin-toolbar: #252b34;
-    --admin-table-heading: #252b34;
     --admin-control-hover: #303742;
     --admin-switch-off: #66717f;
   }

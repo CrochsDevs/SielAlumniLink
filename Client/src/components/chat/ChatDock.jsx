@@ -122,7 +122,7 @@ const ChatWindow = ({
   };
 
   return (
-    <div className="relative flex w-[328px] flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl shadow-zinc-900/10">
+    <div className="relative flex w-[328px] flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-panel">
       {/* Header */}
       <div className="flex w-full items-center gap-2 rounded-t-2xl bg-white dark:bg-zinc-900 px-3 py-2 text-left shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
         <div ref={profileWrapRef} className="relative min-w-0 flex-1">

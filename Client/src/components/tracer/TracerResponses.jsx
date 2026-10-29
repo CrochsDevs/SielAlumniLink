@@ -114,7 +114,7 @@ export default function TracerResponses() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(50);
 
   useEffect(() => {
     api
@@ -244,6 +244,8 @@ export default function TracerResponses() {
           Tracer Study form.
         </p>
       </div>
+
+
       <AdminStatGrid columns={4}>
         {[
           { label: "Responses", value: counts.total, icon: ClipboardCheck },
@@ -268,7 +270,6 @@ export default function TracerResponses() {
           />
         ))}
       </AdminStatGrid>
-
       {/* Table card */}
       <div className="admin-panel admin-data-table overflow-hidden">
         <div className="admin-toolbar">
@@ -313,6 +314,9 @@ export default function TracerResponses() {
           </div>
         </div>
 
+        <p id="tracer-scroll-hint" className="data-table-hint">
+          {filtered.length} responses · Scroll horizontally to view all columns.
+        </p>
         <div
           data-tracer-table
           role="region"
@@ -456,6 +460,7 @@ export default function TracerResponses() {
           itemLabel="responses"
         />
       </div>
+
     </section>
   );
 }

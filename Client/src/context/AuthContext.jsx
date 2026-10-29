@@ -2,6 +2,15 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AuthContext } from "./auth-context.js";
 import api from "../utils/axios";
 import { connectSocket, disconnectSocket, getSocket } from "../realtime/socket";
+import { accountId, sessionIdentity, setRequestAccount, publishSessionChange, subscribeToSessionChanges } from '../auth/session-sync.js';
+
+let reloadingSession = false;
+const reloadBrowserSession = () => {
+  if (reloadingSession) return;
+  reloadingSession = true;
+  disconnectSocket();
+  window.location.replace('/');
+};
 
 const authErrorMessage = (err, fallback) => {
   if (err.response?.data?.message) return err.response.data.message;
@@ -22,12 +31,36 @@ export const AuthProvider = ({ children }) => {
   const pendingMagicLinkVerification = useRef(null);
   const magicVerificationStarted = useRef(false);
   const authCheckVersion = useRef(0);
+  const activeUser = useRef(null);
+  const sessionLoaded = useRef(false);
+  const updateUser = useCallback(next => {
+    activeUser.current = next;
+    setRequestAccount(next);
+    setUser(next);
+  }, []);
+  const acceptSession = useCallback(next => {
+    ++authCheckVersion.current;
+    disconnectSocket();
+    // A full navigation also discards page forms, calls and chat caches before
+    // a different identity is allowed to use the new shared cookie.
+    if (accountId(activeUser.current) && accountId(next) && accountId(activeUser.current) !== accountId(next)) {
+      publishSessionChange();
+      reloadBrowserSession();
+      return;
+    }
+    updateUser(next);
+    sessionLoaded.current = true;
+    setLoading(false);
+    setError(null);
+    publishSessionChange();
+  }, [updateUser]);
   const chatOwnerId = user?.authId || user?._id;
   useEffect(() => {
     const expired = () => {
       ++authCheckVersion.current;
       disconnectSocket();
-      setUser(null);
+      updateUser(null);
+      sessionLoaded.current = true;
       setLoading(false);
       setError('Your session ended. Please sign in again.');
     };
@@ -35,6 +68,32 @@ export const AuthProvider = ({ children }) => {
     socket.on('auth:revoked', expired);
     window.addEventListener('auth:expired', expired);
     return () => { socket.off('auth:revoked', expired); window.removeEventListener('auth:expired', expired); };
+  }, [updateUser]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSessionChanges(reloadBrowserSession);
+    window.addEventListener('auth:session-changed', reloadBrowserSession);
+    let pending = false, active = true;
+    const revalidate = async () => {
+      if (pending || document.visibilityState === 'hidden' || !sessionLoaded.current || magicVerificationStarted.current) return;
+      pending = true;
+      const version = authCheckVersion.current;
+      try {
+        const response = await api.get('/auth/me');
+        if (!active || version !== authCheckVersion.current || response.data.success !== true) return;
+        if (sessionIdentity(response.data.data || null) !== sessionIdentity(activeUser.current)) reloadBrowserSession();
+      } catch { /* A network failure does not claim the current account changed. */ }
+      finally { pending = false; }
+    };
+    window.addEventListener('focus', revalidate);
+    document.addEventListener('visibilitychange', revalidate);
+    return () => {
+      active = false;
+      unsubscribe();
+      window.removeEventListener('auth:session-changed', reloadBrowserSession);
+      window.removeEventListener('focus', revalidate);
+      document.removeEventListener('visibilitychange', revalidate);
+    };
   }, []);
 
   const checkAuth = useCallback(async () => {
@@ -56,16 +115,16 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const data = response.data.data || null;
-        setUser(data);
+        updateUser(data);
       } else {
-        setUser(null);
+        updateUser(null);
       }
     } catch {
       if (
         checkVersion === authCheckVersion.current &&
         !magicVerificationStarted.current
       ) {
-        setUser(null);
+        updateUser(null);
       }
     } finally {
       if (
@@ -73,9 +132,10 @@ export const AuthProvider = ({ children }) => {
         !magicVerificationStarted.current
       ) {
         setLoading(false);
+        sessionLoaded.current = true;
       }
     }
-  }, []);
+  }, [updateUser]);
 
   useEffect(() => {
     // Initial session lookup updates state only after the API response.
@@ -98,9 +158,7 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post("/auth/login", { email: email.trim(), password });
       if (response.data.success) {
         // A slower initial /auth/me response must not clear this new session.
-        ++authCheckVersion.current;
-        setUser(response.data.data.user);
-        setLoading(false);
+        acceptSession(response.data.data.user);
         return { success: true };
       }
 
@@ -110,7 +168,7 @@ export const AuthProvider = ({ children }) => {
       setError(message);
       return { success: false, error: message };
     }
-  }, []);
+  }, [acceptSession]);
 
   const requestMagicLink = useCallback(async (email) => {
     try {
@@ -147,8 +205,7 @@ export const AuthProvider = ({ children }) => {
         });
         if (response.data.success) {
           const user = response.data.data?.user || null;
-          setUser(user);
-          setLoading(false);
+          acceptSession(user);
           return { success: true, user };
         }
 
@@ -171,11 +228,12 @@ export const AuthProvider = ({ children }) => {
     promise.then(() => {
       if (pendingMagicLinkVerification.current?.token === token) {
         pendingMagicLinkVerification.current = null;
+        magicVerificationStarted.current = false;
       }
     });
 
     return promise;
-  }, []);
+  }, [acceptSession]);
 
   const setupPassword = useCallback(async (newPassword, confirmPassword) => {
     try {
@@ -185,9 +243,7 @@ export const AuthProvider = ({ children }) => {
         confirmPassword,
       });
       if (response.data.success) {
-        setError(null);
-        setUser(response.data.data.user);
-        setLoading(false);
+        acceptSession(response.data.data.user);
         return { success: true };
       }
 
@@ -200,12 +256,11 @@ export const AuthProvider = ({ children }) => {
       setError(message);
       return { success: false, error: message };
     }
-  }, []);
+  }, [acceptSession]);
 
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
-      ++authCheckVersion.current;
       if (chatOwnerId) {
         try {
           localStorage.removeItem(`chatdock:${String(chatOwnerId)}`);
@@ -213,14 +268,12 @@ export const AuthProvider = ({ children }) => {
           // Storage access must not prevent a successful logout.
         }
       }
-      disconnectSocket();
-      setUser(null);
-      setError(null);
+      acceptSession(null);
     } catch (err) {
       setError(err.response?.data?.message || "Unable to complete logout. Please try again.");
       throw err;
     }
-  }, [chatOwnerId]);
+  }, [chatOwnerId, acceptSession]);
 
   // Re-fetch the current user (e.g. after editing own profile).
   const refreshUser = useCallback(async () => {
@@ -228,12 +281,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.get("/auth/me");
       if (checkVersion === authCheckVersion.current && response.data.success) {
-        setUser(response.data.data || null);
+        const next = response.data.data || null;
+        if (sessionIdentity(next) !== sessionIdentity(activeUser.current)) reloadBrowserSession();
+        else updateUser(next);
       }
     } catch {
       // keep current user on failure
     }
-  }, []);
+  }, [updateUser]);
 
   return (
     <AuthContext.Provider

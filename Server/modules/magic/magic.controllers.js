@@ -115,6 +115,7 @@ export const verifyMagicLink = async (req, res) => {
     const userProfile = await UserModel.findByAuthId(user._id);
     const publicUser = {
       ...(userProfile || {}),
+      authId: String(user._id),
       role: user.role,
       passwordSetupRequired: !hasUsableLocalPassword(user)
     };

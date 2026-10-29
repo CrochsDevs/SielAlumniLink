@@ -59,7 +59,7 @@ export default function EmploymentReports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(50);
   const [expanded, setExpanded] = useState(null);
   const generation = useRef(0);
   const load = useCallback(async () => {
@@ -336,59 +336,6 @@ export default function EmploymentReports() {
                 />
               ))}
             </AdminStatGrid>
-            <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-              Employment rate = employed and self-employed alumni ÷ alumni with
-              a reported status. Studying and unemployed are included in the
-              denominator. Missing reports are excluded. Batch and program
-              filters apply to all summaries; search and status below filter the
-              alumni list and its export.
-            </p>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <section className={card}>
-                <h2 className="admin-section-title text-base font-semibold">
-                  Industry distribution
-                </h2>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  Share of employed and self-employed alumni
-                </p>
-                <div className="mt-5 space-y-4">
-                  {!report.industryDistribution.length && (
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      No employed alumni in this selection.
-                    </p>
-                  )}
-                  {report.industryDistribution.map((item) => (
-                    <div key={item.industry}>
-                      <div className="mb-2 flex justify-between gap-3 text-xs">
-                        <span className="break-words">{item.industry}</span>
-                        <span className="shrink-0 text-zinc-500 dark:text-zinc-400">
-                          {item.count} · {item.percentage}%
-                        </span>
-                      </div>
-                      <ProgressBar role="meter" label={item.industry} value={item.percentage} />
-                    </div>
-                  ))}
-                </div>
-              </section>
-              <section className={card}>
-                <h2 className="admin-section-title text-base font-semibold">
-                  Employment status
-                </h2>
-                <dl className="mt-4 space-y-3">
-                  {report.statusDistribution.map((item) => (
-                    <div
-                      key={item.status}
-                      className="flex justify-between gap-3 border-b border-zinc-100 pb-3 text-sm last:border-0 dark:border-zinc-800"
-                    >
-                      <dt className="text-zinc-500 dark:text-zinc-400">
-                        {item.status}
-                      </dt>
-                      <dd className="font-semibold">{item.count}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            </div>
             <section className={card}>
               <h2 className="admin-section-title text-base font-semibold">
                 Career progression
@@ -430,7 +377,7 @@ export default function EmploymentReports() {
               >
                 {filtered.length} alumni
               </p>
-              <div className="mt-3 overflow-x-auto">
+              <div role="region" aria-label="Alumni employment records" tabIndex={0} className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[750px] text-left text-xs">
                   <thead>
                     {employmentTable.getHeaderGroups().map((group) => (
@@ -575,6 +522,60 @@ export default function EmploymentReports() {
                 itemLabel="alumni"
               />
             </section>
+
+            <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+              Employment rate = employed and self-employed alumni ÷ alumni with
+              a reported status. Studying and unemployed are included in the
+              denominator. Missing reports are excluded. Batch and program
+              filters apply to all summaries; search and status below filter the
+              alumni list and its export.
+            </p>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <section className={card}>
+                <h2 className="admin-section-title text-base font-semibold">
+                  Industry distribution
+                </h2>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  Share of employed and self-employed alumni
+                </p>
+                <div className="mt-5 space-y-4">
+                  {!report.industryDistribution.length && (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      No employed alumni in this selection.
+                    </p>
+                  )}
+                  {report.industryDistribution.map((item) => (
+                    <div key={item.industry}>
+                      <div className="mb-2 flex justify-between gap-3 text-xs">
+                        <span className="break-words">{item.industry}</span>
+                        <span className="shrink-0 text-zinc-500 dark:text-zinc-400">
+                          {item.count} · {item.percentage}%
+                        </span>
+                      </div>
+                      <ProgressBar role="meter" label={item.industry} value={item.percentage} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+              <section className={card}>
+                <h2 className="admin-section-title text-base font-semibold">
+                  Employment status
+                </h2>
+                <dl className="mt-4 space-y-3">
+                  {report.statusDistribution.map((item) => (
+                    <div
+                      key={item.status}
+                      className="flex justify-between gap-3 border-b border-zinc-100 pb-3 text-sm last:border-0 dark:border-zinc-800"
+                    >
+                      <dt className="text-zinc-500 dark:text-zinc-400">
+                        {item.status}
+                      </dt>
+                      <dd className="font-semibold">{item.count}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            </div>
           </>
         )
       )}

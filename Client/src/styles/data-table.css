@@ -1,0 +1,75 @@
+/* One table design for every workspace role. Edit --table-* in design-tokens.css. */
+@media screen {
+  .member-workspace[data-workspace-role] main.workspace-page :is(div, section):has(> table) {
+    min-width: 0;
+    max-width: 100%;
+    max-height: var(--table-max-height);
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--table-scrollbar) var(--table-surface);
+  }
+  .member-workspace[data-workspace-role] main.workspace-page :is(div, section):has(> table):focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: -2px;
+  }
+  .member-workspace[data-workspace-role] main.workspace-page table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--table-surface);
+    color: var(--table-text);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: var(--table-font-size);
+    line-height: 1.5;
+    text-align: left;
+  }
+  .member-workspace[data-workspace-role] main.workspace-page table > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+    padding: var(--table-cell-padding);
+    border-color: var(--table-line);
+    vertical-align: middle;
+  }
+  .member-workspace[data-workspace-role] main.workspace-page table > thead,
+  .member-workspace[data-workspace-role] main.workspace-page table > thead > tr {
+    background: var(--table-header-surface);
+  }
+  .member-workspace[data-workspace-role] main.workspace-page table > thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--table-line);
+    background: var(--table-header-surface);
+    color: var(--table-header-text);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.5;
+    letter-spacing: 0.015em;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .member-workspace[data-workspace-role] main.workspace-page table > thead > tr > th.z-30 { z-index: 30; }
+  .member-workspace[data-workspace-role] main.workspace-page table > tbody > tr > :is(td, th) {
+    border-bottom: 1px solid var(--table-line);
+    background: var(--table-surface);
+    color: var(--table-text);
+    font-size: var(--table-font-size);
+    box-shadow: none;
+  }
+  .member-workspace[data-workspace-role] main.workspace-page table > tbody > tr:last-child > :is(td, th) { border-bottom: 0; }
+  .member-workspace[data-workspace-role] main.workspace-page table > tbody > tr:is(:hover, :focus-within) > :is(td, th) {
+    background: var(--table-row-hover);
+  }
+  .member-workspace .data-pagination { border-color: var(--table-line); }
+  .member-workspace .data-table-hint {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--table-line);
+    background: var(--table-surface);
+    color: var(--table-muted);
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  .member-workspace .data-pagination p { color: var(--table-muted); }
+  .member-workspace .data-pagination p span { color: var(--table-text); font-weight: 600; }
+  .member-workspace .data-pagination button { border-radius: var(--radius); font-size: 0.75rem; }
+  .member-workspace .data-pagination button[aria-current="page"] { background: hsl(var(--primary)); color: #fff; }
+}

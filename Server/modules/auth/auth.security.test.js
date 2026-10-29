@@ -15,7 +15,7 @@ process.env.DOTENV_CONFIG_QUIET = 'true';
 // Stub transport creation before loading controllers: no SMTP or database connections.
 let deliver = async () => {};
 mock.method(nodemailer, 'createTransport', () => ({ sendMail: message => deliver(message) }));
-const { forgotPassword, verifyOTP, resetPassword, signup, login, setupPassword, changePassword, logout } = await import('./auth.controllers.js');
+const { forgotPassword, verifyOTP, resetPassword, signup, login, setupPassword, changePassword, logout, getMe } = await import('./auth.controllers.js');
 const { sendMagicLink, verifyMagicLink } = await import('../magic/magic.controllers.js');
 const { default: AuthModel } = await import('./auth.models.js');
 const { default: MagicLinkModel } = await import('../magic/magic.models.js');
@@ -40,6 +40,55 @@ const captureLogs = t => {
     t.mock.method(console, 'error', (...args) => logs.push(args.join(' ')));
     return logs;
 };
+
+test('a stale tab cannot use another account cookie to reach protected handlers', async t => {
+    t.mock.method(AuthModel, 'findById', async () => account);
+    for (const [guard, expected] of [protect, optionalProtect].flatMap(guard =>
+        ['another-account', '', ['fixture'], { id: 'fixture' }].map(expected => [guard, expected]))) {
+        const res = response(); let reached = false;
+        await guard({ cookies: { token: signSessionToken(account) }, headers: { 'x-account-id': expected } }, res, () => { reached = true; });
+        assert.equal(reached, false);
+        assert.equal(res.statusCode, 409);
+        assert.equal(res.body.code, 'SESSION_ACCOUNT_CHANGED');
+    }
+    for (const headers of [{}, { 'x-account-id': account._id }]) {
+        let reached = false;
+        await protect({ cookies: { token: signSessionToken(account) }, headers }, response(), () => { reached = true; });
+        assert.equal(reached, true);
+    }
+});
+
+test('the expected-account header never substitutes for a valid session cookie', async () => {
+    for (const token of [undefined, 'invalid-token']) {
+        const res = response(); let reached = false;
+        await protect({ cookies: { token }, headers: { 'x-account-id': account._id } }, res, () => { reached = true; });
+        assert.equal(reached, false);
+        assert.equal(res.statusCode, 401);
+    }
+});
+
+test('a stale tab cannot log out the newly signed-in account', async t => {
+    t.mock.method(AuthModel, 'findById', async () => account);
+    const revoke = t.mock.method(AuthModel, 'revokeSessionsById', async () => ({ modifiedCount: 1 }));
+    const res = response();
+    await logout({ cookies: { token: signSessionToken(account) }, headers: { 'x-account-id': 'old-account' } }, res);
+    assert.equal(res.statusCode, 409);
+    assert.equal(res.body.code, 'SESSION_ACCOUNT_CHANGED');
+    assert.equal(revoke.mock.callCount(), 0);
+    assert.equal(res.clearedCookie, undefined);
+});
+
+test('session responses identify the auth account even when no profile exists', async t => {
+    t.mock.method(AuthModel, 'findByEmail', async () => account);
+    t.mock.method(UserModel, 'findByAuthId', async () => null);
+    t.mock.method(bcrypt, 'compare', async () => true);
+    t.mock.method(ActivityModel, 'log', async () => {});
+    const signedIn = response();
+    await login({ body: { email: account.email, password: 'Fixture-password' } }, signedIn);
+    assert.equal(signedIn.body.data.user.authId, account._id);
+    const current = response(); await getMe({ user: account }, current);
+    assert.equal(current.body.data.authId, account._id);
+});
 
 test('login failures have the same response and bcrypt work for unknown, disabled and passwordless accounts', async t => {
     let current, comparisons = 0;

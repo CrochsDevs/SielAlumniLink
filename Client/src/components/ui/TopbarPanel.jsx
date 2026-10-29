@@ -27,7 +27,7 @@ export default function TopbarPanel({ title, action, children, onClose, triggerR
 
   return <Panel ref={panelRef} id={id} role={isMobile ? 'dialog' : 'region'} aria-modal={isMobile || undefined} aria-label={title}
     onCancel={isMobile ? event => { event.preventDefault(); onClose(); } : undefined}
-    className={cn('topbar-panel absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 dark:border-zinc-700 dark:bg-zinc-900', className)}>
+    className={cn('topbar-panel absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-5rem)] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-panel dark:border-zinc-700 dark:bg-zinc-900', className)}>
     <div className="topbar-panel-heading flex items-center justify-between gap-3 px-4 py-3">
       <p className="text-[14px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">{title}</p>
       <div className="flex items-center gap-3">

@@ -207,7 +207,7 @@ try {
   await send("Fetch.enable", {
     patterns: [{ urlPattern: "http://localhost:3002/api/*" }],
   });
-  await send("Page.navigate", { url: "http://localhost:5173/admin/tracer" });
+  await send("Page.navigate", { url: "http://localhost:5173/admin/tracer?view=alignment" });
   await until(`${roster}?.textContent.includes('it-graduate@example.test')`);
   assert.equal(
     await evaluate(

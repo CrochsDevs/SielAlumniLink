@@ -7,6 +7,7 @@ import { sendOTPEmail } from '../../utils/email.js';
 import { authEmail, isOTP } from './auth.validation.js';
 import { createPasswordReset, resetTokenHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, activeAccount, sessionMatches, sessionVersion } from './session-token.js';
+import { requestAccountMatches, rejectChangedAccount } from './request-account.js';
 
 const hasUsableLocalPassword = (user) => (
     user?.passwordSetupRequired === false && typeof user?.password === 'string' && user.password.length > 0
@@ -71,6 +72,7 @@ export const login = async (req, res) => {
             data: {
                 user: {
                     ...(userProfile || { email: user.email, name: userProfile?.name }),
+                    authId: String(user._id),
                     role: user.role,
                     passwordSetupRequired: !hasUsableLocalPassword(user)
                 }
@@ -146,6 +148,7 @@ export const setupPassword = async (req, res) => {
             data: {
                 user: {
                     ...(userProfile || { email: req.user.email, name: userProfile?.name }),
+                    authId: String(req.user._id),
                     role: req.user.role,
                     passwordSetupRequired: false
                 }
@@ -371,6 +374,7 @@ export const logout = async (req, res) => {
         if (decoded) {
             const user = await AuthModel.findById(decoded.sub);
             if (sessionMatches(decoded, user)) {
+                if (!requestAccountMatches(req, user)) return rejectChangedAccount(res);
                 const result = await AuthModel.revokeSessionsById(user._id);
                 if (!result.modifiedCount) throw new Error('Session revocation did not complete');
                 // Audit logging is optional; session revocation above is mandatory.
@@ -410,6 +414,7 @@ export const getMe = async (req, res) => {
             success: true,
             data: {
                 ...(userProfile || { email: req.user.email }),
+                authId: String(req.user._id),
                 role: req.user.role,
                 passwordSetupRequired: !hasUsableLocalPassword(req.user)
             }

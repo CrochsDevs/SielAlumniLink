@@ -122,7 +122,7 @@ export default function ProgramAlignmentReport() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(50);
   const generation = useRef(0);
   const load = useCallback(async () => {
     const request = ++generation.current;
@@ -307,7 +307,7 @@ export default function ProgramAlignmentReport() {
         </div>
       </header>
       <section aria-label="Alignment filters" className={card}>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           {[
             ["followUp", "Follow-up period", periods],
             [
@@ -431,14 +431,6 @@ export default function ProgramAlignmentReport() {
                 />
               ))}
             </AdminStatGrid>
-            <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-              Alignment is reported by alumni based on their duties. Rates
-              exclude Not sure, Not reported, and non-working responses. Years
-              after graduation = response year − graduation year (calendar-year
-              estimate). Each alumnus/program/batch contributes its latest
-              response within the selected period; a past response is not
-              treated as their current job.
-            </p>
             {!report.rows.length ? (
               <div className={`${card} py-10 text-center`}>
                 <h3 className="admin-section-title font-semibold">
@@ -452,72 +444,6 @@ export default function ProgramAlignmentReport() {
               </div>
             ) : (
               <>
-                <section className={card}>
-                  <h3 className="admin-section-title text-base font-semibold">
-                    Alignment by graduation program
-                  </h3>
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[860px] text-left text-xs">
-                      <thead>
-                        {programsTable.getHeaderGroups().map((group) => (
-                          <tr
-                            key={group.id}
-                            className={
-                              "border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
-                            }
-                          >
-                            {group.headers.map((header) => (
-                              <th
-                                key={header.id}
-                                scope="col"
-                                colSpan={header.colSpan}
-                                className={
-                                  header.column.columnDef.meta?.headerClassName
-                                }
-                              >
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                      header.column.columnDef.header,
-                                      header.getContext(),
-                                    )}
-                              </th>
-                            ))}
-                          </tr>
-                        ))}
-                      </thead>
-                      <tbody>
-                        {programsTable
-                          .getRowModel()
-                          .rows.map(({ original: item }) => (
-                            <tr
-                              key={item.program}
-                              className="border-b border-zinc-100 dark:border-zinc-800"
-                            >
-                              <th
-                                scope="row"
-                                className="max-w-72 whitespace-normal px-3 py-4 font-medium"
-                              >
-                                {item.program}
-                              </th>
-                              {[
-                                item.working,
-                                item.directlyRelated,
-                                item.partlyRelated,
-                                item.unrelated,
-                                item.unsure + item.notReported,
-                                percentage(item.directAlignmentRate),
-                              ].map((value, index) => (
-                                <td key={index} className="px-3 py-4">
-                                  {value}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
                 <section className={card}>
                   <h3 className="admin-section-title text-base font-semibold">
                     Program and reported work
@@ -629,8 +555,83 @@ export default function ProgramAlignmentReport() {
                     itemLabel="responses"
                   />
                 </section>
+                <section className={card}>
+                  <h3 className="admin-section-title text-base font-semibold">
+                    Alignment by graduation program
+                  </h3>
+                  <div role="region" aria-label="Alignment totals by program" tabIndex={0} className="mt-4 overflow-x-auto">
+                    <table className="w-full min-w-[860px] text-left text-xs">
+                      <thead>
+                        {programsTable.getHeaderGroups().map((group) => (
+                          <tr
+                            key={group.id}
+                            className={
+                              "border-b border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                            }
+                          >
+                            {group.headers.map((header) => (
+                              <th
+                                key={header.id}
+                                scope="col"
+                                colSpan={header.colSpan}
+                                className={
+                                  header.column.columnDef.meta?.headerClassName
+                                }
+                              >
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext(),
+                                    )}
+                              </th>
+                            ))}
+                          </tr>
+                        ))}
+                      </thead>
+                      <tbody>
+                        {programsTable
+                          .getRowModel()
+                          .rows.map(({ original: item }) => (
+                            <tr
+                              key={item.program}
+                              className="border-b border-zinc-100 dark:border-zinc-800"
+                            >
+                              <th
+                                scope="row"
+                                className="max-w-72 whitespace-normal px-3 py-4 font-medium"
+                              >
+                                {item.program}
+                              </th>
+                              {[
+                                item.working,
+                                item.directlyRelated,
+                                item.partlyRelated,
+                                item.unrelated,
+                                item.unsure + item.notReported,
+                                percentage(item.directAlignmentRate),
+                              ].map((value, index) => (
+                                <td key={index} className="px-3 py-4">
+                                  {value}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
               </>
             )}
+
+            <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+              Alignment is reported by alumni based on their duties. Rates
+              exclude Not sure, Not reported, and non-working responses. Years
+              after graduation = response year − graduation year (calendar-year
+              estimate). Each alumnus/program/batch contributes its latest
+              response within the selected period; a past response is not
+              treated as their current job.
+            </p>
           </>
         )
       )}
