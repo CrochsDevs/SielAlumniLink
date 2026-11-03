@@ -3,10 +3,10 @@ import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import {
-  useInbox,
   ConvoList,
   ThreadPane,
 } from "../../components/chat/InboxParts";
+import { useInbox } from "../../components/chat/useInbox";
 import "../../components/chat/MessagesWorkspace.css";
 
 const AlumniMessage = () => {

@@ -3,10 +3,10 @@ import { useAuth } from "../../context/useAuth";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import {
-  useInbox,
   ConvoList,
   ThreadPane,
 } from "../../components/chat/InboxParts";
+import { useInbox } from "../../components/chat/useInbox";
 import "../../components/chat/MessagesWorkspace.css";
 
 const AdminMessage = () => {

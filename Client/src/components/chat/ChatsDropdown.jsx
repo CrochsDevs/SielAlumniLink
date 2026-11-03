@@ -33,9 +33,9 @@ export default function ChatsDropdown({ conversations, messagePath, onClose, onD
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[13px] font-bold text-zinc-800 dark:text-zinc-100">{conversation.name}</span>
-            <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{conversation.preview}</span>
+            <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{conversation.preview || 'No received messages yet'}</span>
           </span>
-          <span className="shrink-0 text-[10.5px] text-zinc-400">{formatTime(conversation.time)}</span>
+          <span className="shrink-0 text-[10.5px] text-zinc-400">{formatTime(conversation.previewAt === undefined ? conversation.time : conversation.previewAt)}</span>
         </button>
       </li>)}
       {!filtered.length && <li className="flex flex-col items-center gap-2 px-4 py-10 text-center text-xs text-muted-foreground">

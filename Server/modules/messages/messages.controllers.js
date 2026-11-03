@@ -2,14 +2,19 @@ import { ConversationModel, MessageModel } from './messages.models.js';
 import AuthModel from '../auth/auth.models.js';
 import UserModel from '../users/users.models.js';
 import ConnectionModel from '../connections/connections.models.js';
-import { emitToUser, removeGroupCallMember } from '../../realtime/socket.js';
+import { emitToUser, removeGroupCallMember, endDirectCalls } from '../../realtime/socket.js';
+import { ConversationControls } from './conversation-controls.js';
 import { createGroupMembersService, MAX_GROUP_MEMBERS } from './group-members.js';
 import { groupRoles } from './group-admin.js';
+import { messageWasRead } from './read-receipts.js';
+import { messageSenders } from './message-senders.js';
+import cloudUpload, { cloudinary } from '../../config/cloudinary.js';
+import { uploadMessageAttachment, messageAttachmentDto } from './message-attachments.js';
 
 const groupMembers = createGroupMembersService({ conversations: ConversationModel, connections: ConnectionModel, accounts: AuthModel, profiles: UserModel });
 const groupAction = handler => async (req, res) => {
   try { res.status(200).json({ success: true, data: await handler(req) }); }
-  catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Unable to update group members. Please try again.' }); }
+  catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Unable to update this conversation. Please try again.' }); }
 };
 export const listGroupMembers = groupAction(req => groupMembers.list(req.params.id, req.user._id));
 export const groupCandidates = groupAction(req => groupMembers.candidates(req.params.id, req.user._id));
@@ -41,6 +46,7 @@ const isMember = (convo, authId) =>
 // LinkedIn-style gate: chat only between ACCEPTED connections.
 // Admins bypass (support/moderation).
 const canMessage = async (me, otherAuthId) => {
+  if (await ConversationControls.isBlocked(me._id, otherAuthId)) return false;
   if (me.role === 'admin') return true;
   const mine = await ConnectionModel.findMine(me._id);
   return mine.some((c) =>
@@ -55,8 +61,14 @@ const otherParticipant = (convo, authId) =>
   (convo.participants || []).find((p) => String(p.authId) !== String(authId)) || {};
 
 const enrich = async (convo, myAuthId) => {
+  const preference = await ConversationControls.preference(convo._id, myAuthId);
+  const clearedAt = preference?.clearedAt;
+  const incoming = await MessageModel.latestIncoming(convo._id, myAuthId, clearedAt);
+  const preview = { preview: incoming ? incoming.unsent ? 'Message deleted' : incoming.text ||
+    (incoming.attachment?.kind === 'image' ? '📷 Photo' : incoming.attachment?.kind === 'file' ? '📎 File' : '') : '',
+    previewMessageId: incoming ? String(incoming._id) : null, previewAt: incoming?.createdAt || null };
   if (convo.isGroup) {
-    const unread = await MessageModel.unreadCount(convo._id, myAuthId);
+    const unread = await MessageModel.unreadCount(convo._id, myAuthId, clearedAt);
     return {
       _id: convo._id,
       isGroup: true,
@@ -66,7 +78,7 @@ const enrich = async (convo, myAuthId) => {
       authId: '',
       profilePicture: null,
       memberCount: (convo.participants || []).length,
-      preview: convo.lastMessage?.text || '',
+      ...preview,
       time: convo.lastMessage?.at || convo.updatedAt,
       unread,
     };
@@ -74,17 +86,19 @@ const enrich = async (convo, myAuthId) => {
   const other = otherParticipant(convo, myAuthId);
   const profile = (other.authId ? await UserModel.findByAuthId(other.authId) : null) ||
     (other.email ? await UserModel.findByEmail(other.email) : null);
-  const unread = await MessageModel.unreadCount(convo._id, myAuthId);
+  const unread = await MessageModel.unreadCount(convo._id, myAuthId, clearedAt);
+  const blockStatus = await ConversationControls.blockStatus(myAuthId, other.authId);
   return {
     _id: convo._id,
     isGroup: false,
+    ...blockStatus,
     name: profile?.name || other.email || 'Unknown',
     email: other.email || '',
     authId: other.authId || '',
     profileId: profile?._id ? String(profile._id) : null,
     role: profile?.role || null,
     profilePicture: profile?.profilePicture || null,
-    preview: convo.lastMessage?.text || '',
+    ...preview,
     time: convo.lastMessage?.at || convo.updatedAt,
     unread,
   };
@@ -144,6 +158,7 @@ export const openConversation = async (req, res) => {
     const convo = await ConversationModel.getOrCreate(
       req.user._id, req.user.email, recipient._id, recipient.email
     );
+    await ConversationControls.show(convo._id, req.user._id);
     const data = await enrich(convo, req.user._id);
     res.status(200).json({ success: true, data });
   } catch (error) {
@@ -154,7 +169,7 @@ export const openConversation = async (req, res) => {
   }
 };
 
-// Thread (marks incoming as read).
+// Loading/caching history alone does not imply that it was viewed.
 export const listMessages = async (req, res) => {
   try {
     const convo = await ConversationModel.findById(req.params.id);
@@ -164,19 +179,24 @@ export const listMessages = async (req, res) => {
         message: 'Conversation not found'
       });
     }
-    const messages = await MessageModel.listByConversation(req.params.id);
-    await MessageModel.markRead(req.params.id, req.user._id);
+    const preference = await ConversationControls.preference(convo._id, req.user._id);
+    const messages = await MessageModel.listByConversation(req.params.id, 100, preference?.clearedAt);
+    const senders = await messageSenders(messages);
     res.status(200).json({
       success: true,
       data: messages.map((m) => ({
         _id: m._id,
+        clientMessageId: m.clientMessageId,
         from: String(m.senderAuthId) === String(req.user._id) ? 'me' : 'them',
         text: m.text,
         at: m.createdAt,
         edited: !!m.edited,
         unsent: !!m.unsent,
+        read: messageWasRead(m, convo.isGroup),
+        readByMe: (m.readBy || []).includes(String(req.user._id)),
         senderEmail: m.senderEmail,
-        attachment: m.attachment || null,
+        ...senders.get(String(m.senderAuthId)),
+        attachment: messageAttachmentDto(m),
         call: m.call || null,
       }))
     });
@@ -188,22 +208,34 @@ export const listMessages = async (req, res) => {
   }
 };
 
+export const markMessagesRead = groupAction(async req => {
+  const ids = req.body?.messageIds;
+  if (!Array.isArray(ids) || ids.length > 100 || !ids.length || ids.some(id => typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id))) {
+    throw Object.assign(new Error('Provide up to 100 valid message IDs.'), { status: 400 });
+  }
+  const conversation = await ConversationModel.findById(req.params.id);
+  if (!conversation || !isMember(conversation, req.user._id)) throw Object.assign(new Error('Conversation not found'), { status: 404 });
+  const preference = await ConversationControls.preference(conversation._id, req.user._id);
+  const messages = await MessageModel.markRead(conversation._id, req.user._id, ids, preference?.clearedAt);
+  const unread = await MessageModel.unreadCount(conversation._id, req.user._id, preference?.clearedAt);
+  const data = { conversationId: String(conversation._id), readerAuthId: String(req.user._id), messageIds: messages.map(message => String(message._id)), unread };
+  for (const participant of conversation.participants) emitToUser(participant.authId, 'message:read', data);
+  return data;
+});
+
 // Send + push live to both sides.
 export const sendMessage = async (req, res) => {
   try {
-    const { text, attachment } = req.body;
-    if ((!text || !String(text).trim()) && !attachment?.url) {
+    const { text } = req.body;
+    const clientMessageId = typeof req.body.clientMessageId === 'string' && /^[\w-]{1,100}$/.test(req.body.clientMessageId) ? req.body.clientMessageId : undefined;
+    if (text !== undefined && typeof text !== 'string') return res.status(400).json({ success: false, message: 'Invalid message text' });
+    if ((!text || !text.trim()) && !req.file) {
       return res.status(400).json({
         success: false,
         message: 'Message cannot be empty'
       });
     }
-    if (attachment?.url && String(attachment.url).length > 2_000_000) {
-      return res.status(413).json({
-        success: false,
-        message: 'File too large (max ~1.5MB until Cloudinary lands)'
-      });
-    }
+    if (req.body.attachment) return res.status(400).json({ success: false, message: 'Upload the attachment as a file.' });
 
     const convo = await ConversationModel.findById(req.params.id);
     if (!convo || !isMember(convo, req.user._id)) {
@@ -217,17 +249,23 @@ export const sendMessage = async (req, res) => {
     if (!convo.isGroup && other && !(await canMessage(req.user, other.authId))) {
       return res.status(403).json({
         success: false,
-        message: NOT_CONNECTED_MESSAGE
+        message: await ConversationControls.isBlocked(req.user._id, other.authId) ? 'This conversation is blocked.' : NOT_CONNECTED_MESSAGE
       });
     }
 
-    const message = await MessageModel.create({
+    const attachment = await uploadMessageAttachment(req.file, req.user, req.params.id, cloudUpload);
+    let message;
+    try { message = await MessageModel.create({
       conversationId: req.params.id,
       senderAuthId: req.user._id,
       senderEmail: req.user.email,
+      clientMessageId,
       text: (text || '').trim(),
-      attachment: req.body.attachment,
-    });
+      attachment,
+    }); } catch (error) {
+      if (attachment?.publicId) await cloudinary.uploader.destroy(attachment.publicId, { resource_type: attachment.resourceType, type: 'authenticated' }).catch(() => {});
+      throw error;
+    }
 
     const lastMessage = {
       text: message.text || (message.attachment ? (message.attachment.kind === 'image' ? '📷 Photo' : '📎 File') : ''),
@@ -236,15 +274,18 @@ export const sendMessage = async (req, res) => {
     };
     await ConversationModel.touch(req.params.id, lastMessage);
 
+    const sender = (await messageSenders([message])).get(String(req.user._id));
     const payload = {
       conversationId: String(convo._id),
       message: {
         _id: message._id,
+        clientMessageId,
         text: message.text,
         at: message.createdAt,
         senderAuthId: String(req.user._id),
         senderEmail: req.user.email,
-        attachment: message.attachment || null,
+        ...sender,
+        attachment: messageAttachmentDto(message),
       },
       lastMessage,
     };
@@ -254,10 +295,10 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: { _id: message._id, from: 'me', text: message.text, at: message.createdAt }
+      data: { _id: message._id, clientMessageId, from: 'me', text: message.text, attachment: messageAttachmentDto(message), at: message.createdAt, read: false, ...sender }
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });
@@ -265,6 +306,33 @@ export const sendMessage = async (req, res) => {
 };
 
 // Push an event to all members of a conversation (groups included).
+export const deleteConversation = groupAction(async req => {
+  const conversation = await ConversationModel.findById(req.params.id);
+  if (!conversation || !isMember(conversation, req.user._id)) throw Object.assign(new Error('Conversation not found'), { status: 404 });
+  const data = await ConversationControls.clear(conversation._id, req.user._id);
+  // Personal deletion never removes another participant's messages or group membership.
+  emitToUser(req.user._id, 'conversation:deleted', data);
+  return data;
+});
+
+const changeBlock = blocked => groupAction(async req => {
+  const conversation = await ConversationModel.findById(req.params.id);
+  if (!conversation || !isMember(conversation, req.user._id)) throw Object.assign(new Error('Conversation not found'), { status: 404 });
+  if (conversation.isGroup) throw Object.assign(new Error('Blocking applies to individual accounts, not group chats.'), { status: 400 });
+  const other = otherParticipant(conversation, req.user._id);
+  if (!other.authId) throw Object.assign(new Error('Account not found'), { status: 404 });
+  await ConversationControls.setBlocked(req.user._id, other.authId, blocked);
+  if (blocked) await endDirectCalls(req.user._id, other.authId);
+  const data = await enrich(conversation, req.user._id);
+  for (const participant of conversation.participants) {
+    const updated = String(participant.authId) === String(req.user._id) ? data : await enrich(conversation, participant.authId);
+    emitToUser(participant.authId, 'conversation:updated', updated);
+  }
+  return data;
+});
+export const blockConversation = changeBlock(true);
+export const unblockConversation = changeBlock(false);
+
 const emitToMembers = async (conversationId, event, payload) => {
   try {
     const convo = await ConversationModel.findById(conversationId);

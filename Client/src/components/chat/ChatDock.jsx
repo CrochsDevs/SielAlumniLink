@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { gooeyToast as toast } from 'goey-toast';
 import { X, Minus, Send, Smile, ImagePlus, Paperclip } from "lucide-react";
+import { useMessageComposer } from './useMessageComposer';
+import ComposerEditNotice from './ComposerEditNotice';
+import ComposerImagePreview from './ComposerImagePreview';
 import ChatAvatar from "./ChatAvatar";
 import EditGroupName from "./EditGroupName";
 import GroupMembers from "./GroupMembers";
@@ -22,7 +24,8 @@ const ChatWindow = ({
   onEdit,
   onUnsend,
 }) => {
-  const [draft, setDraft] = useState("");
+  const composer = useMessageComposer(id, onSend, onEdit);
+  const { draft, setDraft, bindInput } = composer;
   const [showEmoji, setShowEmoji] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const profileWrapRef = useRef(null);
@@ -97,32 +100,12 @@ const ChatWindow = ({
     };
   }, [showEmoji]);
 
-  const submit = (e) => {
-    e.preventDefault();
-    if (!draft.trim()) return;
-    onSend(id, draft.trim());
-    setDraft("");
-  };
+  const submit = composer.submit;
 
-  const sendFile = (file, kind) => {
-    if (!file) return;
-    if (file.size > 1_500_000) {
-      toast.error("Error", { description: "File too large (max 1.5MB for now — Cloudinary coming soon)" });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      onSend(id, "", {
-        kind: kind === "image" ? "image" : "file",
-        name: file.name,
-        url: String(reader.result || ""),
-      });
-    };
-    reader.readAsDataURL(file);
-  };
+  const sendFile = composer.attachFile;
 
   return (
-    <div className="relative flex w-[328px] flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-panel">
+    <div style={{ '--chat-photo-max-width': '200px', '--chat-photo-max-height': '160px' }} className="relative flex w-[328px] flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-panel">
       {/* Header */}
       <div className="flex w-full items-center gap-2 rounded-t-2xl bg-white dark:bg-zinc-900 px-3 py-2 text-left shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
         <div ref={profileWrapRef} className="relative min-w-0 flex-1">
@@ -217,11 +200,15 @@ const ChatWindow = ({
             className="h-[min(340px,calc(100dvh-140px))] overflow-y-auto bg-[#f8faf8] dark:bg-zinc-950 p-3"
           >
             <div ref={messageContentRef}>
-              <MessageThread messages={messages} isGroup={convo.isGroup} convoId={id} onEdit={onEdit} onUnsend={onUnsend} />
+              <MessageThread messages={messages} isGroup={convo.isGroup} conversation={convo} convoId={id} onEdit={composer.startEdit} onUnsend={onUnsend} />
             </div>
           </div>
+          {convo.blocked ? <p role="status" className="border-t border-border p-3 text-center text-xs text-muted-foreground">Messaging is unavailable for this conversation.</p> : <>
+          {composer.editing && <ComposerEditNotice onCancel={composer.cancelEdit} saving={composer.saving} />}
+          {!composer.editing && <ComposerImagePreview attachment={composer.attachment} saving={composer.saving} onRemove={composer.removeImage} />}
           <form
             onSubmit={submit}
+            onPaste={composer.onPaste}
             className="relative flex items-center gap-1 border-t border-zinc-100 dark:border-zinc-800 p-2"
           >
             <div ref={emojiWrapRef} className="relative shrink-0">
@@ -256,7 +243,8 @@ const ChatWindow = ({
               <ImagePlus className="h-4 w-4" />
               <input
                 type="file"
-                accept="image/*"
+                disabled={composer.editing || composer.saving}
+                accept="image/jpeg,image/png,image/gif,image/webp"
                 className="hidden"
                 onChange={(e) => {
                   if (e.target.files?.[0]) sendFile(e.target.files[0], "image");
@@ -271,6 +259,7 @@ const ChatWindow = ({
               <Paperclip className="h-4 w-4" />
               <input
                 type="file"
+                disabled={composer.editing || composer.saving}
                 className="hidden"
                 onChange={(e) => {
                   if (e.target.files?.[0]) sendFile(e.target.files[0], "file");
@@ -279,20 +268,24 @@ const ChatWindow = ({
               />
             </label>
             <input
+              ref={bindInput}
               value={draft}
+              disabled={composer.saving}
+              aria-label={composer.editing ? 'Edit message text' : undefined}
+              onKeyDown={event => { if (event.key === 'Escape' && composer.editing) { event.preventDefault(); composer.cancelEdit(); } }}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Write a message..."
               className="h-9 min-w-0 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:bg-zinc-50 dark:focus:bg-zinc-700 focus:ring-2 focus:ring-brand/20"
             />
             <button
               type="submit"
-              disabled={!draft.trim()}
+              disabled={!composer.canSubmit}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand transition hover:bg-emerald-50 disabled:opacity-40"
-              aria-label="Send message"
+              aria-label={composer.editing ? 'Save edit' : 'Send message'}
             >
               <Send className="h-4 w-4" />
             </button>
-          </form>
+          </form></>}
         </>
       )}
     </div>

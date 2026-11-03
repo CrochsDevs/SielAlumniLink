@@ -1,10 +1,5 @@
-import { useState } from "react";
 import Swal from "sweetalert2";
 import {
-  Pencil,
-  Trash2,
-  Check,
-  X,
   FileText,
   Download,
   Phone,
@@ -13,6 +8,10 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Bubble, BubbleContent } from "../ui/bubble";
+import { messageDeliveryLabel } from './messageDelivery';
+import MessageActions from './MessageActions';
+import ChatPhoto from './ChatPhoto';
+import { chatAttachmentUrl } from '../../utils/chatAttachments';
 
 const sharedPostId = (text) => {
   const match = /^Shared a post: (https?:\/\/\S+)$/.exec(text || "");
@@ -33,29 +32,24 @@ const sharedPostId = (text) => {
 export default function MessageBubble({
   msg,
   mine,
+  isGroup = false,
   convoId,
   onEdit,
   onUnsend,
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(msg.text || "");
   const postId = sharedPostId(msg.text);
+  const hasPhoto = !msg.unsent && msg.attachment?.kind === 'image' && !!msg.attachment.url;
   const canEdit = !msg.call && mine && msg._id && msg.text && onEdit;
   const canUnsend = !msg.call && mine && msg._id && onUnsend;
 
-  const saveEdit = () => {
-    if (draft.trim() && draft.trim() !== msg.text)
-      onEdit(convoId, msg._id, draft.trim());
-    setEditing(false);
-  };
 
   const confirmUnsend = async () => {
     const result = await Swal.fire({
-      title: "Unsend message?",
+      title: "Delete message?",
       text: "It will be removed for everyone.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Unsend",
+      confirmButtonText: "Delete message",
       confirmButtonColor: "#dc2626",
       reverseButtons: true,
     });
@@ -64,6 +58,8 @@ export default function MessageBubble({
 
   return (
     <Bubble
+      style={hasPhoto ? { maxWidth: 'min(100%, var(--chat-photo-max-width, 320px))' } : undefined}
+      data-read-id={!mine && msg._id && !msg.readByMe ? msg._id : undefined}
       align={mine ? "end" : "start"}
       variant={msg.unsent ? "outline" : mine ? "default" : "secondary"}
       className={
@@ -78,65 +74,13 @@ export default function MessageBubble({
         <BubbleContent className="text-xs italic text-muted-foreground">
           {mine ? "You unsent a message" : "Message unsent"}
         </BubbleContent>
-      ) : editing ? (
-        <div className="w-full min-w-40 rounded-xl border border-ring bg-background p-2">
-          <textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.nativeEvent.isComposing) return;
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                saveEdit();
-              }
-              if (event.key === "Escape") setEditing(false);
-            }}
-            autoFocus
-            aria-label="Edit message text"
-            rows={2}
-            className="block w-full resize-y bg-transparent p-1 text-[13px] text-foreground outline-none"
-          />
-          <div className="flex justify-end gap-1">
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="rounded-md p-2 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Cancel edit"
-            >
-              <X size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={saveEdit}
-              disabled={!draft.trim()}
-              className="rounded-md p-2 text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
-              aria-label="Save edit"
-            >
-              <Check size={15} />
-            </button>
-          </div>
-        </div>
       ) : (
         <>
-          <BubbleContent>
-            {msg.attachment?.kind === "image" && msg.attachment?.url && (
-              <a
-                href={msg.attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mb-1 block overflow-hidden rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
-                aria-label={`Open ${msg.attachment.name || "shared photo"}`}
-              >
-                <img
-                  src={msg.attachment.url}
-                  alt={msg.attachment.name || "Shared photo"}
-                  className="max-h-56 max-w-full object-contain"
-                />
-              </a>
-            )}
+          {msg.attachment?.kind === 'image' && msg.attachment.url && <ChatPhoto attachment={msg.attachment} pending={!!msg.pendingId} />}
+          {(msg.text || msg.call || msg.attachment?.kind === 'file') && <BubbleContent>
             {msg.attachment?.kind === "file" && msg.attachment?.url && (
               <a
-                href={msg.attachment.url}
+                href={chatAttachmentUrl(msg.attachment)}
                 download={msg.attachment.name || "file"}
                 className="flex min-w-0 items-center gap-2 rounded-lg py-1 font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
               >
@@ -170,40 +114,24 @@ export default function MessageBubble({
               ) : (
                 <p>{msg.text}</p>
               ))}
-          </BubbleContent>
-          {msg.edited && (
+          </BubbleContent>}
+          {msg.edited && !mine && (
             <span className="px-1 text-[10px] text-muted-foreground">
               Edited
             </span>
           )}
           {(canEdit || canUnsend) && (
-            <div className="message-actions absolute right-full top-1 mr-1 flex gap-0.5 rounded-lg border border-border bg-background p-0.5 opacity-100 shadow-sm transition-opacity sm:opacity-0 sm:group-hover/bubble:opacity-100 sm:group-focus-within/bubble:opacity-100 [@media(hover:none)]:opacity-100">
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraft(msg.text || "");
-                    setEditing(true);
-                  }}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Edit message"
-                >
-                  <Pencil size={12} />
-                </button>
-              )}
-              {canUnsend && (
-                <button
-                  type="button"
-                  onClick={confirmUnsend}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Unsend message"
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
-            </div>
+            <MessageActions canEdit={canEdit} canDelete={canUnsend}
+              onEdit={() => onEdit(convoId, msg._id, msg.text)}
+              onDelete={confirmUnsend} />
           )}
         </>
+      )}
+      {mine && !msg.unsent && !msg.call && (
+        <span className="self-end px-1 text-[10px] leading-4 text-muted-foreground" aria-live="polite"
+          title={msg.read && isGroup ? 'Read by at least one other group member' : undefined}>
+          {messageDeliveryLabel(msg)}
+        </span>
       )}
     </Bubble>
   );

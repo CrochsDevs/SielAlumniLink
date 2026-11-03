@@ -990,18 +990,18 @@ export default function AdminEvents() {
     return (
       <>
         <div className="overflow-hidden rounded-3xl bg-white shadow-sm dark:bg-zinc-900">
-          <div className="grid grid-cols-7 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="admin-month-weekdays grid grid-cols-7 gap-px border-b border-[var(--calendar-grid-line)] bg-[var(--calendar-grid-line)]">
             {WEEKDAYS.map((d) => (
               <div
                 key={d}
-                className="py-2.5 text-center text-[11px] font-bold text-zinc-400 dark:text-zinc-500"
+                className="bg-white py-2.5 text-center text-[11px] font-bold text-zinc-400 dark:bg-zinc-900 dark:text-zinc-500"
               >
                 <span className="sm:hidden">{d[0]}</span>
                 <span className="hidden sm:inline">{d}</span>
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-px bg-zinc-100 dark:bg-zinc-800">
+          <div className="admin-month-grid grid grid-cols-7 gap-px bg-[var(--calendar-grid-line)]">
             {days.map((day) => {
               const inMonth = day.getMonth() === currentDate.getMonth();
               const isToday = sameDay(day, now);

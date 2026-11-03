@@ -3,6 +3,7 @@ import MessageBubble from "./MessageBubble";
 import { groupMessages } from "./messageGroups";
 import ChatAvatar from "./ChatAvatar";
 import { formatTime } from "./messageFormat";
+import { useVisibleMessageReads } from './useVisibleMessageReads';
 
 export default function MessageThread({
   messages,
@@ -14,21 +15,22 @@ export default function MessageThread({
   user,
   conversation,
 }) {
+  const readRoot = useVisibleMessageReads(convoId, messages);
   if (layout === "stream") {
     return (
-      <div className="message-stream" data-chat-thread>
+      <div ref={readRoot} className="message-stream" data-chat-thread>
         {groupMessages(messages, isGroup).map((group, index) => {
           const first = group[0];
           const mine = first.from === "me";
           const name = mine
             ? user?.name || "You"
             : isGroup
-              ? first.senderName || first.senderEmail || "Member"
+              ? first.senderName || "Member"
               : conversation?.name || first.senderEmail || "Member";
           const avatar = mine
             ? { name, profilePicture: user?.profilePicture }
             : isGroup
-              ? { name }
+              ? { name, profilePicture: first.senderProfilePicture }
               : { ...conversation, name };
           return (
             <section
@@ -51,6 +53,7 @@ export default function MessageThread({
                     <MessageBubble
                       key={message._id || messageIndex}
                       msg={message}
+                      isGroup={isGroup}
                       mine={message.from === "me"}
                       convoId={convoId}
                       onEdit={onEdit}
@@ -66,26 +69,34 @@ export default function MessageThread({
     );
   }
   return (
-    <div className="flex min-w-0 flex-col gap-5" data-chat-thread>
-      {groupMessages(messages, isGroup).map((group, index) => (
-        <BubbleGroup key={group[0]._id || `${convoId}-${index}`}>
-          {isGroup && group[0].from !== "me" && group[0].senderEmail && (
-            <p className="truncate px-1 text-[10px] font-medium text-muted-foreground">
-              {group[0].senderEmail}
-            </p>
-          )}
-          {group.map((message, messageIndex) => (
-            <MessageBubble
-              key={message._id || messageIndex}
-              msg={message}
-              mine={message.from === "me"}
-              convoId={convoId}
-              onEdit={onEdit}
-              onUnsend={onUnsend}
-            />
-          ))}
-        </BubbleGroup>
-      ))}
+    <div ref={readRoot} className="flex min-w-0 flex-col gap-5" data-chat-thread>
+      {groupMessages(messages, isGroup).map((group, index) => {
+        const first = group[0];
+        const mine = first.from === 'me';
+        const name = (isGroup ? first.senderName : conversation?.name || first.senderName) || 'Member';
+        const avatar = { name, profilePicture: (isGroup ? first.senderProfilePicture : conversation?.profilePicture || first.senderProfilePicture) || null };
+        return (
+          <div key={first._id || `${convoId}-${index}`} data-message-group data-align={mine ? 'end' : 'start'} className="flex min-w-0 items-end gap-2">
+            {!mine && <span data-message-avatar className="mb-0.5 flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[11px] font-semibold text-primary" title={name}>
+              <ChatAvatar convo={avatar} />
+            </span>}
+            <BubbleGroup className="min-w-0 flex-1">
+              {isGroup && !mine && <span className="truncate px-1 text-[10px] font-medium text-muted-foreground">{name}</span>}
+              {group.map((message, messageIndex) => (
+                <MessageBubble
+                  key={message._id || messageIndex}
+                  msg={message}
+                  isGroup={isGroup}
+                  mine={message.from === "me"}
+                  convoId={convoId}
+                  onEdit={onEdit}
+                  onUnsend={onUnsend}
+                />
+              ))}
+            </BubbleGroup>
+          </div>
+        );
+      })}
     </div>
   );
 }

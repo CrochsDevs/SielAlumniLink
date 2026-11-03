@@ -30,10 +30,11 @@ export function createCallService({ authorize, record, emit, now = Date.now, sch
       if (kind === 'invite') {
         if (call || finishedIds.has(id) || sender === String(toAuthId)) return;
         // Reserve before the async permission lookup to prevent duplicate invites.
-        call = { id, caller: socket.user, callerSocket: socket.id, kind: data.callKind === 'video' ? 'video' : 'voice' };
+        call = { id, caller: socket.user, callerSocket: socket.id, recipientId: String(toAuthId), kind: data.callKind === 'video' ? 'video' : 'voice' };
         calls.set(id, call);
         try {
           call.recipient = await authorize(socket.user, toAuthId);
+          if (call.finished) return;
           if (!call.recipient) throw new Error('Calling this account is not allowed');
           if (socket.disconnected) {
             await finish(call, 'missed');
@@ -42,6 +43,7 @@ export function createCallService({ authorize, record, emit, now = Date.now, sch
           call.timer = schedule(() => { void finish(call, 'missed'); }, 45000);
           call.timer?.unref?.();
         } catch {
+          if (call.finished) return;
           calls.delete(id);
           emit(sender, 'call:signal', { fromAuthId: String(toAuthId), kind: 'decline', data: { callId: id } });
           return;
@@ -63,6 +65,19 @@ export function createCallService({ authorize, record, emit, now = Date.now, sch
         } else if (kind !== 'signal') return;
       }
       emit(toAuthId, 'call:signal', { fromAuthId: sender, fromEmail: socket.user.email, kind, data });
+    },
+    async endBetween(a, b) {
+      const pair = [String(a), String(b)].sort().join('|');
+      await Promise.all([...calls.values()].filter(call =>
+        [String(call.caller._id), String(call.recipient?._id || call.recipientId)].sort().join('|') === pair
+      ).map(async call => {
+        if (call.recipient) return finish(call, call.acceptedAt != null ? 'completed' : 'missed');
+        call.finished = true;
+        calls.delete(call.id);
+        finishedIds.add(call.id);
+        if (finishedIds.size > 2000) finishedIds.delete(finishedIds.values().next().value);
+        emit(call.caller._id, 'call:signal', { fromAuthId: call.recipientId, kind: 'decline', data: { callId: call.id } });
+      }));
     },
     disconnect(socket) {
       for (const call of calls.values()) {

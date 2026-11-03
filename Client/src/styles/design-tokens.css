@@ -77,6 +77,7 @@
     --table-line: #e1e5e9;
     --table-row-hover: #f3f8f5;
     --table-scrollbar: #b8c0ca;
+    --calendar-grid-line: #cbd0d8;
     --table-cell-padding: 0.875rem 1rem;
     --table-font-size: 0.8125rem;
     --table-max-height: min(65dvh, 40rem);
@@ -93,6 +94,7 @@
     --table-line: #353d49;
     --table-row-hover: #26342e;
     --table-scrollbar: #616875;
+    --calendar-grid-line: #515b6a;
   }
 }
 

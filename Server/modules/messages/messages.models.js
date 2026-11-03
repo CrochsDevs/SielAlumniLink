@@ -2,6 +2,8 @@ import { client } from '../../config/db.js';
 import { renameGroup } from './group-name.js';
 import { promoteGroupAdmin } from './group-admin.js';
 import { exitGroup } from './group-exit.js';
+import { ConversationControls, visibleConversation } from './conversation-controls.js';
+import { recordMessageReads } from './read-receipts.js';
 
 const db = client.db('SielAlumni');
 const convosCollection = db.collection('conversations');
@@ -54,10 +56,15 @@ export const ConversationModel = {
   },
 
   async findMine(authId) {
-    return await convosCollection
+    const conversations = await convosCollection
       .find({ 'participants.authId': key(authId) })
       .sort({ updatedAt: -1 })
       .toArray();
+    const visible = await Promise.all(conversations.map(async conversation => {
+      const preference = await ConversationControls.preference(conversation._id, authId);
+      return visibleConversation(conversation, preference) ? conversation : null;
+    }));
+    return visible.filter(Boolean);
   },
 
   // Group chat (3+ connects): named conversation with many members.
@@ -99,62 +106,55 @@ export const ConversationModel = {
 };
 
 export const MessageModel = {
-  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call }) {
+  async latestIncoming(conversationId, readerAuthId, clearedAt = null) {
+    return messagesCollection.findOne({ conversationId: await toObjectId(conversationId), senderAuthId: { $ne: key(readerAuthId) },
+      ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) },
+    { sort: { createdAt: -1, _id: -1 }, projection: { _id: 1, text: 1, createdAt: 1, unsent: 1, 'attachment.kind': 1 } });
+  },
+  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, clientMessageId }) {
+    if (attachment && (!attachment.publicId || attachment.deliveryType !== 'authenticated')) {
+      throw new Error('Message attachments must be uploaded to Cloudinary first');
+    }
     const now = new Date();
     const doc = {
       conversationId: await toObjectId(conversationId),
       senderAuthId: key(senderAuthId),
       senderEmail,
+      ...(clientMessageId ? { clientMessageId } : {}),
       ...(call ? { call } : {}),
       text: String(text || '').slice(0, 2000),
-      // Inline attachment (base64 data URL) until Cloudinary lands.
-      // Capped client-side; migrate `url` to Cloudinary URLs later.
-      attachment: attachment && attachment.url
-        ? {
-            kind: attachment.kind === 'file' ? 'file' : 'image',
-            name: String(attachment.name || 'file').slice(0, 120),
-            url: String(attachment.url).slice(0, 2_000_000),
-          }
-        : null,
+      attachment: attachment || null,
       read: false,
+      readBy: [],
       createdAt: now,
     };
     const result = await messagesCollection.insertOne(doc);
     return { ...doc, _id: result.insertedId };
   },
 
-  async listByConversation(conversationId, limit = 100) {
+  async listByConversation(conversationId, limit = 100, clearedAt = null) {
     try {
       return await messagesCollection
-        .find({ conversationId: await toObjectId(conversationId) })
-        .sort({ createdAt: 1 })
+        .find({ conversationId: await toObjectId(conversationId), ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) })
+        .sort({ createdAt: -1, _id: -1 })
         .limit(limit)
-        .toArray();
+        .toArray().then(messages => messages.reverse());
     } catch {
       return [];
     }
   },
 
-  async markRead(conversationId, readerAuthId) {    try {
-      await messagesCollection.updateMany(
-        {
-          conversationId: await toObjectId(conversationId),
-          senderAuthId: { $ne: key(readerAuthId) },
-          read: false,
-        },
-        { $set: { read: true } }
-      );
-    } catch {
-      // ignore
-    }
+  markRead(conversationId, readerAuthId, messageIds, clearedAt) {
+    return recordMessageReads(messagesCollection, conversationId, readerAuthId, messageIds, clearedAt);
   },
 
-  async unreadCount(conversationId, readerAuthId) {
+  async unreadCount(conversationId, readerAuthId, clearedAt = null) {
     try {
       return await messagesCollection.countDocuments({
         conversationId: await toObjectId(conversationId),
         senderAuthId: { $ne: key(readerAuthId) },
-        read: false,
+        $or: [{ readBy: { $exists: true, $ne: key(readerAuthId) } }, { readBy: { $exists: false }, read: false }],
+        ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}),
       });
     } catch {
       return 0;
@@ -169,6 +169,10 @@ export const MessageModel = {
       if (!message || message.call || String(message.senderAuthId) !== key(senderAuthId) || message.unsent) {
         return null;
       }
+      const conversation = await ConversationModel.findById(message.conversationId);
+      if (!conversation?.participants?.some(member => String(member.authId) === key(senderAuthId))) return null;
+      const other = conversation.participants.find(member => String(member.authId) !== key(senderAuthId));
+      if (!conversation.isGroup && other && await ConversationControls.isBlocked(senderAuthId, other.authId)) return null;
       await messagesCollection.updateOne(
         { _id: objectId },
         { $set: { text: String(text || '').slice(0, 2000), edited: true } }

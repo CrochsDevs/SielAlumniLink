@@ -26,6 +26,15 @@ return {
     return await usersCollection.findOne(query);
   },
 
+  async findChatProfilesByAuthIds(authIds) {
+    const { ObjectId } = await import('mongodb');
+    const ids = [...new Set(authIds.filter(Boolean).map(String))];
+    if (!ids.length) return [];
+    const values = ids.flatMap(id => ObjectId.isValid(id) ? [id, new ObjectId(id)] : [id]);
+    return usersCollection.find({ authId: { $in: values } },
+      { projection: { _id: 0, authId: 1, name: 1, profilePicture: 1 } }).toArray();
+  },
+
   async findById(id) {
     const { ObjectId } = await import('mongodb');
     return await usersCollection.findOne({ _id: new ObjectId(id) });

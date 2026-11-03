@@ -1,7 +1,7 @@
 const senderKey = (message, isGroup) => {
   if (message.from === "me") return "me";
-  if (message.senderEmail) return `email:${message.senderEmail}`;
   if (message.senderAuthId) return `auth:${message.senderAuthId}`;
+  if (message.senderEmail) return `email:${message.senderEmail}`;
   return isGroup ? null : "them";
 };
 

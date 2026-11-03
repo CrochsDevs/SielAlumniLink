@@ -9,10 +9,14 @@ import { createCallService } from './calls.js';
 import { createGroupCallRuntime } from './group-calls.js';
 import UserModel from '../modules/users/users.models.js';
 import ConnectionModel from '../modules/connections/connections.models.js';
+import { ConversationControls } from '../modules/messages/conversation-controls.js';
 import { ConversationModel, MessageModel } from '../modules/messages/messages.models.js';
+import { messageSenders } from '../modules/messages/message-senders.js';
 
 let io = null;
 let groupCalls = null;
+let directCalls = null;
+export const endDirectCalls = (a, b) => directCalls?.endBetween(a, b);
 export const removeGroupCallMember = (id, authId) => groupCalls?.removeMember(id, authId);
 
 const broadcastPresence = () => {
@@ -84,14 +88,15 @@ export const initSocket = (server) => {
       const message = await MessageModel.create({ conversationId: call.id, senderAuthId: call.caller._id, senderEmail: call.caller.email, text, call: { id: call.callId, kind: call.kind, status: call.acceptedAt == null ? 'missed' : 'completed', duration: call.duration, group: true } });
       const lastMessage = { text, at: message.createdAt, by: String(call.caller._id) };
       await ConversationModel.touch(call.id, lastMessage);
-      for (const participant of group.participants) emitToUser(participant.authId, 'message:new', { conversationId: call.id, message: { ...message, at: message.createdAt }, lastMessage });
+      const sender = (await messageSenders([message])).get(String(message.senderAuthId));
+      for (const participant of group.participants) emitToUser(participant.authId, 'message:new', { conversationId: call.id, message: { ...message, ...sender, at: message.createdAt }, lastMessage });
     },
   });
-  const calls = createCallService({
+  const calls = directCalls = createCallService({
     emit: emitToUser,
     authorize: async (caller, recipientId) => {
       const recipient = await AuthModel.findById(recipientId);
-      if (!recipient) return null;
+      if (!recipient || recipient.disabledAt || await ConversationControls.isBlocked(caller._id, recipientId)) return null;
       if (caller.role !== 'admin') {
         const connections = await ConnectionModel.findMine(caller._id);
         if (!connections.some(c => c.status === 'accepted' &&
@@ -111,8 +116,9 @@ export const initSocket = (server) => {
       });
       const lastMessage = { text, at: message.createdAt, by: String(call.caller._id) };
       await ConversationModel.touch(convo._id, lastMessage);
+      const sender = (await messageSenders([message])).get(String(message.senderAuthId));
       for (const participant of convo.participants)
-        emitToUser(participant.authId, 'message:new', { conversationId: String(convo._id), message: { ...message, at: message.createdAt }, lastMessage });
+        emitToUser(participant.authId, 'message:new', { conversationId: String(convo._id), message: { ...message, ...sender, at: message.createdAt }, lastMessage });
     },
   });
 

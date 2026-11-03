@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import {
   Search,
   Send,
@@ -15,14 +14,15 @@ import {
   ImagePlus,
   Paperclip,
 } from "lucide-react";
-import { gooeyToast as toast } from "goey-toast";
-import { useChat } from "../../context/useChat.js";
 import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
 import { formatTime } from "./messageFormat";
 import MessageThread from "./MessageThread";
 import EmojiPicker from "emoji-picker-react";
 import ChatAvatar from "./ChatAvatar";
+import ConversationActions from './ConversationActions';
+import ComposerEditNotice from './ComposerEditNotice';
+import ComposerImagePreview from './ComposerImagePreview';
 import EditGroupName from "./EditGroupName";
 import GroupMembers from "./GroupMembers";
 import GroupCallButtons from "../call/GroupCallButtons";
@@ -73,196 +73,6 @@ const useConnectedPeople = (open) => {
   return { people, loading };
 };
 
-const useInboxPage = () => {
-  const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedId = searchParams.get("conversation");
-  const {
-    convos,
-    threads,
-    loadThread,
-    sendChat,
-    editChatMessage,
-    unsendChatMessage,
-    createGroupChat,
-    openChat,
-  } = useChat();
-  const accountId = user?.authId || user?._id;
-  const storageKey = accountId
-    ? `messages:last-conversation:${accountId}`
-    : null;
-  const savedId = useMemo(() => {
-    try {
-      return storageKey ? localStorage.getItem(storageKey) : null;
-    } catch {
-      return null;
-    }
-  }, [storageKey]);
-  const [selection, setSelection] = useState({ storageKey: null, id: null, requestedId: null });
-  const activeId = selection.storageKey === storageKey ? selection.id : null;
-  const setActiveId = useCallback(
-    (id) => {
-      const conversationId = id == null ? null : String(id);
-      setSelection({ storageKey, id: conversationId, requestedId });
-      // A selection made inside Messages replaces the header's explicit deep link.
-      setSearchParams(previous => {
-        const next = new URLSearchParams(previous);
-        next.delete("conversation");
-        return next;
-      }, { replace: true });
-      // Going back to the mobile list keeps the last conversation for the next visit.
-      if (storageKey && conversationId) {
-        try {
-          localStorage.setItem(storageKey, conversationId);
-        } catch {
-          // Conversation selection still works when browser storage is unavailable.
-        }
-      }
-    },
-    [storageKey, setSearchParams, requestedId],
-  );
-  const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
-  const [chatFilter, setChatFilter] = useState("all");
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [groupOpen, setGroupOpen] = useState(false);
-  const [groupName, setGroupName] = useState("");
-  const [groupEmails, setGroupEmails] = useState([]); // now an array
-  const [groupSaving, setGroupSaving] = useState(false);
-
-  // Initialize when the asynchronous list arrives. A deliberate null selection
-  // keeps the mobile list open; later messages must not change the selected chat.
-  if (
-    storageKey &&
-    convos.length &&
-    (selection.storageKey !== storageKey ||
-      selection.requestedId !== requestedId ||
-      (selection.id && !convos.some((c) => String(c._id) === selection.id)))
-  ) {
-    const requested = convos.find((c) => String(c._id) === requestedId);
-    const remembered = convos.find((c) => String(c._id) === savedId);
-    const latest = convos.reduce((recent, conversation) =>
-      (Date.parse(conversation.time) || 0) > (Date.parse(recent.time) || 0)
-        ? conversation
-        : recent,
-    );
-    // Clearing a deep link must preserve an explicit selection or mobile Back.
-    // Router URL updates can commit after the local selection state changes.
-    const clearedRequest = selection.storageKey === storageKey && selection.requestedId && !requestedId &&
-      (!selection.id || convos.some(c => String(c._id) === selection.id));
-    setSelection({ storageKey, id: clearedRequest ? selection.id : String((requested || remembered || latest)._id), requestedId });
-  }
-
-  useEffect(() => {
-    if (!activeId) return;
-    loadThread(activeId);
-    try {
-      if (storageKey) localStorage.setItem(storageKey, activeId);
-    } catch {
-      // Explicit conversation links also work when browser storage is unavailable.
-    }
-  }, [activeId, loadThread, storageKey]);
-
-  const active = convos.find((c) => String(c._id) === String(activeId));
-  const filtered = convos.filter(
-    (c) =>
-      (chatFilter !== "groups" || c.isGroup) &&
-      `${c.name} ${c.email}`.toLowerCase().includes(query.toLowerCase()),
-  );
-
-  const send = (e) => {
-    e.preventDefault();
-    if (!draft.trim() || !activeId) return;
-    sendChat(activeId, draft.trim());
-    setDraft("");
-  };
-
-  // Gallery / files ride as inline data URLs until Cloudinary lands
-  // (1.5MB cap enforced server-side too).
-  const sendFile = (file, kind) => {
-    if (!file || !activeId) return;
-    if (file.size > 1_500_000) {
-      toast.error("Error", {
-        description:
-          "File too large (max 1.5MB for now — Cloudinary coming soon)",
-      });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      sendChat(activeId, "", {
-        kind: kind === "image" ? "image" : "file",
-        name: file.name,
-        url: String(reader.result || ""),
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const closeGroup = () => {
-    setGroupOpen(false);
-    setGroupEmails([]);
-    setGroupName("");
-  };
-
-  const submitGroup = async (e) => {
-    e.preventDefault();
-    const emails = groupEmails;
-    if (emails.length < 2) {
-      toast.error("Error", {
-        description: "Add at least 2 connected Sieles (3+ people total)",
-      });
-      return;
-    }
-    setGroupSaving(true);
-    const created = await createGroupChat(
-      groupName.trim() || "Group Chat",
-      emails,
-    );
-    setGroupSaving(false);
-    if (created) {
-      const full = {
-        ...created,
-        _id: created._id,
-        name: groupName.trim() || "Group Chat",
-        isGroup: true,
-        initial: "G",
-      };
-      closeGroup();
-      openChat(full);
-      setActiveId(String(created._id));
-    }
-  };
-
-  return {
-    activeId,
-    setActiveId,
-    draft,
-    setDraft,
-    query,
-    setQuery,
-    active,
-    filtered,
-    threads,
-    send,
-    showEmoji,
-    setShowEmoji,
-    chatFilter,
-    setChatFilter,
-    groupOpen,
-    setGroupOpen,
-    groupName,
-    setGroupName,
-    groupEmails,
-    setGroupEmails,
-    groupSaving,
-    submitGroup,
-    closeGroup,
-    editChatMessage,
-    unsendChatMessage,
-    sendFile,
-  };
-};
 
 const GroupModal = ({
   groupName,
@@ -476,15 +286,12 @@ const ConvoList = ({
         const isActive = String(activeId) === String(c._id);
         return (
           <li key={c._id}>
+            <div className="inbox-conversation-row flex min-w-0 items-center">
             <button
               type="button"
               onClick={() => setActiveId(String(c._id))}
               aria-pressed={isActive}
-              className={`inbox-conversation-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
-                isActive
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-200/60 dark:ring-brand"
-                  : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              }`}
+              className="inbox-conversation-item flex min-w-0 flex-1 items-center gap-3 rounded-xl bg-transparent px-3 py-2.5 text-left transition"
             >
               <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
                 <ChatAvatar convo={c} />
@@ -505,16 +312,18 @@ const ConvoList = ({
                     ) : null}
                   </span>
                   <span className="shrink-0 text-[10.5px] font-medium text-zinc-400 dark:text-zinc-500">
-                    {formatTime(c.time)}
+                    {formatTime(c.previewAt === undefined ? c.time : c.previewAt)}
                   </span>
                 </span>
                 <span
                   className={`block truncate text-[11.5px] ${c.unread > 0 ? "font-semibold text-zinc-700 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-400"}`}
                 >
-                  {c.preview || "Start chatting..."}
+                  {c.preview || "No received messages yet"}
                 </span>
               </span>
             </button>
+            <ConversationActions conversation={c} onDeleted={() => { if (String(activeId) === String(c._id)) setActiveId(null); }} />
+            </div>
           </li>
         );
       })}
@@ -556,16 +365,17 @@ const ThreadPane = ({
   setActiveId,
   threads,
   draft,
+  composer,
   setDraft,
   send,
   showEmoji,
   setShowEmoji,
-  editChatMessage,
   unsendChatMessage,
   sendFile,
 }) => {
   const { user } = useAuth();
   const messages = threads[activeId] || [];
+  const { bindInput } = composer;
   const scrollRef = useRef(null);
   const emojiWrapRef = useRef(null);
 
@@ -652,7 +462,7 @@ const ThreadPane = ({
           <GroupMembers key={`members-${active._id}`} conversation={active} />
         )}
         <GroupCallButtons conversation={active} />
-        {!active.isGroup && active.authId && (
+        {!active.isGroup && active.authId && !active.blocked && (
           <span className="flex shrink-0 gap-0.5">
             <button
               type="button"
@@ -693,7 +503,7 @@ const ThreadPane = ({
           messages={messages}
           isGroup={active.isGroup}
           convoId={activeId}
-          onEdit={editChatMessage}
+          onEdit={composer.startEdit}
           onUnsend={unsendChatMessage}
           layout={workspace ? "stream" : "bubbles"}
           user={user}
@@ -701,8 +511,14 @@ const ThreadPane = ({
         />
       </div>
 
+      {active.blocked ? <p role="status" className="border-t border-border p-4 text-center text-xs text-muted-foreground">
+        {active.blockedByMe ? 'You blocked this account. Use the chat options to unblock it.' : 'Messaging is unavailable for this conversation.'}
+      </p> : <>
+      {composer.editing && <ComposerEditNotice onCancel={composer.cancelEdit} saving={composer.saving} />}
+      {!composer.editing && <ComposerImagePreview attachment={composer.attachment} saving={composer.saving} onRemove={composer.removeImage} />}
       <form
         onSubmit={send}
+        onPaste={composer.onPaste}
         className="inbox-composer relative flex shrink-0 items-center gap-1.5 border-t border-zinc-100 dark:border-zinc-800 p-3"
       >
         <div ref={emojiWrapRef} className="relative shrink-0">
@@ -738,7 +554,8 @@ const ThreadPane = ({
           <ImagePlus className="h-4 w-4" />
           <input
             type="file"
-            accept="image/*"
+            disabled={composer.editing || composer.saving}
+            accept="image/jpeg,image/png,image/gif,image/webp"
             className="hidden"
             onChange={(e) => {
               if (e.target.files?.[0]) sendFile(e.target.files[0], "image");
@@ -753,6 +570,7 @@ const ThreadPane = ({
           <Paperclip className="h-4 w-4" />
           <input
             type="file"
+            disabled={composer.editing || composer.saving}
             className="hidden"
             onChange={(e) => {
               if (e.target.files?.[0]) sendFile(e.target.files[0], "file");
@@ -761,23 +579,26 @@ const ThreadPane = ({
           />
         </label>
         <input
+          ref={bindInput}
           value={draft}
+          disabled={composer.saving}
+          aria-label={composer.editing ? 'Edit message text' : undefined}
+          onKeyDown={event => { if (event.key === 'Escape' && composer.editing) { event.preventDefault(); composer.cancelEdit(); } }}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={`Message ${active.isGroup ? "group" : active.name.split(" ")[0]}...`}
           className="inbox-message-input h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
         />
         <button
           type="submit"
-          disabled={!draft.trim()}
+          disabled={!composer.canSubmit}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-sm transition hover:bg-brand disabled:opacity-40"
-          aria-label="Send message"
+          aria-label={composer.editing ? 'Save edit' : 'Send message'}
         >
           <Send className="h-4 w-4" />
         </button>
-      </form>
+      </form></>}
     </div>
   );
 };
 
-export const useInbox = useInboxPage;
 export { ConvoList, ThreadPane };

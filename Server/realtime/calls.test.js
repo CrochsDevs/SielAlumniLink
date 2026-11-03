@@ -67,3 +67,27 @@ test('outsiders, stale signals and unauthorized invites cannot write call histor
   await f.expire();
   assert.equal(f.records[0].status, 'missed');
 });
+
+test('blocking ends a direct call once and suppresses late signals', async () => {
+  const f = fixture();
+  await f.signal(f.a, 'invite');
+  await f.signal(f.b, 'accept');
+  await f.service.endBetween('b', 'a');
+  await f.signal(f.a, 'end');
+  await f.service.endBetween('a', 'b');
+  assert.equal(f.records.length, 1);
+  assert.equal(f.records[0].status, 'completed');
+});
+
+test('blocking while authorization is pending prevents a late invite', async () => {
+  let resolve;
+  const events = [];
+  const service = createCallService({ authorize: () => new Promise(done => { resolve = done; }),
+    record: async () => assert.fail('Pending invite must not create call history'),
+    emit: (...args) => events.push(args) });
+  const invite = service.signal({ id: 'socket-a', user: { _id: 'a' } }, { toAuthId: 'b', kind: 'invite', data: { callId: 'pending' } });
+  await service.endBetween('a', 'b');
+  resolve({ _id: 'b' });
+  await invite;
+  assert.deepEqual(events.map(([, , payload]) => payload.kind), ['decline']);
+});
