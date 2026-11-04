@@ -18,7 +18,11 @@ import {
   Download,
 } from "lucide-react";
 import DataPagination from "../ui/data-pagination";
+import ProfileAvatar from "../profile/ProfileAvatar";
+import ColumnFilter from "../ui/ColumnFilter";
+import { filterOptions, manilaDate, matchesTextFilter } from "../../utils/tableFilters";
 import api from "../../utils/axios";
+import { useSearchParams } from "react-router-dom";
 import {
   TRACER_STATUS_DETAILS,
   normalizeTracerDetails,
@@ -37,6 +41,15 @@ const STATUS_STYLE = {
 };
 
 const FILTERS = ["all", "Employed", "Self-employed", "Unemployed", "Studying"];
+const QUARTERS = [['1', 'Q1 · Jan–Mar'], ['2', 'Q2 · Apr–Jun'], ['3', 'Q3 · Jul–Sep'], ['4', 'Q4 · Oct–Dec']];
+const responsePeriod = row => {
+  if (row.tracingYear && row.tracingQuarter) return { year: Number(row.tracingYear), quarter: Number(row.tracingQuarter) };
+  const value = row.updatedAt || row.respondedAt;
+  const date = value ? new Date(value) : null;
+  if (!date || !Number.isFinite(date.getTime())) return null;
+  const local = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return { year: local.getUTCFullYear(), quarter: Math.floor(local.getUTCMonth() / 3) + 1 };
+};
 
 const formatDate = (value) =>
   value
@@ -49,16 +62,17 @@ const formatDate = (value) =>
 
 const TABLE_COLUMNS = [
   ["Graduate", 280],
-  ["Batch", 90],
+  ["Batch", 120],
+  ["Tracing Period", 180],
   ["Program", 340],
   ["Status", 150],
   ["Company / Business / School", 260],
   ["Job / Business / Course", 260],
   ["Salary / Income", 180],
-  ["Start Month", 150],
+  ["Start Month", 180],
   ["Location", 260],
-  ["Responded", 145],
-  ["Updated", 145],
+  ["Responded", 190],
+  ["Updated", 190],
 ];
 const TABLE_WIDTH = TABLE_COLUMNS.reduce(
   (total, [, width]) => total + width,
@@ -91,6 +105,7 @@ const RESPONSE_COLUMNS = TABLE_COLUMNS.map(([header, width], index) => ({
   accessorKey: [
     "email",
     "batch",
+    "tracingYear",
     "program",
     "status",
     "company",
@@ -109,27 +124,55 @@ const RESPONSE_COLUMNS = TABLE_COLUMNS.map(([header, width], index) => ({
 }));
 
 export default function TracerResponses() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const yearFilter = searchParams.get('year') || 'all';
+  const quarterFilter = searchParams.get('quarter') || 'all';
+  const [years, setYears] = useState([]);
+  const [loadError, setLoadError] = useState('');
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [columnFilters, setColumnFilters] = useState({});
+  const changeColumn = (key, value) => { setColumnFilters(previous => ({ ...previous, [key]: value })); setPage(1); };
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
+  const changePeriod = (key, value) => {
+    // Read the latest URL so rapid year/quarter selections retain both values.
+    const next = new URLSearchParams(window.location.search);
+    if (value === 'all') next.delete(key); else next.set(key, value);
+    setSearchParams(next);
+    setPage(1);
+    setColumnFilters({});
+  };
+  const periodLabel = `${yearFilter === 'all' ? 'All tracing years' : yearFilter} · ${quarterFilter === 'all' ? 'All quarters' : `Q${quarterFilter}`}`;
 
   useEffect(() => {
+    let cancelled = false;
+    // Clear records from the previous tracing period while its replacement loads.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    setResponses([]);
+    setLoadError('');
     api
-      .get("/tracer")
+      .get("/tracer", { params: { year: yearFilter, quarter: quarterFilter } })
       .then((tracerRes) => {
-        setResponses((tracerRes.data.data || []).map(normalizeTracerDetails));
+        if (cancelled) return;
+        const rows = (tracerRes.data.data || []).map(normalizeTracerDetails);
+        setResponses(rows);
+        setYears(tracerRes.data.periods?.years || [...new Set(rows.map(row => responsePeriod(row)?.year).filter(Boolean))]);
       })
-      .catch((err) =>
+      .catch((err) => {
+        if (cancelled) return;
+        setLoadError(err.response?.data?.message || 'Failed to load tracer responses');
         toast.error("Error", {
           description:
             err.response?.data?.message || "Failed to load tracer responses",
-        }),
-      )
-      .finally(() => setLoading(false));
-  }, []);
+        });
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [yearFilter, quarterFilter]);
 
   const counts = useMemo(() => {
     const employed = responses.filter(
@@ -147,6 +190,7 @@ export default function TracerResponses() {
 
   const filtered = responses.filter((r) => {
     const matchesQuery = [
+      r.name,
       r.email,
       r.batch,
       r.program,
@@ -160,8 +204,18 @@ export default function TracerResponses() {
         .includes(query.trim().toLowerCase()),
     );
     const matchesStatus = statusFilter === "all" || r.status === statusFilter;
-    return matchesQuery && matchesStatus;
+    const period = responsePeriod(r);
+    const values = { ...r, email: [r.name, r.email], tracingYear: period ? `${period.year} Q${period.quarter}` : 'Unknown period',
+      employmentDate: manilaDate(r.employmentDate).slice(0, 7), respondedAt: manilaDate(r.respondedAt), updatedAt: manilaDate(r.updatedAt) };
+    return matchesQuery && matchesStatus && Object.entries(columnFilters).every(([key, value]) =>
+      !value || (['batch', 'program', 'status', 'tracingYear', 'employmentDate', 'respondedAt', 'updatedAt'].includes(key)
+        ? String(values[key] ?? '') === value : matchesTextFilter(values[key], value)));
   });
+  const columnOptions = {
+    batch: filterOptions(responses.map(row => row.batch)), program: filterOptions(responses.map(row => row.program)),
+    status: FILTERS.filter(value => value !== 'all').map(value => ({ value, label: value })),
+    tracingYear: filterOptions(responses.map(row => { const period = responsePeriod(row); return period ? `${period.year} Q${period.quarter}` : 'Unknown period'; })),
+  };
 
   const responsesTable = useReactTable({
     data: filtered,
@@ -194,8 +248,11 @@ export default function TracerResponses() {
   // Accreditation / institutional reporting export.
   const exportCSV = () => {
     const headers = [
+      "Graduate Name",
       "Email",
       "Batch Graduated",
+      "Tracing Year",
+      "Tracing Quarter",
       "Graduation Program",
       "Employment Status",
       "Company / Business / School",
@@ -207,8 +264,11 @@ export default function TracerResponses() {
       "Last Updated",
     ];
     const rows = filtered.map((r) => [
+      r.name || "",
       r.email || "",
       r.batch || "",
+      responsePeriod(r)?.year || '',
+      responsePeriod(r) ? `Q${responsePeriod(r).quarter}` : '',
       r.program || "",
       r.status || "",
       r.company || "",
@@ -228,7 +288,7 @@ export default function TracerResponses() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `tracer-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `tracer-report-${yearFilter === 'all' ? 'all-years' : yearFilter}-${quarterFilter === 'all' ? 'all-quarters' : `Q${quarterFilter}`}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -241,7 +301,7 @@ export default function TracerResponses() {
         </h2>
         <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
           Graduate survey submissions and employment outcomes reported in the
-          Tracer Study form.
+          Tracer Study form. Select a tracing year and quarter to review the latest response per user in that period (Philippine time).
         </p>
       </div>
 
@@ -266,10 +326,32 @@ export default function TracerResponses() {
             {...item}
             featured={index === 0}
             loading={loading}
-            detail="Current tracer responses"
+            detail={periodLabel}
           />
         ))}
       </AdminStatGrid>
+      <div aria-label="Tracing period filters" className="admin-panel flex flex-wrap items-end gap-3 p-4">
+        <label className="min-w-[150px] flex-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300 sm:flex-none">
+          Tracing year
+          <select aria-label="Tracing year" value={yearFilter} onChange={event => changePeriod('year', event.target.value)}
+            className="mt-1.5 block h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+            <option value="all">All years</option>
+            {[...new Set([...years, Number(new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Asia/Manila' }).format(new Date())),
+              ...(yearFilter !== 'all' ? [Number(yearFilter)] : [])])].filter(Number.isFinite).sort((a, b) => b - a)
+              .map(year => <option key={year} value={year}>{year}</option>)}
+          </select>
+        </label>
+        <label className="min-w-[180px] flex-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300 sm:flex-none">
+          Tracing quarter
+          <select aria-label="Tracing quarter" value={quarterFilter} onChange={event => changePeriod('quarter', event.target.value)}
+            className="mt-1.5 block h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+            <option value="all">All quarters</option>
+            {QUARTERS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 sm:ml-auto">Tracing period, separate from graduation batch.</p>
+      </div>
+      {loadError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{loadError}</p>}
       {/* Table card */}
       <div className="admin-panel admin-data-table overflow-hidden">
         <div className="admin-toolbar">
@@ -305,7 +387,7 @@ export default function TracerResponses() {
             <button
               type="button"
               onClick={exportCSV}
-              disabled={filtered.length === 0}
+              disabled={loading || filtered.length === 0}
               className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 text-xs font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
               <Download className="h-3.5 w-3.5" />
@@ -315,7 +397,8 @@ export default function TracerResponses() {
         </div>
 
         <p id="tracer-scroll-hint" className="data-table-hint">
-          {filtered.length} responses · Scroll horizontally to view all columns.
+          {filtered.length} responses · {periodLabel} · Scroll horizontally to view all columns.
+          {Object.values(columnFilters).some(Boolean) && <button type="button" onClick={() => { setColumnFilters({}); setPage(1); }} className="ml-3 font-semibold text-brand underline">Clear column filters</button>}
         </p>
         <div
           data-tracer-table
@@ -355,6 +438,10 @@ export default function TracerResponses() {
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
+                      {!header.isPlaceholder && <ColumnFilter label={`Filter ${header.column.columnDef.header}`}
+                        value={columnFilters[header.column.id] || ''} onChange={value => changeColumn(header.column.id, value)}
+                        options={columnOptions[header.column.id]}
+                        type={['respondedAt', 'updatedAt'].includes(header.column.id) ? 'date' : header.column.id === 'employmentDate' ? 'month' : 'search'} />}
                     </th>
                   ))}
                 </tr>
@@ -378,18 +465,22 @@ export default function TracerResponses() {
                   >
                     <td className="md:sticky md:left-0 z-10 border-r border-zinc-200 bg-white px-4 py-4 group-hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:group-hover:bg-zinc-800">
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-[12px] font-bold text-brand dark:bg-emerald-950 dark:text-brand">
-                          {(r.email || "U").charAt(0).toUpperCase()}
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[12px] font-bold text-brand ring-1 ring-black/5 dark:bg-emerald-950 dark:text-brand dark:ring-white/10">
+                          <ProfileAvatar user={r} fallback={r.email || 'U'} />
                         </span>
                         <span className="min-w-0">
-                          <span className="block break-all font-semibold leading-relaxed text-zinc-800 dark:text-zinc-100">
-                            {r.email}
+                          <span className="block break-words font-semibold leading-relaxed text-zinc-800 dark:text-zinc-100">
+                            {r.name || r.email}
                           </span>
+                          {r.name && <span title={r.email} className="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">{r.email}</span>}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                       {r.batch}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-zinc-600 dark:text-zinc-300">
+                      {responsePeriod(r) ? `${responsePeriod(r).year} Q${responsePeriod(r).quarter}` : 'Unknown period'}
                     </td>
                     <td className="break-words px-4 py-4 leading-relaxed text-zinc-600 dark:text-zinc-300">
                       {r.program || "—"}
@@ -432,13 +523,13 @@ export default function TracerResponses() {
                       </span>
                       <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
                         {responses.length === 0
-                          ? "No responses yet"
+                          ? (yearFilter !== 'all' || quarterFilter !== 'all' ? 'No responses for this tracing period' : 'No responses yet')
                           : "No responses found"}
                       </p>
                     </div>
                     <p className="mt-0.5 text-[12px] text-zinc-400 dark:text-zinc-500">
                       {responses.length === 0
-                        ? "Alumni answer via the Tracer Study form."
+                        ? (yearFilter !== 'all' || quarterFilter !== 'all' ? 'Choose another year or quarter.' : 'Alumni answer via the Tracer Study form.')
                         : "Try a different keyword or filter."}
                     </p>
                   </td>

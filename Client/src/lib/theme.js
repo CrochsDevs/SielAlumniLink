@@ -3,6 +3,8 @@
 const KEY = 'theme';
 let mediaQuery = null;
 let mediaHandler = null;
+// Authentication pages stay light, including during the initial session check.
+let workspaceThemeEnabled = false;
 
 const systemDark = () =>
   typeof window !== 'undefined' &&
@@ -22,7 +24,12 @@ export const isDarkActive = () => {
 };
 
 export const applyTheme = () => {
-  document.documentElement.classList.toggle('dark', isDarkActive());
+  document.documentElement.classList.toggle('dark', workspaceThemeEnabled && isDarkActive());
+};
+
+export const setWorkspaceThemeEnabled = (enabled) => {
+  workspaceThemeEnabled = enabled;
+  applyTheme();
 };
 
 const stopSystemListener = () => {

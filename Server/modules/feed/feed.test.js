@@ -101,6 +101,30 @@ const fixture = async () => {
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
 
+test('admin moderation appends actor/target audit events without logging failed or member actions', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post({ title: 'Audit fixture' }));
+  const c = await f.feed.comment(f.student, p._id, 'A comment');
+  await rejects(f.feed.moderate(f.student, p._id, { action: 'block', enabled: true, reason: 'No access' }), 403);
+  assert.equal(await f.db.collection('activity_logs').countDocuments({}), 0);
+  await f.feed.moderate(f.admin, p._id, { action: 'block', enabled: true, reason: 'Spam' });
+  await f.feed.moderate(f.admin, p._id, { action: 'block', enabled: false });
+  await f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: true, reason: 'Pause discussion' });
+  await f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: false });
+  await f.feed.restrictAuthor(f.admin, f.author._id, { enabled: true, reason: 'Spam' });
+  await f.feed.restrictAuthor(f.admin, f.author._id, { enabled: false });
+  await f.feed.removeComment(f.admin, p._id, c._id);
+  await f.feed.remove(f.admin, p._id);
+  const rows = await f.db.collection('activity_logs').find({}).toArray();
+  assert.deepEqual(rows.map(row => row.action), ['post_blocked', 'post_restored', 'comments_disabled',
+    'comments_enabled', 'author_restricted', 'author_unrestricted', 'comment_deleted', 'post_deleted']);
+  assert.ok(rows.every(row => row.actor.authId === String(f.admin._id) && row.createdAt instanceof Date));
+  assert.equal(rows[0].target.label, 'Audit fixture');
+  assert.equal(rows[0].details, 'Spam');
+  assert.equal(rows[6].target.id, String(c._id));
+  assert.equal(rows[7].target.id, String(p._id));
+});
+
 test('student dashboard filters all five types, paginates search, and protects private or blocked posts', async () => {
   const f = await fixture();
   const inputs = [

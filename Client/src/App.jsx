@@ -14,6 +14,7 @@ import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
 
 import AdminDashboard from "./pages/admin/adminDashboard";
 import AdminUsers from "./pages/admin/adminUsers";
+import AdminAuditLogs from "./pages/admin/adminAuditLogs";
 import AdminTracer from "./pages/admin/adminTracer";
 import AdminJobs from "./pages/admin/adminJobs";
 import CareerOpportunityPage from "./pages/CareerOpportunityPage";
@@ -70,6 +71,7 @@ import MagicLinkVerification from "./auth/magic-link-verify";
 import SetupPassword from "./auth/setup-password";
 import { Roles } from "./utils/roles";
 import { scrollToTop } from "./lib/scroll";
+import { setWorkspaceThemeEnabled } from "./lib/theme";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -229,6 +231,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/admin/audit-logs" element={
+        <ProtectedRoute allowedRoles={[Roles.ADMIN]}><AdminAuditLogs /></ProtectedRoute>
+      } />
       <Route
         path="/admin/tracer"
         element={
@@ -660,6 +665,13 @@ function AppRoutes() {
 
 function MemberPages() {
   const { user } = useAuth();
+  const { pathname } = useLocation();
+  const isAuthPage = ["/login", "/logout", "/signup", "/forgot-password", "/verify-magic-link", "/setup-password"]
+    .includes(pathname.replace(/\/+$/, ""));
+  const workspaceTheme = !!user && !user.passwordSetupRequired && !isAuthPage;
+  useLayoutEffect(() => {
+    setWorkspaceThemeEnabled(workspaceTheme);
+  }, [workspaceTheme]);
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
     <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>

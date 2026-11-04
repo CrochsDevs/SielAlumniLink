@@ -143,7 +143,9 @@ export function employmentReport(profiles, { batch, program } = {}) {
         toCompany: job.company || '', toPosition: job.position || job.role || '', startDate: jobMonth(job.startDate),
         companyChanged: previous.company !== job.company, positionChanged: (previous.position || previous.role) !== (job.position || job.role) };
     });
-    return { _id: profile._id, name: profile.name || 'Alumni', email: profile.email || '', batch: profile.batch || '', program: profile.program || '', ...state, employmentHistory: history, transitions };
+    return { _id: profile._id, name: profile.name || 'Alumni', email: profile.email || '',
+      profilePicture: typeof profile.profilePicture === 'string' ? profile.profilePicture : null,
+      batch: profile.batch || '', program: profile.program || '', ...state, employmentHistory: history, transitions };
   });
   const reported = filtered.length - statusDistribution.find(item => item.status === 'Not reported').count;
   const percentage = (count, total) => total ? Math.round(count / total * 1000) / 10 : 0;

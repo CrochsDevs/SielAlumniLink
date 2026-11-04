@@ -1,6 +1,6 @@
 import ActivityModel from './activity.models.js';
 
-// Admin-only: recent audit trail (who logged in/out, when).
+// Admin-only, read-only: student and alumni access history (admin actors excluded).
 export const getActivity = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit, 10) || 50;

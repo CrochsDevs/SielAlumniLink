@@ -332,12 +332,13 @@ try {
   await photo("reports-desktop", 1440, false);
   await photo("reports-mobile-dark", 390, true);
   await evaluate(
-    `Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('2 roles')).click()`,
+    `document.querySelector('button[aria-label="View employment history for Alex Santos"]').click()`,
   );
   await until(
-    `document.body.textContent.includes('Alex Santos — career history')`,
+    `document.querySelector('dialog[aria-label="Alex Santos employment history"][open]')`,
   );
   await photo("progression-mobile", 390, false);
+  await evaluate(`document.querySelector('dialog[open] button[aria-label^="Close employment history"]').click()`);
   await fill("Filter batch", "2024");
   await until(
     `!document.querySelector('tbody')?.textContent.includes('Alex Santos')&&document.body.textContent.includes('100%')`,

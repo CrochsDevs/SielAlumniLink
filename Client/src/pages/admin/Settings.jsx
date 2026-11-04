@@ -1,11 +1,12 @@
 import AccountSettingsNavigation from "../../components/ui/AccountSettingsNavigation";
+import MemberActivity from "../../components/profile/MemberActivity";
 import { AdminTabs, AdminSwitch } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { gooeyToast as toast } from 'goey-toast';
-import { Users, ShieldCheck, Bell, Moon, Sun, Monitor } from "lucide-react";
+import { Users, ShieldCheck, Bell, Moon, Sun, Monitor, Activity } from "lucide-react";
 import ProfilePhotoUpload from "../../components/profile/ProfilePhotoUpload";
 import { useAuth } from "../../context/useAuth";
 import { useNotifications } from "../../realtime/useNotifications";
@@ -17,6 +18,7 @@ import api from "../../utils/axios";
 const TABS = [
   { key: "account", label: "Account Management", icon: Users },
   { key: "security", label: "Security and Password", icon: ShieldCheck },
+  { key: "activity", label: "Activity Logs", desc: "Your private activity history", icon: Activity },
   { key: "notifications", label: "Notification", icon: Bell },
   { key: "appearance", label: "Dark Mode", icon: Moon },
 ];
@@ -144,26 +146,15 @@ export default function Settings() {
       await api.post("/auth/password/change", pwForm);
       setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
 
-      // Stay or logout? Auto-logout after 5 seconds of no choice.
-      const choice = await Swal.fire({
-        title: "Password changed!",
-        text: "Stay logged in on this device, or log out now? Auto logout in 5 seconds.",
+      await Swal.fire({
+        title: "Password changed",
+        text: "Please sign in again. You can review this change in Settings ? Activity Logs ? Security.",
         icon: "success",
-        showConfirmButton: true,
-        confirmButtonText: "Stay logged in",
+        confirmButtonText: "Sign in again",
         confirmButtonColor: "hsl(var(--primary))",
-        showDenyButton: true,
-        denyButtonText: "Log out now",
-        denyButtonColor: "#71717a",
-        reverseButtons: true,
-        timer: 5000,
-        timerProgressBar: true,
+        allowOutsideClick: false,
       });
-
-      if (!choice.isConfirmed) {
-        await logout();
-        navigate("/login", { replace: true });
-      }
+      window.location.assign("/login");
     } catch (err) {
       toast.error("Error", { description: err.response?.data?.message || "Failed to change password" });
     } finally {
@@ -197,6 +188,7 @@ export default function Settings() {
 
             {/* Content */}
             <div className="flex-1 min-w-0 w-full account-settings-content">
+              {activeTab === "activity" && <MemberActivity key={user?.authId || user?._id} admin />}
               {/* ACCOUNT */}
               {activeTab === "account" && (
                 <div className="space-y-4">

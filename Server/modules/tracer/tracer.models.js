@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { client } from '../../config/db.js';
+import { buildTracerPeriodReport, validateTracerPeriod } from './tracer.period-report.js';
 
 // One response per account (upsert by authId). Status values must match
 // the labels used in the admin dashboard filters.
@@ -16,7 +17,21 @@ const activeResponses = (alumniOnly = false) => [
   { $match: { '_tracerAccount.0': { $exists: true } } },
   { $project: { _tracerAccount: 0 } },
 ];
+const currentProfile = [
+      { $lookup: { from: 'users', let: { id: { $toString: '$authId' } }, pipeline: [
+        { $match: { $expr: { $eq: [{ $convert: { input: '$authId', to: 'string', onError: null, onNull: null } }, '$$id'] } } },
+        { $project: { _id: 0, name: 1, profilePicture: 1 } }, { $limit: 1 },
+      ], as: '_tracerProfile' } },
+      { $set: { _tracerName: { $arrayElemAt: ['$_tracerProfile.name', 0] },
+        _tracerPicture: { $arrayElemAt: ['$_tracerProfile.profilePicture', 0] } } },
+      { $project: { _tracerProfile: 0 } },
+    ];
 return {
+  async findPeriodReport(filters = {}) {
+    validateTracerPeriod(filters);
+    const documents = await tracerCollection.aggregate([...activeResponses(), ...currentProfile]).toArray();
+    return buildTracerPeriodReport(documents, filters);
+  },
   async findByAuthId(authId) {
     try {
       const { ObjectId } = await import('mongodb');
@@ -46,7 +61,7 @@ return {
       { $literal: data.program },
       '$program',
     ] };
-    const legacySnapshot = Object.fromEntries(['batch', 'program', 'status', 'company', 'position', 'location', 'jobAlignment', 'alignmentExplanation'].map(key => [key, `$${key}`]));
+    const legacySnapshot = Object.fromEntries(['batch', 'program', 'status', 'company', 'position', 'salaryRange', 'employmentDate', 'email', 'location', 'jobAlignment', 'alignmentExplanation'].map(key => [key, `$${key}`]));
     legacySnapshot.recordedAt = { $ifNull: ['$updatedAt', '$respondedAt'] };
     // Append a dated observation atomically while keeping the latest response for the existing form.
     await tracerCollection.updateOne(
@@ -69,7 +84,7 @@ return {
 
   async findAlumniResponses() {
     // Alignment still needs every dated observation, including historical ones.
-    return await tracerCollection.aggregate(activeResponses(true)).toArray();
+    return await tracerCollection.aggregate([...activeResponses(true), ...currentProfile]).toArray();
   },
 
   async findAll() {

@@ -75,10 +75,11 @@ export const getMyResponse = async (req, res) => {
 // Admin-only: all responses for the dashboard.
 export const getResponses = async (req, res) => {
   try {
-    const responses = await TracerModel.findAll();
+    const { responses, periods } = await TracerModel.findPeriodReport(req.query);
     res.status(200).json({
       success: true,
       data: responses,
+      periods,
       message: 'Tracer responses fetched successfully'
     });
   } catch (error) {

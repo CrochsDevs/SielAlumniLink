@@ -1,4 +1,5 @@
 import { client } from '../../config/db.js';
+import { recordAdminAudit, listUserAccessAudit } from './admin-audit.js';
 
 const db = client.db('SielAlumni');
 const activityCollection = db.collection('activity_logs');
@@ -6,6 +7,9 @@ const activityCollection = db.collection('activity_logs');
 // Persistent audit trail: logins, logouts (and future actions).
 // Presence (online NOW) is separate — see realtime/presence.store.js.
 export const ActivityModel = {
+  logAdmin(actor, action, target, details, ip) {
+    return recordAdminAudit(db, actor, action, target, details, ip);
+  },
   async logPasswordChange({ authId, action = 'password_changed' }) {
     if (!['password_changed', 'password_reset'].includes(action)) return;
     try {
@@ -16,12 +20,13 @@ export const ActivityModel = {
       console.error('Password activity log failed:', error.message);
     }
   },
-  async log({ authId, email, action, ip }) {
+  async log({ authId, email, action, ip, role }) {
     try {
       await activityCollection.insertOne({
         authId: authId ? String(authId) : null,
         email,
         action, // 'login' | 'logout'
+        role: typeof role === 'string' ? role.toLowerCase() : null,
         ip: ip || null,
         createdAt: new Date(),
       });
@@ -32,11 +37,7 @@ export const ActivityModel = {
   },
 
   async listRecent(limit = 50) {
-    return await activityCollection
-      .find({})
-      .sort({ createdAt: -1 })
-      .limit(Math.min(Math.max(limit, 1), 200))
-      .toArray();
+    return listUserAccessAudit(db, limit);
   },
 
   async lastLoginByEmail(email) {

@@ -1,0 +1,25 @@
+@media screen {
+  .member-workspace[data-workspace-role] main.workspace-page.admin-connections {
+    max-width: 1200px;
+  }
+
+  .member-workspace[data-workspace-role] main.workspace-page.admin-connections table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 640px;
+  }
+
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(1) { width: 42%; }
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(2) { width: 16%; }
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(3) { width: 17%; }
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(4) { width: 25%; }
+
+  .member-workspace[data-workspace-role] main.workspace-page.admin-connections table > :is(thead, tbody) > tr > :is(th, td) {
+    padding: 0.75rem 1rem;
+  }
+
+  .admin-connections td:first-child img,
+  .admin-connections td:first-child [class*="rounded-full"] {
+    flex-shrink: 0;
+  }
+}

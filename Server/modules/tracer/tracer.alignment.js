@@ -52,7 +52,10 @@ export function buildAlignmentReport(documents, filters = {}) {
       const graduationYear = /^\d{4}$/.test(String(snapshot.batch)) ? Number(snapshot.batch) : null;
       const years = surveyYear !== null && graduationYear !== null && surveyYear >= graduationYear ? surveyYear - graduationYear : null;
       const alignment = working(snapshot.status) ? JOB_ALIGNMENTS.includes(snapshot.jobAlignment) ? snapshot.jobAlignment : 'not_reported' : 'not_applicable';
-      return { authId: String(document.authId || document._id), email: document.email || '', name: document.alumniName || '', program: snapshot.program || '', batch: String(snapshot.batch || ''), status: snapshot.status || '', company: snapshot.company || '', position: snapshot.position || '', alignment, alignmentLabel: ALIGNMENT_LABELS[alignment], explanation: snapshot.alignmentExplanation || '', recordedAt: recordedAt || null, yearsAfterGraduation: years };
+      return { authId: String(document.authId || document._id), email: document.email || '',
+        name: typeof document._tracerName === 'string' ? document._tracerName : document.alumniName || '',
+        profilePicture: typeof document._tracerPicture === 'string' ? document._tracerPicture : null,
+        program: snapshot.program || '', batch: String(snapshot.batch || ''), status: snapshot.status || '', company: snapshot.company || '', position: snapshot.position || '', alignment, alignmentLabel: ALIGNMENT_LABELS[alignment], explanation: snapshot.alignmentExplanation || '', recordedAt: recordedAt || null, yearsAfterGraduation: years };
     });
   });
   const inWindow = years => followUp === 'all' || (years !== null && (followUp === '3-5' ? years >= 3 && years <= 5 : followUp === '0-2' ? years <= 2 : years >= 6));

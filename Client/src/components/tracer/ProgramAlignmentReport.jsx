@@ -10,6 +10,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, RefreshCw, ClipboardCheck } from "lucide-react";
 import api from "../../utils/axios";
 import DataPagination from "../ui/data-pagination";
+import GraduateIdentity from "../profile/GraduateIdentity";
+import ColumnFilter from "../ui/ColumnFilter";
+import { matchesTextFilter, matchesNumberFilter } from "../../utils/tableFilters";
 import { JOB_ALIGNMENT_OPTIONS } from "../../utils/tracerStudy";
 
 const PROGRAM_COLUMNS = [
@@ -108,6 +111,12 @@ const csvCell = (value) => {
   const text = String(value ?? "");
   return `"${(/^[\s]*[=+@-]/.test(text) ? "'" : "") + text.replace(/"/g, '""')}"`;
 };
+const EMPTY_COLUMN_FILTERS = { name: '', yearsAfterGraduation: '', position: '', alignment: '', explanation: '' };
+const COLUMN_LABELS = {
+  name: 'Filter alumni or program', yearsAfterGraduation: 'Filter follow-up years',
+  position: 'Filter reported job or business', alignment: 'Filter table alignment', explanation: 'Filter duties and explanation',
+};
+const columnInput = 'mt-2 block h-9 w-full min-w-[150px] rounded-lg border border-zinc-300 bg-white px-2.5 text-xs font-normal normal-case tracking-normal text-zinc-700 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200';
 
 export default function ProgramAlignmentReport() {
   const [filters, setFilters] = useState({
@@ -118,6 +127,8 @@ export default function ProgramAlignmentReport() {
     query: "",
   });
   const [query, setQuery] = useState("");
+  const [columnFilters, setColumnFilters] = useState(EMPTY_COLUMN_FILTERS);
+  const [programColumnFilters, setProgramColumnFilters] = useState({});
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -147,8 +158,11 @@ export default function ProgramAlignmentReport() {
       ++generation.current;
     };
   }, [load]);
+  const filteredPrograms = (report?.programs || []).filter(program => Object.entries(programColumnFilters).every(([key, value]) =>
+    key === 'program' ? matchesTextFilter(program.program, value)
+      : matchesNumberFilter(key === 'unassessed' ? program.unsure + program.notReported : program[key], value)));
   const programsTable = useReactTable({
-    data: report?.programs || [],
+    data: filteredPrograms,
     columns: PROGRAM_COLUMNS,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => String(row.program),
@@ -157,8 +171,23 @@ export default function ProgramAlignmentReport() {
   const change = (key, value) => {
     setFilters((previous) => ({ ...previous, [key]: value }));
     setPage(1);
+    setColumnFilters(EMPTY_COLUMN_FILTERS);
+    setProgramColumnFilters({});
   };
-  const alignmentRows = report?.rows || [];
+  const hasColumnFilters = Object.values(columnFilters).some(Boolean);
+  const changeColumnFilter = (key, value) => {
+    setColumnFilters(previous => ({ ...previous, [key]: value }));
+    setPage(1);
+  };
+  const contains = (values, search) => values.some(value => String(value || '').toLowerCase().includes(search.trim().toLowerCase()));
+  const alignmentRows = (report?.rows || []).filter(row =>
+    contains([row.name, row.email, row.program, row.batch], columnFilters.name) &&
+    (!columnFilters.yearsAfterGraduation || (columnFilters.yearsAfterGraduation === 'unknown'
+      ? row.yearsAfterGraduation === null : String(row.yearsAfterGraduation) === columnFilters.yearsAfterGraduation)) &&
+    contains([row.position, row.company, row.status], columnFilters.position) &&
+    (!columnFilters.alignment || row.alignment === columnFilters.alignment) &&
+    contains([row.explanation], columnFilters.explanation));
+  const followUpYears = [...new Set((report?.rows || []).map(row => row.yearsAfterGraduation).filter(value => value !== null))].sort((a, b) => a - b);
   const alignmentTable = useReactTable({
     data: alignmentRows,
     columns: ALIGNMENT_COLUMNS,
@@ -198,6 +227,9 @@ export default function ProgramAlignmentReport() {
       ["Batch", filters.batch || "All batches"],
       ["Alignment filter", filters.alignment || "All"],
       ["Search", filters.query],
+      ["Table column filters", "Summary totals use report filters. Each exported table also applies its own column filters."],
+      ...Object.entries(columnFilters).map(([key, value]) => [COLUMN_LABELS[key], value || 'All']),
+      ...PROGRAM_COLUMNS.map(column => [`Program column filter: ${column.header}`, programColumnFilters[column.accessorKey] || 'All']),
       [
         "Direct alignment rate (%)",
         report.summary.directAlignmentRate ?? "N/A",
@@ -222,7 +254,7 @@ export default function ProgramAlignmentReport() {
         "Not working",
         "Direct alignment (%)",
       ],
-      ...report.programs.map((item) => [
+      ...filteredPrograms.map((item) => [
         item.program,
         item.working,
         item.directlyRelated,
@@ -246,7 +278,7 @@ export default function ProgramAlignmentReport() {
         "Alignment",
         "Duties and explanation",
       ],
-      ...report.rows.map((row) => [
+      ...alignmentRows.map((row) => [
         row.email,
         row.program,
         row.batch,
@@ -298,7 +330,7 @@ export default function ProgramAlignmentReport() {
           <button
             type="button"
             onClick={exportCSV}
-            disabled={loading || !!error || !report?.rows.length}
+            disabled={loading || !!error || !alignmentRows.length}
             className={button}
           >
             <Download size={15} />
@@ -448,12 +480,12 @@ export default function ProgramAlignmentReport() {
                   <h3 className="admin-section-title text-base font-semibold">
                     Program and reported work
                   </h3>
-                  <p
-                    role="status"
-                    className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
-                  >
-                    {report.rows.length} responses in the selected period
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <p role="status" className="text-xs text-zinc-500 dark:text-zinc-400">{alignmentRows.length} of {report.rows.length} responses in the selected period</p>
+                    {hasColumnFilters && <button type="button" onClick={() => { setColumnFilters(EMPTY_COLUMN_FILTERS); setPage(1); }}
+                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:border-brand hover:text-brand dark:border-zinc-700 dark:text-zinc-300">Clear column filters</button>}
+                  </div>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Column filters apply to this table and exported details. Summary totals follow the report filters above.</p>
                   <div
                     role="region"
                     aria-label="Alumni program and work alignment"
@@ -484,25 +516,37 @@ export default function ProgramAlignmentReport() {
                                       header.column.columnDef.header,
                                       header.getContext(),
                                     )}
+                                {!header.isPlaceholder && (header.column.id === 'yearsAfterGraduation' ?
+                                  <select aria-label={COLUMN_LABELS[header.column.id]} value={columnFilters[header.column.id]}
+                                    onChange={event => changeColumnFilter(header.column.id, event.target.value)} className={columnInput}>
+                                    <option value="">All follow-up years</option>
+                                    {followUpYears.map(year => <option key={year} value={year}>{year} {year === 1 ? 'year' : 'years'} after graduation</option>)}
+                                    {(report.rows.some(row => row.yearsAfterGraduation === null)) && <option value="unknown">Years unknown</option>}
+                                  </select>
+                                  : header.column.id === 'alignment' ?
+                                    <select aria-label={COLUMN_LABELS[header.column.id]} value={columnFilters.alignment}
+                                      onChange={event => changeColumnFilter('alignment', event.target.value)} className={columnInput}>
+                                      <option value="">All alignments</option>
+                                      {alignments.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                    : <input type="search" maxLength={200} aria-label={COLUMN_LABELS[header.column.id]}
+                                      placeholder={header.column.id === 'name' ? 'Name, email, program…' : header.column.id === 'position' ? 'Job, business, employer…' : 'Search explanation…'}
+                                      value={columnFilters[header.column.id]}
+                                      onChange={event => changeColumnFilter(header.column.id, event.target.value)} className={columnInput} />)}
                               </th>
                             ))}
                           </tr>
                         ))}
                       </thead>
                       <tbody>
+                        {!rows.length && <tr><td colSpan={ALIGNMENT_COLUMNS.length} className="px-3 py-8 text-sm text-zinc-500 dark:text-zinc-400">No responses match these column filters. Clear or adjust the filters above.</td></tr>}
                         {rows.map((row) => (
                           <tr
                             key={`${row.authId}:${row.program}:${row.batch}`}
                             className="border-b border-zinc-100 align-top dark:border-zinc-800"
                           >
-                            <td className="max-w-72 break-words px-3 py-4">
-                              <p className="font-medium">
-                                {row.name || row.email}
-                              </p>
-                              <p className="mt-2">{row.program}</p>
-                              <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-                                Graduated {row.batch}
-                              </p>
+                            <td className="min-w-[320px] max-w-[380px] px-3 py-4">
+                              <GraduateIdentity user={row} />
                             </td>
                             <td className="px-3 py-4">
                               <p>
@@ -551,7 +595,7 @@ export default function ProgramAlignmentReport() {
                     onPerPageChange={(pageSize) =>
                       alignmentTable.setPagination({ pageIndex: 0, pageSize })
                     }
-                    totalItems={report.rows.length}
+                    totalItems={alignmentRows.length}
                     itemLabel="responses"
                   />
                 </section>
@@ -559,6 +603,10 @@ export default function ProgramAlignmentReport() {
                   <h3 className="admin-section-title text-base font-semibold">
                     Alignment by graduation program
                   </h3>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p>{filteredPrograms.length} of {report.programs.length} programs · Numeric filters accept =, &gt;, &lt;, &gt;=, &lt;= (for example, &gt;=5).</p>
+                    {Object.values(programColumnFilters).some(Boolean) && <button type="button" onClick={() => setProgramColumnFilters({})} className="font-semibold text-brand underline">Clear program column filters</button>}
+                  </div>
                   <div role="region" aria-label="Alignment totals by program" tabIndex={0} className="mt-4 overflow-x-auto">
                     <table className="w-full min-w-[860px] text-left text-xs">
                       <thead>
@@ -574,9 +622,7 @@ export default function ProgramAlignmentReport() {
                                 key={header.id}
                                 scope="col"
                                 colSpan={header.colSpan}
-                                className={
-                                  header.column.columnDef.meta?.headerClassName
-                                }
+                                className={`${header.column.columnDef.meta?.headerClassName} min-w-[160px]`}
                               >
                                 {header.isPlaceholder
                                   ? null
@@ -584,12 +630,17 @@ export default function ProgramAlignmentReport() {
                                       header.column.columnDef.header,
                                       header.getContext(),
                                     )}
+                                {!header.isPlaceholder && <ColumnFilter label={`Filter program summary ${header.column.columnDef.header}`}
+                                  value={programColumnFilters[header.column.id] || ''}
+                                  onChange={value => setProgramColumnFilters(previous => ({ ...previous, [header.column.id]: value }))}
+                                  placeholder={header.column.id === 'program' ? 'Search program…' : 'e.g. >=5'} />}
                               </th>
                             ))}
                           </tr>
                         ))}
                       </thead>
                       <tbody>
+                        {!filteredPrograms.length && <tr><td colSpan={PROGRAM_COLUMNS.length} className="px-3 py-8 text-zinc-500 dark:text-zinc-400">No programs match these column filters.</td></tr>}
                         {programsTable
                           .getRowModel()
                           .rows.map(({ original: item }) => (

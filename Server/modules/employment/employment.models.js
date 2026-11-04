@@ -25,7 +25,7 @@ return {
       { $lookup: { from: 'users', let: { authId: { $toString: '$_id' } }, pipeline: [
         { $match: { $expr: { $eq: [{ $convert: { input: '$authId', to: 'string', onError: '', onNull: '' } }, '$$authId'] } } },
         { $sort: { updatedAt: -1 } }, { $limit: 1 },
-        { $project: { name: 1, email: 1, batch: 1, program: 1, employmentStatus: 1, employmentHistory: 1, employmentUpdatedAt: 1 } },
+        { $project: { name: 1, email: 1, profilePicture: 1, batch: 1, program: 1, employmentStatus: 1, employmentHistory: 1, employmentUpdatedAt: 1 } },
       ], as: 'profile' } },
       { $replaceRoot: { newRoot: { $mergeObjects: [{ _id: '$_id', name: '$name', email: '$email' }, { $arrayElemAt: ['$profile', 0] }] } } },
       { $sort: { name: 1, _id: 1 } },

@@ -18,7 +18,6 @@ import {
   Users as UsersIcon,
   GraduationCap,
   BookOpen,
-  ScrollText,
   RefreshCw,
   DatabaseZap,
   Circle,
@@ -30,24 +29,7 @@ import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import api from "../../utils/axios";
 import { Roles } from "../../utils/roles";
 import DataPagination from "../../components/ui/data-pagination";
-
-const AUDIT_COLUMNS = [
-  {
-    accessorKey: "email",
-    header: "User",
-    meta: { headerClassName: "px-5 py-3 font-semibold" },
-  },
-  {
-    accessorKey: "action",
-    header: "Action",
-    meta: { headerClassName: "px-5 py-3 font-semibold" },
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Time",
-    meta: { headerClassName: "px-5 py-3 font-semibold" },
-  },
-];
+import "./adminUsers.css";
 
 const USER_COLUMNS = [
   {
@@ -130,17 +112,13 @@ export default function AdminUsers() {
   const { user } = useAuth();
   const { onlineIds, lastSeen } = usePresence();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [view, setView] = useState("users");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [audit, setAudit] = useState([]);
-  const [auditLoading, setAuditLoading] = useState(false);
   const [userPage, setUserPage] = useState(1);
   const [userPerPage, setUserPerPage] = useState(10);
-  const [auditPage, setAuditPage] = useState(1);
-  const [auditPerPage, setAuditPerPage] = useState(10);
   const [syncOpen, setSyncOpen] = useState(false);
   const [syncSummary, setSyncSummary] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
@@ -167,18 +145,11 @@ export default function AdminUsers() {
   const fetchAudit = useCallback(async () => {
     if (auditPending.current) return;
     auditPending.current = true;
-    setAuditLoading(true);
     try {
-      const res = await api.get("/activity", { params: { limit: 50 } });
+      const res = await api.get("/activity", { params: { limit: 200 } });
       setAudit(res.data.data || []);
-    } catch (err) {
-      toast.error("Error", {
-        description: err.response?.data?.message || "Failed to load audit logs",
-      });
-    } finally {
-      setAuditLoading(false);
-      auditPending.current = false;
-    }
+    } catch { /* Live presence still works if access history is unavailable. */ }
+    finally { auditPending.current = false; }
   }, []);
 
   useEffect(() => {
@@ -213,9 +184,6 @@ export default function AdminUsers() {
     return map;
   }, [audit]);
 
-  useEffect(() => {
-    if (view === "audit") fetchAudit();
-  }, [view, fetchAudit]);
 
   // ---- CAIS sync (one-click live pull) ----
   // One-click live pull from the CAIS API — loading, then stored.
@@ -306,40 +274,6 @@ export default function AdminUsers() {
   const totalUserPages = Math.max(1, usersTable.getPageCount());
   const pagedUsers = usersTable.getRowModel().rows.map((row) => row.original);
 
-  // Audit logs exclude admins (matched by email from the users list).
-  const adminEmails = useMemo(
-    () =>
-      new Set(users.filter((u) => u.role === Roles.ADMIN).map((u) => u.email)),
-    [users],
-  );
-  const filteredAudit = audit.filter((log) => !adminEmails.has(log.email));
-  const auditTable = useReactTable({
-    data: filteredAudit,
-    columns: AUDIT_COLUMNS,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getRowId: (row) => String(row._id ?? row.authId ?? row.email),
-    autoResetPageIndex: false,
-    state: {
-      pagination: {
-        pageIndex: Math.min(
-          auditPage - 1,
-          Math.max(0, Math.ceil(filteredAudit.length / auditPerPage) - 1),
-        ),
-        pageSize: auditPerPage,
-      },
-    },
-    onPaginationChange: (updater) => {
-      const next =
-        typeof updater === "function"
-          ? updater(auditTable.getState().pagination)
-          : updater;
-      setAuditPage(next.pageIndex + 1);
-      setAuditPerPage(next.pageSize);
-    },
-  });
-  const totalAuditPages = Math.max(1, auditTable.getPageCount());
-  const pagedAudit = auditTable.getRowModel().rows.map((row) => row.original);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -359,7 +293,7 @@ export default function AdminUsers() {
         <main className="workspace-page admin-users mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
           <PageHeader
             title="Users"
-            description="Manage community members and review account activity."
+            description="Manage community members and view their account status."
           />
           <AdminStatGrid columns={3} label="User summaries">
             {[
@@ -393,9 +327,8 @@ export default function AdminUsers() {
                 {...item}
                 featured={index === 0}
                 loading={loading}
-                selected={view === "users" && roleFilter === filter}
+                selected={roleFilter === filter}
                 onClick={() => {
-                  setView("users");
                   setRoleFilter(filter);
                   setUserPage(1);
                 }}
@@ -403,139 +336,7 @@ export default function AdminUsers() {
             ))}
           </AdminStatGrid>
 
-          <AdminTabs
-            label="User management views"
-            value={view}
-            onChange={setView}
-            items={[
-              { id: "users", label: "Users", icon: UsersIcon },
-              {
-                id: "audit",
-                label: "Audit Logs",
-                icon: ScrollText,
-                badge: "Live",
-              },
-            ]}
-          />
-
-          {view === "audit" ? (
-            <div className="admin-panel admin-data-table overflow-hidden">
-              <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 p-4">
-                <div>
-                  <h2 className="admin-section-title text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
-                    Audit Logs
-                  </h2>
-                  <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">
-                    Logins and logouts — newest first.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={fetchAudit}
-                  disabled={auditLoading}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-[11.5px] font-bold text-zinc-600 dark:text-zinc-300 transition hover:border-brand hover:text-brand disabled:opacity-50"
-                >
-                  <RefreshCw
-                    className={`h-3.5 w-3.5 ${auditLoading ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </button>
-              </div>
-              {auditLoading ? (
-                <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-                  Loading audit logs...
-                </p>
-              ) : (
-                <div className="overflow-x-auto no-scrollbar">
-                  <table className="w-full min-w-[560px] text-left text-[12.5px]">
-                    <thead>
-                      {auditTable.getHeaderGroups().map((group) => (
-                        <tr
-                          key={group.id}
-                          className={
-                            "border-b border-zinc-100 dark:border-zinc-800 text-[10.5px] uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                          }
-                        >
-                          {group.headers.map((header) => (
-                            <th
-                              key={header.id}
-                              scope="col"
-                              colSpan={header.colSpan}
-                              className={
-                                header.column.columnDef.meta?.headerClassName
-                              }
-                            >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext(),
-                                  )}
-                            </th>
-                          ))}
-                        </tr>
-                      ))}
-                    </thead>
-                    <tbody>
-                      {pagedAudit.map((log) => (
-                        <tr
-                          key={log._id}
-                          className="border-b border-zinc-50 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:bg-zinc-800/60"
-                        >
-                          <td className="px-5 py-3 font-medium text-zinc-800 dark:text-zinc-100">
-                            {log.email}
-                          </td>
-                          <td className="px-5 py-3">
-                            <span
-                              className={`inline-block rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ${
-                                log.action === "login"
-                                  ? "bg-brand/10 text-brand"
-                                  : "bg-zinc-100 text-zinc-500"
-                              }`}
-                            >
-                              {log.action}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">
-                            {new Date(log.createdAt).toLocaleString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                              hour: "numeric",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            })}
-                          </td>
-                        </tr>
-                      ))}
-                      {filteredAudit.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={3}
-                            className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-500"
-                          >
-                            No activity yet.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              <DataPagination
-                page={Math.min(auditPage, totalAuditPages)}
-                totalPages={totalAuditPages}
-                onPageChange={(value) => auditTable.setPageIndex(value - 1)}
-                perPage={auditPerPage}
-                onPerPageChange={(pageSize) =>
-                  auditTable.setPagination({ pageIndex: 0, pageSize })
-                }
-                totalItems={filteredAudit.length}
-                itemLabel="logs"
-              />
-            </div>
-          ) : (
-            <>
+          <>
               {/* Table card */}
               <div className="admin-panel admin-data-table overflow-hidden">
                 <div className="admin-toolbar">
@@ -823,8 +624,7 @@ export default function AdminUsers() {
                   </div>
                 </div>
               )}
-            </>
-          )}
+          </>
         </main>
       </div>
     </div>

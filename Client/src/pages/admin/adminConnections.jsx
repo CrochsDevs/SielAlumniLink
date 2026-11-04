@@ -15,6 +15,7 @@ import DataPagination from "../../components/ui/data-pagination";
 import { Avatar } from "../../components/search/SearchPerson";
 import api from "../../utils/axios";
 import { getSocket } from "../../realtime/socket";
+import "./adminConnections.css";
 
 const MEMBER_COLUMNS = [
   {
@@ -247,7 +248,7 @@ export default function AdminConnections() {
           title="Connections"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="workspace-page mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+        <main className="workspace-page admin-connections mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
           <PageHeader
             title="Connections"
             description="Select a student or alumnus to see their community connections."
@@ -332,13 +333,13 @@ export default function AdminConnections() {
                           className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                         >
                           <td className="px-5 py-4">
-                            <div className="flex items-center gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
                               <Avatar person={member} />
-                              <div>
-                                <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+                              <div className="min-w-0">
+                                <p className="break-words font-semibold text-zinc-900 dark:text-zinc-100">
                                   {member.name}
                                 </p>
-                                <p className="text-xs text-zinc-500">
+                                <p className="break-all text-xs text-zinc-500">
                                   {member.email}
                                 </p>
                               </div>

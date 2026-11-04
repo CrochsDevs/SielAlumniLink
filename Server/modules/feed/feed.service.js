@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { recordAdminAudit } from '../activity/admin-audit.js';
 import { canViewPost, ensureFeedParticipation, fail, isFeedAdmin, membershipUpdate, POST_TYPES, STORY_TOPICS, validateComment, validateModeration, validatePost } from './feed.policy.js';
 
 const objectId = (value) => {
@@ -214,6 +215,8 @@ export const createFeedService = (db, changed = () => {}) => {
       ...(isFeedAdmin(user) ? {} : { authorAuthId: String(user._id) }), deletedAt: null },
     { $set: { deletedAt: new Date(), deletedBy: String(user._id) } });
     if (!result.matchedCount) fail(404, 'Comment not found');
+    await recordAdminAudit(db, user, 'comment_deleted', { type: 'comment', id: commentId, label: post.title || 'Post comment' },
+      `Removed comment from post ${post._id}.`);
     changed();
   };
 
@@ -238,6 +241,7 @@ export const createFeedService = (db, changed = () => {}) => {
     const post = await readable(id, user);
     if (post.authorAuthId !== String(user._id) && !isFeedAdmin(user)) fail(403, 'Only the author or an administrator can delete this post');
     await posts.updateOne({ _id: post._id }, { $set: { deletedAt: new Date(), deletedBy: String(user._id) } });
+    await recordAdminAudit(db, user, 'post_deleted', { type: 'post', id: post._id, label: post.title || 'Community post' }, 'Removed post from the feed.');
     changed();
   };
 
@@ -269,6 +273,9 @@ export const createFeedService = (db, changed = () => {}) => {
       $push: { moderationHistory: { action: input.action, enabled, reason, by: String(user._id), at: now } },
     }, { returnDocument: 'after' });
     if (!updated) fail(404, 'Post no longer available');
+    await recordAdminAudit(db, user, input.action === 'block' ? (enabled ? 'post_blocked' : 'post_restored')
+      : (enabled ? 'comments_disabled' : 'comments_enabled'),
+    { type: 'post', id: post._id, label: post.title || 'Community post' }, reason || 'Moderation setting updated.');
     changed();
     return serialize(updated, user);
   };
@@ -285,6 +292,8 @@ export const createFeedService = (db, changed = () => {}) => {
       $push: { history: { enabled, reason, by: String(user._id), at: now } },
     }, { upsert: true });
     changed();
+    await recordAdminAudit(db, user, enabled ? 'author_restricted' : 'author_unrestricted',
+      { type: 'user', id: target._id, label: target.name || target.email }, reason || 'Feed participation restored.');
     return { authId: String(target._id), restricted: enabled };
   };
 

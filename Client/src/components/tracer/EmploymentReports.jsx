@@ -7,9 +7,13 @@ import {
 } from "@tanstack/react-table";
 import AdminStatCard from "../admin/AdminStatCard";
 import { AdminStatGrid } from "../admin/AdminUI";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, RefreshCw, Briefcase } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Download, RefreshCw, Briefcase, ChevronRight, X } from "lucide-react";
 import DataPagination from "../ui/data-pagination";
+import ProfileAvatar from "../profile/ProfileAvatar";
+import GraduateIdentity from "../profile/GraduateIdentity";
+import ColumnFilter from "../ui/ColumnFilter";
+import { filterOptions, matchesTextFilter } from "../../utils/tableFilters";
 import api from "../../utils/axios";
 
 const EMPLOYMENT_COLUMNS = [
@@ -35,7 +39,7 @@ const EMPLOYMENT_COLUMNS = [
   },
   {
     accessorKey: "history",
-    header: "History",
+    header: "Employment History",
     meta: { headerClassName: "px-3 py-3 font-medium" },
   },
 ];
@@ -50,11 +54,76 @@ const csvCell = (value) => {
   return `"${(/^[=+@\-\t\r]/.test(text) ? "'" : "") + text.replace(/"/g, '""')}"`;
 };
 
+const displayMonth = value => {
+  const month = typeof value === 'string' ? value.slice(0, 7) : '';
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return 'Date not provided';
+  return new Date(`${month}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+};
+
+function EmploymentHistoryDetails({ person, onClose }) {
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    const trigger = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialog.showModal();
+    closeRef.current?.focus({ preventScroll: true });
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    };
+  }, [person._id]);
+  const jobs = [...person.employmentHistory].reverse();
+  return <dialog ref={dialogRef} id={`employment-history-${person._id}`} aria-label={`${person.name} employment history`}
+    onCancel={event => { event.preventDefault(); onClose(); }}
+    onKeyDown={event => {
+      if (event.key !== 'Tab') return;
+      const controls = event.currentTarget.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]');
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }}
+    onClick={event => { if (event.target === event.currentTarget) onClose(); }}
+    className="m-auto max-h-[85dvh] w-[min(560px,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-0 text-zinc-900 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+    <div className="p-5 sm:p-6">
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/10 text-sm font-semibold text-brand ring-1 ring-black/5 dark:ring-white/10"><ProfileAvatar user={person} fallback={person.email || 'U'} /></span>
+        <div><h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Employment history</h2>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{person.name}</p>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{jobs.length} recorded {jobs.length === 1 ? 'position' : 'positions'}</p>
+        </div>
+      </div>
+      <button ref={closeRef} type="button" onClick={onClose} aria-label={`Close employment history for ${person.name}`}
+        className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-200 focus-visible:outline-brand dark:text-zinc-400 dark:hover:bg-zinc-800"><X size={16} /></button>
+    </div>
+    <ol className="ml-4 mt-5 space-y-5 border-l border-zinc-300 pl-5 dark:border-zinc-700">
+      {jobs.map((job, index) => <li key={job._id || index} className="relative">
+        <span aria-hidden="true" className="absolute -left-[25px] top-1.5 h-2 w-2 rounded-full bg-brand ring-4 ring-zinc-50 dark:ring-zinc-900" />
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="break-words text-sm font-semibold text-zinc-900 dark:text-zinc-100">{job.position || job.role || 'Position not specified'}</p>
+          {job.current && <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-medium text-brand">Current</span>}
+        </div>
+        <p className="mt-1 break-words text-sm text-zinc-600 dark:text-zinc-300">{job.company || 'Company not specified'}</p>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{displayMonth(job.startDate)} – {job.current ? 'Present' : displayMonth(job.endDate)}{job.industry ? ` · ${job.industry}` : ''}</p>
+      </li>)}
+    </ol>
+    </div>
+  </dialog>;
+}
+
 export default function EmploymentReports() {
   const [report, setReport] = useState(null);
   const [batch, setBatch] = useState("");
   const [program, setProgram] = useState("");
   const [query, setQuery] = useState("");
+  const [columnFilters, setColumnFilters] = useState({});
+  const changeColumn = (key, value) => {
+    setColumnFilters(previous => ({ ...previous, [key]: value })); setPage(1); setExpanded(null);
+  };
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -100,8 +169,21 @@ export default function EmploymentReports() {
         person.industry,
       ].some((value) =>
         value.toLowerCase().includes(query.trim().toLowerCase()),
-      ),
+      ) && Object.entries(columnFilters).every(([key, value]) => {
+        if (!value) return true;
+        if (key === 'name') return matchesTextFilter([person.name, person.email, person.program, person.batch], value);
+        if (key === 'currentCompany') return matchesTextFilter([person.currentCompany, person.position], value);
+        if (key === 'industry') return value === '__none__' ? !person.industry : person.industry === value;
+        if (key === 'history') return value === 'none' ? !person.employmentHistory.length
+          : value === 'current' ? person.employmentHistory.some(job => job.current) : person.employmentHistory.length > 0;
+        return person[key] === value;
+      }),
   );
+  const columnOptions = {
+    employmentStatus: (report?.statusDistribution || []).map(item => ({ value: item.status, label: item.status })),
+    industry: [...filterOptions((report?.alumni || []).map(person => person.industry)), { value: '__none__', label: 'No industry reported' }],
+    history: [{ value: 'none', label: 'No history' }, { value: 'recorded', label: 'With history' }, { value: 'current', label: 'Has current role' }],
+  };
   const employmentTable = useReactTable({
     data: filtered,
     columns: EMPLOYMENT_COLUMNS,
@@ -125,6 +207,7 @@ export default function EmploymentReports() {
           : updater;
       setPage(next.pageIndex + 1);
       setPerPage(next.pageSize);
+      setExpanded(null);
     },
   });
   const totalPages = Math.max(1, employmentTable.getPageCount());
@@ -135,6 +218,10 @@ export default function EmploymentReports() {
       ["Employment report", "Value"],
       ["Batch", batch || "All"],
       ["Program", program || "All"],
+      ...EMPLOYMENT_COLUMNS.map(column => {
+        const value = columnFilters[column.accessorKey];
+        return [`Column filter: ${column.header}`, columnOptions[column.accessorKey]?.find(option => option.value === value)?.label || value || 'All'];
+      }),
       ["Total alumni", report.summary.totalAlumni],
       ["Reported status", report.summary.reported],
       ["Not reported", report.summary.notReported],
@@ -353,6 +440,7 @@ export default function EmploymentReports() {
                   onChange={(event) => {
                     setQuery(event.target.value);
                     setPage(1);
+                    setExpanded(null);
                   }}
                   className={`${input} flex-1 basis-64`}
                 />
@@ -362,6 +450,7 @@ export default function EmploymentReports() {
                   onChange={(event) => {
                     setStatus(event.target.value);
                     setPage(1);
+                    setExpanded(null);
                   }}
                   className={input}
                 >
@@ -376,6 +465,7 @@ export default function EmploymentReports() {
                 className="mt-4 text-xs text-zinc-500 dark:text-zinc-400"
               >
                 {filtered.length} alumni
+                {Object.values(columnFilters).some(Boolean) && <button type="button" onClick={() => { setColumnFilters({}); setPage(1); setExpanded(null); }} className="ml-3 font-semibold text-brand underline">Clear column filters</button>}
               </p>
               <div role="region" aria-label="Alumni employment records" tabIndex={0} className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[750px] text-left text-xs">
@@ -387,9 +477,7 @@ export default function EmploymentReports() {
                             key={header.id}
                             scope="col"
                             colSpan={header.colSpan}
-                            className={
-                              header.column.columnDef.meta?.headerClassName
-                            }
+                            className={`${header.column.columnDef.meta?.headerClassName} min-w-[160px]`}
                           >
                             {header.isPlaceholder
                               ? null
@@ -397,6 +485,9 @@ export default function EmploymentReports() {
                                   header.column.columnDef.header,
                                   header.getContext(),
                                 )}
+                            {!header.isPlaceholder && <ColumnFilter label={`Filter employment ${header.column.columnDef.header}`}
+                              value={columnFilters[header.column.id] || ''} onChange={value => changeColumn(header.column.id, value)}
+                              options={columnOptions[header.column.id]} />}
                           </th>
                         ))}
                       </tr>
@@ -408,13 +499,8 @@ export default function EmploymentReports() {
                         key={person._id}
                         className="border-b border-zinc-100 dark:border-zinc-800"
                       >
-                        <td className="max-w-64 break-words px-3 py-4">
-                          <p className="font-semibold">{person.name}</p>
-                          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-                            {[person.program, person.batch]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </p>
+                        <td className="min-w-[320px] max-w-[380px] px-3 py-4">
+                          <GraduateIdentity user={person} />
                         </td>
                         <td className="px-3 py-4">{person.employmentStatus}</td>
                         <td className="max-w-64 break-words px-3 py-4">
@@ -425,18 +511,18 @@ export default function EmploymentReports() {
                         </td>
                         <td className="px-3 py-4">{person.industry || "—"}</td>
                         <td className="px-3 py-4">
+                          {person.employmentHistory.length > 0 ? <div className="space-y-1.5">
                           <button
                             type="button"
-                            aria-expanded={expanded === person._id}
-                            onClick={() =>
-                              setExpanded(
-                                expanded === person._id ? null : person._id,
-                              )
-                            }
-                            className="font-semibold text-brand dark:text-brand"
+                            aria-label={`View employment history for ${person.name}`}
+                            aria-haspopup="dialog"
+                            onClick={() => setExpanded(person._id)}
+                            className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-brand hover:text-brand focus-visible:outline-brand dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
                           >
-                            {person.employmentHistory.length} roles · View
+                            View details <ChevronRight size={14} />
                           </button>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">{person.employmentHistory.length} {person.employmentHistory.length === 1 ? 'entry' : 'entries'}</p>
+                          </div> : <span className="text-xs text-zinc-500 dark:text-zinc-400">No history</span>}
                         </td>
                       </tr>
                     ))}
@@ -448,66 +534,6 @@ export default function EmploymentReports() {
                   No alumni match this selection.
                 </p>
               )}
-              {expanded &&
-                filtered.some((person) => person._id === expanded) && (
-                  <div className="mt-4 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/60">
-                    {filtered
-                      .filter((person) => person._id === expanded)
-                      .map((person) => (
-                        <div key={person._id}>
-                          <div className="flex items-center justify-between gap-3">
-                            <h3 className="admin-section-title text-sm font-semibold">
-                              {person.name} — career history
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => setExpanded(null)}
-                              className="text-xs underline"
-                            >
-                              Close
-                            </button>
-                          </div>
-                          {!person.employmentHistory.length && (
-                            <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-                              No roles recorded.
-                            </p>
-                          )}
-                          <ol className="mt-4 space-y-3">
-                            {person.employmentHistory.map((job, index) => (
-                              <li
-                                key={job._id || index}
-                                className="border-l-2 border-brand pl-3"
-                              >
-                                <p className="break-words text-sm font-medium">
-                                  {job.position ||
-                                    job.role ||
-                                    "Position not specified"}{" "}
-                                  at {job.company || "Company not specified"}
-                                  {job.current && " · Current"}
-                                </p>
-                                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                  {labelMonth(job.startDate)} –{" "}
-                                  {job.current
-                                    ? "Present"
-                                    : labelMonth(job.endDate)}
-                                  {job.industry && ` · ${job.industry}`}
-                                </p>
-                              </li>
-                            ))}
-                          </ol>
-                          <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
-                            {
-                              person.transitions.filter(
-                                (step) =>
-                                  step.companyChanged || step.positionChanged,
-                              ).length
-                            }{" "}
-                            recorded company or position changes.
-                          </p>
-                        </div>
-                      ))}
-                  </div>
-                )}
               <DataPagination
                 page={currentPage}
                 totalPages={totalPages}
@@ -521,13 +547,15 @@ export default function EmploymentReports() {
                 totalItems={filtered.length}
                 itemLabel="alumni"
               />
+              {paged.filter(person => person._id === expanded && person.employmentHistory.length > 0).map(person =>
+                <EmploymentHistoryDetails key={person._id} person={person} onClose={() => setExpanded(null)} />)}
             </section>
 
             <p className="px-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
               Employment rate = employed and self-employed alumni ÷ alumni with
               a reported status. Studying and unemployed are included in the
               denominator. Missing reports are excluded. Batch and program
-              filters apply to all summaries; search and status below filter the
+              filters apply to all summaries; search, status, and column filters narrow the
               alumni list and its export.
             </p>
             <div className="grid gap-4 lg:grid-cols-2">

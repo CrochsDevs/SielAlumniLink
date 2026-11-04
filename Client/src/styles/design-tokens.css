@@ -78,9 +78,10 @@
     --table-row-hover: #f3f8f5;
     --table-scrollbar: #b8c0ca;
     --calendar-grid-line: #cbd0d8;
-    --table-cell-padding: 0.875rem 1rem;
-    --table-font-size: 0.8125rem;
-    --table-max-height: min(65dvh, 40rem);
+    --table-cell-padding: 1rem 1.25rem;
+    --table-font-size: 0.875rem;
+    --table-scale: 0.9;
+    --table-max-height: none;
   }
   .dark {
     --shadow-panel: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);

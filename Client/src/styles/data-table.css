@@ -1,5 +1,8 @@
 /* One table design for every workspace role. Edit --table-* in design-tokens.css. */
 @media screen {
+  .member-workspace[data-workspace-role] main.workspace-page:has(table) {
+    --workspace-max-width: 100%;
+  }
   .member-workspace[data-workspace-role] main.workspace-page :is(div, section):has(> table) {
     min-width: 0;
     max-width: 100%;
@@ -14,7 +17,8 @@
     outline-offset: -2px;
   }
   .member-workspace[data-workspace-role] main.workspace-page table {
-    width: 100%;
+    zoom: var(--table-scale);
+    width: calc(100% / var(--table-scale));
     border-collapse: separate;
     border-spacing: 0;
     background: var(--table-surface);
@@ -40,7 +44,7 @@
     border-bottom: 1px solid var(--table-line);
     background: var(--table-header-surface);
     color: var(--table-header-text);
-    font-size: 0.75rem;
+    font-size: var(--table-font-size);
     font-weight: 650;
     line-height: 1.5;
     letter-spacing: 0.015em;

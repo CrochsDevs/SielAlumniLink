@@ -21,6 +21,8 @@ const { default: AuthModel } = await import('./auth.models.js');
 const { default: MagicLinkModel } = await import('../magic/magic.models.js');
 const { default: UserModel } = await import('../users/users.models.js');
 const { default: ActivityModel } = await import('../activity/activity.models.js');
+// Admin audit writes are isolated from the real database in controller fixtures.
+test.beforeEach(t => t.mock.method(ActivityModel, 'logAdmin', async () => {}));
 const { protect, optionalProtect } = await import('../../middlewares/auth.middleware.js');
 const { deleteUser, getUsers, getUserById, syncUsers } = await import('../users/users.controllers.js');
 const { visibleProfile } = await import('../users/profile-visibility.js');
@@ -170,7 +172,7 @@ test('an in-flight password change rejected by the conditional write cannot clai
     assert.equal(log.mock.callCount(), 0);
 });
 
-test('successful student and alumni password changes record only their own security event', async t => {
+test('successful student, alumni, and admin password changes record only their own security event', async t => {
     const compare = t.mock.method(bcrypt, 'compare', async () => true);
     t.mock.method(bcrypt, 'genSalt', async () => 'salt');
     t.mock.method(bcrypt, 'hash', async () => 'new-hash');
@@ -178,7 +180,7 @@ test('successful student and alumni password changes record only their own secur
     const log = t.mock.method(ActivityModel, 'logPasswordChange', async () => {});
     let user;
     t.mock.method(AuthModel, 'findByEmail', async () => user);
-    for (const role of ['student', 'alumni']) {
+    for (const role of ['student', 'alumni', 'admin']) {
         user = { ...account, role };
         const res = response();
         await changePassword({ user, body: { currentPassword: 'Old-secret', newPassword: 'New-secret', confirmPassword: 'New-secret' } }, res);
@@ -186,12 +188,12 @@ test('successful student and alumni password changes record only their own secur
         assert.equal(res.body.reauthenticationRequired, true);
         assert.deepEqual(log.mock.calls.at(-1).arguments, [{ authId: user._id }]);
     }
-    assert.equal(log.mock.callCount(), 2);
+    assert.equal(log.mock.callCount(), 3);
     compare.mock.mockImplementation(async () => false);
     const res = response();
     await changePassword({ user: account, body: { currentPassword: 'Wrong-secret', newPassword: 'New-secret', confirmPassword: 'New-secret' } }, res);
     assert.equal(res.statusCode, 401);
-    assert.equal(log.mock.callCount(), 2);
+    assert.equal(log.mock.callCount(), 3);
 });
 
 test('password activity persistence never stores credentials or prevents a completed password change', async t => {

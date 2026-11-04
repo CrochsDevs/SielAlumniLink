@@ -130,7 +130,7 @@ export const verifyMagicLink = async (req, res) => {
     });
 
     // Audit trail (fire-and-forget).
-    void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', ip: req.ip });
+    void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', role: user.role, ip: req.ip });
 
     res.status(200).json({
       success: true,

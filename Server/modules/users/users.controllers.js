@@ -13,6 +13,10 @@ import MagicLinkModel from '../magic/magic.models.js';
 import { visibleProfile, profileProjection } from './profile-visibility.js';
 import { client } from '../../config/db.js';
 import { recordProfileActivity } from '../activity/member-activity.service.js';
+import ActivityModel from '../activity/activity.models.js';
+
+const auditUser = (req, action, profile, details = '') => ActivityModel.logAdmin(req.user, action,
+  { type: 'user', id: profile.authId || profile._id, label: profile.name || profile.email }, details, req.ip);
 
 const logProfileChange = async (authId, before, after) => {
   try { await recordProfileActivity(client.db('SielAlumni'), authId, before, after); }
@@ -119,6 +123,8 @@ export const syncUsers = async (req, res) => {
       }
     }
 
+    await ActivityModel.logAdmin(req.user, 'users_synced', { type: 'directory', label: 'User directory' },
+      `Created ${summary.created}; updated ${summary.updated}; skipped ${summary.skipped.length}.`, req.ip);
     res.status(200).json({
       success: true,
       data: { ...summary, sources: caisMeta },
@@ -239,6 +245,7 @@ export const createUser = async (req, res) => {
     });
     
     const { password: _, ...safeUser } = newUser;
+    await auditUser(req, 'user_created', newUser, 'Created a directory user.');
     
     res.status(201).json({
       success: true,
@@ -288,6 +295,7 @@ export const updateUser = async (req, res) => {
       updateData.email = email;
       if (user.authId) {
         await AuthModel.updateEmailById(user.authId, email);
+        await auditUser(req, 'email_changed', user, `Login email changed to ${email}.`);
       }
       emailChanged = true;
     }
@@ -296,6 +304,8 @@ export const updateUser = async (req, res) => {
 
     const updatedUser = await UserModel.findById(id);
     const { password, ...safeUser } = updatedUser;
+    const fields = Object.keys(updateData).filter(field => updateData[field] !== user[field] && !(field === 'email' && user.authId && emailChanged));
+    if (fields.length) await auditUser(req, 'user_updated', updatedUser, `Updated fields: ${fields.join(', ')}.`);
 
     res.status(200).json({
       success: true,
@@ -331,10 +341,12 @@ export const deleteUser = async (req, res) => {
     if (auth) {
       // Disable first: even a later cleanup failure must leave login revoked.
       await AuthModel.disableById(auth._id);
+      await auditUser(req, 'account_disabled', { ...user, authId: auth._id }, 'Disabled account and revoked its sessions.');
       await MagicLinkModel.deleteByEmail(auth.email);
       await UserModel.deleteByAuthId(auth._id);
     }
     await UserModel.deleteById(id);
+    await auditUser(req, 'user_deleted', user, 'Removed directory profile.');
     
     res.status(200).json({
       success: true,
@@ -377,6 +389,7 @@ export const graduateUser = async (req, res) => {
 
     if (auth.role !== Roles.ALUMNI) {
       await AuthModel.updateRoleById(auth._id, Roles.ALUMNI);
+      await auditUser(req, 'role_changed', { ...auth, authId: auth._id }, `${auth.role} → alumni (graduation).`);
     }
 
     const profile = await UserModel.findByAuthId(auth._id);
@@ -396,6 +409,7 @@ export const graduateUser = async (req, res) => {
       });
     }
 
+    await auditUser(req, 'user_graduated', { ...auth, authId: auth._id }, 'Marked profile as graduated.');
     res.status(200).json({
       success: true,
       message: `${auth.email} is now an alumnus`,
@@ -444,6 +458,7 @@ export const updateUserRole = async (req, res) => {
     }
 
     await AuthModel.updateRoleById(profile.authId, role);
+    await auditUser(req, 'role_changed', profile, `${profile.role || 'Unspecified'} → ${role}.`);
     await UserModel.updateById(String(profile._id), { role });
 
     res.status(200).json({

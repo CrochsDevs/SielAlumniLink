@@ -182,17 +182,18 @@ try {
   await page.goto("http://localhost:5173/admin/users");
   await page.locator("tbody tr").nth(9).waitFor();
   assert.equal(await page.locator("thead th").count(), 10);
-  await page.getByRole("button", { name: /^Audit Logs/ }).click();
+  await page.goto("http://localhost:5173/admin/audit-logs");
   await page.locator("tbody tr").nth(9).waitFor();
-  assert.equal(await page.locator("thead th").count(), 3);
+  assert.equal(await page.locator("thead th").count(), 4);
 
   await page.goto("http://localhost:5173/admin/tracer?view=employment");
   await page.locator("tbody tr").nth(9).waitFor();
   await page
-    .getByRole("button", { name: /1 roles/ })
+    .getByRole("button", { name: /View employment history for/ })
     .first()
     .click();
-  await page.getByRole("heading", { name: /career history/ }).waitFor();
+  await page.getByRole("dialog", { name: /employment history/ }).waitFor();
+  await page.keyboard.press("Escape");
   await page
     .getByLabel("Search alumni employment", { exact: true })
     .fill("member23");
@@ -200,7 +201,7 @@ try {
   assert.equal(await page.locator("tbody tr").count(), 1);
   await page.goto("http://localhost:5173/admin/tracer?view=responses");
   await page.locator("tbody tr").nth(9).waitFor();
-  assert.equal(await page.locator("thead th").count(), 11);
+  assert.equal(await page.locator("thead th").count(), 12);
   await page
     .getByLabel("Search tracer responses", { exact: true })
     .fill("no-match");

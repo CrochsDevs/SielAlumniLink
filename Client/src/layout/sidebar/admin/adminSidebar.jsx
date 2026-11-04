@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
   Award,
+  ScrollText,
   X,
 } from "lucide-react";
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
@@ -33,6 +34,7 @@ const menuGroups = [
     items: [
       { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
       { to: "/admin/users", label: "Users", icon: Users },
+      { to: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
       { to: "/feed", label: "Alumni Feed", icon: MessageSquare },
     ],
   },

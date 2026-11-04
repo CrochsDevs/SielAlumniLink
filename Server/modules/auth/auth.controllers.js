@@ -64,7 +64,7 @@ export const login = async (req, res) => {
         });
 
         // Audit trail (fire-and-forget — never blocks login).
-        void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', ip: req.ip });
+        void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', role: user.role, ip: req.ip });
 
         res.status(200).json({
             success: true,
@@ -210,7 +210,7 @@ export const changePassword = async (req, res) => {
         if (!result.modifiedCount) {
             return res.status(409).json({ success: false, message: 'Your account changed. Please sign in again before changing your password.' });
         }
-        if (['student', 'alumni'].includes(user.role)) {
+        if (['student', 'alumni', 'admin'].includes(user.role)) {
             await ActivityModel.logPasswordChange({ authId: user._id });
         }
         res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
@@ -356,7 +356,7 @@ export const resetPassword = async (req, res) => {
         if (!result.modifiedCount) {
             return res.status(401).json({ success: false, message: 'Invalid or expired reset token' });
         }
-        if (['student', 'alumni'].includes(user.role)) {
+        if (['student', 'alumni', 'admin'].includes(user.role)) {
             await ActivityModel.logPasswordChange({ authId: user._id, action: 'password_reset' });
         }
 
@@ -384,7 +384,7 @@ export const logout = async (req, res) => {
                 const result = await AuthModel.revokeSessionsById(user._id);
                 if (!result.modifiedCount) throw new Error('Session revocation did not complete');
                 // Audit logging is optional; session revocation above is mandatory.
-                void ActivityModel.log({ authId: user._id, email: user.email, action: 'logout', ip: req.ip }).catch(() => {});
+                void ActivityModel.log({ authId: user._id, email: user.email, action: 'logout', role: user.role, ip: req.ip }).catch(() => {});
             }
         }
 
