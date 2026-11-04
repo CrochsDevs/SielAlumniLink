@@ -11,6 +11,13 @@ import { EmploymentModel } from '../employment/employment.models.js';
 import { changeExperience, employmentState } from '../employment/employment.policy.js';
 import MagicLinkModel from '../magic/magic.models.js';
 import { visibleProfile, profileProjection } from './profile-visibility.js';
+import { client } from '../../config/db.js';
+import { recordProfileActivity } from '../activity/member-activity.service.js';
+
+const logProfileChange = async (authId, before, after) => {
+  try { await recordProfileActivity(client.db('SielAlumni'), authId, before, after); }
+  catch (error) { console.error('[profile] Unable to record profile activity', error.message); }
+};
 
 const SYNCABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
@@ -542,6 +549,8 @@ export const updateMyProfile = async (req, res) => {
     const updated = await UserModel.findById(String(profile._id));
     const { password, ...safeProfile } = updated;
 
+    await logProfileChange(req.user._id, profile, updated);
+
     if (updateData.profilePicture !== undefined || updateData.name !== undefined) {
       try {
         const conversations = await ConversationModel.findMine(req.user._id);
@@ -581,6 +590,7 @@ export const updateMyExperience = async (req, res) => {
     const profile = await UserModel.findByAuthId(req.user._id);
     if (!profile) return res.status(404).json({ success: false, message: 'Profile not found' });
     const updated = await EmploymentModel.updateProfile(profile, changeExperience(profile, req.body));
+    await logProfileChange(req.user._id, profile, updated);
     const { password, ...safeProfile } = updated;
     res.status(200).json({ success: true, data: { ...safeProfile, role: req.user.role, historyRevision: employmentState(updated).historyRevision } });
   } catch (error) {

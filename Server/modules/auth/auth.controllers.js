@@ -210,6 +210,9 @@ export const changePassword = async (req, res) => {
         if (!result.modifiedCount) {
             return res.status(409).json({ success: false, message: 'Your account changed. Please sign in again before changing your password.' });
         }
+        if (['student', 'alumni'].includes(user.role)) {
+            await ActivityModel.logPasswordChange({ authId: user._id });
+        }
         res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
 
         res.status(200).json({
@@ -352,6 +355,9 @@ export const resetPassword = async (req, res) => {
         const result = await AuthModel.resetPasswordWithToken(user._id, tokenHash, hashedPassword);
         if (!result.modifiedCount) {
             return res.status(401).json({ success: false, message: 'Invalid or expired reset token' });
+        }
+        if (['student', 'alumni'].includes(user.role)) {
+            await ActivityModel.logPasswordChange({ authId: user._id, action: 'password_reset' });
         }
 
         res.status(200).json({

@@ -302,5 +302,7 @@ export const ensureFeedIndexes = async (db) => {
   await db.collection('feed_posts').createIndex({ authorAuthId: 1, audience: 1, _id: -1 });
   await db.collection('feed_posts').createIndex({ originalPostId: 1, deletedAt: 1 });
   await db.collection('feed_comments').createIndex({ postId: 1, deletedAt: 1, _id: -1 });
+  await db.collection('feed_comments').createIndex({ authorAuthId: 1, _id: -1 });
+  await db.collection('member_activity').createIndex({ authorAuthId: 1, _id: -1 });
   await db.collection('feed_images').createIndex({ ownerAuthId: 1, createdAt: -1 });
 };

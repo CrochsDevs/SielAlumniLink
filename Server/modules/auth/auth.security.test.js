@@ -156,6 +156,7 @@ test('conditional password writes check both credential state and the authorized
 });
 
 test('an in-flight password change rejected by the conditional write cannot claim success', async t => {
+    const log = t.mock.method(ActivityModel, 'logPasswordChange', async () => {});
     t.mock.method(AuthModel, 'findByEmail', async () => account);
     t.mock.method(bcrypt, 'compare', async () => true);
     t.mock.method(AuthModel, 'updatePasswordById', async (_id, _hash, expected) => {
@@ -166,6 +167,46 @@ test('an in-flight password change rejected by the conditional write cannot clai
     assert.equal(res.statusCode, 409);
     assert.equal(res.body.success, false);
     assert.equal(res.clearedCookie, undefined);
+    assert.equal(log.mock.callCount(), 0);
+});
+
+test('successful student and alumni password changes record only their own security event', async t => {
+    const compare = t.mock.method(bcrypt, 'compare', async () => true);
+    t.mock.method(bcrypt, 'genSalt', async () => 'salt');
+    t.mock.method(bcrypt, 'hash', async () => 'new-hash');
+    t.mock.method(AuthModel, 'updatePasswordById', async () => ({ modifiedCount: 1 }));
+    const log = t.mock.method(ActivityModel, 'logPasswordChange', async () => {});
+    let user;
+    t.mock.method(AuthModel, 'findByEmail', async () => user);
+    for (const role of ['student', 'alumni']) {
+        user = { ...account, role };
+        const res = response();
+        await changePassword({ user, body: { currentPassword: 'Old-secret', newPassword: 'New-secret', confirmPassword: 'New-secret' } }, res);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body.reauthenticationRequired, true);
+        assert.deepEqual(log.mock.calls.at(-1).arguments, [{ authId: user._id }]);
+    }
+    assert.equal(log.mock.callCount(), 2);
+    compare.mock.mockImplementation(async () => false);
+    const res = response();
+    await changePassword({ user: account, body: { currentPassword: 'Wrong-secret', newPassword: 'New-secret', confirmPassword: 'New-secret' } }, res);
+    assert.equal(res.statusCode, 401);
+    assert.equal(log.mock.callCount(), 2);
+});
+
+test('password activity persistence never stores credentials or prevents a completed password change', async t => {
+    const write = t.mock.method(Collection.prototype, 'insertOne', async doc => {
+        assert.deepEqual(Object.keys(doc).sort(), ['action', 'authorAuthId', 'createdAt', 'kind']);
+        assert.equal(doc.kind, 'security');
+        assert.equal(doc.authorAuthId, 'fixture');
+        assert.ok(doc.createdAt instanceof Date);
+        return { insertedId: 'event' };
+    });
+    await ActivityModel.logPasswordChange({ authId: 'fixture', password: 'SECRET', action: 'password_reset' });
+    assert.equal(write.mock.callCount(), 1);
+    t.mock.method(console, 'error', () => {});
+    write.mock.mockImplementation(async () => { throw new Error('storage unavailable'); });
+    await assert.doesNotReject(ActivityModel.logPasswordChange({ authId: 'fixture' }));
 });
 
 test('logout reports storage/revocation failure without clearing the retry credential or leaking details', async t => {
@@ -410,6 +451,17 @@ const verifyCode = async (otp = '123456') => {
 const resetWith = async (token, newPassword = 'Updated-password') => {
     const res = response(); await resetPassword({ body: { token, newPassword } }, res); return res;
 };
+
+test('successful password recovery records a private reset event once', async t => {
+    const state = recoveryFixture(t);
+    state.role = 'student';
+    const log = t.mock.method(ActivityModel, 'logPasswordChange', async () => {});
+    const token = (await verifyCode()).body.data.resetToken;
+    assert.equal((await resetWith(token)).statusCode, 200);
+    assert.deepEqual(log.mock.calls[0].arguments, [{ authId: state._id, action: 'password_reset' }]);
+    assert.equal((await resetWith(token)).statusCode, 401);
+    assert.equal(log.mock.callCount(), 1);
+});
 
 test('reset credentials are random, hashed at rest and expire after ten minutes', () => {
     const first = createPasswordReset(), second = createPasswordReset();

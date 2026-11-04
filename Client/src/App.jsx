@@ -362,6 +362,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/alumni/activity-logs" element={
+        <ProtectedRoute allowedRoles={[Roles.ALUMNI]}><Navigate to="/alumni/accounts?tab=activity" replace /></ProtectedRoute>
+      } />
       <Route
         path="/alumni/profile/:id"
         element={
@@ -506,6 +509,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/student/activity-logs" element={
+        <ProtectedRoute allowedRoles={[Roles.STUDENT]}><Navigate to="/student/accounts?tab=activity" replace /></ProtectedRoute>
+      } />
       <Route
         path="/student/profile/:id"
         element={

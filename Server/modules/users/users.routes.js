@@ -15,11 +15,25 @@ import {
 } from './users.controllers.js';
 import { protect, authorize } from '../../middlewares/auth.middleware.js';
 import Roles from '../../constant/roles.js';
+import { client } from '../../config/db.js';
+import { createFeedService } from '../feed/feed.service.js';
+import { createMemberActivityService } from '../activity/member-activity.service.js';
 
 const router = express.Router();
 
 // All user endpoints require login
 router.use(protect);
+
+const db = client.db('SielAlumni');
+const memberActivity = createMemberActivityService(db, createFeedService(db));
+router.get('/:id/activity', async (req, res) => {
+  try {
+    res.json({ success: true, data: await memberActivity(req.user, req.params.id, req.query) });
+  } catch (error) {
+    res.status(error.status || 500).json({ success: false,
+      message: error.status ? error.message : 'Unable to load activity. Please try again.' });
+  }
+});
 
 // Directory: any authenticated role (student / alumni / admin)
 router.get('/', getUsers);

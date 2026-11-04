@@ -1,5 +1,7 @@
 import ProfileAvatar from "../../components/profile/ProfileAvatar";
 import AccountSettingsNavigation from "../../components/ui/AccountSettingsNavigation";
+import MemberActivity from "../../components/profile/MemberActivity";
+import { useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/ui/PageHeader";
 import { createElement, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
@@ -17,6 +19,7 @@ import {
   ScrollText,
   ChevronDown,
   LifeBuoy,
+  Activity,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import StudentSidebar from "../../layout/sidebar/student/studentSidebar";
@@ -28,6 +31,7 @@ const TAB_GROUPS = [
   {
     label: "Account Settings",
     tabs: [
+      { key: "activity", label: "Activity Logs", desc: "Your private activity history", icon: Activity },
       {
         key: "profile",
         label: "Profile",
@@ -242,7 +246,9 @@ const LegalDoc = ({ sections }) => (
 const StudentAccounts = () => {
   const { user, refreshUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [params, setParams] = useSearchParams();
+  const activeTab = TAB_GROUPS.flatMap(group => group.tabs).some(tab => tab.key === params.get("tab")) ? params.get("tab") : "profile";
+  const setActiveTab = tab => setParams(previous => { const next = new URLSearchParams(previous); next.set("tab", tab); return next; });
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
   const [pwForm, setPwForm] = useState({
@@ -334,6 +340,7 @@ const StudentAccounts = () => {
 
             {/* Content */}
             <div className="w-full min-w-0 flex-1 account-settings-content">
+              {activeTab === "activity" && <MemberActivity key={user?.authId || user?._id} />}
               {activeTab === "profile" && (
                 <section className="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
