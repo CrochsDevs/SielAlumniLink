@@ -32,10 +32,10 @@ export default function ChatsDropdown({ conversations, messagePath, onClose, onD
             {conversation.unread > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">{conversation.unread}</span>}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-bold text-zinc-800 dark:text-zinc-100">{conversation.name}</span>
-            <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{conversation.preview || 'No received messages yet'}</span>
+            <span className={`block truncate text-[13px] text-zinc-800 dark:text-zinc-100 ${conversation.unread > 0 ? 'font-bold' : 'font-medium'}`}>{conversation.name}</span>
+            <span className={`block truncate text-xs ${conversation.unread > 0 ? 'font-bold text-zinc-900 dark:text-zinc-100' : 'font-normal text-zinc-500 dark:text-zinc-400'}`}>{conversation.preview || 'No received messages yet'}</span>
           </span>
-          <span className="shrink-0 text-[10.5px] text-zinc-400">{formatTime(conversation.previewAt === undefined ? conversation.time : conversation.previewAt)}</span>
+          <span className={`shrink-0 text-[10.5px] ${conversation.unread > 0 ? 'font-bold text-zinc-700 dark:text-zinc-200' : 'font-normal text-zinc-400'}`}>{formatTime(conversation.previewAt === undefined ? conversation.time : conversation.previewAt)}</span>
         </button>
       </li>)}
       {!filtered.length && <li className="flex flex-col items-center gap-2 px-4 py-10 text-center text-xs text-muted-foreground">

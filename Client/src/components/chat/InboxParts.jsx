@@ -303,7 +303,7 @@ const ConvoList = ({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[13px] font-bold text-zinc-900 dark:text-zinc-100">
+                  <span className={`truncate text-[13px] text-zinc-900 dark:text-zinc-100 ${c.unread > 0 ? "font-bold" : "font-medium"}`}>
                     {c.name}
                     {c.isGroup && c.memberCount ? (
                       <span className="ml-1 font-medium text-zinc-400">
@@ -311,12 +311,12 @@ const ConvoList = ({
                       </span>
                     ) : null}
                   </span>
-                  <span className="shrink-0 text-[10.5px] font-medium text-zinc-400 dark:text-zinc-500">
+                  <span className={`shrink-0 text-[10.5px] ${c.unread > 0 ? "font-bold text-zinc-700 dark:text-zinc-200" : "font-normal text-zinc-400 dark:text-zinc-500"}`}>
                     {formatTime(c.previewAt === undefined ? c.time : c.previewAt)}
                   </span>
                 </span>
                 <span
-                  className={`block truncate text-[11.5px] ${c.unread > 0 ? "font-semibold text-zinc-700 dark:text-zinc-200" : "text-zinc-500 dark:text-zinc-400"}`}
+                  className={`block truncate text-[11.5px] ${c.unread > 0 ? "font-bold text-zinc-900 dark:text-zinc-100" : "font-normal text-zinc-500 dark:text-zinc-400"}`}
                 >
                   {c.preview || "No received messages yet"}
                 </span>

@@ -393,7 +393,7 @@
 }
 .messages-workspace
   .message-stream-body
-  [data-slot="bubble"][data-align="start"]:not([data-variant="outline"])
+  [data-slot="bubble"][data-align="start"]:not([data-variant="outline"]):not([data-variant="destructive"])
   > [data-slot="bubble-content"] {
   background: var(--message-composer);
   color: var(--message-ink);

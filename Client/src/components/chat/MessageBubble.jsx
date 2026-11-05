@@ -4,7 +4,9 @@ import {
   Download,
   Phone,
   PhoneMissed,
+  PhoneOff,
   Video,
+  VideoOff,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Bubble, BubbleContent } from "../ui/bubble";
@@ -12,6 +14,7 @@ import { messageDeliveryLabel } from './messageDelivery';
 import MessageActions from './MessageActions';
 import ChatPhoto from './ChatPhoto';
 import { chatAttachmentUrl } from '../../utils/chatAttachments';
+import './MessageBubble.css';
 
 const sharedPostId = (text) => {
   const match = /^Shared a post: (https?:\/\/\S+)$/.exec(text || "");
@@ -38,6 +41,11 @@ export default function MessageBubble({
   onUnsend,
 }) {
   const postId = sharedPostId(msg.text);
+  const missedCall = msg.call?.status === 'missed';
+  const declinedCall = msg.call?.status === 'declined';
+  const callType = msg.call?.kind === 'video' ? 'video' : 'voice';
+  const callDuration = Math.max(0, Math.floor(Number(msg.call?.duration) || 0));
+  const durationLabel = `${Math.floor(callDuration / 60)}:${String(callDuration % 60).padStart(2, '0')}`;
   const hasPhoto = !msg.unsent && msg.attachment?.kind === 'image' && !!msg.attachment.url;
   const canEdit = !msg.call && mine && msg._id && msg.text && onEdit;
   const canUnsend = !msg.call && mine && msg._id && onUnsend;
@@ -61,10 +69,13 @@ export default function MessageBubble({
       style={hasPhoto ? { maxWidth: 'min(100%, var(--chat-photo-max-width, 320px))' } : undefined}
       data-read-id={!mine && msg._id && !msg.readByMe ? msg._id : undefined}
       align={mine ? "end" : "start"}
-      variant={msg.unsent ? "outline" : mine ? "default" : "secondary"}
+      data-call-status={msg.call?.status}
+      variant={msg.unsent ? "outline" : missedCall ? "destructive" : msg.call ? "outline" : mine ? "default" : "secondary"}
       className={
         msg.unsent
           ? "[&>[data-slot=bubble-content]]:border-dashed [&>[data-slot=bubble-content]]:bg-transparent"
+          : msg.call
+            ? "chat-call-card"
           : mine
             ? "[&>[data-slot=bubble-content]]:bg-brand [&>[data-slot=bubble-content]]:text-white"
             : ""
@@ -92,18 +103,26 @@ export default function MessageBubble({
               </a>
             )}
             {msg.call && (
-              <span className="mb-1 flex items-center gap-2 text-xs font-semibold">
-                {msg.call.status === "missed" ? (
-                  <PhoneMissed size={16} />
-                ) : msg.call.kind === "video" ? (
-                  <Video size={16} />
-                ) : (
-                  <Phone size={16} />
-                )}
-                {mine ? "Outgoing call" : "Incoming call"}
-              </span>
+              <div className="chat-call-card__layout">
+                <span className="chat-call-card__icon" aria-hidden="true">
+                  {declinedCall
+                    ? callType === 'video' ? <VideoOff size={19} /> : <PhoneOff size={19} />
+                    : callType === 'video' ? <Video size={19} /> : missedCall ? <PhoneMissed size={19} /> : <Phone size={19} />}
+                </span>
+                <div className="chat-call-card__details">
+                  <p className="chat-call-card__title">
+                    {missedCall ? `Missed ${callType} call` : `${callType === 'video' ? 'Video' : 'Voice'} call ${msg.call.status === 'declined' ? 'declined' : 'ended'}`}
+                  </p>
+                  <p className="chat-call-card__subtitle">
+                    {mine ? 'Outgoing call' : 'Incoming call'}
+                    {declinedCall && <> &middot; {mine ? 'Declined' : 'You declined'}</>}
+                    {msg.call.status === 'completed' && <> &middot; <span className="chat-call-card__duration">{durationLabel}</span></>}
+                    {missedCall && mine && <> &middot; No answer</>}
+                  </p>
+                </div>
+              </div>
             )}
-            {msg.text &&
+            {msg.text && !msg.call &&
               (postId ? (
                 <Link
                   to={`/feed?post=${postId}`}

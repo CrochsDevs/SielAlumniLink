@@ -1,0 +1,87 @@
+.chat-call-card {
+  --call-title: #27272a;
+  --call-icon: hsl(var(--primary));
+  --call-icon-bg: hsl(var(--primary) / 0.1);
+}
+
+.chat-call-card[data-call-status="missed"] {
+  --call-title: #dc2626;
+  --call-icon: #dc2626;
+  --call-icon-bg: #fee2e2;
+}
+
+.chat-call-card[data-call-status="declined"] {
+  --call-title: #92400e;
+  --call-icon: #b45309;
+  --call-icon-bg: #fef3c7;
+}
+
+.chat-call-card[data-slot="bubble"][data-variant] > [data-slot="bubble-content"] {
+  width: 248px;
+  max-width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e4e4e7;
+  border-radius: 16px;
+  background: #fafafa;
+  color: var(--call-title);
+  box-shadow: none;
+  white-space: normal;
+}
+
+.chat-call-card__layout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-call-card__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--call-icon-bg);
+  color: var(--call-icon);
+}
+
+.chat-call-card__details { min-width: 0; }
+
+.chat-call-card__title {
+  margin: 0;
+  color: var(--call-title);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.chat-call-card__subtitle {
+  margin: 3px 0 0;
+  color: #71717a;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.dark .chat-call-card[data-slot="bubble"][data-variant] > [data-slot="bubble-content"] {
+  border-color: #3f4148;
+  background: #2b2d31;
+  color: var(--call-title);
+}
+
+.dark .chat-call-card { --call-title: #f4f4f5; }
+
+.dark .chat-call-card[data-call-status="missed"] {
+  --call-title: #f87171;
+  --call-icon: #f87171;
+  --call-icon-bg: rgb(239 68 68 / 12%);
+}
+
+.dark .chat-call-card[data-call-status="declined"] {
+  --call-title: #fcd34d;
+  --call-icon: #fbbf24;
+  --call-icon-bg: rgb(245 158 11 / 14%);
+}
+
+.dark .chat-call-card__subtitle { color: #a1a1aa; }
+.chat-call-card__duration { font-variant-numeric: tabular-nums; }
