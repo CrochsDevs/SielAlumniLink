@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
+import GraduationCapLoader from "../components/ui/GraduationCapLoader";
+
 const MagicLinkVerification = () => {
   const navigate = useNavigate();
   const { verifyMagicLink } = useAuth();
@@ -31,6 +33,10 @@ const MagicLinkVerification = () => {
       }
     });
   }, [token, navigate, verifyMagicLink]);
+
+  if (status === "checking" || status === "success") {
+    return <GraduationCapLoader label="Verifying your login link" />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--auth-background)] px-6">

@@ -1,0 +1,79 @@
+.graduation-cap-loader {
+  --grad-loader-bg: #fff;
+  --grad-loader-ink: #151515;
+  --grad-loader-muted: #8a8a8a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+  background: var(--grad-loader-bg);
+  color: var(--grad-loader-ink);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.graduation-cap-loader[data-theme="dark"] {
+  --grad-loader-bg: #131517;
+  --grad-loader-ink: #f2f2f2;
+  --grad-loader-muted: #7d8389;
+}
+
+.graduation-cap-loader[data-theme="dark"] [data-part="tassel"] path {
+  fill: #a5b4fc;
+  stroke: #a5b4fc;
+}
+
+.graduation-cap-loader--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding-top: max(32px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+}
+
+.graduation-cap-loader__animation {
+  width: min(32vw, 120px);
+  max-width: 100%;
+  aspect-ratio: 1;
+}
+
+.graduation-cap-loader__animation svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.graduation-cap-loader__label {
+  color: var(--grad-loader-muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.graduation-cap-loader__dots {
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+}
+
+.graduation-cap-loader__dots::after {
+  content: "";
+  animation: graduation-cap-loader-dots 1.6s steps(1, end) infinite;
+}
+
+@keyframes graduation-cap-loader-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .graduation-cap-loader__dots::after {
+    animation: none;
+    content: "...";
+  }
+}

@@ -53,6 +53,7 @@ export const setTheme = (theme) => {
     mediaQuery.addEventListener('change', mediaHandler);
   }
   applyTheme();
+  window.dispatchEvent(new Event('alumnilink:theme-change'));
 };
 
 // Call once at startup (main.jsx) so listeners attach for 'system'.

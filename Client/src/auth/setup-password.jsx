@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
+import GraduationCapLoader from "../components/ui/GraduationCapLoader";
+
 const SetupPassword = () => {
   const navigate = useNavigate();
   const { user, setupPassword, loading: authLoading } = useAuth();
@@ -10,15 +12,8 @@ const SetupPassword = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (authLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-[var(--auth-background)]">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Setting up your password...</h1>
-          <p className="mt-4">Loading...</p>
-        </div>
-      </div>
-    );
+  if (authLoading || loading) {
+    return <GraduationCapLoader label="Setting up your account" />;
   }
 
   if (!user) {

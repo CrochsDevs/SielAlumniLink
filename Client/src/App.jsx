@@ -10,6 +10,7 @@ import {
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
 import { useAuth } from "./context/useAuth";
+import GraduationCapLoader from "./components/ui/GraduationCapLoader";
 import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
 
 import AdminDashboard from "./pages/admin/adminDashboard";
@@ -77,34 +78,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-white">
-        <div className="text-center">
-          <svg
-            className="animate-spin h-8 w-8 mx-auto text-brand"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          <p className="mt-3 text-[13px] font-semibold text-zinc-700">
-            Checking your session...
-          </p>
-        </div>
-      </div>
-    );
+    return <GraduationCapLoader label="Checking your session" />;
   }
 
   if (!isAuthenticated) {
@@ -664,7 +638,7 @@ function AppRoutes() {
 }
 
 function MemberPages() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { pathname } = useLocation();
   const isAuthPage = ["/login", "/logout", "/signup", "/forgot-password", "/verify-magic-link", "/setup-password"]
     .includes(pathname.replace(/\/+$/, ""));
@@ -672,6 +646,9 @@ function MemberPages() {
   useLayoutEffect(() => {
     setWorkspaceThemeEnabled(workspaceTheme);
   }, [workspaceTheme]);
+  if (loading && !isAuthPage) {
+    return <GraduationCapLoader label="Checking your session" />;
+  }
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
     <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
@@ -693,11 +670,17 @@ function ScrollToTop() {
   return null;
 }
 
+function SignInLoading() {
+  const { signingIn } = useAuth();
+  return signingIn ? <GraduationCapLoader label="Signing you in" /> : null;
+}
+
 function App() {
   return (
     <Router>
       <ScrollToTop />
       <AuthProvider>
+        <SignInLoading />
         <ChatProvider>
           <MemberPages />
         </ChatProvider>

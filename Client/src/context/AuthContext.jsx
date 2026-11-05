@@ -26,6 +26,7 @@ const authErrorMessage = (err, fallback) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState(null);
   const didCheckAuth = useRef(false);
   const pendingMagicLinkVerification = useRef(null);
@@ -153,10 +154,18 @@ export const AuthProvider = ({ children }) => {
   }, [user, loading]);
 
   const login = useCallback(async (email, password) => {
+    const startedAt = Date.now();
+    setSigningIn(true);
     try {
       setError(null);
       const response = await api.post("/auth/login", { email: email.trim(), password });
       if (response.data.success) {
+        // The cap animation takes 3.4s, including the returning tassel.
+        // Allow a full cycle and a short settling period before entering.
+        const remaining = 4000 - (Date.now() - startedAt);
+        if (remaining > 0) {
+          await new Promise(resolve => setTimeout(resolve, remaining));
+        }
         // A slower initial /auth/me response must not clear this new session.
         acceptSession(response.data.data.user);
         return { success: true };
@@ -167,6 +176,8 @@ export const AuthProvider = ({ children }) => {
       const message = authErrorMessage(err, "Login failed");
       setError(message);
       return { success: false, error: message };
+    } finally {
+      setSigningIn(false);
     }
   }, [acceptSession]);
 
@@ -295,6 +306,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         loading,
+        signingIn,
         error,
         login,
         requestMagicLink,

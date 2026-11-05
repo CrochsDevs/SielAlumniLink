@@ -1,22 +1,21 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { gooeyToast as toast } from "goey-toast";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/useAuth";
+import GraduationCapLoader from "../components/ui/GraduationCapLoader";
 import clsuLogo from "../assets/logo/clsu_logo.png";
 import "./login.css";
 
 const errorToast = (message) => toast.error(message);
 
 const Login = () => {
-  const navigate = useNavigate();
-  const { login, requestMagicLink, error: authError } = useAuth();
+  const { login, requestMagicLink, isAuthenticated, user, error: authError } = useAuth();
   const [authMode, setAuthMode] = useState("magic");
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [magicMessage, setMagicMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,8 +27,6 @@ const Login = () => {
     setLoading(true);
     const result = await login(formData.email, formData.password);
     if (result.success) {
-      setRedirecting(true);
-      setTimeout(() => navigate("/"), 600);
       return;
     } else {
       errorToast(result.error || authError || "Login failed");
@@ -50,38 +47,23 @@ const Login = () => {
     setLoading(false);
   };
 
+  // The chat provider remounts this page when the account changes. Use the
+  // accepted session so that a remount cannot briefly show the login form.
+  if (isAuthenticated) {
+    return (
+      <>
+        <GraduationCapLoader label="Signing you in" />
+        <Navigate to={user?.passwordSetupRequired ? "/setup-password" : "/"} replace />
+      </>
+    );
+  }
+
+  if (loading && authMode === "password") {
+    return <GraduationCapLoader label="Signing you in" />;
+  }
+
   return (
     <>
-      {redirecting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm">
-          <div className="text-center">
-            <svg
-              className="animate-spin h-7 w-7 mx-auto text-brand"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            <p className="mt-2.5 text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
-              Signing you in...
-            </p>
-            <p className="text-[10.5px] text-zinc-400">Loading your account</p>
-          </div>
-        </div>
-      )}
-
       <div className="login-page min-h-screen bg-[var(--auth-background)] flex items-center justify-center p-4 font-sans">
         <div className="login-card w-full max-w-md lg:max-w-4xl grid grid-cols-1 lg:grid-cols-2">
           <div className="login-panel bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 sm:p-6 relative overflow-hidden">
