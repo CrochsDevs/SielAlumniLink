@@ -2,7 +2,7 @@
 export function createCallService({ authorize, record, emit, now = Date.now, schedule = setTimeout, cancel = clearTimeout, onError = console.error }) {
   const calls = new Map();
   const finishedIds = new Set();
-  const finish = async (call, status) => {
+  const finish = async (call, status, reason) => {
     if (call.finished) return;
     call.finished = true;
     cancel(call.timer);
@@ -10,7 +10,7 @@ export function createCallService({ authorize, record, emit, now = Date.now, sch
     finishedIds.add(call.id);
     if (finishedIds.size > 2000) finishedIds.delete(finishedIds.values().next().value);
     for (const [to, from] of [[call.caller, call.recipient], [call.recipient, call.caller]])
-      emit(to._id, 'call:signal', { fromAuthId: String(from._id), kind: 'end', data: { callId: call.id } });
+      emit(to._id, 'call:signal', { fromAuthId: String(from._id), kind: 'end', data: { callId: call.id, ...(reason ? { reason } : {}) } });
     try {
       await record({
         ...call,
@@ -40,8 +40,10 @@ export function createCallService({ authorize, record, emit, now = Date.now, sch
             await finish(call, 'missed');
             return;
           }
-          call.timer = schedule(() => { void finish(call, 'missed'); }, 45000);
+          call.ringExpiresAt = now() + 30000;
+          call.timer = schedule(() => { void finish(call, 'missed', 'no-answer'); }, 30000);
           call.timer?.unref?.();
+          emit(sender, 'call:signal', { fromAuthId: String(toAuthId), kind: 'ringing', data: { callId: id, ringExpiresAt: call.ringExpiresAt } });
         } catch {
           if (call.finished) return;
           calls.delete(id);
@@ -64,7 +66,7 @@ export function createCallService({ authorize, record, emit, now = Date.now, sch
           return;
         } else if (kind !== 'signal') return;
       }
-      emit(toAuthId, 'call:signal', { fromAuthId: sender, fromEmail: socket.user.email, kind, data });
+      emit(toAuthId, 'call:signal', { fromAuthId: sender, fromEmail: socket.user.email, kind, data: kind === 'invite' ? { ...data, ringExpiresAt: call.ringExpiresAt } : data });
     },
     async endBetween(a, b) {
       const pair = [String(a), String(b)].sort().join('|');

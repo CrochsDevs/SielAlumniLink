@@ -605,6 +605,13 @@ export const ChatProvider = ({ children }) => {
         onUnsend={unsendChatMessage}
       />
       <CallManager
+        getProfilePicture={(authId, email) => {
+          const found = convos.find(conversation => !conversation.isGroup && (
+            String(conversation.authId) === String(authId) ||
+            (email && conversation.email === email)
+          ));
+          return found?.profilePicture || null;
+        }}
         getDisplayName={(authId, email) => {
           const found = convos.find(
             (c) =>
