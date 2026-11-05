@@ -20,11 +20,12 @@ import { formatTime } from "./messageFormat";
 import MessageThread from "./MessageThread";
 import EmojiPicker from "emoji-picker-react";
 import ChatAvatar from "./ChatAvatar";
+import PresenceBadge from './PresenceBadge';
+import { presenceLabel, presenceTextColor } from './presenceStatus';
 import ConversationActions from './ConversationActions';
 import ComposerEditNotice from './ComposerEditNotice';
 import ComposerImagePreview from './ComposerImagePreview';
-import EditGroupName from "./EditGroupName";
-import GroupMembers from "./GroupMembers";
+import GroupOptions from "./GroupOptions";
 import GroupCallButtons from "../call/GroupCallButtons";
 import { FeedDialog } from "../feed/FeedComposer";
 
@@ -278,7 +279,6 @@ const ConvoList = ({
         <span>
           {chatFilter === "groups" ? "Group conversations" : "Conversations"}
         </span>
-        <span>{filtered.length}</span>
       </div>
     )}
     <ul className="inbox-conversation-list min-h-0 max-h-[calc(100vh-16rem)] flex-1 overflow-y-auto overscroll-contain p-1.5">
@@ -295,6 +295,7 @@ const ConvoList = ({
             >
               <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
                 <ChatAvatar convo={c} />
+                {!c.isGroup && <PresenceBadge status={c.presenceStatus} />}
                 {c.unread > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
                     {c.unread}
@@ -434,9 +435,7 @@ const ThreadPane = ({
         </button>
         <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20 text-sm font-bold text-brand dark:text-brand">
           <ChatAvatar convo={active} />
-          {!workspace && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-brand" />
-          )}
+          {!active.isGroup && <PresenceBadge status={active.presenceStatus} />}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
@@ -447,20 +446,11 @@ const ThreadPane = ({
               </span>
             ) : null}
           </span>
-          <span className="block text-[11px] font-medium text-brand dark:text-brand">
-            {workspace
-              ? active.isGroup
-                ? "Group conversation"
-                : "Direct message"
-              : "Active now"}
+          <span className={`block text-[11px] font-medium ${active.isGroup ? 'text-zinc-500 dark:text-zinc-400' : presenceTextColor(active.presenceStatus)}`}>
+            {active.isGroup ? 'Group conversation' : presenceLabel(active.presenceStatus)}
           </span>
         </span>
-        {active.isGroup && (
-          <EditGroupName key={active._id} conversation={active} />
-        )}
-        {active.isGroup && (
-          <GroupMembers key={`members-${active._id}`} conversation={active} />
-        )}
+        {active.isGroup && <GroupOptions key={active._id} conversation={active} />}
         <GroupCallButtons conversation={active} />
         {!active.isGroup && active.authId && !active.blocked && (
           <span className="flex shrink-0 gap-0.5">

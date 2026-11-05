@@ -7,13 +7,13 @@ import { getSocket } from '../../realtime/socket';
 import api from '../../utils/axios';
 import ChatAvatar from './ChatAvatar';
 
-export default function GroupMembers({ conversation }) {
-  const [open, setOpen] = useState(false);
+export default function GroupMembers({ conversation, dialogOnly = false, onClosed }) {
+  const [open, setOpen] = useState(dialogOnly);
   if (!conversation.isGroup) return null;
   return <>
-    <button type="button" aria-label="View group members" title="View group members" onClick={() => setOpen(true)}
-      className="shrink-0 rounded-full p-2 text-zinc-500 hover:bg-zinc-100 hover:text-brand dark:text-zinc-400 dark:hover:bg-zinc-800"><Users size={17} /></button>
-    {open && <MembersDialog key={conversation._id} conversation={conversation} onClose={() => setOpen(false)} />}
+    {!dialogOnly && <button type="button" aria-label="View group members" title="View group members" onClick={() => setOpen(true)}
+      className="shrink-0 rounded-full p-2 text-zinc-500 hover:bg-zinc-100 hover:text-brand dark:text-zinc-400 dark:hover:bg-zinc-800"><Users size={17} /></button>}
+    {open && <MembersDialog key={conversation._id} conversation={conversation} onClose={() => { setOpen(false); onClosed?.(); }} />}
   </>;
 }
 

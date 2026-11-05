@@ -2,7 +2,6 @@ import { BubbleGroup } from "../ui/bubble";
 import MessageBubble from "./MessageBubble";
 import { groupMessages } from "./messageGroups";
 import ChatAvatar from "./ChatAvatar";
-import { formatTime } from "./messageFormat";
 import { useVisibleMessageReads } from './useVisibleMessageReads';
 
 export default function MessageThread({
@@ -42,12 +41,6 @@ export default function MessageThread({
                 <ChatAvatar convo={avatar} />
               </span>
               <div className="message-stream-body">
-                <div className="message-stream-author">
-                  <strong>{name}</strong>
-                  {first.at && (
-                    <time dateTime={first.at}>{formatTime(first.at)}</time>
-                  )}
-                </div>
                 <BubbleGroup>
                   {group.map((message, messageIndex) => (
                     <MessageBubble

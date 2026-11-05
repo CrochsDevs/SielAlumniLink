@@ -4,8 +4,7 @@ import { Users } from "lucide-react";
 export default function ChatAvatar({ convo }) {
   const [failedUrl, setFailedUrl] = useState(null);
   const url = convo.profilePicture;
-  if (convo.isGroup) return <Users className="h-4 w-4" />;
-  if (url && url !== failedUrl)
+  if (!convo.isGroup && url && url !== failedUrl)
     return (
       <img
         src={url}
@@ -15,6 +14,13 @@ export default function ChatAvatar({ convo }) {
       />
     );
   return (
-    convo.initial || (convo.name || convo.email || "U").charAt(0).toUpperCase()
+    <span
+      role="img"
+      aria-label={`${convo.name || convo.email || (convo.isGroup ? 'Group' : 'User')} avatar`}
+      className="flex h-full w-full items-center justify-center rounded-full border border-zinc-300 bg-zinc-200 font-semibold text-zinc-700 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+    >
+      {convo.isGroup ? <Users className="h-4 w-4" aria-hidden="true" /> :
+        convo.initial || (convo.name || convo.email || "U").charAt(0).toUpperCase()}
+    </span>
   );
 }

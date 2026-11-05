@@ -9,6 +9,7 @@ import CallManager from "../components/call/CallManager";
 import GroupCallProvider from "../components/call/GroupCallProvider";
 import { mergeMessageHistory } from '../components/chat/messageDelivery';
 import { messageUploadBody } from '../utils/chatAttachments';
+import { useChatPresence } from '../realtime/useChatPresence';
 
 const toInitial = (name, email) =>
   (name || email || "U").charAt(0).toUpperCase();
@@ -29,6 +30,10 @@ export const ChatProvider = ({ children }) => {
   myAuthIdRef.current = myAuthId;
 
   const [convos, setConvos] = useState([]);
+  const { contacts, presenceStatus, presenceSaving, setPresenceStatus } = useChatPresence(myAuthId, convos);
+  const visibleConvos = convos.map(conversation => conversation.isGroup ? conversation : {
+    ...conversation, presenceStatus: contacts[String(conversation.authId)]?.status || 'offline',
+  });
   const convosRef = useRef([]);
   useEffect(() => {
     convosRef.current = convos;
@@ -566,7 +571,10 @@ export const ChatProvider = ({ children }) => {
   return (
     <ChatContext.Provider
       value={{
-        convos,
+        convos: visibleConvos,
+        presenceStatus,
+        presenceSaving,
+        setPresenceStatus,
         threads,
         openChat,
         openChatByEmail,
@@ -594,7 +602,7 @@ export const ChatProvider = ({ children }) => {
         windows={openChats.map((window) => ({
           ...window,
           convo:
-            convos.find((convo) => String(convo._id) === String(window.id)) ||
+            visibleConvos.find((convo) => String(convo._id) === String(window.id)) ||
             window.convo,
         }))}
         threads={threads}

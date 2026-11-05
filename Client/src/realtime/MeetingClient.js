@@ -13,6 +13,8 @@ export default class MeetingClient {
     this.local = new MediaStream();
     this.cameraTrack = null;
     this.screen = null;
+    this.presenterId = null;
+    this.presentationVersion = 0;
     this.iceServers = [];
     this.active = true;
     this.joining = false;
@@ -33,6 +35,18 @@ export default class MeetingClient {
       notice: "",
     };
     this.handlers = {
+      'meeting:presentation-changed': ({ presenterId, version }) => {
+        if (this.namespace !== 'group-call' || version < this.presentationVersion) return;
+        this.presenterId = presenterId;
+        this.presentationVersion = version;
+        this.update({
+          peers: this.state.peers.map(peer => ({ ...peer, sharing: peer.id === presenterId })),
+          ...(presenterId !== this.state.self?.id ? { sharing: false, stream: new MediaStream(this.local.getTracks()) } : {}),
+        });
+        if (presenterId !== this.state.self?.id && this.screen) {
+          void this.stopSharing({ release: false }).catch(() => this.update({ error: 'Unable to restore your camera. Please rejoin the call.' }));
+        }
+      },
       "meeting:peer-joined": (peer) =>
         this.update({
           peers: [
@@ -291,7 +305,7 @@ export default class MeetingClient {
         if (!(kind === "video" && this.screen)) await this.replace(kind, track);
         this.update({
           [key]: true,
-          stream: new MediaStream(this.local.getTracks()),
+          stream: new MediaStream(this.screen ? [...this.local.getAudioTracks(), ...this.screen.getVideoTracks()] : this.local.getTracks()),
         });
       } else {
         track.enabled = !this.state[key];
@@ -310,14 +324,18 @@ export default class MeetingClient {
       this.mediaOperations.delete(kind);
     }
   }
-  async stopSharing() {
+  async stopSharing({ release = true } = {}) {
+    const version = this.presentationVersion;
+    const generation = this.mediaGeneration;
     const screen = this.screen;
     this.screen = null;
+    if (this.namespace === 'group-call' && release) this.emit('meeting:present', { sharing: false, version });
     screen?.getTracks().forEach((track) => {
       track.onended = null;
       track.stop();
     });
     await this.replace("video", this.cameraTrack);
+    if (!this.active || generation !== this.mediaGeneration || this.screen) return;
     this.update({
       sharing: false,
       stream: new MediaStream(this.local.getTracks()),
@@ -349,7 +367,22 @@ export default class MeetingClient {
         return;
       }
       this.screen = screen;
+      if (this.namespace === 'group-call') {
+        const presentation = await this.request('meeting:present', { sharing: true });
+        if (presentation.version > this.presentationVersion) {
+          this.presentationVersion = presentation.version;
+          this.presenterId = presentation.presenterId;
+        }
+        if (!this.active || generation !== this.mediaGeneration || this.screen !== screen || this.presenterId !== this.state.self?.id) {
+          screen.getTracks().forEach(track => track.stop());
+          return;
+        }
+      }
       await this.replace("video", screen.getVideoTracks()[0]);
+      if (!this.active || generation !== this.mediaGeneration || this.screen !== screen) {
+        screen.getTracks().forEach(track => track.stop());
+        return;
+      }
       screen.getVideoTracks()[0].onended = () =>
         this.stopSharing().catch(() =>
           this.update({

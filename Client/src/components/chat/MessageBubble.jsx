@@ -7,6 +7,7 @@ import {
   PhoneOff,
   Video,
   VideoOff,
+  Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Bubble, BubbleContent } from "../ui/bubble";
@@ -43,7 +44,10 @@ export default function MessageBubble({
   const postId = sharedPostId(msg.text);
   const missedCall = msg.call?.status === 'missed';
   const declinedCall = msg.call?.status === 'declined';
+  const groupCall = !!msg.call?.group;
+  const joinedCall = groupCall && msg.call?.event === 'joined';
   const callType = msg.call?.kind === 'video' ? 'video' : 'voice';
+  const callName = `${groupCall ? 'group ' : ''}${callType} call`;
   const callDuration = Math.max(0, Math.floor(Number(msg.call?.duration) || 0));
   const durationLabel = `${Math.floor(callDuration / 60)}:${String(callDuration % 60).padStart(2, '0')}`;
   const hasPhoto = !msg.unsent && msg.attachment?.kind === 'image' && !!msg.attachment.url;
@@ -105,16 +109,16 @@ export default function MessageBubble({
             {msg.call && (
               <div className="chat-call-card__layout">
                 <span className="chat-call-card__icon" aria-hidden="true">
-                  {declinedCall
+                  {joinedCall ? <Users size={19} /> : declinedCall
                     ? callType === 'video' ? <VideoOff size={19} /> : <PhoneOff size={19} />
-                    : callType === 'video' ? <Video size={19} /> : missedCall ? <PhoneMissed size={19} /> : <Phone size={19} />}
+                    : callType === 'video' ? <Video size={19} /> : missedCall ? <PhoneMissed size={19} /> : groupCall ? <Users size={19} /> : <Phone size={19} />}
                 </span>
                 <div className="chat-call-card__details">
                   <p className="chat-call-card__title">
-                    {missedCall ? `Missed ${callType} call` : `${callType === 'video' ? 'Video' : 'Voice'} call ${msg.call.status === 'declined' ? 'declined' : 'ended'}`}
+                    {joinedCall ? `${mine ? 'You' : msg.call.actorName || msg.senderName || 'A member'} joined the call` : missedCall ? `Missed ${callName}` : `${callName.charAt(0).toUpperCase()}${callName.slice(1)} ${declinedCall ? 'declined' : 'ended'}`}
                   </p>
                   <p className="chat-call-card__subtitle">
-                    {mine ? 'Outgoing call' : 'Incoming call'}
+                    {joinedCall ? `Group ${callType} call` : groupCall ? mine ? 'You started the call' : `Started by ${msg.senderName || 'a member'}` : mine ? 'Outgoing call' : 'Incoming call'}
                     {declinedCall && <> &middot; {mine ? 'Declined' : 'You declined'}</>}
                     {msg.call.status === 'completed' && <> &middot; <span className="chat-call-card__duration">{durationLabel}</span></>}
                     {missedCall && mine && <> &middot; No answer</>}

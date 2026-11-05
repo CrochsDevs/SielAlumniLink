@@ -4,14 +4,15 @@ import { useChat } from '../../context/useChat';
 import { useAuth } from '../../context/useAuth';
 import { FeedDialog } from '../feed/FeedComposer';
 
-export default function EditGroupName({ conversation }) {
+export default function EditGroupName({ conversation, dialogOnly = false, onClosed }) {
   const { user } = useAuth();
   const { renameGroupChat } = useChat();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
+  const [open, setOpen] = useState(dialogOnly);
+  const [name, setName] = useState(conversation.name || '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
+  const close = () => { setOpen(false); onClosed?.(); };
   const submit = async event => {
     event.preventDefault();
     if (pending.current || !name.trim() || name.trim().length > 80) return;
@@ -20,7 +21,7 @@ export default function EditGroupName({ conversation }) {
     setError('');
     try {
       await renameGroupChat(conversation._id, name.trim());
-      setOpen(false);
+      close();
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to save the group name. Please try again.');
     } finally {
@@ -30,12 +31,12 @@ export default function EditGroupName({ conversation }) {
   };
   if (!conversation.isGroup || !conversation.adminAuthIds?.includes(String(user?.authId || user?._id))) return null;
   return <>
-    <button type="button" aria-label="Edit group name" title="Edit group name"
+    {!dialogOnly && <button type="button" aria-label="Edit group name" title="Edit group name"
       className="shrink-0 rounded-full p-2 text-zinc-500 hover:bg-zinc-100 hover:text-brand dark:text-zinc-400 dark:hover:bg-zinc-800"
       onClick={() => { setName(conversation.name || ''); setError(''); setOpen(true); }}>
       <Pencil size={16} />
-    </button>
-    {open && <FeedDialog title="Edit group name" busy={saving} onClose={() => setOpen(false)}>
+    </button>}
+    {open && <FeedDialog title="Edit group name" busy={saving} onClose={close}>
       <form onSubmit={submit} className="space-y-4">
         <label className="block text-sm font-medium">
           Group name
@@ -46,7 +47,7 @@ export default function EditGroupName({ conversation }) {
         <p className="text-xs text-zinc-500 dark:text-zinc-400">All group members will see this name. Maximum 80 characters.</p>
         {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="flex justify-end gap-2">
-          <button type="button" disabled={saving} onClick={() => setOpen(false)} className="rounded-lg px-4 py-2 text-sm disabled:opacity-50">Cancel</button>
+          <button type="button" disabled={saving} onClick={close} className="rounded-lg px-4 py-2 text-sm disabled:opacity-50">Cancel</button>
           <button type="submit" disabled={saving || !name.trim() || name.trim() === conversation.name}
             className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving...' : 'Save changes'}</button>
         </div>

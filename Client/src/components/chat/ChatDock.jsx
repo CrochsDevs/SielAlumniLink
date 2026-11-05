@@ -4,10 +4,11 @@ import { useMessageComposer } from './useMessageComposer';
 import ComposerEditNotice from './ComposerEditNotice';
 import ComposerImagePreview from './ComposerImagePreview';
 import ChatAvatar from "./ChatAvatar";
-import EditGroupName from "./EditGroupName";
-import GroupMembers from "./GroupMembers";
+import GroupOptions from "./GroupOptions";
 import GroupCallButtons from "../call/GroupCallButtons";
 import MessageThread from "./MessageThread";
+import PresenceBadge from './PresenceBadge';
+import { presenceLabel, presenceTextColor } from './presenceStatus';
 import EmojiPicker from "emoji-picker-react";
 import { Link } from "react-router-dom";
 import { profilePath } from "../search/searchLinks";
@@ -135,16 +136,16 @@ const ChatWindow = ({
           >
             <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">
               <ChatAvatar convo={convo} />
-              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-zinc-900 bg-brand" />
+              {!convo.isGroup && <PresenceBadge status={convo.presenceStatus} />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[12px] font-bold text-zinc-800 dark:text-zinc-100">
                 {convo.name}
               </span>
-              <span className="block text-[10px] text-brand dark:text-brand">
+              <span className={`block text-[10px] ${convo.isGroup ? 'text-zinc-500 dark:text-zinc-400' : presenceTextColor(convo.presenceStatus)}`}>
                 {convo.isGroup
                   ? `${convo.memberCount || ""} members`.trim() || "Group"
-                  : "Active now"}
+                  : presenceLabel(convo.presenceStatus)}
               </span>
             </span>
           </button>
@@ -165,8 +166,7 @@ const ChatWindow = ({
             </div>
           )}
         </div>
-        {convo.isGroup && <EditGroupName conversation={convo} />}
-        {convo.isGroup && <GroupMembers conversation={convo} />}
+        {convo.isGroup && <GroupOptions key={convo._id} conversation={convo} />}
         <GroupCallButtons conversation={convo} />
         <button
           type="button"
@@ -197,7 +197,7 @@ const ChatWindow = ({
               followLatestRef.current =
                 list.scrollHeight - list.scrollTop - list.clientHeight < 40;
             }}
-            className="h-[min(340px,calc(100dvh-140px))] overflow-y-auto bg-[#f8faf8] dark:bg-zinc-950 p-3"
+            className="chat-dock-message-list h-[min(340px,calc(100dvh-140px))] overflow-y-auto bg-[#f8faf8] dark:bg-zinc-950 px-2 py-4"
           >
             <div ref={messageContentRef}>
               <MessageThread messages={messages} isGroup={convo.isGroup} conversation={convo} convoId={id} onEdit={composer.startEdit} onUnsend={onUnsend} />

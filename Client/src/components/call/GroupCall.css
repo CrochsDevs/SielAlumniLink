@@ -6,29 +6,115 @@
 .dark .group-call-header-actions > button { color: #bdc7c0; }
 .dark .group-call-header-actions > .group-call-join { color: #fff; }
 .dark .group-call-header-actions > button:hover { background: #244531; color: #b8e5c5; }
-.group-call-dialog .group-call-subtitle { display: flex; align-items: center; gap: 7px; margin: -5px 0 16px; color: #718077; font-size: 12px; }
-dialog.group-call-dialog[open] { display: flex; flex-direction: column; overflow: hidden; }
-.group-call-dialog > div:first-child, .group-call-dialog > p { flex-shrink: 0; }
-.group-call-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px; min-height: 0; overflow-y: auto; }
-.group-call-peer { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid #37473e; border-radius: 12px; background: #1b2921; }
-.group-call-peer > video { position: absolute; width: 100%; height: 100%; object-fit: cover; }
-.group-call-peer > video.group-call-camera-off { opacity: 0; }
-.group-call-avatar { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: #315d3f; color: #e2f5e8; font-size: 24px; font-weight: 600; }
-.group-call-peer > div { position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; background: linear-gradient(transparent, #000a); color: #fff; font-size: 12px; }
-.group-call-peer > div > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.group-call-error { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: #fff1f2; color: #a82332; font-size: 12px; line-height: 20px; }
-.group-call-waiting { margin-top: 14px; color: #718077; text-align: center; font-size: 12px; line-height: 20px; }
-.group-call-controls { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
-.group-call-controls > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; min-width: 42px; padding: 10px; border-radius: 12px; background: #e8eee9; color: #294334; font-size: 12px; font-weight: 600; }
-.group-call-controls > button[aria-pressed="false"] { background: #fce5e7; color: #ad3140; }
-.group-call-controls > .group-call-leave { background: #be3343; color: #fff; padding-inline: 16px; }
-.group-call-controls > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
-.group-call-incoming { padding: 8px; text-align: center; }
-.group-call-incoming > span { display: grid; place-items: center; width: 64px; height: 64px; margin: auto; border-radius: 50%; background: #e6f5eb; color: hsl(var(--primary)); }
-.group-call-incoming > h3 { margin-top: 16px; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
-.group-call-incoming > p { margin-top: 8px; font-size: 12px; line-height: 20px; color: #718077; }
-.group-call-incoming > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
-.group-call-incoming button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 16px; border-radius: 9px; font-size: 12px; font-weight: 600; }
-.group-call-decline { background: #fce5e7; color: #ad3140; }
+
+dialog.group-call-dialog {
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  overscroll-behavior: contain;
+}
+dialog.group-call-dialog::backdrop { background: rgb(0 0 0 / 65%); backdrop-filter: blur(4px); }
+dialog.group-call-dialog[open] { display: flex; flex-direction: column; }
+dialog.group-call-dialog--incoming {
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  border: 1px solid #e4e4e7;
+  border-radius: 24px;
+  background: #fff;
+  color: #18181b;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 20%);
+  overflow-y: auto;
+}
+.dark dialog.group-call-dialog--incoming { background: #18181b; border-color: #303035; color: #fafafa; }
+.group-call-topbar { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; }
+.group-call-heading { min-width: 0; }
+.group-call-heading h2 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.group-call-heading p { margin: 3px 0 0; color: #a1a1aa; font-size: 11px; }
+.group-call-close { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: rgb(127 127 127 / 10%); color: inherit; }
+.group-call-close:hover { background: rgb(127 127 127 / 20%); }
+.group-call-dialog button:focus-visible { outline: 2px solid #34d399; outline-offset: 3px; }
+.group-call-incoming { padding: 10px 24px 26px; text-align: center; }
+.group-call-incoming-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 24px; background: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); }
+.group-call-incoming h3 { margin: 0; overflow-wrap: anywhere; font-size: 21px; font-weight: 650; line-height: 1.35; letter-spacing: -0.025em; }
+.group-call-incoming p { margin: 8px 0 0; color: #71717a; font-size: 12px; line-height: 1.6; }
+.dark .group-call-incoming p { color: #a1a1aa; }
+.group-call-kind { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: #71717a; font-size: 11px; }
+.dark .group-call-kind { color: #a1a1aa; }
+.group-call-incoming-actions { display: flex; justify-content: center; gap: 10px; margin-top: 24px; }
+.group-call-incoming-actions button { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; transition: filter 150ms; }
+.group-call-incoming-actions button:hover { filter: brightness(0.95); }
+.group-call-decline { background: #f4f4f5; color: #52525b; }
+.dark .group-call-decline { background: #27272a; color: #e4e4e7; }
 .group-call-accept { background: hsl(var(--primary)); color: #fff; }
+dialog.group-call-dialog--room {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: #000;
+  color: #fafafa;
+}
+.group-call-dialog--room .group-call-topbar { padding: 16px 24px; }
+.group-call-stage { display: flex; flex: 1; align-items: center; justify-content: center; min-height: 0; padding: 12px 24px; overflow: hidden; }
+.group-call-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 12px; width: 100%; height: 100%; max-width: 1120px; max-height: 720px; min-height: 0; }
+.group-call-grid[data-count="1"] { grid-template-columns: minmax(0, 1fr); width: min(100%, 400px); height: min(100%, 400px); }
+.group-call-grid[data-count="2"] { max-height: 480px; }
+.group-call-grid:is([data-count="5"], [data-count="6"], [data-count="7"], [data-count="8"]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.group-call-peer { position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; min-width: 0; overflow: hidden; border: 1px solid #27272a; border-radius: 20px; background: #141416; }
+.group-call-peer > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.group-call-peer > video.group-call-camera-off { opacity: 0; }
+.group-call-avatar { display: flex; align-items: center; justify-content: center; width: clamp(48px, 9vh, 88px); height: clamp(48px, 9vh, 88px); overflow: hidden; border-radius: 50%; background: #27272a; color: #e4e4e7; font-size: 28px; font-weight: 600; box-shadow: 0 0 0 5px rgb(255 255 255 / 3%); }
+.group-call-peer-label { position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 22px 14px 12px; background: linear-gradient(transparent, rgb(0 0 0 / 55%)); color: #f4f4f5; font-size: 11px; }
+.group-call-peer-label > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group-call-peer-muted { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgb(255 255 255 / 10%); }
+.group-call-error { flex-shrink: 0; margin: 0 24px 8px; padding: 10px 14px; border: 1px solid rgb(248 113 113 / 20%); border-radius: 10px; background: rgb(239 68 68 / 10%); color: #fca5a5; font-size: 12px; line-height: 1.5; }
+.group-call-footer { flex-shrink: 0; padding: 12px 16px max(20px, env(safe-area-inset-bottom)); background: #000; }
+.group-call-waiting { margin: 0 0 14px; color: #a1a1aa; text-align: center; font-size: 12px; line-height: 1.5; }
+.group-call-controls { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.group-call-controls > button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; background: #27272a; color: #fff; transition: background 150ms; }
+.group-call-controls > button:hover { background: #3f3f46; }
+.group-call-controls > button[aria-pressed="false"]:not(.group-call-present) { background: #3b2023; color: #fca5a5; }
+.group-call-controls > .group-call-leave { width: 52px; height: 52px; background: #ef4444; color: #fff; }
+.group-call-controls > .group-call-leave:hover { background: #dc2626; }
+.group-call-controls > .group-call-retry { width: auto; padding-inline: 18px; border-radius: 24px; font-size: 12px; font-weight: 600; }
+@media (max-width: 600px) {
+  .group-call-dialog--room .group-call-topbar { padding: 12px 16px; }
+  .group-call-stage { padding: 8px 12px; }
+  .group-call-grid { gap: 8px; }
+  .group-call-grid:is([data-count="5"], [data-count="6"], [data-count="7"], [data-count="8"]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .group-call-peer { border-radius: 14px; }
+  .group-call-controls { gap: 10px; }
+  .group-call-controls > button { width: 42px; height: 42px; }
+}
 @media (max-width: 767px) { .inbox-thread-header { flex-wrap: wrap; } .inbox-thread-header .group-call-header-actions { margin-left: auto; } }
+
+.group-call-incoming-icon { overflow: hidden; }
+
+.group-call-controls > .group-call-present { width: auto; gap: 8px; padding: 0 18px; border-radius: 24px; font-size: 12px; font-weight: 600; }
+.group-call-controls > .group-call-present[aria-pressed="true"] { background: #d1fae5; color: #065f46; }
+.group-call-controls > button:disabled { cursor: not-allowed; opacity: 0.4; }
+.group-call-stage--presenting { align-items: stretch; gap: 16px; }
+.group-call-presentation { flex: 1; min-width: 0; min-height: 0; }
+.group-call-presentation > .group-call-peer { width: 100%; height: 100%; border-color: #3f3f46; background: #090909; }
+.group-call-peer--sharing > video { object-fit: contain; }
+.group-call-peer-label .group-call-presenting-label { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; color: #6ee7b7; font-size: 10px; }
+.group-call-participant-strip { display: grid; grid-auto-rows: minmax(100px, 140px); align-content: start; gap: 10px; width: 184px; min-height: 0; flex-shrink: 0; overflow-y: auto; scrollbar-width: thin; }
+.group-call-participant-strip .group-call-peer { border-radius: 12px; }
+.group-call-participant-strip .group-call-avatar { width: 44px; height: 44px; font-size: 18px; }
+.group-call-participant-strip .group-call-peer-label { padding: 16px 8px 8px; font-size: 10px; }
+.group-call-participant-strip .group-call-presenting-label { margin-left: 0; font-size: 9px; }
+@media (max-width: 700px) {
+  .group-call-stage--presenting { flex-direction: column; gap: 10px; }
+  .group-call-participant-strip { display: flex; gap: 8px; width: 100%; height: 100px; overflow-x: auto; overflow-y: hidden; }
+  .group-call-participant-strip .group-call-peer { flex: 0 0 132px; height: 94px; }
+  .group-call-controls > .group-call-present { width: 42px; padding: 0; }
+  .group-call-present > span { display: none; }
+}
+@media (max-width: 359px) { .group-call-controls { gap: 6px; } .group-call-controls > button { width: 38px; height: 38px; } }

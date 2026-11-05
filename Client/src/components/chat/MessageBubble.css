@@ -85,3 +85,68 @@
 
 .dark .chat-call-card__subtitle { color: #a1a1aa; }
 .chat-call-card__duration { font-variant-numeric: tabular-nums; }
+
+.chat-dock-message-list {
+  scrollbar-width: thin;
+}
+
+.chat-dock-message-list [data-chat-thread] {
+  gap: 24px;
+}
+
+.chat-dock-message-list [data-slot="bubble-group"] {
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.chat-dock-message-list [data-message-group][data-align="end"] > [data-slot="bubble-group"] {
+  align-items: flex-end;
+}
+
+.chat-dock-message-list [data-slot="bubble"] {
+  max-width: 90%;
+}
+
+.chat-dock-message-list .chat-call-card[data-slot="bubble"] {
+  max-width: 100%;
+}
+
+.chat-dock-message-list [data-message-group] {
+  gap: 6px;
+}
+
+.chat-dock-message-list [data-message-avatar] {
+  width: 24px;
+  height: 24px;
+}
+
+.chat-dock-message-list .chat-call-card[data-slot="bubble"][data-variant] > [data-slot="bubble-content"] {
+  width: 196px;
+  padding: 9px 10px;
+  border-radius: 12px;
+}
+
+.chat-dock-message-list .chat-call-card__layout {
+  gap: 8px;
+}
+
+.chat-dock-message-list .chat-call-card__icon {
+  width: 28px;
+  height: 28px;
+}
+
+.chat-dock-message-list .chat-call-card__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.chat-dock-message-list .chat-call-card__title {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.chat-dock-message-list .chat-call-card__subtitle {
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.4;
+}

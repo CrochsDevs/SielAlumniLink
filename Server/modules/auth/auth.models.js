@@ -20,6 +20,14 @@ const notifyChange = async (authId, operation) => {
 const CREATABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
 export const AuthModel = {
+    async setPresenceStatus(authId, status) {
+        if (!['active', 'busy'].includes(status)) throw new TypeError('Invalid presence status');
+        const result = await authCollection.updateOne(
+            { _id: accountId(authId), disabledAt: null },
+            { $set: { presenceStatus: status } }
+        );
+        if (!result.matchedCount) throw new Error('Account is unavailable');
+    },
     async findByEmail(email) {
         email = authEmail(email);
         if (!email) return null;

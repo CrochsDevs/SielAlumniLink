@@ -1,8 +1,8 @@
-import { client } from '../../config/db.js';
-import { recordAdminAudit, listUserAccessAudit } from './admin-audit.js';
+import { client } from "../../config/db.js";
+import { recordAdminAudit, listUserAccessAudit } from "./admin-audit.js";
 
-const db = client.db('SielAlumni');
-const activityCollection = db.collection('activity_logs');
+const db = client.db("SielAlumni");
+const activityCollection = db.collection("activity_logs");
 
 // Persistent audit trail: logins, logouts (and future actions).
 // Presence (online NOW) is separate — see realtime/presence.store.js.
@@ -10,14 +10,17 @@ export const ActivityModel = {
   logAdmin(actor, action, target, details, ip) {
     return recordAdminAudit(db, actor, action, target, details, ip);
   },
-  async logPasswordChange({ authId, action = 'password_changed' }) {
-    if (!['password_changed', 'password_reset'].includes(action)) return;
+  async logPasswordChange({ authId, action = "password_changed" }) {
+    if (!["password_changed", "password_reset"].includes(action)) return;
     try {
-      await db.collection('member_activity').insertOne({
-        authorAuthId: String(authId), kind: 'security', action, createdAt: new Date(),
+      await db.collection("member_activity").insertOne({
+        authorAuthId: String(authId),
+        kind: "security",
+        action,
+        createdAt: new Date(),
       });
     } catch (error) {
-      console.error('Password activity log failed:', error.message);
+      console.error("Password activity log failed:", error.message);
     }
   },
   async log({ authId, email, action, ip, role }) {
@@ -26,13 +29,13 @@ export const ActivityModel = {
         authId: authId ? String(authId) : null,
         email,
         action, // 'login' | 'logout'
-        role: typeof role === 'string' ? role.toLowerCase() : null,
+        role: typeof role === "string" ? role.toLowerCase() : null,
         ip: ip || null,
         createdAt: new Date(),
       });
     } catch (error) {
       // Never break auth flows because logging failed.
-      console.error('Activity log failed:', error.message);
+      console.error("Activity log failed:", error.message);
     }
   },
 
@@ -42,8 +45,8 @@ export const ActivityModel = {
 
   async lastLoginByEmail(email) {
     return await activityCollection.findOne(
-      { email, action: 'login' },
-      { sort: { createdAt: -1 } }
+      { email, action: "login" },
+      { sort: { createdAt: -1 } },
     );
   },
 };

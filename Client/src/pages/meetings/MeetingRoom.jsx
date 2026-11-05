@@ -56,6 +56,7 @@ function VideoTile({ peer, stream, local = false }) {
         autoPlay
         playsInline
         muted={local}
+        style={local && !peer.sharing ? { transform: 'scaleX(-1)' } : undefined}
         className={`h-full w-full ${peer.sharing ? "object-contain" : "object-cover"} ${!peer.camera && !peer.sharing ? "opacity-0" : ""}`}
       />
       {!peer.camera && !peer.sharing && (

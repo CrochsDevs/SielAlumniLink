@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquareOff, Search } from 'lucide-react';
 import TopbarPanel from '../ui/TopbarPanel';
 import ChatAvatar from './ChatAvatar';
+import PresenceBadge from './PresenceBadge';
 import { formatTime } from './messageFormat';
 import useMobileView from '../../hooks/useMobileView';
 
@@ -29,6 +30,7 @@ export default function ChatsDropdown({ conversations, messagePath, onClose, onD
         <button type="button" onClick={() => select(conversation)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800">
           <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
             <ChatAvatar convo={conversation} />
+            {!conversation.isGroup && <PresenceBadge status={conversation.presenceStatus} />}
             {conversation.unread > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">{conversation.unread}</span>}
           </span>
           <span className="min-w-0 flex-1">

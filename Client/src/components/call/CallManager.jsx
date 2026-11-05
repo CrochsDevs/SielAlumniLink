@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, Maximize, Minimize } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
 import { getSocket } from '../../realtime/socket';
 import { acquireCall, releaseCall } from '../../realtime/callActivity';
 import { gooeyToast as toast } from 'goey-toast';
 import { createRingingTimeout } from './ringingTimeout';
 import { createCallRinger } from './callRinger';
 import ChatAvatar from '../chat/ChatAvatar';
+import { attachCallMedia, setCallTrackEnabled, stopCallStream, callMediaError } from './callMedia';
 
 // Free public STUN for NAT traversal. Note: strict corporate/school
 // NATs may still need a TURN server (follow-up infra) — P2P works
@@ -17,19 +18,25 @@ const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 // Mount once at app root (inside ChatProvider).
 const CallManager = ({ getDisplayName, getProfilePicture }) => {
   const [incoming, setIncoming] = useState(null);
+  const [accepting, setAccepting] = useState(false);
   const [active, setActive] = useState(null);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
+  const remoteStreamRef = useRef(null);
+  const pendingLocalIceRef = useRef([]);
+  const inviteReadyRef = useRef(false);
   const pendingIceRef = useRef([]);
   const activeRef = useRef(null);
   const startingRef = useRef(false);
   const callIdRef = useRef(null);
   const ringingTimeoutRef = useRef(null);
+  const connectionTimerRef = useRef(null);
   const ringerRef = useRef(null);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const [muted, setMuted] = useState(false);
+  const [speakerMuted, setSpeakerMuted] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const ownsFullscreen = useRef(false);
@@ -38,7 +45,10 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
     const ringer = createCallRinger();
     ringerRef.current = ringer;
     // Unlock browser audio during normal interactions before a call arrives.
-    const unlock = () => ringer.unlock();
+    const unlock = () => {
+      ringer.unlock();
+      if (remoteAudioRef.current?.srcObject) void remoteAudioRef.current.play().catch(() => {});
+    };
     document.addEventListener('pointerdown', unlock);
     document.addEventListener('keydown', unlock);
     return () => {
@@ -49,11 +59,18 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
     };
   }, []);
 
-  const ringMode = incoming ? 'incoming' : active?.outgoing && active.status === 'ringing' ? 'outgoing' : null;
+  const ringMode = incoming && !accepting ? 'incoming' : active?.outgoing && active.status === 'ringing' ? 'outgoing' : null;
   useEffect(() => {
-    ringerRef.current?.start(ringMode);
+    ringerRef.current?.start(speakerMuted ? null : ringMode);
     return () => ringerRef.current?.stop();
-  }, [ringMode]);
+  }, [ringMode, speakerMuted]);
+
+  const callStatusLabel = {
+    preparing: active?.kind === 'video' ? 'Preparing camera...' : 'Preparing microphone...',
+    ringing: 'Ringing...',
+    connecting: 'Connecting...',
+    live: 'Live',
+  }[active?.status] || 'Connecting...';
 
   const isVideoCall = active?.kind === 'video';
   useEffect(() => {
@@ -99,11 +116,22 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
     }
   };
 
-  useEffect(() => {
-    activeRef.current = active;
-  }, [active]);
+  const bindLocalVideo = useCallback(element => {
+    localVideoRef.current = element;
+    attachCallMedia(element, localStreamRef.current);
+  }, []);
+  const bindRemoteVideo = useCallback(element => {
+    remoteVideoRef.current = element;
+    attachCallMedia(element, remoteStreamRef.current);
+  }, []);
+  const bindRemoteAudio = useCallback(element => {
+    remoteAudioRef.current = element;
+    attachCallMedia(element, remoteStreamRef.current);
+  }, []);
 
   const cleanup = useCallback(() => {
+    clearTimeout(connectionTimerRef.current);
+    connectionTimerRef.current = null;
     ringerRef.current?.stop();
     ringingTimeoutRef.current?.stop();
     if (ownsFullscreen.current && document.fullscreenElement) {
@@ -113,22 +141,33 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
     releaseCall('direct');
     activeRef.current = null;
     callIdRef.current = null;
+    startingRef.current = false;
+    inviteReadyRef.current = false;
+    pendingLocalIceRef.current = [];
     pendingIceRef.current = [];
     if (pcRef.current) {
       try {
+        pcRef.current.onconnectionstatechange = null;
+        pcRef.current.onicecandidate = null;
+        pcRef.current.ontrack = null;
         pcRef.current.close();
       } catch {
         // ignore
       }
       pcRef.current = null;
     }
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((t) => t.stop());
-      localStreamRef.current = null;
+    stopCallStream(localStreamRef.current);
+    stopCallStream(remoteStreamRef.current);
+    localStreamRef.current = null;
+    remoteStreamRef.current = null;
+    for (const element of [localVideoRef.current, remoteVideoRef.current, remoteAudioRef.current]) {
+      if (element) { element.pause(); element.srcObject = null; }
     }
     setIncoming(null);
+    setAccepting(false);
     setActive(null);
     setMuted(false);
+    setSpeakerMuted(false);
     setVideoOff(false);
   }, []);
 
@@ -152,59 +191,104 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
     };
   }, [cleanup]);
 
-  const attachStreams = useCallback((pc, localStream, kind) => {
+  const attachStreams = useCallback((pc, localStream) => {
     localStreamRef.current = localStream;
-    if (kind === 'video' && localVideoRef.current) {
-      localVideoRef.current.srcObject = localStream;
-    }
+    attachCallMedia(localVideoRef.current, localStream);
     pc.ontrack = (e) => {
-      const [stream] = e.streams;
-      if (kind === 'video' && remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = stream;
-      } else if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = stream;
-      }
+      if (pcRef.current !== pc) return;
+      const stream = remoteStreamRef.current || new MediaStream();
+      if (!stream.getTracks().some(track => track.id === e.track.id)) stream.addTrack(e.track);
+      remoteStreamRef.current = stream;
+      attachCallMedia(remoteVideoRef.current, stream);
+      attachCallMedia(remoteAudioRef.current, stream);
     };
   }, []);
 
-  const makePC = useCallback((toAuthId, kind, localStream) => {
+  const watchConnection = useCallback((callId, peerAuthId) => {
+    clearTimeout(connectionTimerRef.current);
+    connectionTimerRef.current = setTimeout(() => {
+      if (callIdRef.current !== callId) return;
+      cleanup();
+      getSocket().emit('call:signal', { toAuthId: peerAuthId, kind: 'end', data: { callId } });
+      toast.error('The call could not connect. Check your connection and try again.');
+    }, 20000);
+  }, [cleanup]);
+
+  const makePC = useCallback((toAuthId, localStream) => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const callId = callIdRef.current;
     localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
     pc.onicecandidate = (e) => {
       if (e.candidate) {
-        getSocket().emit('call:signal', { toAuthId, kind: 'signal', data: { candidate: e.candidate, callId: callIdRef.current } });
+        if (callIdRef.current !== callId) return;
+        if (!inviteReadyRef.current) pendingLocalIceRef.current.push(e.candidate);
+        else getSocket().emit('call:signal', { toAuthId, kind: 'signal', data: { candidate: e.candidate, callId } });
       }
     };
-    attachStreams(pc, localStream, kind);
+    pc.onconnectionstatechange = () => {
+      if (pcRef.current !== pc || callIdRef.current !== callId) return;
+      if (pc.connectionState === 'connected' && activeRef.current) {
+        clearTimeout(connectionTimerRef.current);
+        connectionTimerRef.current = null;
+        const connected = { ...activeRef.current, status: 'live' };
+        activeRef.current = connected;
+        setActive(connected);
+      } else if (pc.connectionState === 'disconnected') {
+        watchConnection(callId, toAuthId);
+      } else if (pc.connectionState === 'failed') {
+        cleanup();
+        getSocket().emit('call:signal', { toAuthId, kind: 'end', data: { callId } });
+        toast.error('The call connection failed. Please try again.');
+      }
+    };
+    attachStreams(pc, localStream);
     pcRef.current = pc;
     return pc;
-  }, [attachStreams]);
+  }, [attachStreams, cleanup, watchConnection]);
 
   // Outgoing call — exposed globally for thread headers.
   const startCall = useCallback(async (toAuthId, displayName, kind) => {
     if (callIdRef.current || activeRef.current || startingRef.current || !toAuthId) return;
-    if (!acquireCall('direct')) return;
+    if (!getSocket().connected) {
+      toast.error('Messaging is reconnecting. Please try calling again shortly.');
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Calling requires microphone access on HTTPS or localhost.');
+      return;
+    }
+    if (!acquireCall('direct')) {
+      toast.info('End your current call before starting another.');
+      return;
+    }
+    const callId = crypto.randomUUID();
+    callIdRef.current = callId;
     startingRef.current = true;
+    const preparing = { peerAuthId: toAuthId, peerName: displayName, kind, outgoing: true, status: 'preparing' };
+    activeRef.current = preparing;
+    setActive(preparing);
     if (kind === 'video') enterFullscreen();
     try {
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: kind === 'video',
-      });
+      const localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: kind === 'video' });
+      if (callIdRef.current !== callId) { stopCallStream(localStream); return; }
       localStreamRef.current = localStream;
-      callIdRef.current = crypto.randomUUID();
-      const pc = makePC(toAuthId, kind, localStream);
+      const pc = makePC(toAuthId, localStream);
       const offer = await pc.createOffer();
+      if (callIdRef.current !== callId) return;
       await pc.setLocalDescription(offer);
-      const call = { peerAuthId: toAuthId, peerName: displayName, kind, outgoing: true, status: 'ringing', ringExpiresAt: Date.now() + 30000 };
+      if (callIdRef.current !== callId) return;
+      const call = { ...preparing, status: 'ringing', ringExpiresAt: Date.now() + 30000 };
       activeRef.current = call;
       setActive(call);
-      ringingTimeoutRef.current?.start(callIdRef.current, toAuthId);
-      getSocket().emit('call:signal', { toAuthId, kind: 'invite', data: { offer, callKind: kind, callId: callIdRef.current } });
-    } catch {
-      cleanup();
+      ringingTimeoutRef.current?.start(callId, toAuthId);
+      getSocket().emit('call:signal', { toAuthId, kind: 'invite', data: { offer, callKind: kind, callId } });
+    } catch (error) {
+      if (callIdRef.current === callId) {
+        cleanup();
+        toast.error(callMediaError(error));
+      }
     } finally {
-      startingRef.current = false;
+      if (callIdRef.current === callId) startingRef.current = false;
     }
   }, [makePC, cleanup, enterFullscreen]);
 
@@ -233,6 +317,7 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
           return;
         }
         callIdRef.current = data?.callId;
+        inviteReadyRef.current = true;
         ringingTimeoutRef.current?.start(data?.callId, fromAuthId, data?.ringExpiresAt);
         setIncoming({
           callId: data?.callId,
@@ -247,6 +332,11 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
       if (!data?.callId || data.callId !== callIdRef.current) return;
 
       if (kind === 'ringing') {
+        inviteReadyRef.current = true;
+        for (const candidate of pendingLocalIceRef.current) {
+          socket.emit('call:signal', { toAuthId: fromAuthId, kind: 'signal', data: { candidate, callId: data.callId } });
+        }
+        pendingLocalIceRef.current = [];
         setActive(previous => previous?.status === 'ringing'
           ? { ...previous, ringExpiresAt: data.ringExpiresAt }
           : previous);
@@ -257,10 +347,6 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
         if (data.reason === 'no-answer' && activeRef.current?.outgoing) {
           toast.info('No answer. The call ended after 30 seconds.');
         }
-        if (String(activeRef.current?.peerAuthId) === String(fromAuthId)) {
-          cleanup();
-        }
-        setIncoming(null);
         cleanup();
         return;
       }
@@ -268,15 +354,23 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
       if (kind === 'accept' && activeRef.current && String(activeRef.current.peerAuthId) === String(fromAuthId)) {
         ringerRef.current?.stop();
         ringingTimeoutRef.current?.stop();
+        const pc = pcRef.current;
+        if (!pc) return;
+        const connecting = { ...activeRef.current, status: 'connecting' };
+        activeRef.current = connecting;
+        setActive(connecting);
+        watchConnection(data.callId, fromAuthId);
         try {
-          await pcRef.current?.setRemoteDescription(new RTCSessionDescription(data.answer));
-          for (const candidate of pendingIceRef.current) {
-            await pcRef.current?.addIceCandidate(new RTCIceCandidate(candidate));
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+          if (pcRef.current !== pc || callIdRef.current !== data.callId) return;
+          for (const candidate of pendingIceRef.current.splice(0)) {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
           }
-          pendingIceRef.current = [];
-          setActive((prev) => (prev ? { ...prev, status: 'live' } : prev));
-        } catch {
-          // ignore
+        } catch (error) {
+          if (callIdRef.current !== data.callId) return;
+          cleanup();
+          socket.emit('call:signal', { toAuthId: fromAuthId, kind: 'end', data: { callId: data.callId } });
+          toast.error(callMediaError(error));
         }
         return;
       }
@@ -304,10 +398,11 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
       socket.off('call:signal', onSignal);
       socket.off('disconnect', onDisconnect);
     };
-  }, [cleanup]);
+  }, [cleanup, watchConnection]);
 
   const acceptIncoming = async () => {
     if (!incoming || startingRef.current || activeRef.current) return;
+    setAccepting(true);
     ringerRef.current?.stop();
     startingRef.current = true;
     if (incoming.kind === 'video') enterFullscreen();
@@ -321,7 +416,7 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
         return;
       }
       localStreamRef.current = localStream;
-      const pc = makePC(incoming.fromAuthId, incoming.kind, localStream);
+      const pc = makePC(incoming.fromAuthId, localStream);
       await pc.setRemoteDescription(new RTCSessionDescription(incoming.offer));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -340,20 +435,26 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
         peerName: getDisplayName ? getDisplayName(incoming.fromAuthId, incoming.fromEmail) : incoming.fromEmail,
         kind: incoming.kind,
         outgoing: false,
-        status: 'live',
+        status: pc.connectionState === 'connected' ? 'live' : 'connecting',
       };
       activeRef.current = call;
       ringingTimeoutRef.current?.stop();
+      if (call.status !== 'live') watchConnection(incoming.callId, incoming.fromAuthId);
       setActive(call);
       setIncoming(null);
       getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'accept', data: { answer, callId: incoming.callId } });
-    } catch {
+    } catch (error) {
+      if (callIdRef.current !== incoming.callId) return;
+      toast.error(callMediaError(error));
       // mic/camera denied — decline instead
       getSocket().emit('call:signal', { toAuthId: incoming.fromAuthId, kind: 'decline', data: { callId: incoming.callId } });
       setIncoming(null);
       cleanup();
     } finally {
-      startingRef.current = false;
+      if (callIdRef.current === incoming.callId) {
+        startingRef.current = false;
+        setAccepting(false);
+      }
     }
   };
 
@@ -368,22 +469,18 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
   const toggleMute = () => {
     const enabled = !muted;
     setMuted(enabled);
-    localStreamRef.current?.getAudioTracks().forEach((t) => {
-      t.enabled = !enabled;
-    });
+    setCallTrackEnabled(localStreamRef.current, 'audio', !enabled);
   };
 
   const toggleVideo = () => {
     const off = !videoOff;
     setVideoOff(off);
-    localStreamRef.current?.getVideoTracks().forEach((t) => {
-      t.enabled = !off;
-    });
+    setCallTrackEnabled(localStreamRef.current, 'video', !off);
   };
 
   return (
     <>
-      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      <audio ref={bindRemoteAudio} autoPlay playsInline muted={speakerMuted} className="hidden" />
 
       {/* Incoming call modal */}
       {incoming && (
@@ -399,7 +496,7 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
               {getDisplayName ? getDisplayName(incoming.fromAuthId, incoming.fromEmail) : incoming.fromEmail}
             </p>
             <p className="text-[12px] text-zinc-500">
-              Incoming {incoming.kind === 'video' ? 'video' : 'voice'} call...
+              {accepting ? 'Connecting...' : `Incoming ${incoming.kind === 'video' ? 'video' : 'voice'} call...`}
             </p>
             <div className="mt-5 flex justify-center gap-4">
               <button
@@ -415,6 +512,7 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
                 onClick={acceptIncoming}
                 className="flex h-12 w-12 animate-pulse items-center justify-center rounded-full bg-brand text-white shadow-lg transition hover:bg-brand"
                 aria-label="Accept call"
+                disabled={accepting}
               >
                 <Phone className="h-5 w-5" />
               </button>
@@ -436,10 +534,11 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
           >
             {active.kind === 'video' ? (
               <div className="relative min-h-0 w-full flex-1 bg-black">
-                <video ref={remoteVideoRef} autoPlay playsInline className="absolute inset-0 h-full w-full object-contain" />
+                <video ref={bindRemoteVideo} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-contain" />
                 <video
-                  ref={localVideoRef}
+                  ref={bindLocalVideo}
                   autoPlay playsInline muted
+                  style={{ transform: 'scaleX(-1)' }}
                   className={`absolute bottom-4 right-4 h-32 max-h-[35%] w-24 rounded-2xl border border-white/20 bg-black object-cover shadow-lg sm:bottom-6 sm:right-6 sm:h-44 sm:w-32 ${videoOff ? 'hidden' : ''}`}
                 />
               </div>
@@ -453,13 +552,13 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
                 </span>
                 <p className="mt-3 text-[16px] font-extrabold text-white">{active.peerName}</p>
                 <p className="text-[12px] text-white/60">
-                  {active.status === 'ringing' ? 'Ringing...' : 'Voice call • live'}
+                  {callStatusLabel}
                 </p>
               </div>
             )}
             {active.kind === 'video' && (
               <p className="shrink-0 px-4 pt-3 text-center text-[13px] font-bold text-white">
-                {active.peerName} • {active.status === 'ringing' ? 'Ringing...' : 'Live'}
+                {active.peerName} &middot; {callStatusLabel}
               </p>
             )}
             <div className="flex shrink-0 items-center justify-center gap-3 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
@@ -478,7 +577,10 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
                 type="button"
                 onClick={toggleMute}
                 className={`flex h-11 w-11 items-center justify-center rounded-full transition ${muted ? 'bg-red-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                aria-label={muted ? 'Unmute' : 'Mute'}
+                aria-label={muted ? 'Unmute microphone' : 'Mute microphone'}
+                aria-pressed={muted}
+                title={muted ? 'Unmute microphone' : 'Mute microphone'}
+                disabled={active.status === 'preparing'}
               >
                 {muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
               </button>
@@ -488,16 +590,22 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
                   onClick={toggleVideo}
                   className={`flex h-11 w-11 items-center justify-center rounded-full transition ${videoOff ? 'bg-red-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
                   aria-label={videoOff ? 'Camera on' : 'Camera off'}
+                  aria-pressed={videoOff}
+                  title={videoOff ? 'Turn camera on' : 'Turn camera off'}
+                  disabled={active.status === 'preparing'}
                 >
                   {videoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
                 </button>
               )}
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white"
-                aria-label="Speaker"
+                onClick={() => setSpeakerMuted(previous => !previous)}
+                className={`flex h-11 w-11 items-center justify-center rounded-full text-white transition ${speakerMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-white/10 hover:bg-white/20'}`}
+                aria-label={speakerMuted ? 'Unmute speaker' : 'Mute speaker'}
+                aria-pressed={speakerMuted}
+                title={speakerMuted ? 'Unmute speaker' : 'Mute speaker'}
               >
-                <Volume2 className="h-5 w-5" />
+                {speakerMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
               <button
                 type="button"

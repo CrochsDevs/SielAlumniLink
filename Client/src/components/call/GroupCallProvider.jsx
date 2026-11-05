@@ -1,77 +1,124 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Mic, MicOff, Phone, PhoneOff, Users, Video, VideoOff } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Phone, PhoneOff, Users, Video } from "lucide-react";
 import { gooeyToast as toast } from "goey-toast";
 import { GroupCallContext } from "../../context/group-call-context";
 import { getSocket } from "../../realtime/socket";
 import MeetingClient from "../../realtime/MeetingClient";
 import { acquireCall, isCallBusy, releaseCall } from "../../realtime/callActivity";
-import { FeedDialog } from "../feed/FeedComposer";
+import GroupCallDialog from "./GroupCallDialog";
+import GroupCallRoom from "./GroupCallRoom";
+import ChatAvatar from "../chat/ChatAvatar";
+import { createCallRinger } from "./callRinger";
+import { createRingingTimeout } from "./ringingTimeout";
 import "./GroupCall.css";
-
-function PeerTile({ peer, stream, local = false }) {
-  const video = useRef(null);
-  useEffect(() => {
-    const element = video.current;
-    element.srcObject = stream || null;
-    if (stream) element.play().catch(() => {});
-    return () => { element.srcObject = null; };
-  }, [stream]);
-  return <div className="group-call-peer" data-group-call-peer={peer.id || "self"}>
-    <video ref={video} autoPlay playsInline muted={local} className={peer.camera ? "" : "group-call-camera-off"} />
-    {!peer.camera && <span className="group-call-avatar">{(peer.name || "Member").charAt(0).toUpperCase()}</span>}
-    <div><span>{peer.name}{local ? " (You)" : ""}</span>{peer.mic ? <Mic size={13} /> : <MicOff size={13} />}</div>
-  </div>;
-}
-
-function CallRoom({ session, onClose }) {
-  const { client, conversation } = session;
-  const state = useSyncExternalStore(client.subscribe, client.snapshot, client.snapshot);
-  return <FeedDialog title={conversation.name || "Group call"} className="group-call-dialog" onClose={onClose} wide>
-    <p className="group-call-subtitle"><Users size={14} />{state.joined ? `${state.peers.length + 1} in call · Up to 8 participants` : state.busy ? "Connecting to group call…" : "Group call"}</p>
-    {state.error && <p role="alert" className="group-call-error">{state.error}</p>}
-    {state.notice && <p role="status" className="group-call-error">{state.notice}</p>}
-    <div className="group-call-grid">
-      <PeerTile peer={{ ...state.self, name: state.self?.name || "You", mic: state.mic, camera: state.camera }} stream={state.stream} local />
-      {state.peers.map(peer => <PeerTile key={peer.id} peer={peer} stream={peer.stream || client.peers.get(peer.id)?.stream} />)}
-    </div>
-    {state.joined && !state.peers.length && <p className="group-call-waiting">Waiting for other group members to join. They can join from the group chat.</p>}
-    <div className="group-call-controls">
-      {state.joined ? <>
-        <button type="button" onClick={() => client.toggle("audio")} aria-label={state.mic ? "Mute microphone" : "Turn on microphone"} aria-pressed={state.mic}>{state.mic ? <Mic size={19} /> : <MicOff size={19} />}</button>
-        <button type="button" onClick={() => client.toggle("video")} aria-label={state.camera ? "Turn off camera" : "Turn on camera"} aria-pressed={state.camera}>{state.camera ? <Video size={19} /> : <VideoOff size={19} />}</button>
-      </> : !state.busy && <button type="button" onClick={() => client.join(false)} className="group-call-retry">Rejoin call</button>}
-      <button type="button" onClick={onClose} className="group-call-leave" aria-label="Leave group call"><PhoneOff size={19} />Leave call</button>
-    </div>
-  </FeedDialog>;
-}
 
 export default function GroupCallProvider({ user, children }) {
   const [rooms, setRooms] = useState({});
   const [session, setSession] = useState(null);
   const [incoming, setIncoming] = useState(null);
+  const [ringing, setRinging] = useState(false);
+  const [speakerMuted, setSpeakerMuted] = useState(false);
   const current = useRef(null);
+  const ringer = useRef(null);
+  const outgoingTimeout = useRef(null);
+  const ownedFullscreen = useRef(false);
   const authenticated = !!user;
+  const authId = String(user?.authId || user?._id || '');
+
   const close = useCallback(() => {
-    current.current?.client.destroy();
+    outgoingTimeout.current?.stop();
+    ringer.current?.stop();
+    const previous = current.current;
     current.current = null;
+    previous?.unsubscribe?.();
+    previous?.client.destroy();
+    if (ownedFullscreen.current && document.fullscreenElement === document.documentElement) {
+      void document.exitFullscreen().catch(() => {});
+    }
+    ownedFullscreen.current = false;
     releaseCall("group");
     setSession(null);
+    setRinging(false);
+    setSpeakerMuted(false);
   }, []);
+
+  useEffect(() => {
+    const sound = createCallRinger();
+    ringer.current = sound;
+    const timeout = createRingingTimeout({ onExpire: callId => {
+      if (!current.current || current.current.callId !== callId || current.current.answered) return;
+      close();
+      toast.info('No answer. The group call ended after 30 seconds.');
+    } });
+    outgoingTimeout.current = timeout;
+    const unlock = () => sound.unlock();
+    document.addEventListener('pointerdown', unlock);
+    document.addEventListener('keydown', unlock);
+    return () => {
+      document.removeEventListener('pointerdown', unlock);
+      document.removeEventListener('keydown', unlock);
+      timeout.stop();
+      sound.destroy();
+      outgoingTimeout.current = null;
+      ringer.current = null;
+    };
+  }, [close]);
+
+  useEffect(() => {
+    ringer.current?.start(speakerMuted ? null : incoming ? 'incoming' : ringing ? 'outgoing' : null);
+    return () => ringer.current?.stop();
+  }, [incoming, ringing, speakerMuted]);
+
+  useEffect(() => {
+    if (!incoming) return;
+    const timeout = createRingingTimeout({ onExpire: () => setIncoming(previous => previous?.callId === incoming.callId ? null : previous) });
+    timeout.start(incoming.callId, incoming.conversationId, incoming.ringExpiresAt);
+    return () => timeout.stop();
+  }, [incoming]);
+
   const start = useCallback(async (conversation, kind = "voice") => {
     if (current.current) return;
-    if (!getSocket().connected) { toast.error("Call unavailable", { description: "The chat connection is offline. Please wait for it to reconnect." }); return; }
-    if (!acquireCall("group")) { toast.error("Call in progress", { description: "Leave your current call before starting a group call." }); return; }
+    if (!getSocket().connected) { toast.error('The chat connection is offline. Please wait for it to reconnect.'); return; }
+    if (!acquireCall("group")) { toast.error('Leave your current call before starting a group call.'); return; }
     const client = new MeetingClient(String(conversation._id), { namespace: "group-call", joinInput: { conversationId: String(conversation._id), kind } });
-    const next = { client, conversation };
+    const next = { client, conversation, kind, isCaller: !rooms[conversation._id]?.active, answered: false, joinedOnce: false };
     current.current = next;
     setIncoming(null);
+    setSpeakerMuted(false);
     setSession(next);
+    if (kind === 'video' && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+      void document.documentElement.requestFullscreen().then(() => {
+        if (current.current === next) ownedFullscreen.current = true;
+        else if (document.fullscreenElement === document.documentElement) void document.exitFullscreen().catch(() => {});
+      }).catch(() => {});
+    }
+    next.unsubscribe = client.subscribe(() => {
+      if (current.current !== next) return;
+      if (client.state.joined) next.joinedOnce = true;
+      if (client.state.peers.length > 0) {
+        next.answered = true;
+        outgoingTimeout.current?.stop();
+        ringer.current?.stop();
+        setRinging(false);
+      }
+      if (next.joinedOnce && !client.state.joined && !client.state.busy) {
+        const message = client.state.notice || client.state.error;
+        close();
+        if (message) toast.info(message);
+      }
+    });
     client.attach();
     await client.join(false);
     if (current.current !== next || !client.state.joined) return;
+    if (next.isCaller && !next.answered) {
+      next.callId ||= `local:${conversation._id}`;
+      outgoingTimeout.current?.start(next.callId, String(conversation._id), next.ringExpiresAt);
+      setRinging(true);
+    }
     await client.toggle("audio");
     if (kind === "video" && current.current === next) await client.toggle("video");
-  }, []);
+  }, [close, rooms]);
+
   const inspect = useCallback(id => {
     const socket = getSocket();
     if (!socket.connected) return;
@@ -79,20 +126,44 @@ export default function GroupCallProvider({ user, children }) {
       if (!error && response?.success) setRooms(previous => ({ ...previous, [id]: response.data }));
     });
   }, []);
+  const dismiss = () => {
+    if (incoming) getSocket().emit('group-call:decline', { conversationId: incoming.conversationId, callId: incoming.callId });
+    ringer.current?.stop();
+    setIncoming(null);
+  };
+
   useEffect(() => {
     if (!authenticated) return;
     const socket = getSocket();
-    const update = room => setRooms(previous => ({ ...previous, [room.conversationId]: room }));
+    const update = room => {
+      setRooms(previous => ({ ...previous, [room.conversationId]: room }));
+      const next = current.current;
+      if (!next || String(next.conversation._id) !== String(room.conversationId)) return;
+      if (room.callId) next.callId = room.callId;
+      next.ringExpiresAt = room.ringExpiresAt;
+      if (room.callerAuthId) next.isCaller = room.callerAuthId === authId;
+      if (room.answered) {
+        next.answered = true;
+        outgoingTimeout.current?.stop();
+        setRinging(false);
+      }
+    };
     const invite = call => { if (!current.current && !isCallBusy()) setIncoming(call); };
-    const closed = ({ conversationId }) => {
-      setRooms(previous => ({ ...previous, [conversationId]: { active: false } }));
-      setIncoming(previous => previous?.conversationId === conversationId ? null : previous);
+    const closed = ({ conversationId, callId, reason }) => {
+      setRooms(previous => previous[conversationId]?.callId && callId && previous[conversationId].callId !== callId ? previous : ({ ...previous, [conversationId]: { active: false } }));
+      setIncoming(previous => previous?.conversationId === conversationId && (!callId || previous.callId === callId) ? null : previous);
+      const next = current.current;
+      if (String(next?.conversation._id) === String(conversationId) && (!callId || !next.callId || next.callId === callId)) {
+        close();
+        if (reason === 'no-answer') toast.info('No answer. The group call ended after 30 seconds.');
+        if (reason === 'declined') toast.info('The group call was declined.');
+      }
     };
     const removed = ({ conversationId }) => {
       if (String(current.current?.conversation._id) === String(conversationId)) close();
       closed({ conversationId });
     };
-    const disconnected = () => setIncoming(null);
+    const disconnected = () => { setIncoming(null); close(); };
     socket.on("group-call:availability", update);
     socket.on("group-call:invite", invite);
     socket.on("group-call:closed", closed);
@@ -104,19 +175,17 @@ export default function GroupCallProvider({ user, children }) {
       socket.off("group-call:closed", closed);
       socket.off("conversation:removed", removed);
       socket.off("disconnect", disconnected);
-      current.current?.client.destroy();
-      current.current = null;
-      releaseCall("group");
+      close();
     };
-  }, [authenticated, close]);
+  }, [authenticated, authId, close]);
   return <GroupCallContext.Provider value={{ rooms, start, inspect }}>
     {children}
-    {session && <CallRoom session={session} onClose={close} />}
-    {incoming && !session && <FeedDialog title="Incoming group call" onClose={() => setIncoming(null)}>
-      <div className="group-call-incoming"><span><Users size={28} /></span><h3>{incoming.name}</h3><p>{incoming.callerName} started a group {incoming.kind} call.</p><div>
-        <button type="button" onClick={() => setIncoming(null)} className="group-call-decline"><PhoneOff size={16} />Dismiss</button>
+    {session && <GroupCallRoom session={session} onClose={close} user={user} ringing={ringing} speakerMuted={speakerMuted} onSpeakerChange={() => setSpeakerMuted(previous => !previous)} />}
+    {incoming && !session && <GroupCallDialog title="Incoming group call" onClose={dismiss}>
+      <div className="group-call-incoming"><span className="group-call-incoming-icon">{incoming.callerProfilePicture ? <ChatAvatar convo={{ name: incoming.callerName, profilePicture: incoming.callerProfilePicture }} /> : <Users size={30} />}</span><h3>{incoming.name}</h3><p>{incoming.callerName} is calling</p><span className="group-call-kind">{incoming.kind === "video" ? <Video size={14} /> : <Phone size={14} />} Group {incoming.kind} call</span><div className="group-call-incoming-actions">
+        <button type="button" onClick={dismiss} className="group-call-decline"><PhoneOff size={16} />Decline</button>
         <button type="button" onClick={() => start({ _id: incoming.conversationId, name: incoming.name }, incoming.kind)} className="group-call-accept"><Phone size={16} />Join call</button>
       </div></div>
-    </FeedDialog>}
+    </GroupCallDialog>}
   </GroupCallContext.Provider>;
 }
