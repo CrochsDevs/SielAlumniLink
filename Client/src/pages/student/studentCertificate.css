@@ -52,11 +52,11 @@
 .certificate-guide h3 { font-size: .75rem; font-weight: 600; line-height: 1.75rem; }
 .certificate-guide-note { display: flex; align-items: flex-start; gap: .5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--cert-border); }
 .certificate-guide-note > svg { flex: none; margin-top: .1875rem; color: var(--color-primary-hover); }
-.dark .certificate-page { --cert-border: #4c5e53; --cert-muted: #b0c0b6; --cert-surface: #181e1a; --cert-tint: #202e25; }
+.dark .certificate-page { --cert-border: var(--dark-border); --cert-muted: var(--dark-muted); --cert-surface: var(--dark-surface); --cert-tint: var(--dark-control); }
 .dark .certificate-page .certificate-panel { box-shadow: 0 4px 12px rgb(0 0 0 / 30%); }
-.dark .certificate-field { border-color: #697c70; color-scheme: dark; box-shadow: 0 2px 6px rgb(0 0 0 / 40%); }
+.dark .certificate-field { border-color: var(--dark-border); color-scheme: dark; box-shadow: 0 2px 6px rgb(0 0 0 / 40%); }
 .dark .certificate-page :is(.certificate-confirmed, .certificate-clear, .certificate-activity, .certificate-step) { color: #7ee7a0; }
-.dark .certificate-page :is(.certificate-heading-icon, .certificate-empty-icon, .certificate-guide-icon) { background: #193d27; border-color: #3d6950; color: #7ee7a0; }
+.dark .certificate-page :is(.certificate-heading-icon, .certificate-empty-icon, .certificate-guide-icon) { background: var(--dark-control); border-color: var(--dark-border); color: #7ee7a0; }
 .dark .certificate-page :is(.certificate-award-icon, .certificate-guide-note > svg) { color: #7ee7a0; }
 @media (max-width: 479px) { .certificate-type { flex: 1 1 100%; } .certificate-heading-icon { width: 2.75rem; height: 2.75rem; } }
 @media (prefers-reduced-motion: reduce) { .certificate-page .certificate-button { transition: none; } }

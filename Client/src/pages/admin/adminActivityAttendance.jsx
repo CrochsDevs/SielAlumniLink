@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import AdminStatCard from "../../components/admin/AdminStatCard";
 import { AdminStatGrid, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
@@ -114,9 +115,7 @@ export default function AdminActivityAttendance() {
             </p>
           )}
           {loading ? (
-            <p role="status" className="p-8 text-center text-sm text-zinc-500">
-              Loading registrations...
-            </p>
+            <ContentSkeleton variant="table" count={5} label="Loading registrations..." />
           ) : (
             event && (
               <>

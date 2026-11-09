@@ -20,7 +20,7 @@
 .student-requests-page .request-actions button:last-child:hover { background: #007a27; }
 .student-requests-page button:disabled { opacity: .5; cursor: not-allowed; }
 .student-requests-page :is(button, a):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
-.dark .student-requests-page { --requests-border: #4c5e53; --requests-surface: #1c231f; --requests-muted: #b0c0b6; }
+.dark .student-requests-page { --requests-border: var(--dark-border); --requests-surface: var(--dark-surface); --requests-muted: var(--dark-muted); }
 .dark .student-requests-page :is(.requests-toolbar, .requests-card, .requests-state) { box-shadow: 0 4px 12px rgb(0 0 0 / 30%); }
-.dark .student-requests-page .requests-search { border-color: #697c70; box-shadow: 0 2px 6px rgb(0 0 0 / 40%); }
+.dark .student-requests-page .requests-search { border-color: var(--dark-border); box-shadow: 0 2px 6px rgb(0 0 0 / 40%); }
 .dark .student-requests-page .request-pending { border-color: #68532d; background: #382e1c; color: #fcd34d; }

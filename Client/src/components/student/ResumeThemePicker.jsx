@@ -17,7 +17,7 @@ export default function ResumeThemePicker({
         {RESUME_THEMES.map((theme) => (
           <label
             key={theme.id}
-            className={`relative flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${value === theme.id ? "border-brand bg-emerald-50/50 dark:border-brand dark:bg-emerald-950/20" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"} ${compact ? "justify-center" : ""}`}
+            className={`relative flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${value === theme.id ? "border-brand bg-emerald-50/50 dark:border-brand dark:bg-zinc-800/20" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"} ${compact ? "justify-center" : ""}`}
           >
             <input
               type="radio"

@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -400,9 +401,7 @@ export default function AdminSurveys() {
               </div>
 
               {loading ? (
-                <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-                  Loading surveys...
-                </p>
+                <ContentSkeleton variant="table" count={5} label="Loading surveys..." />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[680px] text-left text-[12.5px]">
@@ -577,9 +576,7 @@ export default function AdminSurveys() {
               </div>
               <div className="space-y-4 p-4">
                 {resultsLoading ? (
-                  <p className="py-4 text-center text-[13px] text-zinc-500 dark:text-zinc-400">
-                    Loading responses...
-                  </p>
+                  <ContentSkeleton variant="table" count={5} label="Loading responses..." />
                 ) : results.length === 0 ? (
                   <p className="py-4 text-center text-[13px] text-zinc-400 dark:text-zinc-500">
                     No responses yet.
@@ -628,9 +625,7 @@ export default function AdminSurveys() {
                 </p>
               </div>
               {loading ? (
-                <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-                  Loading responses...
-                </p>
+                <ContentSkeleton variant="table" count={5} label="Loading responses..." />
               ) : surveys.length === 0 ? (
                 <div className="p-10 text-center">
                   <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:text-brand">
@@ -668,9 +663,7 @@ export default function AdminSurveys() {
                       {resultsFor?._id === survey._id && (
                         <div className="mt-3 space-y-3">
                           {resultsLoading ? (
-                            <p className="py-2 text-center text-[12px] text-zinc-400">
-                              Loading...
-                            </p>
+                            <ContentSkeleton variant="table" count={5} label="Loading..." />
                           ) : results.length === 0 ? (
                             <p className="py-2 text-center text-[12px] text-zinc-400">
                               No responses yet.

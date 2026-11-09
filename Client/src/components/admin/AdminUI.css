@@ -17,11 +17,11 @@
 .dark .admin-workspace {
   --admin-primary: hsl(var(--primary));
   --admin-primary-hover: hsl(var(--primary));
-  --admin-muted: #afc8b8;
-  --admin-toolbar: #22392a;
-  --admin-control-hover: #344e3d;
+  --admin-muted: var(--dark-muted);
+  --admin-toolbar: var(--dark-control);
+  --admin-control-hover: var(--dark-control);
   --admin-switch-off: #4c6355;
-  --admin-tabs-line: #515866;
+  --admin-tabs-line: var(--dark-border);
   --admin-tabs-shadow: 0 0 0 1px rgb(0 0 0 / 12%), 0 2px 5px rgb(0 0 0 / 28%), 0 6px 14px rgb(0 0 0 / 22%);
 }
 .admin-workspace .admin-button {

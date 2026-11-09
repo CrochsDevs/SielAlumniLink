@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useEffect, useRef, useState } from 'react';
 import { Users, UserPlus, Search } from 'lucide-react';
 import { FeedDialog } from '../feed/FeedComposer';
@@ -125,7 +126,7 @@ function MembersDialog({ conversation, onClose }) {
       <button type="button" disabled={saving} aria-pressed={tab === 'add'} onClick={() => changeTab('add')}
         className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${tab === 'add' ? 'bg-brand text-white' : 'bg-zinc-100 dark:bg-zinc-800'}`}><UserPlus size={16} />Add members</button>
     </div>
-    {state.loading ? <p role="status" className="p-6 text-center text-sm text-zinc-500">Loading members...</p> : state.error ? (
+    {state.loading ? <ContentSkeleton variant="list" count={3} label="Loading members..." /> : state.error ? (
       <div role="alert" className="space-y-3 py-4 text-sm text-red-600"><p>{state.error}</p><button type="button" className="underline" onClick={() => { setState(prev => ({ ...prev, loading: true, error: '' })); setRevision(value => value + 1); }}>Retry</button></div>
     ) : <form onSubmit={submit}>
       <label className="relative mb-3 block">

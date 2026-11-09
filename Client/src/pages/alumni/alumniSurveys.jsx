@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -45,9 +46,7 @@ const AlumniSurveys = () => {
         <main className="mx-auto max-w-3xl space-y-3 p-4 sm:p-6 workspace-page">
           <PageHeader title="Surveys" description="Share your experience and help improve the alumni community." />
           {loading ? (
-            <p className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
-              Loading surveys...
-            </p>
+            <ContentSkeleton variant="list" count={3} label="Loading surveys..." />
           ) : surveys.length === 0 ? (
             <div className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-10 text-center shadow-sm">
               <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:text-brand">

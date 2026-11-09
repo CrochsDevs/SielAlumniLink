@@ -1,3 +1,13 @@
+import colors from "tailwindcss/colors";
+
+// Keep the original light colors; dark workspaces share one neutral surface scale.
+const neutralPalette = (name) => Object.fromEntries(
+  Object.entries(colors[name]).map(([shade, hex]) => {
+    const rgb = hex.slice(1).match(/../g).map(channel => parseInt(channel, 16)).join(" ");
+    return [shade, `rgb(var(--neutral-${shade}, ${rgb}) / <alpha-value>)`];
+  }),
+);
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
@@ -24,6 +34,9 @@ export default {
         field: "var(--shadow-field)",
       },
       colors: {
+        zinc: neutralPalette("zinc"),
+        gray: neutralPalette("gray"),
+        slate: neutralPalette("slate"),
         brand: "hsl(var(--primary) / <alpha-value>)",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

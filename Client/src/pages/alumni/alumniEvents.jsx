@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, RefreshCw } from "lucide-react";
@@ -233,12 +234,7 @@ export default function AlumniEvents() {
                 </p>
               )}
               {loading && !events.length ? (
-                <div
-                  role="status"
-                  className="flex min-h-[460px] items-center justify-center rounded-xl border border-zinc-200 bg-white text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  Loading calendar…
-                </div>
+                <ContentSkeleton variant="calendar" count={1} label="Loading calendar…" />
               ) : (
                 <>
                   {!error && !visible.length && (

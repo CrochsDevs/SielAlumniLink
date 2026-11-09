@@ -1,0 +1,64 @@
+.cert-admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.cert-admin-stat { display: flex; align-items: flex-start; gap: 14px; padding: 20px; }
+.cert-admin-stat-icon { display: grid; place-items: center; flex: 0 0 42px; height: 42px; color: #008d38; background: #eaf7ee; border-radius: 12px; }
+.cert-admin-stat p { font-size: 12px; color: #71717a; }
+.cert-admin-stat strong { display: block; font-size: 28px; line-height: 1.5; font-weight: 650; }
+.cert-admin-stat small { font-size: 11px; color: #71717a; }
+.cert-admin-workspace { min-width: 0; overflow: hidden; }
+.cert-admin-toolbar { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #e4e4e7; }
+.cert-admin-search { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 120px; padding: 10px 12px; border: 1px solid #d4d4d8; border-radius: 9px; color: #71717a; }
+.cert-admin-search input { width: 100%; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; box-shadow: none; font-size: 12px; background: transparent; color: inherit; outline: none; }
+.cert-admin-search:focus-within { outline: 2px solid #00963b; outline-offset: 2px; }
+.cert-admin-toolbar select { max-width: 260px; padding: 10px 12px; font-size: 12px; border: 1px solid #d4d4d8; border-radius: 9px; background: transparent; }
+.cert-admin-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; }
+.cert-admin-list-heading h2 { font-size: 14px; font-weight: 650; }
+.cert-admin-list-heading p { margin-top: 5px; font-size: 11px; color: #71717a; }
+.cert-admin-table-scroll { width: 100%; overflow-x: auto; }
+.cert-admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.cert-admin-table th { padding: 12px 18px; background: #f8faf9; color: #71717a; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; border-block: 1px solid #e4e4e7; white-space: nowrap; }
+.cert-admin-table td { padding: 16px 18px; border-bottom: 1px solid #f0f0f2; vertical-align: middle; }
+.cert-admin-table td strong { display: block; min-width: 130px; max-width: 320px; overflow-wrap: anywhere; font-weight: 550; line-height: 1.5; }
+.cert-admin-table td small { display: block; margin-top: 4px; font-size: 10px; color: #71717a; overflow-wrap: anywhere; }
+.cert-admin-table tbody tr:hover { background: #fafcfb; }
+.cert-admin-table tr.is-selected { background: #f0faf3; }
+.cert-admin-table .cert-admin-check { width: 40px; padding-right: 0; }
+.cert-admin-check input, .cert-admin-recipient-list input { accent-color: #00963b; width: 16px; height: 16px; cursor: pointer; }
+.cert-admin-date, .cert-admin-number { white-space: nowrap; font-size: 11px; color: #71717a; }
+.cert-admin-number { font-family: ui-monospace, monospace; font-size: 10px; }
+.cert-admin-status { white-space: nowrap; border-radius: 20px; padding: 5px 9px; background: #fff7e1; color: #946213; font-size: 10px; }
+.cert-admin-row-action { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; font-weight: 550; color: #008d38; border: 1px solid #dce9e0; border-radius: 8px; padding: 8px 10px; }
+.cert-admin-row-action:hover { background: #eaf7ee; }
+.cert-admin-selection, .cert-admin-notice { padding: 14px 20px; background: #effaf3; color: #166534; font-size: 12px; }
+.cert-admin-notice { border: 1px solid #bbdfc7; border-radius: 10px; }
+.cert-admin-selection, .cert-admin-selection > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.cert-admin-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 54px 20px; text-align: center; color: #71717a; }
+.cert-admin-empty svg { color: #00963b; }
+.cert-admin-empty h3 { color: #3f3f46; font-size: 15px; font-weight: 600; }
+.cert-admin-empty p { font-size: 12px; }
+.cert-admin-recipient-heading { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding-block: 12px; font-size: 11px; }
+.cert-admin-recipient-list { max-height: 220px; overflow-y: auto; border: 1px solid #e4e4e7; border-radius: 8px; }
+.cert-admin-recipient-list label { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #e4e4e7; cursor: pointer; }
+.cert-admin-recipient-list strong { display: block; font-size: 12px; font-weight: 500; }
+.cert-admin-recipient-list small { display: block; font-size: 10px; color: #71717a; }
+.cert-admin-review-list { max-height: 180px; overflow-y: auto; margin-top: 12px; font-size: 11px; }
+.cert-admin-review-list li { padding-block: 6px; }
+.dark .cert-admin-stat p, .dark .cert-admin-stat small, .dark .cert-admin-list-heading p, .dark .cert-admin-table td small, .dark .cert-admin-date, .dark .cert-admin-number { color: #a1a1aa; }
+.dark .cert-admin-stat-icon, .dark .cert-admin-selection, .dark .cert-admin-notice { background: #143626; color: #86efac; }
+.dark .cert-admin-toolbar, .dark .cert-admin-search, .dark .cert-admin-toolbar select, .dark .cert-admin-table th, .dark .cert-admin-table td, .dark .cert-admin-recipient-list, .dark .cert-admin-recipient-list label { border-color: #3f3f46; }
+.dark .cert-admin-table th { background: #25272a; color: #a1a1aa; }
+.dark .cert-admin-table tr.is-selected, .dark .cert-admin-table tbody tr:hover { background: #193126; }
+.dark .cert-admin-row-action { color: #86efac; border-color: #3b5144; }
+.dark .cert-admin-row-action:hover { background: #143626; }
+.dark .cert-admin-empty h3 { color: #e4e4e7; }
+.dark .cert-admin-status { background: #493b1e; color: #fde68a; }
+@media (max-width: 767px) {
+  .cert-admin-summary { grid-template-columns: 1fr; gap: 8px; }
+  .cert-admin-stat { padding: 14px; align-items: center; }
+  .cert-admin-stat > div { flex: 1; display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .cert-admin-stat strong { grid-column: 2; grid-row: 1 / 3; padding-left: 10px; font-size: 24px; }
+  .cert-admin-stat small { grid-column: 1; }
+  .cert-admin-toolbar { flex-wrap: wrap; padding: 14px; }
+  .cert-admin-search { flex-basis: 100%; }
+  .cert-admin-toolbar select { flex: 1; min-width: 0; max-width: 100%; }
+  .cert-admin-list-heading { padding: 16px 14px; }
+}

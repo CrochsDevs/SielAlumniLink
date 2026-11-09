@@ -64,12 +64,12 @@
 }
 
 .dark .chat-call-card[data-slot="bubble"][data-variant] > [data-slot="bubble-content"] {
-  border-color: #3f4148;
-  background: #2b2d31;
+  border-color: var(--dark-border);
+  background: var(--dark-surface);
   color: var(--call-title);
 }
 
-.dark .chat-call-card { --call-title: #f4f4f5; }
+.dark .chat-call-card { --call-title: var(--dark-text); }
 
 .dark .chat-call-card[data-call-status="missed"] {
   --call-title: #f87171;
@@ -83,7 +83,7 @@
   --call-icon-bg: rgb(245 158 11 / 14%);
 }
 
-.dark .chat-call-card__subtitle { color: #a1a1aa; }
+.dark .chat-call-card__subtitle { color: var(--dark-muted); }
 .chat-call-card__duration { font-variant-numeric: tabular-nums; }
 
 .chat-dock-message-list {

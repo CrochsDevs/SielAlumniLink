@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -123,9 +124,7 @@ function DashboardListings({ filter, query, refreshKey }) {
         </p>
       ))}
       {loading && (
-        <p role="status" className={`${card} text-xs text-zinc-500`}>
-          Loading opportunities and activities...
-        </p>
+        <ContentSkeleton variant="list" count={3} label="Loading opportunities and activities..." />
       )}
       {!loading && !errors.length && !rows.length && (
         <p role="status" className={`${card} text-xs leading-6 text-zinc-500`}>

@@ -177,7 +177,7 @@ export default function StudentCompetency() {
                 "Skills below your target level", CircleAlert, "warning",
               ],
             ].map(([label, value, note, icon, tone]) => (
-              <StatCard key={label} label={label} value={value} note={note} icon={icon} tone={tone} />
+              <StatCard loading={state.loading} key={label} label={label} value={value} note={note} icon={icon} tone={tone} />
             ))}
             </dl>
           </section>
@@ -284,7 +284,7 @@ export default function StudentCompetency() {
                           </p>
                         </div>
                         <span
-                          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${assessment?.rating >= 3 ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"}`}
+                          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${assessment?.rating >= 3 ? "bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"}`}
                         >
                           {assessment
                             ? LEVELS[assessment.rating - 1].label
@@ -519,7 +519,7 @@ export default function StudentCompetency() {
                     {LEVELS.map((level) => (
                       <label
                         key={level.value}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${draft.rating === level.value ? "border-brand bg-emerald-50/50 dark:bg-emerald-950/20" : "border-zinc-200 dark:border-zinc-700"}`}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${draft.rating === level.value ? "border-brand bg-emerald-50/50 dark:bg-zinc-800/20" : "border-zinc-200 dark:border-zinc-700"}`}
                       >
                         <input
                           type="radio"

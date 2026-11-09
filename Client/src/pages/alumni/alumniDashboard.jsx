@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { gooeyToast as toast } from "goey-toast";
@@ -300,7 +301,7 @@ const AlumniDashboard = () => {
           {/* LEFT: Sieles ID card */}
           <aside className="alumni-dashboard-rail order-2 min-w-0 space-y-3 lg:order-none lg:self-start">
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="h-16 overflow-hidden bg-gradient-to-r from-brand via-brand to-brand">
+              <div className="h-16 overflow-hidden bg-gradient-to-r from-brand via-brand to-brand dark:from-zinc-900 dark:to-zinc-900 dark:via-zinc-900">
                 {user?.bannerImage && (
                   <img
                     src={user.bannerImage}
@@ -350,7 +351,7 @@ const AlumniDashboard = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-brand/10 bg-gradient-to-br from-brand to-brand p-4 text-white shadow-sm">
+            <div className="rounded-2xl border border-brand/10 bg-gradient-to-br from-brand to-brand p-4 text-white shadow-sm dark:from-zinc-900 dark:to-zinc-900">
               <p className="flex items-center gap-1.5 text-[12.5px] font-bold">
                 <ClipboardCheck className="h-4 w-4" />
                 Tracer Study
@@ -400,14 +401,12 @@ const AlumniDashboard = () => {
                       <Users className="h-3.5 w-3.5" />
                     </span>
                     My Mentees
-                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 text-[10.5px] font-bold text-brand dark:text-brand">
+                    <span className="rounded-full bg-emerald-50 dark:bg-zinc-800 px-2 py-0.5 text-[10.5px] font-bold text-brand dark:text-brand">
                       {mentees.length} connected students
                     </span>
                   </h3>
                   {menteesLoading ? (
-                    <p className="py-4 text-center text-[12.5px] text-zinc-400">
-                      Loading mentees...
-                    </p>
+                    <ContentSkeleton variant="list" count={3} label="Loading mentees..." />
                   ) : mentees.length === 0 ? (
                     <p className="py-4 text-center text-[12.5px] text-zinc-400">
                       No connected students yet. Accept requests to mentor them
@@ -469,7 +468,7 @@ const AlumniDashboard = () => {
           {/* RIGHT: Connection requests + Suggested connects */}
           <aside className="alumni-dashboard-rail order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:self-start">
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
+              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5 dark:from-zinc-900 dark:to-zinc-900">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
                   <UserPlus className="h-3.5 w-3.5" />
                   Connection Requests
@@ -482,9 +481,7 @@ const AlumniDashboard = () => {
               </div>
               <div className="p-3">
                 {requestsLoading ? (
-                  <p className="py-3 text-center text-[11.5px] text-zinc-400">
-                    Loading...
-                  </p>
+                  <ContentSkeleton variant="list" count={3} label="Loading..." />
                 ) : requests.length === 0 ? (
                   <p className="py-3 text-center text-[11.5px] text-zinc-400">
                     No pending requests
@@ -558,9 +555,7 @@ const AlumniDashboard = () => {
                 Suggested Connects
               </p>
               {suggestionsLoading ? (
-                <p className="py-3 text-center text-[11.5px] text-zinc-400">
-                  Loading...
-                </p>
+                <ContentSkeleton variant="list" count={3} label="Loading..." />
               ) : suggestionsError ? (
                 <div className="py-3 text-center text-[11.5px] text-zinc-500 dark:text-zinc-400">
                   <p role="alert">{suggestionsError}</p>
@@ -627,7 +622,7 @@ const AlumniDashboard = () => {
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5">
+              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5 dark:from-zinc-900 dark:to-zinc-900">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
                   <Megaphone className="h-3.5 w-3.5" />
                   At CLSU Today
@@ -681,7 +676,7 @@ const AlumniDashboard = () => {
             onClose={() => setShowConnections(false)}
           >
             {connectionsLoading ? (
-              <p className="text-sm">Loading connections…</p>
+              <ContentSkeleton variant="list" count={3} label="Loading connections…" />
             ) : connectionsError ? (
               <p role="alert" className="text-sm text-red-600">
                 {connectionsError}{" "}

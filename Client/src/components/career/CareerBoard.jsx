@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { Link } from "react-router-dom";
 import useJobDeadline, {
   deadlinePassed,
@@ -1061,7 +1062,7 @@ export default function CareerBoard({
                 </p>
               </header>
             ) : (
-              <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white">
+              <header className="relative overflow-hidden rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white dark:from-zinc-900 dark:to-zinc-900">
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute -right-8 -top-8 rotate-12 text-white/10"
@@ -1192,12 +1193,7 @@ export default function CareerBoard({
                 </p>
               </section>
             ) : loading ? (
-              <p
-                role="status"
-                className={`${cardClass} p-8 text-center text-sm text-zinc-500 dark:text-zinc-400`}
-              >
-                Loading opportunities…
-              </p>
+              <ContentSkeleton variant="cards" count={3} label="Loading opportunities…" />
             ) : (
               <>
                 <p
@@ -1538,7 +1534,7 @@ export default function CareerBoard({
           {!marketplace && (
             <aside className="career-member-panel order-3 grid min-w-0 gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1 xl:sticky xl:top-20">
               <section className={`${cardClass} p-5 text-center`}>
-                <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand">
                   <ProfileAvatar user={user} />
                 </span>
                 <h2 className="mt-3 break-words text-sm font-semibold">

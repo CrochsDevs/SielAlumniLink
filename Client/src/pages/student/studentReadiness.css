@@ -45,9 +45,9 @@
 .readiness-scoring summary::after { content: '+'; margin-left: .5rem; }
 .readiness-scoring[open] summary::after { content: '−'; }
 .readiness-scoring > div { display: grid; gap: .625rem; margin-top: 1rem; max-width: 60rem; color: var(--readiness-muted); font-size: .75rem; line-height: 1.5rem; }
-.dark .readiness-page { --readiness-surface: #1c231f; --readiness-tint: #202e25; --readiness-border: #4c5e53; --readiness-muted: #b0c0b6; }
+.dark .readiness-page { --readiness-surface: var(--dark-surface); --readiness-tint: var(--dark-control); --readiness-border: var(--dark-border); --readiness-muted: var(--dark-muted); }
 .dark .readiness-page .readiness-panel { box-shadow: 0 4px 12px rgb(0 0 0 / 30%); }
 .dark .readiness-page :is(.readiness-score, .readiness-factor-points, .readiness-factor-link, .readiness-factor-status.is-complete, .readiness-factor-icon, .readiness-guide-icon) { color: #7ee7a0; }
-.dark .readiness-page :is(.readiness-level, .readiness-count, .readiness-levels li.is-current) { border-color: #3d6950; background: #193d27; color: #7ee7a0; }
+.dark .readiness-page :is(.readiness-level, .readiness-count, .readiness-levels li.is-current) { border-color: var(--dark-border); background: var(--dark-surface); color: #7ee7a0; }
 @media (min-width: 640px) { .readiness-overview { grid-template-columns: 250px minmax(0, 1fr); } .readiness-score-panel { border-bottom: 0; border-right: 1px solid var(--readiness-border); } .readiness-factor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1280px) { .readiness-content { grid-template-columns: minmax(0, 1fr) 280px; } .readiness-overview-body { padding: 1.5rem; } }

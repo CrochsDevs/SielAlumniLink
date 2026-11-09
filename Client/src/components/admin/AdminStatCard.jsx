@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import "./AdminStatCard.css";
+import { Skeleton } from "../ui/Skeleton";
 
 export default function AdminStatCard({ label, value, caption, detail, icon, featured = false, to, onClick, selected, loading = false }) {
   const Component = to ? Link : onClick ? "button" : "article";
@@ -13,9 +14,9 @@ export default function AdminStatCard({ label, value, caption, detail, icon, fea
       {(to || onClick) && <ArrowUpRight size={15} className="dashboard-card-arrow" aria-hidden="true" />}
     </div>
     <div className="dashboard-stat-body">
-      <p className="dashboard-stat-value">{loading || value == null ? "—" : typeof value === "number" ? value.toLocaleString() : value}</p>
+      <p className="dashboard-stat-value">{loading ? <><span className="sr-only">Loading {label}</span><Skeleton className="h-8 w-20" /></> : value == null ? "—" : typeof value === "number" ? value.toLocaleString() : value}</p>
       <span className="dashboard-stat-caption">{caption}</span>
     </div>
-    {detail && <div className="dashboard-stat-footer"><span className="dashboard-status-dot" /><p className="dashboard-stat-detail">{loading ? "Loading..." : detail}</p>{(to || onClick) && <ArrowRight size={12} aria-hidden="true" />}</div>}
+    {detail && <div className="dashboard-stat-footer"><span className="dashboard-status-dot" /><p className="dashboard-stat-detail">{loading ? <Skeleton className="w-24" /> : detail}</p>{(to || onClick) && <ArrowRight size={12} aria-hidden="true" />}</div>}
   </Component>;
 }

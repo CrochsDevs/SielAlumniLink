@@ -24,23 +24,42 @@
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    color-scheme: dark;
+    /* Charcoal canvas, raised gray panels, and neutral controls across all roles. */
+    --dark-canvas: #18191a;
+    --dark-surface: #242526;
+    --dark-control: #3a3b3c;
+    --dark-border: #4e4f50;
+    --dark-text: #e4e6eb;
+    --dark-muted: #b0b3b8;
+    --neutral-950: 24 25 26;
+    --neutral-900: 36 37 38;
+    --neutral-800: 58 59 60;
+    --neutral-700: 78 79 80;
+    --neutral-600: 101 103 107;
+    --neutral-500: 138 141 145;
+    --neutral-400: 176 179 184;
+    --neutral-300: 204 206 211;
+    --neutral-200: 228 230 235;
+    --neutral-100: 240 242 245;
+    --neutral-50: 248 249 250;
+    --background: 210 4% 10%;
+    --foreground: 223 15% 91%;
+    --card: 210 3% 15%;
+    --card-foreground: 223 15% 91%;
+    --popover: 210 3% 15%;
+    --popover-foreground: 223 15% 91%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 210 2% 23%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --muted: 210 2% 23%;
+    --muted-foreground: 218 5% 71%;
+    --accent: 210 2% 23%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 210 1% 31%;
+    --input: 210 1% 31%;
     --ring: var(--primary);
   }
 }
@@ -84,18 +103,21 @@
     --table-max-height: none;
   }
   .dark {
+    --color-primary-soft: var(--dark-surface);
+    --color-primary-tint: var(--dark-control);
+    --color-primary-border: var(--dark-border);
     --shadow-panel: 0 0 10px 1px rgb(0 0 0 / 28%), 0 6px 20px rgb(0 0 0 / 45%);
     --shadow-panel-hover: 0 0 10px 1px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 48%);
     --shadow-field: 0 0 0 1px rgb(0 0 0 / 16%), 0 2px 6px rgb(0 0 0 / 35%), 0 5px 12px rgb(0 0 0 / 28%);
-    --table-surface: #1c2027;
-    --table-header-surface: #303742;
-    --table-header-text: #f1f4f8;
-    --table-text: #d6dce5;
-    --table-muted: #aab3c0;
-    --table-line: #353d49;
-    --table-row-hover: #26342e;
+    --table-surface: var(--dark-surface);
+    --table-header-surface: var(--dark-control);
+    --table-header-text: var(--dark-text);
+    --table-text: var(--dark-text);
+    --table-muted: var(--dark-muted);
+    --table-line: var(--dark-border);
+    --table-row-hover: var(--dark-control);
     --table-scrollbar: #616875;
-    --calendar-grid-line: #515b6a;
+    --calendar-grid-line: var(--dark-border);
   }
 }
 
@@ -105,7 +127,7 @@
     --alumni-page-background: #f0f1f3;
   }
   .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
-    --alumni-page-background: #101318;
+    --alumni-page-background: var(--dark-canvas);
   }
   .member-workspace.admin-workspace[data-workspace-role="admin"] {
     --alumni-page-background: #f0f1f3;
@@ -122,17 +144,17 @@
     --admin-switch-off: #9ca3af;
   }
   .dark .member-workspace.admin-workspace[data-workspace-role="admin"] {
-    --alumni-page-background: #101318;
-    --alumni-card: #1c2027;
-    --alumni-card-border: #303742;
-    --alumni-secondary: #1c2027;
-    --alumni-secondary-border: #303742;
-    --alumni-tab: #252b34;
-    --alumni-heading: #f1f4f8;
+    --alumni-page-background: var(--dark-canvas);
+    --alumni-card: var(--dark-surface);
+    --alumni-card-border: var(--dark-border);
+    --alumni-secondary: var(--dark-surface);
+    --alumni-secondary-border: var(--dark-border);
+    --alumni-tab: var(--dark-control);
+    --alumni-heading: var(--dark-text);
     --alumni-card-shadow: var(--shadow-panel);
-    --admin-muted: #aab3c0;
-    --admin-toolbar: #252b34;
-    --admin-control-hover: #303742;
+    --admin-muted: var(--dark-muted);
+    --admin-toolbar: var(--dark-control);
+    --admin-control-hover: var(--dark-control);
     --admin-switch-off: #66717f;
   }
   .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
@@ -146,12 +168,12 @@
     --alumni-card-hover-shadow: var(--shadow-panel-hover);
   }
   .dark .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) {
-    --alumni-card: #181f1a;
-    --alumni-card-border: #303b33;
-    --alumni-secondary: #24231c;
-    --alumni-secondary-border: #3b3a2d;
-    --alumni-tab: #202e24;
-    --alumni-heading: #f4f4f5;
+    --alumni-card: var(--dark-surface);
+    --alumni-card-border: var(--dark-border);
+    --alumni-secondary: var(--dark-surface);
+    --alumni-secondary-border: var(--dark-border);
+    --alumni-tab: var(--dark-control);
+    --alumni-heading: var(--dark-text);
     --alumni-card-shadow: var(--shadow-panel);
     --alumni-card-hover-shadow: var(--shadow-panel-hover);
   }

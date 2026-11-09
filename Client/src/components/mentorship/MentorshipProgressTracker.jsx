@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import StatCard from "../ui/stat-card";
 import ProgressBar from "../ui/progress-bar";
 import { createElement, useCallback, useEffect, useRef, useState } from 'react';
@@ -18,7 +19,7 @@ const STATUSES = [{
 }, {
   key: 'completed',
   label: 'Completed',
-  style: 'bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand'
+  style: 'bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand'
 }];
 const icons = {
   resume_building: FileUser,
@@ -78,7 +79,7 @@ function GoalCard({
   return <article data-mentorship-goal={goal.key} className={`${card} overflow-hidden${isMentor ? "" : " mentorship-student-goal"}`}>
     <div className="mentorship-goal-body p-5 sm:p-6">
       <div className="flex items-start gap-3 sm:gap-4">
-        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${goal.status === 'completed' ? 'bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300'}`}>{createElement(goal.status === 'completed' ? CheckCircle2 : icons[goal.key] || Target, {
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${goal.status === 'completed' ? 'bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300'}`}>{createElement(goal.status === 'completed' ? CheckCircle2 : icons[goal.key] || Target, {
             size: 21,
             'aria-hidden': true
           })}</span>
@@ -186,13 +187,11 @@ export default function MentorshipProgressTracker({
             Retry
           </button>
         </p>}
-      {message && !loading && <p role="status" className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs text-brand dark:bg-emerald-950 dark:text-brand">
+      {message && !loading && <p role="status" className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs text-brand dark:bg-zinc-800 dark:text-brand">
           <CheckCircle2 size={16} />
           {message}
         </p>}
-      {loading ? <p role="status" className={`${card} p-8 text-center text-sm text-zinc-500 dark:text-zinc-400`}>
-          Loading mentorship goals…
-        </p> : !error && !selected ? <div className={`${card} py-12 text-center`}>
+      {loading ? <ContentSkeleton variant="form" count={1} label="Loading mentorship goals…" /> : !error && !selected ? <div className={`${card} py-12 text-center`}>
           <Target size={32} className="mx-auto text-zinc-300 dark:text-zinc-600" />
           <h3 className="mt-4 text-base font-semibold">
             Start with a mentorship connection
@@ -205,7 +204,7 @@ export default function MentorshipProgressTracker({
             <section className={`${card} mentorship-progress-summary overflow-hidden`} aria-label="Selected mentorship overview">
               <div className="mentorship-progress-mentor p-5">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-brand dark:bg-emerald-950"><ProfileAvatar user={peer} /></span>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-brand dark:bg-zinc-800"><ProfileAvatar user={peer} /></span>
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Your mentor</p>
                     <h3 className="mt-1 break-words text-sm font-semibold">{peer.name}</h3>

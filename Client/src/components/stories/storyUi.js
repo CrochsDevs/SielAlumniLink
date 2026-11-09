@@ -7,9 +7,9 @@ export const STORY_TOPICS = [
     singular: "Career journey",
     icon: Compass,
     style:
-      "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand",
+      "bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand",
     cover:
-      "from-emerald-100 via-emerald-50 to-teal-100 dark:from-emerald-950 dark:via-zinc-900 dark:to-teal-950",
+      "from-emerald-100 via-emerald-50 to-teal-100 dark:from-zinc-800 dark:via-zinc-900 dark:to-zinc-800",
   },
   {
     key: "achievement",

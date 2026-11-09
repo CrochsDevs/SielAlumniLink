@@ -1,5 +1,5 @@
 .alumni-career-page { background: #edf2eb; }
-.dark .alumni-career-page { background: #0c1210; }
+.dark .alumni-career-page { background: var(--dark-canvas); }
 .career-marketplace {
   --career-title: #000;
   --career-green: hsl(var(--primary));
@@ -8,11 +8,11 @@
   --career-soft: #e6eee2;
 }
 .dark .career-marketplace {
-  --career-title: #f4f4f5;
+  --career-title: var(--dark-text);
   --career-green: #7ee3a5;
-  --career-line: #303b33;
-  --career-surface: #181b19;
-  --career-soft: #252c27;
+  --career-line: var(--dark-border);
+  --career-surface: var(--dark-surface);
+  --career-soft: var(--dark-control);
 }
 .member-workspace main.workspace-page.career-marketplace :is(.workspace-page-header h1, .career-feed-heading h2, .career-listing h3:not(:where(.opportunity-prose *))) {
   color: var(--career-title) !important;
@@ -77,9 +77,9 @@
 }
 .career-marketplace .career-search button:hover { background: hsl(var(--primary)); }
 .career-marketplace .career-search input::placeholder { color: #647568; opacity: 1; }
-.dark .career-marketplace .career-search { background: #1b2c20; border-color: #536d5c; box-shadow: 0 4px 14px rgb(0 0 0 / 30%), 0 1px 3px rgb(0 0 0 / 20%); }
+.dark .career-marketplace .career-search { background: var(--dark-surface); border-color: var(--dark-border); box-shadow: 0 4px 14px rgb(0 0 0 / 30%), 0 1px 3px rgb(0 0 0 / 20%); }
 .dark .career-marketplace .career-search:focus-within { border-color: #4ade80; box-shadow: 0 0 0 3px rgb(74 222 128 / 15%), 0 4px 14px rgb(0 0 0 / 30%); }
-.dark .career-marketplace .career-search input::placeholder { color: #a0b5a5; }
+.dark .career-marketplace .career-search input::placeholder { color: var(--dark-muted); }
 .career-marketplace .career-filter-toggle {
   display: inline-flex;
   align-items: center;
@@ -110,8 +110,8 @@
 }
 .career-marketplace .career-board-navigation nav:not(.admin-tabs) button:hover { background: rgb(255 255 255 / 35%); }
 .career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: hsl(var(--primary)); color: #fff; box-shadow: 0 2px 4px rgb(18 56 35 / 12%); }
-.dark .career-marketplace .career-board-navigation { background: #1b2b20; }
-.dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button { color: #b7c9bc; }
+.dark .career-marketplace .career-board-navigation { background: var(--dark-surface); }
+.dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button { color: var(--dark-muted); }
 .dark .career-marketplace .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] { background: hsl(var(--primary)); color: #fff; }
 .career-marketplace .career-layout { gap: 24px; }
 .career-marketplace .career-filter-panel {
@@ -137,7 +137,7 @@
 .career-marketplace aside.career-filter-panel .career-filter-heading h2 { color: #fff; }
 .career-marketplace aside.career-filter-panel .career-filter-heading p { color: #c4dec9; }
 .career-marketplace aside.career-filter-panel .career-filter-heading-icon { background: rgb(255 255 255 / 12%); color: #d8efb4; }
-.dark .career-marketplace aside.career-filter-panel { background: #17251c; }
+.dark .career-marketplace aside.career-filter-panel { background: var(--dark-surface); }
 .career-marketplace aside.career-filter-panel .career-filter-groups {
   padding: 22px 12px;
 }
@@ -169,15 +169,15 @@
 .career-filter-drawer .career-filter-footer { margin-top: auto; padding-top: 24px; }
 .career-filter-drawer .career-filter-heading { padding-bottom: 4px; }
 .dark .career-marketplace .career-filter-option { color: var(--career-title); }
-.dark .career-marketplace .career-filter-option.is-selected { background: #183626; color: var(--career-title); }
-.dark .career-marketplace .career-filter-groups [data-filter-group="opportunities"] .career-filter-option.is-selected { background: #28302a; }
+.dark .career-marketplace .career-filter-option.is-selected { background: var(--dark-control); color: var(--career-title); }
+.dark .career-marketplace .career-filter-groups [data-filter-group="opportunities"] .career-filter-option.is-selected { background: var(--dark-control); }
 .career-marketplace .career-filter-groups [data-filter-group="sources"] .career-filter-option { background: transparent; }
-.dark .career-marketplace .career-filter-heading p { color: #a1a1aa; }
-.dark .career-filter-drawer { color: #f4f4f5; }
+.dark .career-marketplace .career-filter-heading p { color: var(--dark-muted); }
+.dark .career-filter-drawer { color: var(--dark-text); }
 .career-marketplace .career-feed-heading { margin-bottom: 20px; }
 .career-marketplace .career-feed-heading h2 { font-size: 20px; line-height: 28px; }
 .career-marketplace .career-feed-heading p { margin-top: 6px; color: #71717a; font-size: 13px; line-height: 21px; }
-.dark .career-marketplace .career-feed-heading p { color: #a1a1aa; }
+.dark .career-marketplace .career-feed-heading p { color: var(--dark-muted); }
 .career-marketplace .career-listing {
   --card-accent: hsl(var(--primary));
   --card-tint: #edf8f0;
@@ -237,15 +237,15 @@
 .career-marketplace .career-opportunity-actions { margin-top: 0; margin-left: auto; }
 .career-marketplace .career-card-bottom .career-opportunity-actions > :is(a, button) { margin-top: 0; min-height: 40px; border-radius: 9px; padding-inline: 18px; font-size: 12px; }
 .career-marketplace .career-listing footer .career-hidden-label { color: #92400e; border-color: #fcdba0; background: #fffbeb; }
-.dark .career-marketplace .career-listing footer span { color: #becbbe; }
-.dark .career-marketplace .career-listing { --card-accent: #7ee3a5; --card-tint: #183626; --card-surface: #17251b; --card-footer: #203426; box-shadow: 0 4px 16px rgb(0 0 0 / 14%); }
-.dark .career-marketplace .career-listing[data-career-category="internship"] { --card-accent: #93c5fd; --card-tint: #1c2e43; --card-surface: #18252e; --card-footer: #223440; }
-.dark .career-marketplace .career-listing[data-career-card="guide"] { --card-accent: #c4b5fd; --card-tint: #30253f; --card-surface: #28251b; }
+.dark .career-marketplace .career-listing footer span { color: var(--dark-muted); }
+.dark .career-marketplace .career-listing { --card-accent: #7ee3a5; --card-tint: var(--dark-control); --card-surface: var(--dark-surface); --card-footer: var(--dark-control); box-shadow: 0 4px 16px rgb(0 0 0 / 14%); }
+.dark .career-marketplace .career-listing[data-career-category="internship"] { --card-accent: #93c5fd; --card-tint: var(--dark-control); --card-surface: var(--dark-surface); --card-footer: var(--dark-control); }
+.dark .career-marketplace .career-listing[data-career-card="guide"] { --card-accent: #c4b5fd; --card-tint: var(--dark-control); --card-surface: var(--dark-surface); }
 .dark .career-marketplace .career-company-mark { background: var(--card-tint); color: var(--card-accent); }
-.dark .career-marketplace .career-listing:hover { border-color: #526b59; }
-.dark .career-marketplace .career-card-labels time { color: #a1a1aa; }
-.dark .career-marketplace .career-job-details dd { color: #c2cdc5; }
-.dark .career-marketplace .career-card-source { color: #a2b9aa; }
+.dark .career-marketplace .career-listing:hover { border-color: var(--dark-border); }
+.dark .career-marketplace .career-card-labels time { color: var(--dark-muted); }
+.dark .career-marketplace .career-job-details dd { color: var(--dark-muted); }
+.dark .career-marketplace .career-card-source { color: var(--dark-muted); }
 .career-marketplace .career-listing footer time { font-size: 11px; }
 .career-marketplace .career-member-panel > section,
 .career-marketplace .career-member-panel > p {
@@ -261,8 +261,8 @@
 .career-marketplace .career-member-panel > section:first-child button { background: #d8efb4; color: #19422b; }
 .career-marketplace .career-member-panel > section:first-child button:hover { background: #c9e69b; }
 .career-marketplace .career-member-panel > section:nth-child(2) { background: #f5f0e3; border-color: #e6dfcf; }
-.dark .career-marketplace .career-member-panel > section:first-child { background: #163e2b; border-color: hsl(var(--primary)); }
-.dark .career-marketplace .career-member-panel > section:nth-child(2) { background: #29271f; border-color: #3b392e; }
+.dark .career-marketplace .career-member-panel > section:first-child { background: var(--dark-surface); border-color: hsl(var(--primary)); }
+.dark .career-marketplace .career-member-panel > section:nth-child(2) { background: var(--dark-surface); border-color: var(--dark-border); }
 /* Admin job posts share the dashboard palette without changing member pages. */
 .admin-workspace[data-workspace-role="admin"] .career-marketplace .career-listing {
   --card-surface: var(--alumni-card);

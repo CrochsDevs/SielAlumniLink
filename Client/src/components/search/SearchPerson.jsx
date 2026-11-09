@@ -15,7 +15,7 @@ export function Highlight({ text = "", query = "" }) {
       index % 2 ? (
         <mark
           key={index}
-          className="rounded bg-emerald-100 text-emerald-950 dark:bg-emerald-900 dark:text-emerald-100"
+          className="rounded bg-emerald-100 text-emerald-950 dark:bg-zinc-800 dark:text-emerald-100"
         >
           {part}
         </mark>

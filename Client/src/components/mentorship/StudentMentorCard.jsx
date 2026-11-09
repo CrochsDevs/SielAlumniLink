@@ -18,18 +18,18 @@ export default function StudentMentorCard({ mentor, status, score, reasons, conn
 
   return (
     <article className="mentorship-person-card rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div aria-hidden="true" className="h-16 shrink-0 overflow-hidden bg-gradient-to-r from-emerald-100 via-emerald-50 to-teal-100 dark:from-emerald-950 dark:via-emerald-900 dark:to-teal-950">
+      <div aria-hidden="true" className="h-16 shrink-0 overflow-hidden bg-gradient-to-r from-emerald-100 via-emerald-50 to-teal-100 dark:from-zinc-800 dark:via-zinc-800 dark:to-zinc-800">
         {mentor.bannerImage && mentor.bannerImage !== failedBanner && <img src={mentor.bannerImage} alt="" loading="lazy" onError={() => setFailedBanner(mentor.bannerImage)} className="h-full w-full object-cover" />}
       </div>
       <div className="mentorship-person-body">
         <div className="flex items-start gap-3">
-          <Link to={profilePath} aria-label={`View ${mentor.name || "alumni"} profile`} className="mentorship-avatar flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-lg font-semibold text-brand dark:bg-emerald-950">
+          <Link to={profilePath} aria-label={`View ${mentor.name || "alumni"} profile`} className="mentorship-avatar flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-50 text-lg font-semibold text-brand dark:bg-zinc-800">
             <ProfileAvatar user={mentor} fallback="A" />
           </Link>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h3 className="min-w-0 text-sm leading-5"><Link to={profilePath} title="View profile" className="break-words hover:text-brand hover:underline">{mentor.name || "Alumni"}</Link></h3>
-              {connected && <span aria-label="Connection status: Connected" className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><BadgeCheck size={12} aria-hidden="true" />Connected</span>}
+              {connected && <span aria-label="Connection status: Connected" className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold leading-4 text-emerald-700 dark:border-emerald-800 dark:bg-zinc-800 dark:text-emerald-300"><BadgeCheck size={12} aria-hidden="true" />Connected</span>}
               {pending && <span aria-label="Connection status: Request sent" className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold leading-4 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300"><Clock size={12} aria-hidden="true" />Request sent</span>}
             </div>
             <p title={headline} className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{headline}</p>
@@ -42,7 +42,7 @@ export default function StudentMentorCard({ mentor, status, score, reasons, conn
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          {score !== undefined && <span title="Similarity between your profile and the mentor’s experience" className="mentorship-tag bg-emerald-50 text-brand dark:bg-emerald-950"><Sparkles size={12} />{score}% profile similarity</span>}
+          {score !== undefined && <span title="Similarity between your profile and the mentor’s experience" className="mentorship-tag bg-emerald-50 text-brand dark:bg-zinc-800"><Sparkles size={12} />{score}% profile similarity</span>}
           {incoming && <span className="mentorship-tag bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
             <Clock size={12} />Wants to connect
           </span>}

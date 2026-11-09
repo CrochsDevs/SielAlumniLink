@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -145,9 +146,7 @@ function ConnectionDetails({ member, onClose }) {
           </button>
         </div>
         {loading ? (
-          <p role="status" className="py-8 text-center text-sm text-zinc-500">
-            Loading connections…
-          </p>
+          <ContentSkeleton variant="list" count={3} label="Loading connections…" />
         ) : error ? (
           <div role="alert">
             <p>{error}</p>
@@ -283,9 +282,7 @@ export default function AdminConnections() {
               />
             </div>
             {loading ? (
-              <p role="status" className="p-6 text-sm text-zinc-500">
-                Loading members…
-              </p>
+              <ContentSkeleton variant="list" count={3} label="Loading members…" />
             ) : error ? (
               <div role="alert" className="p-6 text-sm text-zinc-500">
                 <p>{error}</p>
@@ -356,7 +353,7 @@ export default function AdminConnections() {
                               type="button"
                               aria-label={`View connections of ${member.email}`}
                               onClick={() => setSelectedMember(member)}
-                              className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-brand dark:bg-emerald-950 dark:text-brand"
+                              className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-brand dark:bg-zinc-800 dark:text-brand"
                             >
                               <Eye className="h-4 w-4" />
                               Connections

@@ -159,7 +159,7 @@ const ChatWindow = ({
                 role="menuitem"
                 to={profileUrl}
                 onClick={() => setShowProfile(false)}
-                className="block rounded-lg px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-emerald-50 hover:text-brand dark:text-zinc-200 dark:hover:bg-emerald-950"
+                className="block rounded-lg px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-emerald-50 hover:text-brand dark:text-zinc-200 dark:hover:bg-zinc-800"
               >
                 View profile
               </Link>

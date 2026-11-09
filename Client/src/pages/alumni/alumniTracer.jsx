@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   useCallback,
   useContext,
@@ -476,16 +477,7 @@ export default function AlumniTracer() {
             )}
           </header>
           {loading ? (
-            <div
-              role="status"
-              className="flex min-h-52 items-center justify-center gap-2 p-6 text-sm text-zinc-500 dark:text-zinc-400"
-            >
-              <LoaderCircle
-                size={20}
-                className="animate-spin motion-reduce:animate-none"
-              />
-              Loading your response…
-            </div>
+            <ContentSkeleton variant="form" count={1} label="Loading your response…" />
           ) : loadError ? (
             <div role="alert" className="space-y-4 p-6">
               <p className="text-sm text-red-700 dark:text-red-400">
@@ -748,7 +740,7 @@ export default function AlumniTracer() {
                           placeholder="e.g. Makati City"
                         />
                       </Field>
-                      <div className="rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-brand dark:bg-emerald-950/40 dark:text-emerald-200">
+                      <div className="rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-brand dark:bg-zinc-800/40 dark:text-emerald-200">
                         How does your current work relate to{" "}
                         <strong>{form.program}</strong>? Consider the knowledge
                         and skills you use in your work.

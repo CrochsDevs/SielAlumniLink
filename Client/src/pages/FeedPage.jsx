@@ -1,4 +1,3 @@
-import PageHeader from "../components/ui/PageHeader";
 import { createElement, useState } from "react";
 import { Link } from "react-router-dom";
 import { Newspaper } from "lucide-react";
@@ -39,10 +38,9 @@ export default function FeedPage() {
           onMenuClick: () => setSidebarOpen(true),
         })}
         <main className="mx-auto grid max-w-7xl gap-4 p-3 text-zinc-900 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] dark:text-zinc-100 workspace-page">
-          <div className="col-span-full"><PageHeader title="Community feed" description="Updates, conversations, and opportunities from your community." /></div>
           <aside className="order-2 min-w-0 space-y-3 lg:order-none lg:sticky lg:top-20 lg:self-start">
             <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-              <div className="h-16 bg-gradient-to-r from-brand to-brand" />
+              <div className="h-16 bg-gradient-to-r from-brand to-brand dark:from-zinc-900 dark:to-zinc-900" />
               <div className="px-4 pb-4 text-center">
                 <span className="mx-auto -mt-6 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-white text-brand ring-2 ring-emerald-100 dark:bg-zinc-900 dark:ring-brand">
                   <ProfileAvatar user={user} />
@@ -61,7 +59,7 @@ export default function FeedPage() {
                 </Link>
               </div>
             </section>
-            <div className="rounded-2xl bg-gradient-to-br from-brand to-brand p-4 text-white">
+            <div className="rounded-2xl bg-gradient-to-br from-brand to-brand p-4 text-white dark:from-zinc-900 dark:to-zinc-900">
               <p className="flex items-center gap-2 text-sm font-bold">
                 <Newspaper size={17} />
                 Your alumni network

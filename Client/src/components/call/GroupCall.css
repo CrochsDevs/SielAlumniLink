@@ -3,9 +3,9 @@
 .group-call-header-actions > button:hover { background: #e7f4eb; color: hsl(var(--primary)); }
 .group-call-header-actions > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 .group-call-header-actions > .group-call-join { padding-inline: 9px; border-radius: 7px; background: hsl(var(--primary)); color: #fff; font-size: 11px; font-weight: 600; }
-.dark .group-call-header-actions > button { color: #bdc7c0; }
+.dark .group-call-header-actions > button { color: var(--dark-muted); }
 .dark .group-call-header-actions > .group-call-join { color: #fff; }
-.dark .group-call-header-actions > button:hover { background: #244531; color: #b8e5c5; }
+.dark .group-call-header-actions > button:hover { background: var(--dark-control); color: var(--dark-text); }
 
 dialog.group-call-dialog {
   box-sizing: border-box;
@@ -27,7 +27,7 @@ dialog.group-call-dialog--incoming {
   box-shadow: 0 24px 80px rgb(0 0 0 / 20%);
   overflow-y: auto;
 }
-.dark dialog.group-call-dialog--incoming { background: #18181b; border-color: #303035; color: #fafafa; }
+.dark dialog.group-call-dialog--incoming { background: var(--dark-surface); border-color: var(--dark-border); color: var(--dark-text); }
 .group-call-topbar { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; }
 .group-call-heading { min-width: 0; }
 .group-call-heading h2 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; line-height: 1.5; }
@@ -39,14 +39,14 @@ dialog.group-call-dialog--incoming {
 .group-call-incoming-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto 18px; border-radius: 24px; background: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); }
 .group-call-incoming h3 { margin: 0; overflow-wrap: anywhere; font-size: 21px; font-weight: 650; line-height: 1.35; letter-spacing: -0.025em; }
 .group-call-incoming p { margin: 8px 0 0; color: #71717a; font-size: 12px; line-height: 1.6; }
-.dark .group-call-incoming p { color: #a1a1aa; }
+.dark .group-call-incoming p { color: var(--dark-muted); }
 .group-call-kind { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: #71717a; font-size: 11px; }
-.dark .group-call-kind { color: #a1a1aa; }
+.dark .group-call-kind { color: var(--dark-muted); }
 .group-call-incoming-actions { display: flex; justify-content: center; gap: 10px; margin-top: 24px; }
 .group-call-incoming-actions button { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; transition: filter 150ms; }
 .group-call-incoming-actions button:hover { filter: brightness(0.95); }
 .group-call-decline { background: #f4f4f5; color: #52525b; }
-.dark .group-call-decline { background: #27272a; color: #e4e4e7; }
+.dark .group-call-decline { background: #27272a; color: var(--dark-text); }
 .group-call-accept { background: hsl(var(--primary)); color: #fff; }
 dialog.group-call-dialog--room {
   position: fixed;

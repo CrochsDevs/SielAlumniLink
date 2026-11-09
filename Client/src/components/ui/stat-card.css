@@ -32,14 +32,14 @@
 .student-page .app-stat-card { background: var(--color-primary-tint); }
 .student-page .app-stat-note { color: #52665a; }
 
-.dark .app-stat-card { border-color: #4c5e53; background: #1c231f; box-shadow: 0 2px 6px rgb(0 0 0 / 30%), inset 0 1px 0 rgb(255 255 255 / 4%); }
-.dark .app-stat-label { color: #bbc9c0; }
-.dark .app-stat-value { color: #f2f7f4; }
-.dark .app-stat-note { color: #92a69a; }
+.dark .app-stat-card { border-color: var(--dark-border); background: var(--dark-surface); box-shadow: 0 2px 6px rgb(0 0 0 / 30%), inset 0 1px 0 rgb(255 255 255 / 4%); }
+.dark .app-stat-label { color: var(--dark-muted); }
+.dark .app-stat-value { color: var(--dark-text); }
+.dark .app-stat-note { color: var(--dark-muted); }
 .dark .app-stat-icon-positive { background: #064e3b; color: #6ee7b7; }
 .dark .app-stat-icon-blue { background: #172d50; color: #93c5fd; }
 .dark .app-stat-icon-warning { background: #493116; color: #fcd34d; }
-.dark .app-stat-icon-neutral { background: #303c34; color: #b3c5b9; }
+.dark .app-stat-icon-neutral { background: var(--dark-control); color: var(--dark-muted); }
 
 @media (max-width: 639px) {
   .app-stat-card-compact .app-stat-icon { display: none; }

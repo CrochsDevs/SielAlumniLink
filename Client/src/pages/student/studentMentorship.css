@@ -6,8 +6,8 @@
 }
 
 .dark .mentorship-page {
-  --mentorship-field-border: #4c5e53;
-  --mentorship-field-background: #181c19;
+  --mentorship-field-border: var(--dark-border);
+  --mentorship-field-background: var(--dark-canvas);
   --mentorship-field-shadow: 0 2px 7px rgb(0 0 0 / 40%), inset 0 1px 0 rgb(255 255 255 / 5%);
 }
 

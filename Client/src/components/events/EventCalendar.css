@@ -7,12 +7,12 @@
   --calendar-number-selected: #bfe5cc;
 }
 .dark .alumni-event-calendar {
-  --calendar-divider: #45594c;
-  --calendar-header: #233128;
-  --calendar-header-ink: #c7dacc;
-  --calendar-number-surface: #2b4333;
-  --calendar-number-ink: #c4e8ce;
-  --calendar-number-selected: #365f43;
+  --calendar-divider: var(--dark-border);
+  --calendar-header: var(--dark-control);
+  --calendar-header-ink: var(--dark-text);
+  --calendar-number-surface: var(--dark-surface);
+  --calendar-number-ink: var(--dark-text);
+  --calendar-number-selected: var(--dark-control);
 }
 .alumni-event-calendar .event-calendar-panel {
   box-shadow: var(--alumni-card-shadow, 0 0 8px rgb(0 0 0 / 8%), 0 6px 18px rgb(0 0 0 / 14%));
@@ -64,31 +64,31 @@
 }
 .alumni-event-calendar .event-list-groups { display: grid; gap: 18px; }
 .alumni-event-calendar .event-list-group { min-width: 0; overflow: hidden; border: 1px solid var(--calendar-divider); border-radius: 14px; background: #fff; box-shadow: 0 2px 8px rgb(0 0 0 / 5%); }
-.dark .alumni-event-calendar .event-list-group { background: #1c2420; }
+.dark .alumni-event-calendar .event-list-group { background: var(--dark-surface); }
 .alumni-event-calendar .event-list-date-heading { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--calendar-divider); background: var(--calendar-header); }
 .alumni-event-calendar .event-list-date-tile { display: flex; flex-direction: column; flex-shrink: 0; align-items: center; justify-content: center; width: 42px; min-height: 46px; border: 1px solid var(--calendar-divider); border-radius: 9px; background: #fff; color: var(--calendar-number-ink); }
-.dark .alumni-event-calendar .event-list-date-tile { background: #1c2420; }
+.dark .alumni-event-calendar .event-list-date-tile { background: var(--dark-control); }
 .alumni-event-calendar .event-list-date-tile strong { font-size: 19px; line-height: 23px; font-weight: 600; }
 .alumni-event-calendar .event-list-date-tile > span { font-size: 9px; line-height: 14px; font-weight: 600; text-transform: uppercase; }
 .alumni-event-calendar .event-list-date-copy { flex: 1; min-width: 0; }
 .alumni-event-calendar .event-list-date-copy h3 { color: var(--calendar-header-ink); font-size: 12px; line-height: 18px; font-weight: 600; }
 .alumni-event-calendar .event-list-date-copy p { margin-top: 3px; color: #718077; font-size: 10px; }
-.dark .alumni-event-calendar .event-list-date-copy p { color: #a8bcb0; }
+.dark .alumni-event-calendar .event-list-date-copy p { color: var(--dark-muted); }
 .alumni-event-calendar .event-list-today { padding: 4px 7px; border-radius: 6px; background: hsl(var(--primary)); color: #fff; font-size: 9px; line-height: 14px; font-weight: 600; }
 .alumni-event-calendar .event-list-activities > li + li { border-top: 1px solid var(--calendar-divider); }
 .alumni-event-calendar .event-list-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; align-items: center; gap: 16px; width: 100%; padding: 16px; text-align: left; transition: background-color 150ms ease; }
 .alumni-event-calendar .event-list-time { display: grid; align-self: stretch; align-content: center; gap: 5px; padding-right: 12px; border-right: 1px solid var(--calendar-divider); }
 .alumni-event-calendar .event-list-time strong { color: var(--calendar-number-ink); font-size: 12px; line-height: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .alumni-event-calendar .event-list-time > span { color: #718077; font-size: 10px; line-height: 16px; }
-.dark .alumni-event-calendar .event-list-time > span { color: #a8bcb0; }
+.dark .alumni-event-calendar .event-list-time > span { color: var(--dark-muted); }
 .alumni-event-calendar .event-list-content { display: grid; min-width: 0; justify-items: start; gap: 6px; }
 .alumni-event-calendar .event-list-type { display: inline-flex; padding: 2px 7px; border-radius: 5px; font-size: 9px; line-height: 15px; font-weight: 600; }
 .alumni-event-calendar .event-list-title { color: #25382b; font-size: 13px; line-height: 20px; font-weight: 600; overflow-wrap: anywhere; }
-.dark .alumni-event-calendar .event-list-title { color: #e2eee5; }
+.dark .alumni-event-calendar .event-list-title { color: var(--dark-text); }
 .alumni-event-calendar .event-list-location { display: flex; align-items: flex-start; gap: 5px; color: #6b7c70; font-size: 10px; line-height: 16px; overflow-wrap: anywhere; }
 .alumni-event-calendar .event-list-location svg { flex-shrink: 0; margin-top: 2px; }
 .alumni-event-calendar .event-list-organizer { color: #829086; font-size: 10px; line-height: 16px; overflow-wrap: anywhere; }
-.dark .alumni-event-calendar :is(.event-list-location, .event-list-organizer) { color: #a8bcb0; }
+.dark .alumni-event-calendar :is(.event-list-location, .event-list-organizer) { color: var(--dark-muted); }
 .alumni-event-calendar .event-list-action { display: grid; justify-items: end; gap: 10px; color: hsl(var(--primary)); font-size: 10px; font-weight: 600; }
 .alumni-event-calendar .event-list-action > span { display: inline-flex; align-items: center; gap: 5px; }
 .alumni-event-calendar .event-list-action .event-list-registered { padding: 3px 6px; border-radius: 5px; background: var(--calendar-number-surface); color: var(--calendar-number-ink); font-size: 9px; }

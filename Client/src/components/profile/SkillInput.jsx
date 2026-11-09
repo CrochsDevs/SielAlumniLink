@@ -104,7 +104,7 @@ export default function SkillInput({
                   onMouseDown={(event) => event.preventDefault()}
                   onMouseEnter={() => setActive(index)}
                   onClick={() => add(skill.label)}
-                  className={`cursor-pointer px-3.5 py-2 text-[12px] ${active === index ? "bg-emerald-50 dark:bg-emerald-950" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                  className={`cursor-pointer px-3.5 py-2 text-[12px] ${active === index ? "bg-emerald-50 dark:bg-zinc-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
                 >
                   <span className="block font-semibold text-zinc-800 dark:text-zinc-100">
                     {skill.label}

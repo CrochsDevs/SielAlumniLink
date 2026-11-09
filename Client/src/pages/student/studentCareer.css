@@ -9,12 +9,12 @@
   --alumni-card-shadow: var(--student-card-shadow);
 }
 .dark .student-page.student-career-page {
-  background: #09090b;
+  background: var(--dark-canvas);
 }
 .dark .student-career-board {
-  --alumni-card: #1b2920;
-  --alumni-card-border: #304237;
-  --alumni-tab: #293e30;
-  --alumni-heading: #e4f2e7;
+  --alumni-card: var(--dark-surface);
+  --alumni-card-border: var(--dark-border);
+  --alumni-tab: var(--dark-control);
+  --alumni-heading: var(--dark-text);
   --alumni-card-shadow: var(--student-card-shadow);
 }

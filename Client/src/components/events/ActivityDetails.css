@@ -13,7 +13,7 @@ dialog.alumni-activity-dialog {
   color: var(--activity-ink);
   box-shadow: 0 12px 50px rgb(0 0 0 / 24%);
 }
-.dark dialog.alumni-activity-dialog { --activity-surface: #1c2420; --activity-soft: #25332a; --activity-line: #3b4d41; --activity-ink: #edf5ef; --activity-muted: #acbeb1; }
+.dark dialog.alumni-activity-dialog { --activity-surface: var(--dark-surface); --activity-soft: var(--dark-control); --activity-line: var(--dark-border); --activity-ink: var(--dark-text); --activity-muted: var(--dark-muted); }
 .alumni-activity-dialog::backdrop { background: rgb(15 25 19 / 58%); backdrop-filter: blur(4px); }
 .alumni-activity-dialog > div:first-child { position: sticky; top: 0; z-index: 2; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--activity-line); background: var(--activity-surface); }
 .alumni-activity-dialog .activity-dialog-heading { display: flex; align-items: center; gap: 11px; }

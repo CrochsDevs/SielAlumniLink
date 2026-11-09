@@ -3,6 +3,8 @@ import MessageBubble from "./MessageBubble";
 import { groupMessages } from "./messageGroups";
 import ChatAvatar from "./ChatAvatar";
 import { useVisibleMessageReads } from './useVisibleMessageReads';
+import { useChat } from "../../context/useChat";
+import ContentSkeleton from "../ui/Skeleton";
 
 export default function MessageThread({
   messages,
@@ -15,6 +17,10 @@ export default function MessageThread({
   conversation,
 }) {
   const readRoot = useVisibleMessageReads(convoId, messages);
+  const { threadLoading, threads } = useChat();
+  if (convoId && !threads?.[convoId] && threadLoading?.[convoId] !== false && !messages.length) {
+    return <ContentSkeleton variant="messages" label="Loading messages" />;
+  }
   if (layout === "stream") {
     return (
       <div ref={readRoot} className="message-stream" data-chat-thread>

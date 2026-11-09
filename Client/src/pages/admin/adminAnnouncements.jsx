@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -277,9 +278,7 @@ export default function AdminAnnouncements() {
             </div>
 
             {loading ? (
-              <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-                Loading announcements...
-              </p>
+              <ContentSkeleton variant="list" count={3} label="Loading announcements..." />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[680px] text-left text-[12.5px]">

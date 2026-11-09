@@ -44,7 +44,7 @@ export default function MentorProgressWorkspace({ trackers, renderGoals, dirty, 
       <div className="h-1 bg-brand" />
       <div className="grid items-center gap-6 p-5 sm:p-6 md:grid-cols-[1fr_280px]">
         <div className="flex min-w-0 items-center gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 text-xl font-semibold text-brand dark:bg-emerald-950 dark:text-brand"><ProfileAvatar user={selected.student} /></span>
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-emerald-50 text-xl font-semibold text-brand dark:bg-zinc-800 dark:text-brand"><ProfileAvatar user={selected.student} /></span>
           <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-widest text-brand dark:text-brand">Mentee progress</p><h3 className="mt-1 break-words text-xl font-semibold tracking-tight">{selected.student.name}</h3><p className={`mt-1 break-words text-xs ${muted}`}>{selected.student.program || selected.student.email}</p></div>
         </div>
         <div><Progress tracker={selected} /><p className={`mt-3 text-xs ${muted}`}>{selected.summary.inProgress} in progress · {selected.summary.notStarted} not started</p></div>
@@ -70,13 +70,13 @@ export default function MentorProgressWorkspace({ trackers, renderGoals, dirty, 
       {visible.map(tracker => <article key={tracker.connectionId} data-mentee-progress={tracker.connectionId} className={`${panel} flex min-w-0 flex-col transition-shadow hover:shadow-md`}>
         <div className="flex flex-1 flex-col p-5">
           <div className="mb-6 flex items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 font-semibold text-brand dark:bg-emerald-950 dark:text-brand"><ProfileAvatar user={tracker.student} /></span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 font-semibold text-brand dark:bg-zinc-800 dark:text-brand"><ProfileAvatar user={tracker.student} /></span>
             <div className="min-w-0"><h4 className="truncate text-sm font-semibold" title={tracker.student.name}>{tracker.student.name}</h4><p className={`mt-1 truncate text-xs ${muted}`} title={tracker.student.program || tracker.student.email}>{tracker.student.program || tracker.student.email}</p></div>
           </div>
           <Progress tracker={tracker} />
           <ul className="mt-5 space-y-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">{tracker.goals.map(goal => { const [label, color] = states[goal.status] || states.not_started; return <li key={goal.key} className="flex flex-wrap items-center justify-between gap-2 text-xs"><span className="text-zinc-600 dark:text-zinc-300">{goal.title}</span><span className={`inline-flex items-center gap-1.5 text-[10px] ${muted}`}><span className={`h-1.5 w-1.5 rounded-full ${color}`} />{label}</span></li>; })}</ul>
         </div>
-        <button type="button" aria-label={`View progress for ${tracker.student.name}`} onClick={() => select(tracker.connectionId)} className="flex min-h-12 items-center justify-between gap-2 rounded-b-2xl border-t border-zinc-100 bg-zinc-50/60 px-5 text-xs font-semibold text-brand transition-colors hover:bg-emerald-50 focus-visible:outline-brand dark:border-zinc-800 dark:bg-zinc-800/30 dark:text-brand dark:hover:bg-emerald-950">View progress<ArrowUpRight size={16} /></button>
+        <button type="button" aria-label={`View progress for ${tracker.student.name}`} onClick={() => select(tracker.connectionId)} className="flex min-h-12 items-center justify-between gap-2 rounded-b-2xl border-t border-zinc-100 bg-zinc-50/60 px-5 text-xs font-semibold text-brand transition-colors hover:bg-emerald-50 focus-visible:outline-brand dark:border-zinc-800 dark:bg-zinc-800/30 dark:text-brand dark:hover:bg-zinc-800">View progress<ArrowUpRight size={16} /></button>
       </article>)}
     </div>
     {!visible.length && <div className={`${panel} p-10 text-center`}><Search size={24} className="mx-auto text-zinc-400" /><h3 className="mt-3 text-sm font-semibold">No mentees found</h3><p className={`mt-2 text-xs ${muted}`}>Try another name or adjust the progress filter.</p><button type="button" onClick={() => { setQuery(''); setFilter('all'); }} className="mt-4 min-h-10 text-xs font-semibold text-brand dark:text-brand">Clear filters</button></div>}

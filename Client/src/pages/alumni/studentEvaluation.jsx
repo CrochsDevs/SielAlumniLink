@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Check, Pencil, MessageSquare } from "lucide-react";
@@ -200,15 +201,13 @@ function StudentEvaluationWorkspace({ studentId }) {
           {notice && (
             <p
               role="status"
-              className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-brand dark:border-brand dark:bg-emerald-950 dark:text-brand"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-brand dark:border-brand dark:bg-zinc-800 dark:text-brand"
             >
               {notice}
             </p>
           )}
           {loading ? (
-            <p role="status" className="p-8 text-sm text-zinc-500">
-              Loading this student's assessment...
-            </p>
+            <ContentSkeleton variant="form" count={1} label="Loading this student's assessment..." />
           ) : (
             details && (
               <>
@@ -216,7 +215,7 @@ function StudentEvaluationWorkspace({ studentId }) {
                   data-evaluation-student={studentId}
                   className={`${card} flex flex-wrap items-center gap-4 p-5`}
                 >
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-zinc-800">
                     <ProfileAvatar user={details.student} />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -278,7 +277,7 @@ function StudentEvaluationWorkspace({ studentId }) {
                                 {self ? level(self.rating) : "Not assessed"}
                               </p>
                             </div>
-                            <div className="rounded-lg bg-emerald-50/70 p-3 dark:bg-emerald-950/30">
+                            <div className="rounded-lg bg-emerald-50/70 p-3 dark:bg-zinc-800/30">
                               <p className="text-[10px] text-zinc-500">
                                 Your mentor evaluation
                               </p>

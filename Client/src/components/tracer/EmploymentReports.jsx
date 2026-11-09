@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import ProgressBar from "../ui/progress-bar";
 import {
   flexRender,
@@ -383,9 +384,7 @@ export default function EmploymentReports() {
         </p>
       )}
       {loading ? (
-        <p role="status" className={card}>
-          Loading employment reports…
-        </p>
+        <ContentSkeleton variant="table" count={5} label="Loading employment reports…" />
       ) : (
         !error &&
         report && (

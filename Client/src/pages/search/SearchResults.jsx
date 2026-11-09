@@ -1,6 +1,7 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, LoaderCircle, Bookmark } from "lucide-react";
+import { Search, Bookmark } from "lucide-react";
 import api from "../../utils/axios";
 import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
@@ -64,7 +65,7 @@ function PostCard({ post, query }) {
         {post.tags?.map((tag, index) => (
           <span
             key={`${tag}-${index}`}
-            className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-brand dark:bg-emerald-950 dark:text-brand"
+            className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-brand dark:bg-zinc-800 dark:text-brand"
           >
             #{tag}
           </span>
@@ -273,13 +274,7 @@ export default function SearchResults() {
               <p>Type a name or keyword in the search bar above.</p>
             </div>
           ) : loading ? (
-            <div
-              role="status"
-              className="flex items-center justify-center gap-2 py-20 text-zinc-500"
-            >
-              <LoaderCircle className="h-6 w-6 animate-spin" />
-              Searching the community…
-            </div>
+            <ContentSkeleton variant="list" count={3} label="Searching the community…" />
           ) : currentError ? (
             <div
               role="alert"

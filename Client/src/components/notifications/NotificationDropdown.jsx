@@ -12,6 +12,7 @@ import { useAuth } from "../../context/useAuth";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import { notificationTime, notificationText } from "./notificationFormat";
 import TopbarPanel from "../ui/TopbarPanel";
+import ContentSkeleton from "../ui/Skeleton";
 
 // Notification links are authored for alumni pages — resolve them
 // to the equivalent page for the current role.
@@ -38,7 +39,7 @@ const kindIcons = {
 };
 
 // Shared notification dropdown panel (wired to useNotifications data).
-const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef }) => {
+const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef, loading = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [filter, setFilter] = useState("All");
@@ -88,6 +89,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef })
         ))}
       </div>
       <ul className="notifications-list topbar-panel-list max-h-[min(480px,60dvh)] overflow-y-auto">
+        {loading && <ContentSkeleton as="li" label="Loading notifications" />}
         {visibleItems.map((item) => {
           const text = notificationText(item);
           const Icon = kindIcons[item.kind] || Bell;
@@ -97,10 +99,10 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef })
                 type="button"
                 onClick={() => open(item)}
                 className={`flex w-full items-start gap-3 border-b border-zinc-100 px-4 py-3.5 text-left transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800 ${
-                  !item.read ? "bg-emerald-50/50 dark:bg-emerald-950/30" : ""
+                  !item.read ? "bg-emerald-50/50 dark:bg-zinc-800/30" : ""
                 }`}
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-brand dark:bg-emerald-950 dark:text-brand">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-brand dark:bg-zinc-800 dark:text-brand">
                   {item.actor ? (
                     <ProfileAvatar user={item.actor} />
                   ) : (
@@ -138,7 +140,7 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef })
             </li>
           );
         })}
-        {visibleItems.length === 0 && (
+        {!loading && visibleItems.length === 0 && (
           <li className="flex flex-col items-center px-4 py-8 text-center">
             <BellOff className="h-7 w-7 text-zinc-300 dark:text-zinc-600" />
             <p className="mt-2 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400">

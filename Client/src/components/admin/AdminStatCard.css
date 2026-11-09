@@ -13,7 +13,7 @@
   text-align: left;
   font-family: inherit;
 }
-.dark .admin-stat-card { --card-muted: #96a69c; --admin-stat-shadow: 0 4px 18px rgb(0 0 0 / 25%), 0 1px 3px rgb(0 0 0 / 15%); }
+.dark .admin-stat-card { --card-muted: var(--dark-muted); --admin-stat-shadow: 0 4px 18px rgb(0 0 0 / 25%), 0 1px 3px rgb(0 0 0 / 15%); }
 .admin-stat-card:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 4px; }
 .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { border-color: #81a88b; }
 
@@ -68,17 +68,17 @@
 .admin-stat-card.dashboard-stat-featured .dashboard-stat-detail,
 .admin-stat-card.dashboard-stat-featured .dashboard-stat-footer > svg { color: #c4dfce; }
 .admin-stat-card.dashboard-stat-featured .dashboard-status-dot { background: #95d2ab; }
-.dark .admin-stat-card { background-color: #223c2b; }
-.dark .admin-stat-card .dashboard-stat-value { color: #cdebd7; }
+.dark .admin-stat-card { background-color: var(--dark-surface); }
+.dark .admin-stat-card .dashboard-stat-value { color: var(--dark-text); }
 .dark .admin-stat-card[aria-pressed="true"]:not(.dashboard-stat-featured) { background-color: hsl(var(--primary)); }
-.dark .admin-stat-card .dashboard-stat-icon { background: #263d2e; border-color: #3c5345; color: #abd1b7; }
-.dark .admin-stat-card .dashboard-stat-label { color: #c1d0c6; }
+.dark .admin-stat-card .dashboard-stat-icon { background: var(--dark-control); border-color: var(--dark-border); color: var(--dark-muted); }
+.dark .admin-stat-card .dashboard-stat-label { color: var(--dark-muted); }
 .dark .admin-stat-card .dashboard-stat-footer { background: transparent; border-top-color: rgb(182 218 192 / 7%); }
-.dark .admin-stat-card .dashboard-stat-detail { color: #a9bcb0; }
+.dark .admin-stat-card .dashboard-stat-detail { color: var(--dark-muted); }
 .dark .admin-stat-card.dashboard-stat-featured { background: hsl(var(--primary)); border-color: hsl(var(--primary)); }
-.dark .admin-stat-card.dashboard-stat-featured .dashboard-stat-icon { background: #35533e; border-color: #45664f; color: #bdd9c5; }
-.dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-label, .dashboard-card-arrow, .dashboard-stat-value) { color: #daeadf; }
-.dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-caption, .dashboard-stat-detail, .dashboard-stat-footer > svg) { color: #acc8b6; }
+.dark .admin-stat-card.dashboard-stat-featured .dashboard-stat-icon { background: var(--dark-control); border-color: var(--dark-border); color: var(--dark-text); }
+.dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-label, .dashboard-card-arrow, .dashboard-stat-value) { color: var(--dark-text); }
+.dark .admin-stat-card.dashboard-stat-featured :is(.dashboard-stat-caption, .dashboard-stat-detail, .dashboard-stat-footer > svg) { color: var(--dark-muted); }
 /* Admin statistics use the same neutral surfaces as the dashboard. */
 .admin-workspace[data-workspace-role="admin"] .admin-stat-card {
   --card-muted: var(--admin-muted);

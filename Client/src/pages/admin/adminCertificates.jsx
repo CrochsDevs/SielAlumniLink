@@ -1,13 +1,17 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
+import GraduationCapLoader from "../../components/ui/GraduationCapLoader";
 import { AdminTabs, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, BadgeCheck } from "lucide-react";
+import { Plus, BadgeCheck, Search, Award, Users, Clock, Eye, Download } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 import CertificatePreview from "../../components/student/CertificatePreview";
+import DataPagination from "../../components/ui/data-pagination";
+import "./adminCertificates.css";
 import api from "../../utils/axios";
 
 const card =
@@ -40,7 +44,35 @@ export default function AdminCertificates() {
   const [saveError, setSaveError] = useState("");
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState("pending");
+  const [query, setQuery] = useState("");
+  const [activity, setActivity] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+  const [checked, setChecked] = useState([]);
+  const [recipientIds, setRecipientIds] = useState([]);
+  const [recipientQuery, setRecipientQuery] = useState("");
+  const [notice, setNotice] = useState("");
+  const [progress, setProgress] = useState(0);
   const posting = useRef(false);
+  const records = view === "pending" ? pending : issued;
+  const activities = [...new Set(records.map(record => record.title))].sort();
+  const filtered = records.filter(record => (!activity || record.title === activity) &&
+    [record.studentName, record.studentEmail, record.recipientName, record.title, record.certificateNumber, record.date, record.participationDate]
+      .join(" ").toLowerCase().includes(query.trim().toLowerCase()));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const currentPage = Math.min(page, totalPages);
+  const visible = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const matchingPeople = participants.filter(person => [person.name, person.program, person.email].join(" ").toLowerCase().includes(recipientQuery.trim().toLowerCase()));
+  const toggle = (id, values, setter) => setter(values.includes(id) ? values.filter(value => value !== id) : [...values, id]);
+  const changeView = value => { setView(value); setPage(1); setActivity(""); setChecked([]); };
+  const exportCsv = () => {
+    const columns = ["Student", "Activity", "Type", "Participation date", "Certificate number"];
+    const rows = filtered.map(record => [record.recipientName, record.title, record.activityType, record.participationDate, record.certificateNumber]);
+    const csv = [columns, ...rows].map(row => row.map(value => '"' + String(value || "").replace(/^[=+@\-\t\r]/, "'$&").replaceAll('"', '\"\"') + '"').join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a"); link.href = url; link.download = "issued-certificates.csv"; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -76,6 +108,9 @@ export default function AdminCertificates() {
     Promise.resolve().then(load);
   }, [load]);
   const open = (record) => {
+    setRecipientIds([]);
+    setRecipientQuery("");
+    setProgress(0);
     setEditor(record || {});
     setSaveError("");
     setForm({
@@ -95,14 +130,33 @@ export default function AdminCertificates() {
     setSaving(true);
     setSaveError("");
     try {
-      const response = await api.post(
-        editor._id
-          ? `/certificates/attendance/${editor._id}/confirm`
-          : "/certificates/participations",
-        form,
-      );
-      setEditor(null);
-      setSelected(response.data.data);
+      const targets = editor.bulk ? pending.filter(record => checked.includes(record._id)) : editor._id ? [editor] : recipientIds.map(authId => ({ authId }));
+      if (!targets.length) { setSaveError("Select at least one student."); return; }
+      const failures = [];
+      let lastCertificate;
+      let done = 0;
+      // Keep requests bounded so a large selection does not overwhelm the API.
+      for (let offset = 0; offset < targets.length; offset += 5) {
+        await Promise.all(targets.slice(offset, offset + 5).map(async target => {
+          try {
+            const response = await api.post(target._id ? `/certificates/attendance/${target._id}/confirm` : "/certificates/participations",
+              { ...form, studentAuthId: target.authId, type: editor.bulk ? target.activityType || form.type : form.type });
+            lastCertificate = response.data.data;
+          } catch (err) {
+            failures.push({ target, message: err.response?.data?.message || "Unable to issue certificate. Please retry." });
+          } finally { done++; setProgress(done); }
+        }));
+      }
+      const successful = targets.length - failures.length;
+      setNotice(`${successful} of ${targets.length} certificates issued.${failures.length ? ` ${failures.length} need attention. Retry the remaining students.` : ""}`);
+      if (failures.length) {
+        setSaveError(failures.map(({ target, message }) => `${target.studentName || participants.find(person => person.authId === target.authId)?.name || "Student"}: ${message}`).join("\n"));
+        if (editor.bulk) setChecked(failures.map(({ target }) => target._id));
+        else if (!editor._id) setRecipientIds(failures.map(({ target }) => target.authId));
+      } else {
+        setEditor(null); setChecked([]);
+        if (targets.length === 1 && !editor.bulk) setSelected(lastCertificate);
+      }
       await load();
     } catch (err) {
       setSaveError(
@@ -127,7 +181,7 @@ export default function AdminCertificates() {
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="workspace-page mx-auto max-w-6xl space-y-5 p-3 sm:p-6">
-          <PageHeader title="Certificates" description="Confirm participation and manage attendance certificates.">
+          <PageHeader title="Certificates" description="Review attendance and issue certificates to students, individually or in batches.">
             <AdminButton
               type="button"
               disabled={loading || !participants.length}
@@ -146,82 +200,36 @@ export default function AdminCertificates() {
               </button>
             </p>
           )}
-          <AdminTabs label="Certificate management views" value={view} onChange={setView} items={[
+          <div className="cert-admin-summary">
+            {[ [Clock, "Awaiting review", pending.length, "Participation records to confirm"], [Award, "Certificates issued", issued.length, "Available in student portfolios"], [Users, "Recipients", new Set(issued.map(item => item.studentAuthId)).size, "Students with issued certificates"] ].map(([Icon, label, value, hint]) => <div className="admin-panel cert-admin-stat" key={label}><span className="cert-admin-stat-icon"><Icon size={21} /></span><div><p>{label}</p><strong>{loading ? "-" : value.toLocaleString()}</strong><small>{hint}</small></div></div>)}
+          </div>
+          {notice && <p role="status" className="cert-admin-notice">{notice}</p>}
+          <AdminTabs label="Certificate management views" value={view} onChange={changeView} items={[
             { id: "pending", label: "Attendance review", count: loading ? "-" : pending.length },
             { id: "issued", label: "Issued certificates", count: loading ? "-" : issued.length },
           ]} />
-          {loading ? (
-            <p role="status" className="p-8 text-sm text-zinc-500">
-              Loading records...
-            </p>
-          ) : view === "pending" ? (
-            <section className="space-y-3">
-              {!pending.length && (
-                <p className={`${card} p-8 text-center text-sm text-zinc-500`}>
-                  No participation records waiting for review.
-                </p>
-              )}
-              {pending.map((record) => (
-                <article
-                  key={record._id}
-                  data-attendance={record._id}
-                  className={`${card} flex flex-wrap items-center justify-between gap-4 p-5`}
-                >
-                  <div>
-                    <h2 className="admin-section-title text-sm font-semibold">{record.title}</h2>
-                    <p className="mt-2 text-xs text-zinc-500">
-                      {record.studentName} | {record.date}
-                    </p>
-                    <p className="mt-1 text-[11px] text-zinc-400">
-                      Recorded participation - awaiting confirmation
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => open(record)}
-                    className={button}
-                  >
-                    <BadgeCheck size={14} />
-                    Confirm participation
-                  </button>
-                </article>
-              ))}
-            </section>
-          ) : (
-            <section className="space-y-3">
-              {!issued.length && (
-                <p className={`${card} p-8 text-center text-sm text-zinc-500`}>
-                  No certificates issued yet.
-                </p>
-              )}
-              {issued.map((certificate) => (
-                <article
-                  key={certificate._id}
-                  className={`${card} flex flex-wrap items-center justify-between gap-3 p-5`}
-                >
-                  <div>
-                    <h2 className="admin-section-title text-sm font-semibold">
-                      {certificate.title}
-                    </h2>
-                    <p className="mt-2 text-xs text-zinc-500">
-                      {certificate.recipientName} | {certificate.activityType} |{" "}
-                      {certificate.participationDate}
-                    </p>
-                    <p className="mt-1 text-[10px] text-zinc-400">
-                      {certificate.certificateNumber}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelected(certificate)}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-xs dark:border-zinc-700"
-                  >
-                    View certificate
-                  </button>
-                </article>
-              ))}
-            </section>
-          )}
+          <section className="admin-panel cert-admin-workspace" aria-label="Certificate records">
+            <div className="cert-admin-toolbar">
+              <label className="cert-admin-search"><Search size={17} aria-hidden="true" /><input type="search" aria-label="Search certificate records" placeholder="Search student, activity, or certificate ID" value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} /></label>
+              <select aria-label="Filter by activity" value={activity} onChange={event => { setActivity(event.target.value); setPage(1); }}><option value="">All activities</option>{activities.map(title => <option key={title}>{title}</option>)}</select>
+              {view === "issued" && <AdminButton variant="secondary" disabled={!filtered.length || loading} onClick={exportCsv}><Download size={15} />Export CSV</AdminButton>}
+            </div>
+            <div className="cert-admin-list-heading"><div><h2>{view === "pending" ? "Attendance review" : "Issued certificates"}</h2><p>{loading ? "Loading records..." : `${filtered.length.toLocaleString()} records${query || activity ? ` of ${records.length.toLocaleString()}` : ""}`} | {view === "pending" ? "Select students to issue certificates together." : "Find and view any student's certificate."}</p></div>{(query || activity) && <button className="text-xs text-brand" onClick={() => { setQuery(""); setActivity(""); setPage(1); }}>Clear filters</button>}</div>
+            {view === "pending" && checked.length > 0 && <div className="cert-admin-selection"><span><strong>{checked.length}</strong> selected across pages</span><div><button type="button" onClick={() => setChecked([])}>Clear selection</button><AdminButton disabled={loading} onClick={() => open({ bulk: true })}><BadgeCheck size={15} />Issue selected</AdminButton></div></div>}
+            {loading ? <ContentSkeleton variant="table" count={5} label="Loading records..." /> : !filtered.length ? <div className="cert-admin-empty"><Award size={32} /><h3>{query || activity ? "No matching records" : view === "pending" ? "All caught up" : "No certificates issued yet"}</h3><p>{query || activity ? "Try another student name, activity, or certificate ID." : view === "pending" ? "No participation records waiting for review." : "Record participation or confirm attendance to issue certificates."}</p></div> : <>
+              <div className="cert-admin-table-scroll"><table className="cert-admin-table"><caption className="sr-only">{view === "pending" ? "Attendance waiting for confirmation" : "Issued certificates"}</caption><thead><tr>
+                {view === "pending" && <th className="cert-admin-check"><input type="checkbox" aria-label="Select all on this page" checked={visible.length > 0 && visible.every(record => checked.includes(record._id))} ref={node => { if (node) node.indeterminate = visible.some(record => checked.includes(record._id)) && !visible.every(record => checked.includes(record._id)); }} onChange={event => setChecked(event.target.checked ? [...new Set([...checked, ...visible.map(record => record._id)])] : checked.filter(id => !visible.some(record => record._id === id)))} /></th>}
+                <th>Student</th><th>Activity</th><th>Date</th><th>{view === "pending" ? "Status" : "Certificate ID"}</th><th><span className="sr-only">Actions</span></th>
+              </tr></thead><tbody>{visible.map(record => <tr key={record._id} data-attendance={view === "pending" ? record._id : undefined} data-certificate={view === "issued" ? record._id : undefined} className={checked.includes(record._id) ? "is-selected" : ""}>
+                {view === "pending" && <td className="cert-admin-check"><input type="checkbox" aria-label={`Select ${record.studentName} for ${record.title}`} checked={checked.includes(record._id)} onChange={() => toggle(record._id, checked, setChecked)} /></td>}
+                <td><strong>{record.studentName || record.recipientName}</strong>{record.studentEmail && <small>{record.studentEmail}</small>}</td>
+                <td><strong>{record.title}</strong><small className="capitalize">{record.activityType || "event"}</small></td><td className="cert-admin-date">{record.date || record.participationDate}</td>
+                <td>{view === "pending" ? <span className="cert-admin-status">Awaiting review</span> : <span className="cert-admin-number">{record.certificateNumber}</span>}</td>
+                <td><button type="button" className="cert-admin-row-action" onClick={() => view === "pending" ? open(record) : setSelected(record)}>{view === "pending" ? <BadgeCheck size={15} /> : <Eye size={15} />}{view === "pending" ? "Confirm participation" : "View certificate"}</button></td>
+              </tr>)}</tbody></table></div>
+              <DataPagination page={currentPage} totalPages={totalPages} onPageChange={setPage} perPage={perPage} onPerPageChange={value => { setPerPage(value); setPage(1); }} perPageOptions={[20, 50, 100]} totalItems={filtered.length} itemLabel="records" />
+            </>}
+          </section>
           <Link
             to="/admin/events"
             className="inline-block text-xs font-medium text-brand"
@@ -230,7 +238,7 @@ export default function AdminCertificates() {
           </Link>
           {editor && (
             <FeedDialog
-              title="Confirm participation"
+              title={editor.bulk ? `Issue certificates to ${checked.length} students` : editor._id ? "Confirm participation" : "Record participation"}
               busy={saving}
               onClose={() => setEditor(null)}
             >
@@ -240,32 +248,13 @@ export default function AdminCertificates() {
                     Confirmation creates the student's digital certificate and
                     stores it in their portfolio.
                   </p>
-                  {editor._id ? (
+                  {editor.bulk ? <div className="rounded-lg bg-zinc-50 p-3 text-sm dark:bg-zinc-800"><strong>{checked.length} attendance records selected</strong><p className="mt-2 text-xs text-zinc-500">Each student keeps their recorded activity, date, and activity type. The organizer below applies to all selected records.</p><ul className="cert-admin-review-list">{pending.filter(record => checked.includes(record._id)).map(record => <li key={record._id}>{record.studentName} | {record.title} | {record.date}</li>)}</ul></div> : editor._id ? (
                     <p className="rounded-lg bg-zinc-50 p-3 text-sm dark:bg-zinc-800">
                       {editor.studentName} | {editor.title} | {editor.date}
                     </p>
                   ) : (
                     <>
-                      <label className="block text-xs font-medium">
-                        Student *
-                        <select
-                          required
-                          value={form.studentAuthId}
-                          onChange={(event) =>
-                            setForm({
-                              ...form,
-                              studentAuthId: event.target.value,
-                            })
-                          }
-                          className={input}
-                        >
-                          {participants.map((person) => (
-                            <option key={person.authId} value={person.authId}>
-                              {person.name} | {person.program || person.email}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <div className="cert-admin-recipients"><label className="block text-xs font-medium">Students *<input type="search" className={input} value={recipientQuery} onChange={event => setRecipientQuery(event.target.value)} placeholder="Search name, program, or email" /></label><div className="cert-admin-recipient-heading"><span>{recipientIds.length} selected</span><button type="button" className="text-brand" onClick={() => setRecipientIds([...new Set([...recipientIds, ...matchingPeople.map(person => person.authId)])])}>Select matching ({matchingPeople.length})</button><button type="button" onClick={() => setRecipientIds([])}>Clear</button></div><div className="cert-admin-recipient-list">{matchingPeople.map(person => <label key={person.authId}><input type="checkbox" checked={recipientIds.includes(person.authId)} onChange={() => toggle(person.authId, recipientIds, setRecipientIds)} /><span><strong>{person.name}</strong><small>{person.program || person.email}</small></span></label>)}{!matchingPeople.length && <p className="p-3 text-xs text-zinc-500">No matching students.</p>}</div></div>
                       <label className="block text-xs font-medium">
                         Scheduled activity (optional)
                         <select
@@ -332,6 +321,7 @@ export default function AdminCertificates() {
                     <label className="block text-xs font-medium">
                       Activity type
                       <select
+                        disabled={editor.bulk}
                         value={form.type}
                         onChange={(event) =>
                           setForm({ ...form, type: event.target.value })
@@ -366,10 +356,11 @@ export default function AdminCertificates() {
                       }
                       className="mt-1 accent-brand"
                     />
-                    I confirm that this student's participation is complete.
+                    I confirm that participation is complete for all selected students.
                   </label>
+                  {saving && <GraduationCapLoader fullScreen={false} compact className="graduation-cap-loader--inline" label={`Issuing certificates (${progress} processed)`} />}
                   {saveError && (
-                    <p role="alert" className="text-xs text-red-600">
+                    <p role="alert" className="whitespace-pre-line text-xs text-red-600">
                       {saveError}
                     </p>
                   )}
@@ -381,8 +372,8 @@ export default function AdminCertificates() {
                     >
                       Cancel
                     </button>
-                    <button type="submit" className={button}>
-                      {saving ? "Confirming..." : "Confirm & issue certificate"}
+                    <button type="submit" disabled={!editor._id && !editor.bulk && !recipientIds.length} className={button}>
+                      {saving ? "Confirming..." : editor.bulk || recipientIds.length > 1 ? "Confirm & issue certificates" : "Confirm & issue certificate"}
                     </button>
                   </div>
                 </fieldset>

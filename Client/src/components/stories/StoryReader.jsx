@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useRef, useState } from "react";
 import { ArrowUpRight, BookOpen, PenLine, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -52,9 +53,7 @@ export default function StoryReader({
     <FeedDialog title="Read success story" busy={busy} onClose={onClose} wide className="story-reader-dialog" header={<div className="story-reader-heading"><BookOpen size={23} aria-hidden="true" /><div><p>Read success story</p><span>Alumni experiences, milestones, and lessons</span></div></div>}>
       <div className="story-reader-content" tabIndex={0} role="region" aria-label="Story content">
       {loading ? (
-        <p role="status" className="py-10 text-center text-sm text-zinc-500">
-          Loading story…
-        </p>
+        <ContentSkeleton variant="detail" count={1} label="Loading story…" />
       ) : error ? (
         <p role="alert" className="py-5 text-sm text-red-600 dark:text-red-400">
           {error}{" "}
@@ -74,7 +73,7 @@ export default function StoryReader({
               {post.title}
             </h3>
             <div className="story-reader-author mb-6 mt-5 flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-zinc-800">
                 <ProfileAvatar user={post.author} />
               </span>
               <div className="min-w-0">

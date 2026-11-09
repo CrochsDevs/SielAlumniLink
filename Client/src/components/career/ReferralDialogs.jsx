@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, CheckCircle2, Pencil, Send, Trash2, Users } from "lucide-react";
 import api from "../../utils/axios";
@@ -140,7 +141,7 @@ export function ReferralEditor({ item, onClose, onSaved }) {
               className={`${fieldStyle} !h-auto py-3 leading-6`}
             />
           </label>
-          <p className="rounded-xl bg-emerald-50 px-4 py-3 text-xs leading-6 text-brand dark:bg-emerald-950/50 dark:text-brand">
+          <p className="rounded-xl bg-emerald-50 px-4 py-3 text-xs leading-6 text-brand dark:bg-zinc-800/50 dark:text-brand">
             Students can apply here in the portal. You can review their notes
             and update their application status.
           </p>
@@ -467,9 +468,7 @@ export function ReferralApplicants({ referral, onClose }) {
         </p>
       )}
       {loading ? (
-        <p role="status" className="py-10 text-center text-sm text-zinc-500">
-          Loading applicants…
-        </p>
+        <ContentSkeleton variant="list" count={3} label="Loading applicants…" />
       ) : !applicants.length && !error ? (
         <div className="py-10 text-center">
           <Users size={28} className="mx-auto text-zinc-400" />

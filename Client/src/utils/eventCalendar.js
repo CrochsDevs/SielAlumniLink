@@ -42,7 +42,11 @@ export const monthDates = (date) => {
   const first = new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
   );
-  return Array.from({ length: 42 }, (_, index) =>
+  const daysInMonth = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  const cellCount = Math.ceil((first.getUTCDay() + daysInMonth) / 7) * 7;
+  return Array.from({ length: cellCount }, (_, index) =>
     addDays(first, index - first.getUTCDay()),
   );
 };

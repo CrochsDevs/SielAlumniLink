@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -423,9 +424,7 @@ export default function ProgramAlignmentReport() {
         </p>
       )}
       {loading ? (
-        <p role="status" className={card}>
-          Loading program-job alignment…
-        </p>
+        <ContentSkeleton variant="table" count={5} label="Loading program-job alignment…" />
       ) : (
         !error &&
         report && (
@@ -569,7 +568,7 @@ export default function ProgramAlignmentReport() {
                             </td>
                             <td className="px-3 py-4">
                               <span
-                                className={`inline-block rounded-lg px-2 py-1 font-medium ${row.alignment === "directly_related" ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : row.alignment === "unrelated" ? "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
+                                className={`inline-block rounded-lg px-2 py-1 font-medium ${row.alignment === "directly_related" ? "bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand" : row.alignment === "unrelated" ? "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}`}
                               >
                                 {row.alignmentLabel}
                               </span>

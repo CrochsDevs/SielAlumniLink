@@ -22,7 +22,7 @@ assert.equal(
   dateKey(shiftMonth(new Date("2024-01-31T00:00:00Z"), 1)),
   "2024-02-29",
 );
-assert.equal(monthDates(new Date("2026-10-13T00:00:00Z")).length, 42);
+assert.equal(monthDates(new Date("2026-10-13T00:00:00Z")).length, 35);
 assert.equal(monthDates(new Date("2026-10-13T00:00:00Z"))[0].getUTCDay(), 0);
 const boundary = {
   startAt: "2026-10-13T15:00:00Z",
@@ -296,7 +296,7 @@ try {
     `document.querySelector('main [role=alert]')?.textContent.includes('Calendar temporarily unavailable')`,
   );
   await click("Retry");
-  await until(`document.querySelectorAll('[data-calendar-date]').length===42`);
+  await until(`document.querySelectorAll('[data-calendar-date]').length===${monthDates(today).length}`);
   assert.equal(
     await evaluate(
       `document.querySelector('[data-calendar-title]').textContent`,

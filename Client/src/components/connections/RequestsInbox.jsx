@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
 import { Check, X, UserPlus, Inbox, Clock3, LoaderCircle } from "lucide-react";
@@ -72,16 +73,14 @@ const RequestsList = ({ requests, loading, onRespond, error, onRetry, searching 
   if (error) return <div role="alert" className="requests-state rounded-2xl border border-red-200 bg-white p-6 text-sm text-red-600 dark:border-red-900 dark:bg-zinc-900 dark:text-red-400">{error}{onRetry && <button type="button" onClick={onRetry} className="ml-2 font-semibold underline">Retry</button>}</div>;
   if (loading) {
     return (
-      <p role="status" className="requests-state rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400">
-        Loading invitations...
-      </p>
+      <ContentSkeleton variant="list" count={3} label="Loading invitations..." />
     );
   }
 
   if (requests.length === 0) {
     return (
       <div className="requests-state rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-10 text-center">
-        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-brand dark:text-brand">
+        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-zinc-800 text-brand dark:text-brand">
           <Inbox className="h-6 w-6" />
         </span>
         <p className="text-[14px] font-bold text-zinc-800 dark:text-zinc-100">

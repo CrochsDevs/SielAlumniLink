@@ -8,7 +8,7 @@ export const REFERRAL_TYPES = [
     icon: BriefcaseBusiness,
     description: "Take the next step in your career.",
     style:
-      "bg-emerald-50 text-brand dark:bg-emerald-950/60 dark:text-brand",
+      "bg-emerald-50 text-brand dark:bg-zinc-800/60 dark:text-brand",
     accent: "bg-brand",
   },
   {
@@ -47,7 +47,7 @@ export const APPLICATION_STATUSES = [
     key: "accepted",
     label: "Accepted",
     style:
-      "bg-emerald-50 text-brand dark:bg-emerald-950/60 dark:text-brand",
+      "bg-emerald-50 text-brand dark:bg-zinc-800/60 dark:text-brand",
   },
   {
     key: "declined",

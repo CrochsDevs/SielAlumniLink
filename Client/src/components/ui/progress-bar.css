@@ -34,10 +34,10 @@
 }
 
 .dark .app-progress {
-  --progress-track: #39483f;
-  --progress-border: #697c70;
+  --progress-track: var(--dark-control);
+  --progress-border: var(--dark-border);
   --progress-fill: #16b85b;
-  --progress-filled-border: #34d399;
+  --progress-filled-border: var(--dark-border);
   --progress-shadow: 0 2px 5px rgb(0 0 0 / 45%), inset 0 1px 2px rgb(0 0 0 / 20%);
   --progress-fill-shadow: inset 0 1px 0 rgb(255 255 255 / 15%);
 }

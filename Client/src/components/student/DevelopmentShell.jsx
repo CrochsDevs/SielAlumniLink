@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { createElement, useState } from "react";
 import { useAuth } from "../../context/useAuth";
 import StudentSidebar from "../../layout/sidebar/student/studentSidebar";
@@ -11,7 +12,7 @@ export const developmentInput =
   "mt-1.5 h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-brand dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:[color-scheme:dark]";
 export const developmentButton =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white disabled:opacity-50";
-export function DevelopmentStatus({ state }) {
+export function DevelopmentStatus({ state, variant = "cards", showLoading = true }) {
   return (
     <>
       {state.error && (
@@ -29,13 +30,8 @@ export function DevelopmentStatus({ state }) {
           </button>
         </p>
       )}
-      {state.loading && (
-        <p
-          role="status"
-          className="p-5 text-sm text-zinc-500 dark:text-zinc-400"
-        >
-          Loading your records…
-        </p>
+      {state.loading && showLoading && (
+        <ContentSkeleton variant={variant} count={variant === "form" ? 1 : 3} label="Loading your records…" />
       )}
     </>
   );

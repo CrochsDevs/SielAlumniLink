@@ -27,13 +27,13 @@ dialog.story-reader-dialog::backdrop { background: rgb(15 23 18 / 65%); backdrop
 .story-reader-actions .story-reader-delete { display: inline-flex; align-items: center; gap: 6px; color: #b91c1c; }
 .story-reader-dialog :is(button, a):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .story-reader-dialog button:disabled { opacity: .5; cursor: not-allowed; }
-.dark dialog.story-reader-dialog, .dark .story-reader-footer { border-color: #4c5e53; background: #1c231f; }
-.dark .story-reader-dialog > div:first-child { border-color: #4c5e53; background: #202e25; }
-.dark .story-reader-dialog button[aria-label="Close dialog"], .dark .story-reader-actions > button:not(.story-reader-close) { border-color: #4c5e53; background: #272f2a; }
-.dark .story-reader-heading span { color: #b0c0b6; }
+.dark dialog.story-reader-dialog, .dark .story-reader-footer { border-color: var(--dark-border); background: var(--dark-surface); }
+.dark .story-reader-dialog > div:first-child { border-color: var(--dark-border); background: var(--dark-surface); }
+.dark .story-reader-dialog button[aria-label="Close dialog"], .dark .story-reader-actions > button:not(.story-reader-close) { border-color: var(--dark-border); background: var(--dark-surface); }
+.dark .story-reader-heading span { color: var(--dark-muted); }
 .dark :is(.story-reader-heading > svg, .story-reader-author-link, .story-reader-sections h4) { color: #7ee7a0; }
-.dark .story-reader-sections p { color: #c3d0c8; }
-.dark :is(.story-reader-author, .story-reader-sections section + section, .story-reader-media > div) { border-color: #4c5e53; }
+.dark .story-reader-sections p { color: var(--dark-muted); }
+.dark :is(.story-reader-author, .story-reader-sections section + section, .story-reader-media > div) { border-color: var(--dark-border); }
 .dark .story-reader-actions .story-reader-delete { color: #fca5a5; }
 .dark dialog.story-reader-dialog { color-scheme: dark; }
 .dark .story-reader-content { scrollbar-color: #667a6d #202e25; }

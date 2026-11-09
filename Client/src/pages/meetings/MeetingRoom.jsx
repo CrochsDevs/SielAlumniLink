@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   createElement,
   useCallback,
@@ -260,9 +261,7 @@ export default function MeetingRoom() {
         </div>
       )}
       {loading ? (
-        <p role="status" className="p-12 text-center text-zinc-400">
-          Loading meeting...
-        </p>
+        <ContentSkeleton variant="detail" count={1} label="Loading meeting..." />
       ) : !event ? (
         <p className="p-12 text-center text-zinc-400">
           Meeting unavailable.{" "}

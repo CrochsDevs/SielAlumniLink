@@ -3,7 +3,7 @@
   box-shadow: var(--shadow-field);
 }
 .dark .alumni-employment-field {
-  border-color: #64756b;
+  border-color: var(--dark-border);
   box-shadow: var(--shadow-field);
 }
 .alumni-employment-field:focus {

@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { createElement, useRef, useState } from "react";
 import PageTitle from "../../components/ui/PageTitle";
 import { createPortal } from "react-dom";
@@ -42,7 +43,7 @@ const SECTIONS = [
     hint: "The tools, technologies, and strengths you bring.",
     example: "e.g. JavaScript, one skill at a time",
     color:
-      "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand",
+      "bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand",
   },
   {
     key: "projects",
@@ -261,7 +262,7 @@ export default function StudentPortfolio() {
   return (
     <DevelopmentShell title="Portfolio">
       <main className="mx-auto max-w-7xl space-y-5 p-3 sm:p-6 workspace-page">
-        <DevelopmentStatus state={state} />
+        <DevelopmentStatus state={state} variant="form" showLoading={view !== "resume"} />
         <header className="border-b border-zinc-200 pb-5 pt-1 dark:border-zinc-800 workspace-page-header">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -323,9 +324,7 @@ export default function StudentPortfolio() {
                 className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-200/40 p-3 sm:p-5 dark:border-zinc-800 dark:bg-zinc-800/40"
               >
                 {state.loading ? (
-                  <p className="p-8 text-center text-sm text-zinc-500">
-                    Loading resume...
-                  </p>
+                  <ContentSkeleton variant="form" count={1} label="Loading resume..." />
                 ) : state.data ? (
                   <ResumePreview>{resume}</ResumePreview>
                 ) : (
@@ -482,7 +481,7 @@ export default function StudentPortfolio() {
                           return section.type === "tags" ? (
                             <div
                               key={index}
-                              className="flex max-w-full items-center gap-1 rounded-lg border border-emerald-100 bg-emerald-50/50 py-1 pl-3 pr-1 text-xs font-medium text-brand dark:border-brand dark:bg-emerald-950/30 dark:text-emerald-200"
+                              className="flex max-w-full items-center gap-1 rounded-lg border border-emerald-100 bg-emerald-50/50 py-1 pl-3 pr-1 text-xs font-medium text-brand dark:border-brand dark:bg-zinc-800/30 dark:text-emerald-200"
                             >
                               <span className="break-words">{title}</span>
                               {controls(section, index, title)}
@@ -528,7 +527,7 @@ export default function StudentPortfolio() {
             </Link>
             <section className={`${card} p-5`}>
               <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-lg font-semibold text-brand dark:bg-emerald-950">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-lg font-semibold text-brand dark:bg-zinc-800">
                   <ProfileAvatar user={user} />
                 </span>
                 <div className="min-w-0">

@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -232,7 +233,7 @@ export default function SuccessStoriesBoard() {
       {notice && (
         <p
           role="status"
-          className="rounded-xl bg-emerald-50 p-4 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
+          className="rounded-xl bg-emerald-50 p-4 text-sm text-brand dark:bg-zinc-800 dark:text-brand"
         >
           {notice}
         </p>
@@ -259,7 +260,7 @@ export default function SuccessStoriesBoard() {
                   type="button"
                   aria-pressed={filters.topic === topic.key}
                   onClick={() => change("topic", topic.key)}
-                  className={`shrink-0 rounded-lg px-3 py-2.5 text-xs font-semibold ${filters.topic === topic.key ? "bg-brand/10 text-brand dark:bg-emerald-950 dark:text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
+                  className={`shrink-0 rounded-lg px-3 py-2.5 text-xs font-semibold ${filters.topic === topic.key ? "bg-brand/10 text-brand dark:bg-zinc-800 dark:text-brand" : "text-zinc-500 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"}`}
                 >
                   {topic.label}
                 </button>
@@ -328,12 +329,7 @@ export default function SuccessStoriesBoard() {
         </p>
       )}
       {loading ? (
-        <p
-          role="status"
-          className={`${card} p-12 text-center text-sm text-zinc-500 dark:text-zinc-400`}
-        >
-          Loading alumni stories…
-        </p>
+        <ContentSkeleton variant="cards" count={3} label="Loading alumni stories…" />
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -418,7 +414,7 @@ export default function SuccessStoriesBoard() {
                   </p>
                   <div className="mt-auto">
                     <div className="story-author flex items-center gap-2.5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-zinc-800">
                         <ProfileAvatar user={post.author} />
                       </span>
                       <div className="min-w-0">

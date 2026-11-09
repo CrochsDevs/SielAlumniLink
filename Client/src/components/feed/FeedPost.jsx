@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -83,7 +84,7 @@ function PostContent({ post, onRsvp, busy = false }) {
   const longBody = (post.body || "").length > 600;
   return (
     <>
-      <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-brand dark:bg-emerald-950 dark:text-brand">
+      <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-brand dark:bg-zinc-800 dark:text-brand">
         {post.type === "story" ? "Success story" : post.type}
       </span>
       {post.title && <h3 className="mt-2 text-base font-bold">{post.title}</h3>}
@@ -259,9 +260,7 @@ function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
         </p>
       )}
       {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Loading comments…
-        </p>
+        <ContentSkeleton variant="list" count={3} label="Loading comments…" />
       ) : (
         items.length === 0 && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -489,7 +488,7 @@ function SendDialog({ post, onClose }) {
         </p>
       )}
       {loading ? (
-        <p>Loading connections…</p>
+        <ContentSkeleton variant="list" count={3} label="Loading connections…" />
       ) : filtered.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           No connected alumni can receive this post. Connect with alumni first.

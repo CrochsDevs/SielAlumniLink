@@ -2,7 +2,7 @@
   background: #f4f7f5;
 }
 .dark .alumni-career-page {
-  background: #101318;
+  background: var(--dark-canvas);
 }
 .alumni-career-page .career-marketplace {
   --career-title: #202823;
@@ -13,10 +13,10 @@
   max-width: 1160px;
 }
 .dark .alumni-career-page .career-marketplace {
-  --career-title: #f4f4f5;
-  --career-line: #3b424b;
-  --career-surface: #1c2027;
-  --career-soft: #272d35;
+  --career-title: var(--dark-text);
+  --career-line: var(--dark-border);
+  --career-surface: var(--dark-surface);
+  --career-soft: var(--dark-control);
 }
 .alumni-career-page .career-board-navigation,
 .dark .alumni-career-page .career-board-navigation {
@@ -33,7 +33,7 @@
   color: #647069;
 }
 .dark .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button {
-  color: #b6bec8;
+  color: var(--dark-muted);
 }
 .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"],
 .dark .alumni-career-page .career-board-navigation nav:not(.admin-tabs) button[aria-pressed="true"] {
@@ -133,8 +133,8 @@
   font-weight: 700;
 }
 .dark .alumni-career-page .career-company-mark {
-  border-color: #3b6a49;
-  background: #183d29;
+  border-color: var(--dark-border);
+  background: var(--dark-surface);
   color: #86efac;
 }
 .alumni-career-page .career-category-badge {

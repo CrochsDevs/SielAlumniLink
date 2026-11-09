@@ -11,6 +11,7 @@ export function useInbox() {
   const requestedId = searchParams.get("conversation");
   const {
     convos,
+    conversationsLoading,
     threads,
     loadThread,
     sendChat,
@@ -143,6 +144,7 @@ export function useInbox() {
   };
 
   return {
+    conversationsLoading,
     activeId,
     setActiveId,
     draft,

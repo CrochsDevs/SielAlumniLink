@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -171,9 +172,7 @@ export default function AlumniMentorship() {
                 </div>
               )}
               {loading ? (
-                <p role="status" className="p-5 text-sm text-zinc-500">
-                  Loading your students...
-                </p>
+                <ContentSkeleton variant="list" count={3} label="Loading your students..." />
               ) : !students.length ? (
                 !error && (
                   <section className={`${card} p-10 text-center`}>
@@ -220,7 +219,7 @@ export default function AlumniMentorship() {
                           className={`${card} min-w-0 p-3.5`}
                         >
                           <div className="flex items-center gap-2.5">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-zinc-800">
                               <ProfileAvatar user={student} />
                             </span>
                             <div className="min-w-0 flex-1">

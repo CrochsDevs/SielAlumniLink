@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -104,7 +105,7 @@ function Chart({ report, period }) {
       )}
       {detail && (
         <div
-          className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm dark:bg-emerald-950"
+          className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm dark:bg-zinc-800"
           aria-live="polite"
         >
           <strong>{detail.key}</strong> · {num(detail.total)} actions ·{" "}
@@ -235,9 +236,7 @@ export default function AdminDashboard() {
             </AdminButton>
           </PageHeader>
           {!current && (
-            <div className={panel} role="status">
-              Loading dashboard reports...
-            </div>
+            <ContentSkeleton variant="cards" count={3} label="Loading dashboard reports..." />
           )}
           {current?.error && (
             <div className={panel} role="alert">

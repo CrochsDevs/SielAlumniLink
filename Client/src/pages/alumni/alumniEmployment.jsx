@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Building2, Briefcase, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
@@ -172,7 +173,7 @@ export default function AlumniEmployment() {
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-6 workspace-page">
-          <header className="rounded-2xl bg-gradient-to-br from-brand to-brand p-6 text-white workspace-page-header">
+          <header className="rounded-2xl bg-gradient-to-br from-brand to-brand p-6 text-white workspace-page-header dark:from-zinc-900 dark:to-zinc-900">
             <div className="flex items-center gap-3">
               <Building2 size={25} />
               <h1 className="text-xl font-semibold">My employment</h1>
@@ -207,15 +208,13 @@ export default function AlumniEmployment() {
           {message && (
             <p
               role="status"
-              className="rounded-lg bg-emerald-50 p-3 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
+              className="rounded-lg bg-emerald-50 p-3 text-sm text-brand dark:bg-zinc-800 dark:text-brand"
             >
               {message}
             </p>
           )}
           {loading ? (
-            <p role="status" className={card}>
-              Loading employment…
-            </p>
+            <ContentSkeleton variant="table" count={5} label="Loading employment…" />
           ) : (
             record && (
               <>
@@ -353,7 +352,7 @@ export default function AlumniEmployment() {
                               {job.position || job.role}
                             </h3>
                             {job.current && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-brand dark:bg-emerald-950 dark:text-brand">
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-brand dark:bg-zinc-800 dark:text-brand">
                                 Current
                               </span>
                             )}

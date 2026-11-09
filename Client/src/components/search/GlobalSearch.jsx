@@ -1,6 +1,7 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useEffect, useId, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, X, LoaderCircle } from "lucide-react";
+import { Search, X } from "lucide-react";
 import api from "../../utils/axios";
 import { PersonSummary } from "./SearchPerson";
 import { profilePath } from "./searchLinks";
@@ -190,10 +191,7 @@ function SearchInput({ initialQuery }) {
         <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] w-full min-w-[230px] overflow-y-auto rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-white sm:left-auto sm:right-0 sm:w-[380px] sm:max-w-[calc(100vw-2rem)]">
           <div role="status" className="px-4 pt-3 text-xs text-zinc-500">
             {loading ? (
-              <span className="flex items-center gap-2">
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-                Searching…
-              </span>
+              <ContentSkeleton variant="list" count={3} label="Searching…" />
             ) : current && result.error ? (
               result.error
             ) : !items.length ? (

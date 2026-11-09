@@ -25,11 +25,11 @@
 .student-success-stories .story-read-button { justify-content: space-between; width: 100%; min-height: 2.5rem; margin-top: .625rem; padding: .5rem .75rem; border: 1px solid hsl(var(--primary)); border-radius: .625rem; background: hsl(var(--primary)); color: white; box-shadow: 0 2px 5px rgb(15 23 42 / 14%); }
 .student-success-stories .story-read-button:hover { background: #007a27; border-color: #007a27; }
 .student-success-stories :is(button, a):not(:where(dialog *)):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
-.dark .student-success-stories { --story-border: #4c5e53; --story-surface: #1c231f; --story-muted: #b0c0b6; }
+.dark .student-success-stories { --story-border: var(--dark-border); --story-surface: var(--dark-surface); --story-muted: var(--dark-muted); }
 .dark .student-success-stories :is(.story-gallery-card, .story-filters) { box-shadow: 0 4px 12px rgb(0 0 0 / 30%); }
-.dark .student-success-stories nav[aria-label="Story topics"] button[aria-pressed="true"] { border-color: #3d6950; background: #193d27; color: #7ee7a0; }
-.dark .student-success-stories .story-search-form input { border-color: #697c70; box-shadow: 0 2px 6px rgb(0 0 0 / 40%); }
-.dark .student-success-stories .story-gallery-card:hover { border-color: #6b947b; }
+.dark .student-success-stories nav[aria-label="Story topics"] button[aria-pressed="true"] { border-color: var(--dark-border); background: var(--dark-control); color: #7ee7a0; }
+.dark .student-success-stories .story-search-form input { border-color: var(--dark-border); box-shadow: 0 2px 6px rgb(0 0 0 / 40%); }
+.dark .student-success-stories .story-gallery-card:hover { border-color: var(--dark-border); }
 .dark .student-success-stories .story-card-body > div:first-child > span.text-brand { color: #7ee7a0; }
 @media (max-width: 479px) { .student-success-stories .story-search-form { grid-template-columns: minmax(0, 1fr) 2.75rem; } .student-success-stories .story-search-form > div { grid-column: 1 / -1; } }
 @media (max-width: 575px) { .student-success-stories .story-gallery { grid-auto-rows: auto; } .student-success-stories .story-card-title { min-height: 0; } .student-success-stories .story-excerpt { min-height: 0; } }

@@ -146,7 +146,7 @@ export default function StudentJourney() {
           </header>
         <div className="overflow-hidden rounded-2xl border border-[#e4ecf4] bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
 
-          <DevelopmentStatus state={state} />
+          <DevelopmentStatus state={state} variant="table" />
           <div
             role="tablist"
             aria-label="Journey sections"

@@ -30,6 +30,8 @@ export const ChatProvider = ({ children }) => {
   myAuthIdRef.current = myAuthId;
 
   const [convos, setConvos] = useState([]);
+  const [convosSettledFor, setConvosSettledFor] = useState(null);
+  const [threadLoading, setThreadLoading] = useState({});
   const { contacts, presenceStatus, presenceSaving, setPresenceStatus } = useChatPresence(myAuthId, convos);
   const visibleConvos = convos.map(conversation => conversation.isGroup ? conversation : {
     ...conversation, presenceStatus: contacts[String(conversation.authId)]?.status || 'offline',
@@ -178,6 +180,8 @@ export const ChatProvider = ({ children }) => {
       );
     } catch {
       // stay silent — chat is secondary
+    } finally {
+      if (myAuthIdRef.current === authId) setConvosSettledFor(authId);
     }
   }, [getChatData]);
 
@@ -376,12 +380,15 @@ export const ChatProvider = ({ children }) => {
       const authId = myAuthIdRef.current;
       if (!authId) return;
       const epoch = threadEpochs.current.get(String(convoId)) || 0;
+      setThreadLoading(previous => ({ ...previous, [convoId]: true }));
       try {
         const res = await getChatData(`/conversations/${convoId}/messages`);
         if (myAuthIdRef.current !== authId || (threadEpochs.current.get(String(convoId)) || 0) !== epoch) return;
         setThreads((prev) => ({ ...prev, [convoId]: mergeMessageHistory(prev[convoId] || [], res.data.data || []) }));
       } catch {
         // ignore
+      } finally {
+        if (myAuthIdRef.current === authId) setThreadLoading(previous => ({ ...previous, [convoId]: false }));
       }
     },
     [getChatData],
@@ -572,6 +579,8 @@ export const ChatProvider = ({ children }) => {
     <ChatContext.Provider
       value={{
         convos: visibleConvos,
+        conversationsLoading: !!myAuthId && convosSettledFor !== myAuthId,
+        threadLoading,
         presenceStatus,
         presenceSaving,
         setPresenceStatus,

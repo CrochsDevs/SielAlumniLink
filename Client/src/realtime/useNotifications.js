@@ -11,6 +11,7 @@ export const useNotifications = () => {
   const generation = useRef(0);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [settledFor, setSettledFor] = useState(null);
 
   const refresh = useCallback(() => {
     if (!authId) return Promise.resolve();
@@ -29,6 +30,7 @@ export const useNotifications = () => {
         // Retry on the next event or explicit refresh, not in a request loop.
       })
       .finally(() => {
+        if (generation.current === version) setSettledFor(authId);
         if (pending.current?.request === request) pending.current = null;
       });
     pending.current = { authId, request };
@@ -80,5 +82,5 @@ export const useNotifications = () => {
     }
   }, [refresh]);
 
-  return { items, unread, refresh, markRead, markAllRead };
+  return { items, unread, refresh, markRead, markAllRead, loading: !!authId && settledFor !== authId };
 };

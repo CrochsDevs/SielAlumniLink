@@ -146,7 +146,7 @@
 }
 
 .dark .workspace-search-input {
-  border-color: #64756b;
+  border-color: var(--dark-border);
   box-shadow: var(--shadow-field);
 }
 .workspace-search-input:focus {

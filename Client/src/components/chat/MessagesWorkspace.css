@@ -17,14 +17,14 @@
   overflow: hidden;
 }
 .dark .messages-workspace {
-  --message-surface: #313338;
+  --message-surface: var(--dark-surface);
   --message-canvas: var(--message-surface);
-  --message-sidebar: #242529;
-  --message-composer: #383a40;
-  --message-line: #202125;
-  --message-selected: #3c3e45;
-  --message-ink: #f2f3f5;
-  --message-muted: #adb1bb;
+  --message-sidebar: var(--dark-surface);
+  --message-composer: var(--dark-control);
+  --message-line: var(--dark-border);
+  --message-selected: var(--dark-control);
+  --message-ink: var(--dark-text);
+  --message-muted: var(--dark-muted);
   --message-shadow-line: rgb(0 0 0 / 28%);
   --message-shadow-soft: rgb(0 0 0 / 36%);
   --message-sidebar-shadow: rgb(0 0 0 / 52%);

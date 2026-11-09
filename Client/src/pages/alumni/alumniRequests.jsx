@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
 import { UserPlus, X, GraduationCap } from "lucide-react";
@@ -137,9 +138,7 @@ const AlumniRequests = () => {
             </p>
 
             {suggestionsLoading ? (
-              <p className="py-6 text-center text-[12.5px] text-zinc-400">
-                Loading suggestions...
-              </p>
+              <ContentSkeleton variant="list" count={3} label="Loading suggestions..." />
             ) : suggestions.length === 0 ? (
               <p className="py-6 text-center text-[12.5px] text-zinc-400">
                 No suggestions right now.
@@ -152,7 +151,7 @@ const AlumniRequests = () => {
                     className="relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
                   >
                     {/* Banner */}
-                    <div className="h-16 bg-gradient-to-br from-brand/30 via-emerald-200/60 to-zinc-200 dark:from-brand/40 dark:via-emerald-900/40 dark:to-zinc-800" />
+                    <div className="h-16 bg-gradient-to-br from-brand/30 via-emerald-200/60 to-zinc-200 dark:from-zinc-900 dark:via-zinc-800/40 dark:to-zinc-800" />
 
                     {/* Dismiss */}
                     <button
@@ -169,7 +168,7 @@ const AlumniRequests = () => {
                       <Link
                         to={profilePath(person)}
                         aria-label={`View ${person.name || "Alumni"} profile`}
-                        className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-emerald-50 dark:bg-emerald-900/50 text-2xl font-bold text-brand dark:text-brand"
+                        className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white dark:border-zinc-900 bg-emerald-50 dark:bg-zinc-800/50 text-2xl font-bold text-brand dark:text-brand"
                       >
                         <ProfileAvatar
                           user={{

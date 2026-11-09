@@ -70,6 +70,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   const [scrollHidden, setScrollHidden] = useState(false);
   const {
     convos,
+    conversationsLoading,
     openChat,
     refreshConvos,
     unreadTotal: totalUnread,
@@ -79,6 +80,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   } = useChat();
   const {
     items: notifs,
+    loading: notificationsLoading,
     unread: notifUnread,
     markRead: markNotifRead,
     markAllRead: markAllNotifsRead,
@@ -179,7 +181,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
             <li className="flex items-center">
               <Link
                 to={homePath}
-                className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 font-semibold text-brand dark:text-brand transition hover:bg-emerald-100 dark:hover:bg-emerald-900"
+                className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-zinc-800 px-2.5 py-1 font-semibold text-brand dark:text-brand transition hover:bg-emerald-100 dark:hover:bg-zinc-800"
               >
                 <Home className="h-3.5 w-3.5" />
                 <span>{roleLabel}</span>
@@ -230,6 +232,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
             {chatOpen && <ChatsDropdown
               id={`${memberRole}-topbar-chats`}
               conversations={convos}
+              loading={conversationsLoading}
               messagePath={`${homePath}/message`}
               triggerRef={chatButtonRef}
               onClose={() => setChatOpen(false)}
@@ -260,6 +263,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
               <NotificationDropdown
                 triggerRef={notifButtonRef}
                 items={notifs}
+                loading={notificationsLoading}
                 onRead={markNotifRead}
                 onReadAll={markAllNotifsRead}
                 onClose={() => setNotifOpen(false)}
@@ -296,7 +300,7 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
 
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 shadow-xl shadow-zinc-900/5 z-20">
-              <div className="rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 px-3 py-2.5 mb-1">
+              <div className="rounded-xl bg-emerald-50/60 dark:bg-zinc-800/40 px-3 py-2.5 mb-1">
                 <p className="truncate text-[12.5px] font-bold text-zinc-800 dark:text-zinc-100">
                   {user?.name || roleLabel}
                 </p>

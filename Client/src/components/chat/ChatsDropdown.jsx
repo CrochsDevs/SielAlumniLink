@@ -6,8 +6,9 @@ import ChatAvatar from './ChatAvatar';
 import PresenceBadge from './PresenceBadge';
 import { formatTime } from './messageFormat';
 import useMobileView from '../../hooks/useMobileView';
+import ContentSkeleton from '../ui/Skeleton';
 
-export default function ChatsDropdown({ conversations, messagePath, onClose, onDesktopSelect, triggerRef, id }) {
+export default function ChatsDropdown({ conversations, messagePath, onClose, onDesktopSelect, triggerRef, id, loading = false }) {
   const [query, setQuery] = useState('');
   const isMobile = useMobileView();
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function ChatsDropdown({ conversations, messagePath, onClose, onD
         className="h-11 w-full rounded-full border border-border bg-muted pl-10 pr-4 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
     </label>}
     <ul className="topbar-panel-list max-h-80 overflow-y-auto pb-1.5">
+      {loading && <ContentSkeleton as="li" label="Loading conversations" />}
       {filtered.map(conversation => <li key={conversation._id}>
         <button type="button" onClick={() => select(conversation)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800">
           <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
@@ -40,7 +42,7 @@ export default function ChatsDropdown({ conversations, messagePath, onClose, onD
           <span className={`shrink-0 text-[10.5px] ${conversation.unread > 0 ? 'font-bold text-zinc-700 dark:text-zinc-200' : 'font-normal text-zinc-400'}`}>{formatTime(conversation.previewAt === undefined ? conversation.time : conversation.previewAt)}</span>
         </button>
       </li>)}
-      {!filtered.length && <li className="flex flex-col items-center gap-2 px-4 py-10 text-center text-xs text-muted-foreground">
+      {!loading && !filtered.length && <li className="flex flex-col items-center gap-2 px-4 py-10 text-center text-xs text-muted-foreground">
         <MessageSquareOff size={28} aria-hidden="true" />
         <p>{query ? 'No matching conversations.' : 'No conversations yet.'}</p>
       </li>}

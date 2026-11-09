@@ -400,7 +400,7 @@ const AlumniAccounts = () => {
                   <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
                     <h2 className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
                       Change Password
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand dark:bg-emerald-950 dark:text-brand">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand dark:bg-zinc-800 dark:text-brand">
                         <Lock className="h-2.5 w-2.5" />
                         Secure
                       </span>
@@ -501,7 +501,7 @@ const AlumniAccounts = () => {
                         onClick={() => changeTheme(key)}
                         className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition ${
                           theme === key
-                            ? "border-brand bg-emerald-50/50 text-brand dark:bg-emerald-950/30 dark:text-brand"
+                            ? "border-brand bg-emerald-50/50 text-brand dark:bg-zinc-800/30 dark:text-brand"
                             : "border-zinc-200 text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-600"
                         }`}
                       >
@@ -536,7 +536,7 @@ const AlumniAccounts = () => {
                       </details>
                     ))}
                   </div>
-                  <div className="m-5 flex flex-col gap-3 rounded-2xl bg-emerald-50/70 p-4 dark:bg-emerald-950/40 sm:m-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="m-5 flex flex-col gap-3 rounded-2xl bg-emerald-50/70 p-4 dark:bg-zinc-800/40 sm:m-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white">
                         <LifeBuoy className="h-5 w-5" />

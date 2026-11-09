@@ -27,10 +27,10 @@
 .opportunity-link label { display: block; margin-bottom: 6px; }
 .opportunity-link input { flex: 1; min-width: 120px; border: 1px solid #a1a1aa; border-radius: 5px; background: transparent; padding: 6px; }
 .opportunity-link button { padding: 6px 10px; border: 1px solid #a1a1aa; border-radius: 5px; }
-.dark .opportunity-editor { background: #18181b; border-color: #71717a; color: #f4f4f5; }
-.dark .opportunity-toolbar { background: #27272a; border-color: #52525b; }
+.dark .opportunity-editor { background: var(--dark-surface); border-color: var(--dark-border); color: var(--dark-text); }
+.dark .opportunity-toolbar { background: var(--dark-control); border-color: var(--dark-border); }
 .dark .opportunity-toolbar select { color-scheme: dark; }
-.dark .opportunity-tool:hover { background: #3f3f46; }
+.dark .opportunity-tool:hover { background: var(--dark-control); }
 .dark .opportunity-tool[aria-pressed="true"], .dark .opportunity-prose a { color: #4ade80; }
-.dark .opportunity-editor-footer { border-color: #52525b; color: #a1a1aa; }
-.dark .opportunity-input p.is-editor-empty:first-child::before { color: #a1a1aa; }
+.dark .opportunity-editor-footer { border-color: var(--dark-border); color: var(--dark-muted); }
+.dark .opportunity-input p.is-editor-empty:first-child::before { color: var(--dark-muted); }

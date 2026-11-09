@@ -1,3 +1,5 @@
+import ContentSkeleton from "../ui/Skeleton";
+import { useChat } from "../../context/useChat";
 import { useEffect, useRef, useState } from "react";
 import {
   Search,
@@ -120,9 +122,7 @@ const GroupModal = ({
 
           <ul className="max-h-60 space-y-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-200 dark:border-zinc-700 p-1.5">
             {loading && (
-              <li className="py-6 text-center text-[12px] text-zinc-400">
-                Loading connections...
-              </li>
+              <ContentSkeleton variant="list" count={3} label="Loading connections..." as="li" />
             )}
             {!loading && people.length === 0 && (
               <li className="py-6 text-center text-[12px] text-zinc-400">
@@ -194,6 +194,7 @@ const GroupModal = ({
 };
 
 const ConvoList = ({
+  conversationsLoading = false,
   workspace = false,
   chatFilter,
   setChatFilter,
@@ -282,6 +283,7 @@ const ConvoList = ({
       </div>
     )}
     <ul className="inbox-conversation-list min-h-0 max-h-[calc(100vh-16rem)] flex-1 overflow-y-auto overscroll-contain p-1.5">
+      {conversationsLoading && <ContentSkeleton as="li" label="Loading conversations" count={5} />}
       {filtered.map((c) => {
         const isActive = String(activeId) === String(c._id);
         return (
@@ -328,7 +330,7 @@ const ConvoList = ({
           </li>
         );
       })}
-      {filtered.length === 0 && (
+      {!conversationsLoading && filtered.length === 0 && (
         <li className="flex flex-col items-center p-8 text-center">
           <MessageSquareOff className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
           <p className="mt-2 text-[12.5px] font-semibold text-zinc-500 dark:text-zinc-400">
@@ -375,6 +377,7 @@ const ThreadPane = ({
   sendFile,
 }) => {
   const { user } = useAuth();
+  const { threadLoading } = useChat();
   const messages = threads[activeId] || [];
   const { bindInput } = composer;
   const scrollRef = useRef(null);
@@ -408,7 +411,7 @@ const ThreadPane = ({
   if (!active) {
     return (
       <div className="inbox-empty hidden flex-1 flex-col items-center justify-center gap-2 bg-zinc-50/50 dark:bg-zinc-950/50 p-8 text-center md:flex">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950 text-brand dark:text-brand">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-zinc-800 text-brand dark:text-brand">
           <Send className="h-6 w-6" />
         </span>
         <p className="text-[14px] font-bold text-zinc-700 dark:text-zinc-200">
@@ -484,7 +487,7 @@ const ThreadPane = ({
         ref={scrollRef}
         className="inbox-message-list min-h-0 max-h-[calc(100vh-21rem)] flex-1 space-y-2 overflow-y-auto overscroll-contain bg-[#f4f6f4] dark:bg-zinc-950 p-4"
       >
-        {messages.length === 0 && (
+        {(threads[activeId] || threadLoading?.[activeId] === false) && messages.length === 0 && (
           <p className="py-8 text-center text-[12px] text-zinc-400 dark:text-zinc-500">
             No messages yet — say hello! 👋
           </p>

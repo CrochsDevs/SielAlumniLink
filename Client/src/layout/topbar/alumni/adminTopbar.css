@@ -7,12 +7,12 @@
   color: hsl(var(--primary));
 }
 .dark .admin-workspace .member-topbar > header {
-  background-color: #18181bf2;
-  border-color: #3f3f46;
+  background-color: rgb(var(--neutral-900) / 95%);
+  border-color: var(--dark-border);
 }
 .dark .admin-workspace .member-topbar button[aria-expanded="true"] {
-  background-color: #27272a;
-  color: #b6e2c4;
+  background-color: var(--dark-surface);
+  color: var(--dark-text);
 }
 
 /* Every admin screen uses the same page heading and action layout. */

@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -115,7 +116,9 @@ const isDraft = (e) => e.isActive === false;
 const monthGrid = (date) => {
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
   const start = addDays(first, -first.getDay());
-  return Array.from({ length: 42 }, (_, i) => addDays(start, i));
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const cellCount = Math.ceil((first.getDay() + daysInMonth) / 7) * 7;
+  return Array.from({ length: cellCount }, (_, i) => addDays(start, i));
 };
 
 const hourLabel = (h) => {
@@ -1099,9 +1102,7 @@ export default function AdminEvents() {
       </div>
 
       {loading ? (
-        <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-          Loading events...
-        </p>
+        <ContentSkeleton variant="table" count={5} label="Loading events..." />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-[12.5px]">
@@ -1245,9 +1246,7 @@ export default function AdminEvents() {
   const renderView = () => {
     if (loading && viewMode !== "list") {
       return (
-        <p className="rounded-3xl bg-white p-6 text-[13px] text-zinc-500 shadow-sm dark:bg-zinc-900 dark:text-zinc-400">
-          Loading events...
-        </p>
+        <ContentSkeleton variant="calendar" count={1} label="Loading events..." />
       );
     }
     if (viewMode === "list") return renderList();
@@ -1511,7 +1510,7 @@ export default function AdminEvents() {
                 </div>
               </div>
               {form.deliveryMode === "online" && (
-                <p className="rounded-lg bg-emerald-50 p-3 text-xs leading-6 text-brand dark:bg-emerald-950 dark:text-brand">
+                <p className="rounded-lg bg-emerald-50 p-3 text-xs leading-6 text-brand dark:bg-zinc-800 dark:text-brand">
                   An in-app meeting room will be available for this activity.
                   Students register before joining. The room supports up to 8
                   people, including the host.

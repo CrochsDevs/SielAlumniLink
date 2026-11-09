@@ -1,6 +1,7 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Award, BadgeCheck, Building2, CalendarDays, Clock3, MapPin, Search, Video, ArrowUpRight, RefreshCw } from "lucide-react";
+import { Award, BadgeCheck, Building2, CalendarDays, Clock3, MapPin, Search, Video, ArrowUpRight } from "lucide-react";
 import ActivityAccess from "../../components/student/ActivityAccess";
 import DevelopmentShell from "../../components/student/DevelopmentShell";
 import api from "../../utils/axios";
@@ -54,16 +55,16 @@ export default function StudentEvents() {
         <Link to="/student/certificate" className="events-button self-start"><Award size={16} />Your certificates<ArrowUpRight size={14} /></Link>
       </header>
       <dl className="grid gap-3 sm:grid-cols-3" aria-label="Activity summary">
-        <StatCard label="Available activities" value={loading || error ? "—" : events.length} icon={CalendarDays} note="Events, training, and seminars" />
-        <StatCard label="Online sessions" value={loading || error ? "—" : events.filter(event => event.deliveryMode === "online").length} icon={Video} note="Join through SielAlumni" />
-        <StatCard label="Your registrations" value={loading || error ? "—" : events.filter(event => event.registration).length} icon={BadgeCheck} note="Activities you registered for" />
+        <StatCard loading={loading} label="Available activities" value={loading || error ? "—" : events.length} icon={CalendarDays} note="Events, training, and seminars" />
+        <StatCard loading={loading} label="Online sessions" value={loading || error ? "—" : events.filter(event => event.deliveryMode === "online").length} icon={Video} note="Join through SielAlumni" />
+        <StatCard loading={loading} label="Your registrations" value={loading || error ? "—" : events.filter(event => event.registration).length} icon={BadgeCheck} note="Activities you registered for" />
       </dl>
       <div ref={filters} className="events-panel events-filters scroll-mt-24">
         <label className="relative min-w-0 flex-1"><span className="sr-only">Search activities</span><Search size={17} className="pointer-events-none absolute left-3 top-3.5 text-zinc-400" /><input type="search" value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search activities or organizer" className="events-field events-search" /></label>
         <label className="events-type"><span className="sr-only">Activity type</span><select value={type} onChange={event => { setType(event.target.value); setPage(1); }} className="events-field"><option value="all">All activities</option><option value="event">Events</option><option value="training">Training</option><option value="seminar">Seminars</option></select></label>
       </div>
       {error && <div role="alert" className="events-panel p-4 text-sm text-red-600 dark:text-red-400">{error}<button type="button" onClick={load} className="ml-2 font-semibold underline">Retry</button></div>}
-      {loading ? <div className="events-panel events-empty" role="status"><RefreshCw size={25} className="animate-spin text-brand" /><p>Loading activities...</p></div> : !error && <>
+      {loading ? <ContentSkeleton variant="cards" count={3} label="Loading activities..." /> : !error && <>
         <div className="flex items-center justify-between gap-3 px-1"><p role="status" className="events-muted">{visible.length} {visible.length === 1 ? "activity" : "activities"}{hasFilters ? ` of ${events.length}` : " to explore"}</p>{hasFilters && <button type="button" onClick={clearFilters} className="events-clear">Clear filters</button>}</div>
         {!visible.length ? <section className="events-panel events-empty"><span className="events-empty-icon"><CalendarDays size={30} /></span><h2>{events.length ? "No matching activities" : "More opportunities are on the way"}</h2><p>{events.length ? "Try another search or activity type to find what interests you." : "Published events, training, and seminars will appear here. Check back for new activities."}</p>{hasFilters && <button type="button" onClick={clearFilters} className="events-button">Clear filters</button>}</section> : <section className="events-grid" aria-label="Activities">
           {pageEvents.map(event => <article key={event._id} data-event={event._id} className="events-panel event-card">

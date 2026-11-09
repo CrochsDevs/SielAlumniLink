@@ -64,6 +64,36 @@
   animation: graduation-cap-loader-dots 1.6s steps(1, end) infinite;
 }
 
+.graduation-cap-loader--compact,
+.graduation-cap-loader--compact[data-theme="dark"] {
+  --grad-loader-bg: hsl(var(--card));
+  --grad-loader-ink: hsl(var(--foreground));
+  --grad-loader-muted: hsl(var(--muted-foreground));
+  gap: 8px;
+  padding: 16px;
+  background: transparent;
+}
+
+.graduation-cap-loader--compact .graduation-cap-loader__animation {
+  width: 64px;
+}
+
+.graduation-cap-loader--compact .graduation-cap-loader__label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.graduation-cap-loader--inline {
+  flex-direction: row;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.graduation-cap-loader--inline .graduation-cap-loader__animation {
+  width: 44px;
+  flex-shrink: 0;
+}
+
 @keyframes graduation-cap-loader-dots {
   0% { content: ""; }
   25% { content: "."; }

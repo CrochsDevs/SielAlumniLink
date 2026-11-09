@@ -19,16 +19,16 @@
 .referral-card[data-referral-type="internship"] { --referral-accent: #3760a8; --referral-tint: #edf3fc; }
 .referral-card[data-referral-type="scholarship"] { --referral-accent: #94651f; --referral-tint: #fbf4e6; }
 .dark .referral-card {
-  --referral-surface: #1c2420;
-  --referral-ink: #e9f0eb;
-  --referral-muted: #a3b3a9;
-  --referral-line: #34443a;
-  --referral-soft: #26342c;
+  --referral-surface: var(--dark-surface);
+  --referral-ink: var(--dark-text);
+  --referral-muted: var(--dark-muted);
+  --referral-line: var(--dark-border);
+  --referral-soft: var(--dark-control);
   --referral-accent: #83d6a1;
-  --referral-tint: #233d2c;
+  --referral-tint: var(--dark-control);
 }
-.dark .referral-card[data-referral-type="internship"] { --referral-accent: #a6c7ff; --referral-tint: #29394f; }
-.dark .referral-card[data-referral-type="scholarship"] { --referral-accent: #e7c57e; --referral-tint: #3b3426; }
+.dark .referral-card[data-referral-type="internship"] { --referral-accent: #a6c7ff; --referral-tint: var(--dark-control); }
+.dark .referral-card[data-referral-type="scholarship"] { --referral-accent: #e7c57e; --referral-tint: var(--dark-control); }
 .referral-card-content { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 18px; }
 .referral-card-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .referral-card-category { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; background: var(--referral-tint); color: var(--referral-accent); font-size: 10px; line-height: 16px; font-weight: 600; }
@@ -59,7 +59,7 @@
 .referral-detail-management > p { margin-bottom: 10px; font-size: 12px; font-weight: 600; }
 .referral-detail-management > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .referral-detail-management .referral-detail-delete { color: #b42332; border-color: #fecdd3; background: #fff1f2; }
-.dark .referral-detail-management { border-color: #34443a; }
+.dark .referral-detail-management { border-color: var(--dark-border); }
 .dark .referral-detail-management .referral-detail-delete { color: #fda4af; border-color: #70414b; background: #40282e; }
 .referral-card-actions > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 @media (hover: hover) {
@@ -69,7 +69,7 @@
   .referral-card-edit:hover { background: var(--referral-line); }
   .referral-card-delete:hover, .referral-detail-management .referral-detail-delete:hover { background: #ffe4e6; }
   .dark .referral-card-delete:hover, .dark .referral-detail-management .referral-detail-delete:hover { background: #562e38; }
-  .dark .referral-card:hover { border-color: #516d5b; }
+  .dark .referral-card:hover { border-color: var(--dark-border); }
 }
 @media (max-width: 359px) { .referral-card-content { padding: 14px; } }
 @media (prefers-reduced-motion: reduce) { .referral-card, .referral-card-actions > button { transition: none; } }

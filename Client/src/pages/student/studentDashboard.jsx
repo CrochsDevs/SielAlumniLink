@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import ProgressBar from "../../components/ui/progress-bar";
 import PageTitle from "../../components/ui/PageTitle";
 import { createElement } from "react";
@@ -151,12 +152,7 @@ export default function StudentDashboard() {
                 </Link>
               </div>
               {development.loading ? (
-                <p
-                  role="status"
-                  className="py-6 text-xs text-zinc-500 dark:text-zinc-400"
-                >
-                  Loading your records...
-                </p>
+                <ContentSkeleton variant="list" count={3} label="Loading your records..." />
               ) : development.error ? (
                 <p
                   role="alert"

@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gooeyToast as toast } from "goey-toast";
@@ -144,9 +145,7 @@ export default function AdminAuditLogs() {
               </div>
               {auditError && <p role="alert" className="m-4 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{auditError}</p>}
               {auditLoading ? (
-                <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-                  Loading audit logs...
-                </p>
+                <ContentSkeleton variant="table" count={5} label="Loading audit logs..." />
               ) : (
                 <div className="overflow-x-auto no-scrollbar">
                   <table aria-label="Audit logs" className="w-full min-w-[720px] text-left text-[12.5px]">

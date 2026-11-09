@@ -1,3 +1,5 @@
+import GraduationCapLoader from "../../components/ui/GraduationCapLoader";
+import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -371,9 +373,7 @@ export default function AdminUsers() {
                 </div>
 
                 {loading ? (
-                  <p className="p-6 text-[13px] text-zinc-500 dark:text-zinc-400">
-                    Loading users...
-                  </p>
+                  <ContentSkeleton variant="table" count={5} label="Loading users..." />
                 ) : (
                   <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full min-w-[1240px] text-left text-[12.5px]">
@@ -536,33 +536,7 @@ export default function AdminUsers() {
                     )}
 
                     {syncLoading && (
-                      <div className="mt-4 flex flex-col items-center rounded-2xl bg-zinc-50 dark:bg-zinc-800 py-8">
-                        <svg
-                          className="h-8 w-8 animate-spin text-brand dark:text-brand"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        <p className="mt-3 text-[13px] font-bold text-zinc-700 dark:text-zinc-200">
-                          Syncing from CAIS...
-                        </p>
-                        <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                          Fetching records and storing them
-                        </p>
-                      </div>
+                      <div className="mt-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 py-4"><GraduationCapLoader fullScreen={false} compact label="Syncing records from CAIS" /><p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400">Fetching records and storing them</p></div>
                     )}
 
                     {syncSummary && (

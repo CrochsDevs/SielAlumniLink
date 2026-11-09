@@ -33,9 +33,9 @@
   box-shadow: var(--dashboard-shadow);
 }
 .dark .admin-workspace .admin-overview .admin-stat-card {
-  --card-surface: #1c2027;
-  --card-muted: #aab3c0;
-  --card-ink: #f1f4f8;
+  --card-surface: var(--dark-surface);
+  --card-muted: var(--dark-muted);
+  --card-ink: var(--dark-text);
   background: var(--card-surface);
   box-shadow: var(--dashboard-shadow);
 }
@@ -157,45 +157,45 @@
 .admin-overview :is(button, a):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .dark .member-workspace.admin-workspace > .admin-dashboard-shell {
   color-scheme: dark;
-  background: #101318;
+  background: var(--dark-canvas);
 }
 .dark .admin-overview {
-  --card-border: #303742;
-  --dashboard-edge: #536071;
+  --card-border: var(--dark-border);
+  --dashboard-edge: var(--dark-border);
   --dashboard-shadow: var(--shadow-panel);
-  --card-muted: #aab3c0;
-  --card-ink: #f1f4f8;
-  --card-soft: #252b34;
-  --card-surface: #1c2027;
-  --gauge-track: #303742;
-  --alumni-heading: #f1f4f8;
-  --alumni-card: #1c2027;
-  --alumni-card-border: #303742;
-  --alumni-tab: #252b34;
-  --admin-ink: #f1f4f8;
-  --admin-muted: #aab3c0;
-  --admin-surface: #1c2027;
-  --admin-line: #39414c;
-  --admin-soft: #252b34;
-  --admin-control-hover: #303742;
-  --border: 218 16% 22%;
-  --foreground: 220 25% 96%;
+  --card-muted: var(--dark-muted);
+  --card-ink: var(--dark-text);
+  --card-soft: var(--dark-control);
+  --card-surface: var(--dark-surface);
+  --gauge-track: var(--dark-control);
+  --alumni-heading: var(--dark-text);
+  --alumni-card: var(--dark-surface);
+  --alumni-card-border: var(--dark-border);
+  --alumni-tab: var(--dark-control);
+  --admin-ink: var(--dark-text);
+  --admin-muted: var(--dark-muted);
+  --admin-surface: var(--dark-surface);
+  --admin-line: var(--dark-border);
+  --admin-soft: var(--dark-control);
+  --admin-control-hover: var(--dark-control);
+  --border: 210 1% 31%;
+  --foreground: 223 15% 91%;
   color: var(--card-ink);
 }
 .dark .admin-overview .dashboard-card { color: var(--card-ink); }
-.dark .admin-overview .dashboard-view-link { color: #c0c9d5; }
+.dark .admin-overview .dashboard-view-link { color: var(--dark-text); }
 .dark .admin-overview .dashboard-view-link > svg { color: hsl(var(--primary)); }
 .dark .admin-overview .dashboard-view-link:hover { color: #fff; }
-.dark .admin-overview .dashboard-event > div:first-child { background: #252b34; color: #e0e6ee; }
+.dark .admin-overview .dashboard-event > div:first-child { background: var(--dark-surface); color: var(--dark-text); }
 .dark .admin-overview .dashboard-summary .dashboard-card { box-shadow: var(--dashboard-shadow); }
-.dark .admin-overview .dashboard-summary .dashboard-upcoming { border-color: #39414c; }
+.dark .admin-overview .dashboard-summary .dashboard-upcoming { border-color: var(--dark-border); }
 .dark .admin-overview .queue-count.has-items { color: #efc477; }
 .dark .admin-overview .dashboard-operation { box-shadow: var(--dashboard-shadow); }
 .dark .admin-overview .dashboard-summary .dashboard-queue > a:hover { background: var(--card-soft); }
-.dark .admin-overview .dashboard-engagement input[type="date"] { background: #252b34; border-color: #39414c; color: #e0e6ee; }
-.dark .admin-overview .coverage-legend i.is-muted { background: #66717f; }
+.dark .admin-overview .dashboard-engagement input[type="date"] { background: var(--dark-surface); border-color: var(--dark-border); color: var(--dark-text); }
+.dark .admin-overview .coverage-legend i.is-muted { background: var(--dark-surface); }
 
-.dark .admin-overview .dashboard-operations .dashboard-operation:hover { background: #252b34; }
+.dark .admin-overview .dashboard-operations .dashboard-operation:hover { background: var(--dark-control); }
 .admin-workspace .admin-overview :is(.dashboard-card, .dashboard-operation) {
   border: 1px solid var(--dashboard-edge);
   box-shadow: var(--dashboard-shadow);
@@ -212,7 +212,7 @@
   --dashboard-edge: #b9c3cb;
 }
 .dark .admin-workspace .admin-overview .dashboard-engagement {
-  --dashboard-edge: #536071;
+  --dashboard-edge: var(--dark-border);
 }
 @media (max-width: 767px) {
   .admin-overview .dashboard-visuals { grid-template-columns: 1fr; }

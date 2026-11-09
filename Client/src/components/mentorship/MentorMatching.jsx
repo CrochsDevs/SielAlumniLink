@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -112,13 +113,7 @@ export default function MentorMatching({
   };
   if (loading)
     return (
-      <div
-        role="status"
-        className={`${card} flex items-center gap-3 text-sm text-zinc-500`}
-      >
-        <LoaderCircle className="animate-spin text-brand" size={20} />
-        Finding mentors for you…
-      </div>
+      <ContentSkeleton variant="cards" count={3} label="Finding mentors for you…" />
     );
   if (!data)
     return (
@@ -144,7 +139,7 @@ export default function MentorMatching({
           aria-label="Your career direction"
         >
           <header className="flex items-center gap-3 p-4 sm:p-5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-brand dark:bg-emerald-950">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-brand dark:bg-zinc-800">
               <Target size={20} />
             </span>
             <div className="min-w-0">
@@ -300,7 +295,7 @@ export default function MentorMatching({
         {saved && (
           <p
             role="status"
-            className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
+            className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-brand dark:bg-zinc-800 dark:text-brand"
           >
             <Check size={16} />
             Your career direction is saved. Recommendations are updated.
@@ -342,7 +337,7 @@ export default function MentorMatching({
           {notice && (
             <p
               role="status"
-              className="rounded-xl bg-emerald-50 p-4 text-sm text-brand dark:bg-emerald-950 dark:text-brand"
+              className="rounded-xl bg-emerald-50 p-4 text-sm text-brand dark:bg-zinc-800 dark:text-brand"
             >
               {notice}
             </p>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import GraduationCapLoader from "../components/ui/GraduationCapLoader";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/useAuth";
 
@@ -53,44 +53,7 @@ const Logout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--auth-background)] flex items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-[320px] text-center">
-        {/* Logo + spinner */}
-        <div className="relative mx-auto mb-6 h-20 w-20">
-          {/* Green glow */}
-          <div className="absolute inset-0 rounded-full bg-brand blur-2xl opacity-40 scale-125"></div>
-
-          {/* Spinner ring */}
-          <div className="absolute inset-0 rounded-full border-[3px] border-zinc-200 border-t-primary animate-spin"></div>
-
-          {/* Center icon */}
-          <div className="absolute inset-[10px] rounded-full bg-white flex items-center justify-center shadow-md">
-            <LogOut className="w-7 h-7 text-brand" />
-          </div>
-        </div>
-
-        {/* Text */}
-        <h1 className="text-[18px] font-bold text-zinc-900 tracking-tight mb-1">
-          Signing you out
-        </h1>
-        <p className="text-[12.5px] text-zinc-500 leading-relaxed">
-          Ending your session securely...
-        </p>
-
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-1.5 mt-5">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"
-            style={{ animationDelay: "150ms" }}
-          ></span>
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"
-            style={{ animationDelay: "300ms" }}
-          ></span>
-        </div>
-      </div>
-    </div>
+    <GraduationCapLoader label="Signing you out" />
   );
 };
 

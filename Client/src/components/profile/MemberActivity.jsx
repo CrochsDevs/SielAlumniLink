@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ArrowUpRight, FileText, MessageCircle, RefreshCw, UserRound, ShieldCheck } from "lucide-react";
@@ -79,7 +80,7 @@ function ActivityList({ filter }) {
         <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
       </button>
     </div>
-    {loading ? <p role="status" className="py-8 text-center text-sm text-zinc-500">Loading activity...</p> : <>
+    {loading ? <ContentSkeleton variant="list" count={3} label="Loading activity..." /> : <>
       {items.length > 0 && <ol className="mt-2 divide-y divide-zinc-100 dark:divide-zinc-800">
         {items.map(item => {
           const Icon = ['security', 'admin'].includes(item.kind) ? ShieldCheck : item.kind === "comment" ? MessageCircle : item.kind === "profile" ? UserRound : FileText;

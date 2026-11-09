@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import ProgressBar from "../../components/ui/progress-bar";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -208,7 +209,7 @@ export default function StudentInternship() {
             </Link>
           </aside>
           <section className="order-1 min-w-0 space-y-3 md:order-none">
-            <header className="rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white">
+            <header className="rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white dark:from-zinc-900 dark:to-zinc-900">
               <h2 className="text-xl font-semibold">Internship Tracking</h2>
               <p className="mt-2 text-xs leading-6 text-white/90">
                 Record your company, supervisor, completed hours, and
@@ -237,7 +238,7 @@ export default function StudentInternship() {
                 </button>
               </div>
             </header>
-            <DevelopmentStatus state={state} />
+            <DevelopmentStatus state={state} variant="table" showLoading={view === "records"} />
             {view === "records" && !state.loading && (
               <>
                 {!filtered.length && (
@@ -302,7 +303,7 @@ export default function StudentInternship() {
                       {record.evaluation || "Not recorded yet"}
                     </p>
                     <span
-                      className={`mt-3 inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold ${record.completed ? "bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand" : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"}`}
+                      className={`mt-3 inline-block rounded-md px-2.5 py-1 text-[10px] font-semibold ${record.completed ? "bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand" : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"}`}
                     >
                       {record.completed ? "Completed" : "In progress"} ·
                       Self-reported
@@ -326,7 +327,7 @@ export default function StudentInternship() {
                   </p>
                 )}
                 {opportunityLoading ? (
-                  <p className={card}>Loading opportunities…</p>
+                  <ContentSkeleton variant="cards" count={3} label="Loading opportunities…" />
                 ) : !opportunities.length ? (
                   <p
                     className={`${card} text-sm text-zinc-500 dark:text-zinc-400`}
@@ -365,7 +366,7 @@ export default function StudentInternship() {
           </section>
           <aside className="order-3 grid gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1">
             <section className={`${card} text-center`}>
-              <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand dark:bg-zinc-800">
                 <ProfileAvatar user={user} />
               </span>
               <h2 className="mt-3 text-sm font-semibold">{user?.name}</h2>

@@ -1,3 +1,4 @@
+import GraduationCapLoader from "../ui/GraduationCapLoader";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { BadgeCheck, Download, FileCheck2, Info, LoaderCircle, Maximize2, Printer, ZoomIn } from "lucide-react";
@@ -112,7 +113,7 @@ function CertificatePreviewContent({ certificate, onClose }) {
           </div>
         ) : (
           <>
-            {!ready && <div role="status" className="certificate-preview-status"><LoaderCircle size={26} className="animate-spin" /><p>Loading certificate...</p></div>}
+            {!ready && <GraduationCapLoader fullScreen={false} compact label="Preparing your certificate" className="certificate-preview-status" />}
             {url && <img
               src={url}
               alt={`Certificate of appreciation awarded to ${certificate.recipientName} for ${certificate.title}`}

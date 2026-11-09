@@ -152,7 +152,7 @@ listeners.set("Fetch.requestPaused", async ({ requestId, request }) => {
           participationDate: attendance.date,
           organizer: input.organizer,
           issuedAt: new Date().toISOString(),
-          certificateNumber: "SL-1234567890ABCDEF",
+          certificateNumber: "CLSU-1234567890ABCDEF",
         },
       ];
       data = certificates[0];
@@ -281,7 +281,7 @@ try {
     ...issuedCertificates[0], _id: `pagination-${index + 1}`,
     title: `Pagination certificate ${index + 1}`,
     activityType: index % 2 === 0 ? 'seminar' : 'training',
-    certificateNumber: `SL-PAGINATION-${index + 1}`,
+    certificateNumber: `CLSU-PAGINATION-${index + 1}`,
   }));
   await navigate('/student/certificate');
   await until(`document.querySelectorAll('article[data-certificate]').length === 12`);
@@ -320,7 +320,7 @@ try {
   await until(`document.querySelector('dialog img')?.naturalWidth>0`);
   assert.equal(
     await evaluate(`document.querySelector('dialog a[download]').download`),
-    "SL-1234567890ABCDEF.svg",
+    "CLSU-1234567890ABCDEF.svg",
   );
   await photo("certificate-preview-mobile", 390, false);
   await click("Zoom in");
@@ -356,7 +356,7 @@ try {
   });
   await evaluate(`document.querySelector('dialog a[download]').click()`);
   await downloadFinished;
-  assert.equal(await readFile(path.join(downloadDirectory, 'SL-1234567890ABCDEF.svg'), 'utf8'), downloadedSvg, 'Saved file matches the loaded certificate');
+  assert.equal(await readFile(path.join(downloadDirectory, 'CLSU-1234567890ABCDEF.svg'), 'utf8'), downloadedSvg, 'Saved file matches the loaded certificate');
   // Measure actual rendered text bounds, including maximum-length wide names
   // and unbroken activity/organizer strings, before checking printed output.
   for (const details of [certificates[0], {

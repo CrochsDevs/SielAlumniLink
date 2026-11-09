@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import ContentSkeleton from "../../components/ui/Skeleton";
 import PageTitle from "../../components/ui/PageTitle";
-import { Search, Users, Check, ArrowRight, LoaderCircle, SlidersHorizontal, Compass, Target } from "lucide-react";
+import { Search, Users, Check, ArrowRight, SlidersHorizontal, Compass, Target } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { useChat } from "../../context/useChat.js";
 import DevelopmentShell from "../../components/student/DevelopmentShell";
@@ -222,14 +223,11 @@ export default function StudentMentorship() {
                     Refresh mentors
                   </button>
                 </div>}
-              {notice && <p role="status" className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-brand dark:border-brand dark:bg-emerald-950 dark:text-emerald-200">
+              {notice && <p role="status" className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-brand dark:border-brand dark:bg-zinc-800 dark:text-emerald-200">
                   <Check size={16} className="mt-0.5 shrink-0" />
                   {notice}
                 </p>}
-              {loading ? <div role="status" className={`${card} flex items-center justify-center gap-3 p-12 text-sm text-zinc-500`}>
-                  <LoaderCircle size={20} className="animate-spin text-brand" />
-                  Finding alumni...
-                </div> : <>
+              {loading ? <ContentSkeleton variant="cards" label="Finding alumni" /> : <>
                   <div className="flex items-center justify-between gap-2 px-1">
                     <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                       {filtered.length}{" "}
@@ -241,7 +239,7 @@ export default function StudentMentorship() {
                       </button>}
                   </div>
                   {!filtered.length && <div className={`${card} p-10 text-center`}>
-                      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-brand dark:bg-emerald-950">
+                      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-brand dark:bg-zinc-800">
                         <Users size={26} />
                       </span>
                       <h2 className="mt-4 text-sm font-semibold">

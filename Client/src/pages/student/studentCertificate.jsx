@@ -53,8 +53,8 @@ export default function StudentCertificates() {
       </header>
       <DevelopmentStatus state={state} />
       <dl aria-label="Certificate collection summary" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <StatCard label="Total certificates" value={ready ? certificates.length : "—"} note="In your collection" icon={Award} />
-        {ACTIVITIES.map(([key, label, icon]) => <StatCard key={key} label={label} value={ready ? certificates.filter(item => item.activityType === key).length : "—"} note="Confirmed participation" icon={icon} />)}
+        <StatCard loading={state.loading} label="Total certificates" value={ready ? certificates.length : "—"} note="In your collection" icon={Award} />
+        {ACTIVITIES.map(([key, label, icon]) => <StatCard loading={state.loading} key={key} label={label} value={ready ? certificates.filter(item => item.activityType === key).length : "—"} note="Confirmed participation" icon={icon} />)}
       </dl>
       <div className="certificate-layout">
         <section ref={collection} className="min-w-0 space-y-4 scroll-mt-24" aria-label="Your certificates">

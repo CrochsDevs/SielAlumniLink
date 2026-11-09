@@ -1,3 +1,4 @@
+import ContentSkeleton from "../../components/ui/Skeleton";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { gooeyToast as toast } from 'goey-toast';
@@ -81,16 +82,14 @@ const AlumniSurveyAnswer = () => {
           </button>
 
           {loading ? (
-            <p className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
-              Loading survey...
-            </p>
+            <ContentSkeleton variant="form" count={1} label="Loading survey..." />
           ) : !survey ? (
             <p className="rounded-3xl border border-brand/10 bg-white dark:bg-zinc-900 p-8 text-center text-[13px] text-zinc-500 dark:text-zinc-400 shadow-sm">
               Survey not found.
             </p>
           ) : (
             <section className="space-y-5">
-              <div className="bg-gradient-to-r from-brand to-brand px-5 py-5 sm:px-6 workspace-page-header">
+              <div className="bg-gradient-to-r from-brand to-brand px-5 py-5 sm:px-6 workspace-page-header dark:from-zinc-900 dark:to-zinc-900">
                 <h1 className="text-[16px] font-extrabold text-white">
                   {survey.title}
                 </h1>

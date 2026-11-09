@@ -18,6 +18,7 @@ function subscribeToTheme(onChange) {
 export default function GraduationCapLoader({
   label = "Loading",
   fullScreen = true,
+  compact = false,
   speed = 1,
   className = "",
 }) {
@@ -48,7 +49,7 @@ export default function GraduationCapLoader({
 
   return (
     <div
-      className={`graduation-cap-loader${fullScreen ? " graduation-cap-loader--fullscreen" : ""} ${className}`.trim()}
+      className={`graduation-cap-loader${fullScreen ? " graduation-cap-loader--fullscreen" : ""}${compact ? " graduation-cap-loader--compact" : ""} ${className}`.trim()}
       data-theme={dark ? "dark" : "light"}
       role="status"
       aria-live="polite"

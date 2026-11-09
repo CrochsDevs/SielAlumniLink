@@ -1,6 +1,7 @@
+import ContentSkeleton from "../components/ui/Skeleton";
 import { createElement, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowUpRight, Briefcase, Building2, CheckCircle2, Clock3, GraduationCap, LoaderCircle, MapPin, Monitor } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Briefcase, Building2, CheckCircle2, Clock3, GraduationCap, MapPin, Monitor } from "lucide-react";
 import { useAuth } from "../context/useAuth";
 import api from "../utils/axios";
 import AdminSidebar from "../layout/sidebar/admin/adminSidebar";
@@ -58,7 +59,7 @@ export default function CareerOpportunityPage() {
       {createElement(shell.topbar, { user, title: "Opportunity details", onMenuClick: () => setSidebarOpen(true) })}
       <main className="workspace-page opportunity-detail-page">
         <Link to={shell.board} className="opportunity-back"><ArrowLeft size={16} />Back to opportunities</Link>
-        {error ? <div role="alert" className="opportunity-detail-panel p-6"><p>{error}</p><button type="button" className="mt-4 text-sm font-semibold text-brand underline" onClick={() => { setError(""); setResult(null); setAttempt(value => value + 1); }}>Try again</button></div> : !job ? <div role="status" className="opportunity-detail-panel flex items-center justify-center gap-3 p-16 text-sm"><LoaderCircle size={20} className="animate-spin text-brand" />Loading opportunity...</div> : <>
+        {error ? <div role="alert" className="opportunity-detail-panel p-6"><p>{error}</p><button type="button" className="mt-4 text-sm font-semibold text-brand underline" onClick={() => { setError(""); setResult(null); setAttempt(value => value + 1); }}>Try again</button></div> : !job ? <ContentSkeleton variant="detail" count={1} label="Loading opportunity..." /> : <>
           <header className="opportunity-detail-panel opportunity-detail-header">
             <span className="opportunity-detail-company"><Building2 size={28} aria-hidden="true" /></span>
             <div className="min-w-0 flex-1"><p className="opportunity-detail-kicker">UNIVERSITY OPPORTUNITY</p><h1>{job.title}</h1><p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{job.company}</p><p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{job.createdAt && `Posted ${dateLabel(job.createdAt)} · `}{job.audience === "alumni" ? "Alumni only" : "Alumni & Students"}</p></div>

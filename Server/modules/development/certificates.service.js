@@ -5,6 +5,8 @@ import { fail, pastDate, text } from '../development/development.policy.js';
 const types = ['event', 'training', 'seminar'];
 const ids = value => ObjectId.isValid(String(value)) ? [String(value), new ObjectId(String(value))] : [String(value)];
 const dayInManila = value => new Date(value).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+// Keep legacy certificates consistent with the current CLSU numbering format.
+const formatCertificate = certificate => ({ ...certificate, certificateNumber: certificate.certificateNumber?.replace(/^SL-/, 'CLSU-') });
 export function validateParticipation(input) {
   if (!types.includes(input.type)) fail(400, 'Choose event, training, or seminar');
   if (input.completed !== true) fail(400, 'Confirm completed participation before issuing a certificate');
@@ -17,7 +19,7 @@ export function createCertificateService(db) {
   const adminOnly = user => { if (user.role !== 'admin') fail(403, 'Only administrators can confirm participation'); };
   const accountFor = id => db.collection('auth').findOne({ _id: { $in: ids(id) }, role: { $in: ['student', 'alumni'] } });
   const profileFor = account => db.collection('users').findOne({ $or: [{ authId: { $in: ids(account._id) } }, { email: account.email }] });
-  const listMine = user => certificates.find({ studentAuthId: String(user._id) }).sort({ issuedAt: -1 }).toArray();
+  const listMine = async user => (await certificates.find({ studentAuthId: String(user._id) }).sort({ issuedAt: -1 }).toArray()).map(formatCertificate);
   const issue = async (admin, studentId, input, existingAttendance = null) => {
     adminOnly(admin);
     if (!ObjectId.isValid(String(studentId))) fail(400, 'Choose a valid student');
@@ -43,12 +45,12 @@ export function createCertificateService(db) {
     const sourceKey = source || `attendance:${String(attendanceId)}`;
     const _id = createHash('sha256').update(JSON.stringify([authId, String(attendanceId)])).digest('hex');
     const now = new Date();
-    const doc = { _id, studentAuthId: authId, recipientName, title: data.title, activityType: data.type, participationDate: data.date, organizer: data.organizer, sourceKey, attendanceId: String(attendanceId), issuedBy: String(admin._id), issuedAt: now, certificateNumber: `SL-${_id.slice(0, 16).toUpperCase()}`, templateVersion: 2 };
+    const doc = { _id, studentAuthId: authId, recipientName, title: data.title, activityType: data.type, participationDate: data.date, organizer: data.organizer, sourceKey, attendanceId: String(attendanceId), issuedBy: String(admin._id), issuedAt: now, certificateNumber: `CLSU-${_id.slice(0, 16).toUpperCase()}`, templateVersion: 2 };
     try { await certificates.insertOne(doc); }
     catch (error) { if (error.code !== 11000) throw error; }
     const certificate = await certificates.findOne({ _id });
     await attendance.updateOne({ _id: attendanceId }, { $set: { authId, title: certificate.title, date: certificate.participationDate, activityType: certificate.activityType, source: 'Admin-confirmed participation', certificateId: certificate._id, confirmedBy: certificate.issuedBy, confirmedAt: certificate.issuedAt }, $setOnInsert: { recordedAt: now } }, { upsert: true });
-    return certificate;
+    return formatCertificate(certificate);
   };
   return {
     listMine,
@@ -57,7 +59,7 @@ export function createCertificateService(db) {
       const certificate = await certificates.findOne({ _id: String(id) });
       if (!certificate) fail(404, 'Certificate not found');
       if (user.role !== 'admin' && certificate.studentAuthId !== String(user._id)) fail(403, 'You cannot access another student certificate');
-      return certificate;
+      return formatCertificate(certificate);
     },
     async participants(user) {
       adminOnly(user);
@@ -69,7 +71,7 @@ export function createCertificateService(db) {
     },
     async pending(user) {
       adminOnly(user);
-      const records = await attendance.find({ certificateId: { $exists: false } }).sort({ date: -1 }).limit(200).toArray();
+      const records = await attendance.find({ certificateId: { $exists: false } }).sort({ date: -1 }).toArray();
       const result = [];
       for (const record of records) {
         const account = await accountFor(record.authId);
@@ -79,7 +81,7 @@ export function createCertificateService(db) {
       }
       return result;
     },
-    async all(user) { adminOnly(user); return certificates.find({}).sort({ issuedAt: -1 }).limit(200).toArray(); },
+    async all(user) { adminOnly(user); return (await certificates.find({}).sort({ issuedAt: -1 }).toArray()).map(formatCertificate); },
     async confirm(user, id, input) {
       adminOnly(user);
       if (!ObjectId.isValid(String(id))) fail(404, 'Attendance record not found');

@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import ProgressBar from "../ui/progress-bar";
 import useJobDeadline, { deadlinePassed, deadlineLabel } from "./useJobDeadline";
 import JobDescription from "./JobDescription";
@@ -203,17 +204,11 @@ export function JobApplicationDialog({
       )}
       {!job ? (
         !error && (
-          <div
-            role="status"
-            className="flex items-center justify-center gap-3 py-16 text-sm text-zinc-500"
-          >
-            <LoaderCircle size={20} className="animate-spin text-brand" />
-            Loading job details...
-          </div>
+          <ContentSkeleton variant="detail" count={1} label="Loading job details..." />
         )
       ) : step === "success" ? (
         <div className="px-2 py-5 text-center sm:px-10">
-          <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/50 dark:bg-emerald-950 dark:ring-emerald-950/40">
+          <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/50 dark:bg-zinc-800 dark:ring-emerald-950/40">
             <CheckCircle2
               size={38}
               className="text-brand dark:text-brand"
@@ -250,9 +245,9 @@ export function JobApplicationDialog({
         </div>
       ) : (
         <>
-          <div className="relative overflow-hidden rounded-xl border border-brand/10 bg-gradient-to-br from-emerald-50 via-white to-zinc-50 p-5 sm:p-6 dark:border-brand/40 dark:from-emerald-950/50 dark:via-zinc-900 dark:to-zinc-900">
+          <div className="relative overflow-hidden rounded-xl border border-brand/10 bg-gradient-to-br from-emerald-50 via-white to-zinc-50 p-5 sm:p-6 dark:border-brand/40 dark:from-zinc-800/50 dark:via-zinc-900 dark:to-zinc-900">
             <div className="relative flex items-start gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-200/70 bg-white text-brand shadow-sm dark:border-brand dark:bg-emerald-950">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-200/70 bg-white text-brand shadow-sm dark:border-brand dark:bg-zinc-800">
                 <Building2 size={25} />
               </span>
               <div className="min-w-0">
@@ -435,7 +430,7 @@ export function JobApplicationDialog({
                       setDragging(false);
                       if (!busy) chooseResume(event.dataTransfer.files?.[0]);
                     }}
-                    className={`mt-3 rounded-xl border border-dashed p-5 transition ${dragging ? "border-brand bg-emerald-50 dark:bg-emerald-950/40" : resume ? "border-emerald-300 bg-emerald-50/40 dark:border-brand dark:bg-emerald-950/20" : "border-zinc-300 bg-zinc-50/60 dark:border-zinc-600 dark:bg-zinc-800/30"}`}
+                    className={`mt-3 rounded-xl border border-dashed p-5 transition ${dragging ? "border-brand bg-emerald-50 dark:bg-zinc-800/40" : resume ? "border-emerald-300 bg-emerald-50/40 dark:border-brand dark:bg-zinc-800/20" : "border-zinc-300 bg-zinc-50/60 dark:border-zinc-600 dark:bg-zinc-800/30"}`}
                   >
                     {resume ? (
                       <div className="flex items-center gap-3">
@@ -594,7 +589,7 @@ export function JobApplicantsDialog({ job, onClose }) {
           <p className="mt-1 break-all text-sm text-zinc-500 dark:text-zinc-400">{selectedApplication.email}</p>
           <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Submitted {new Date(selectedApplication.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })} (PH time)</p>
         </section>
-        <section className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20" aria-label="Contact applicant">
+        <section className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-zinc-800/20" aria-label="Contact applicant">
           <h3 className="text-sm font-semibold">Contact applicant</h3>
           <a href={`mailto:${encodeURIComponent(selectedApplication.email)}`} className="mt-3 flex items-start gap-2 text-sm text-brand"><Mail size={16} className="mt-0.5 shrink-0" /><span className="min-w-0 break-all">{selectedApplication.email}</span></a>
           {selectedApplication.phone && <a href={`tel:${selectedApplication.phone.replace(/[^+0-9]/g, "")}`} className="mt-2 flex items-center gap-2 text-sm text-brand"><Phone size={16} className="shrink-0" />{selectedApplication.phone}</a>}
@@ -630,7 +625,7 @@ export function JobApplicantsDialog({ job, onClose }) {
         </p>
       )}
       {loading ? (
-        <p role="status">Loading applicants...</p>
+        <ContentSkeleton variant="list" count={3} label="Loading applicants..." />
       ) : !applications.length ? (
         <p className="text-sm text-zinc-500">No applications yet.</p>
       ) : (

@@ -1,10 +1,10 @@
 .group-options-trigger { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; color: #71717a; }
 .group-options-trigger:hover { background: #f4f4f5; color: #27272a; }
-.dark .group-options-trigger { color: #a1a1aa; }
-.dark .group-options-trigger:hover { background: #27272a; color: #fafafa; }
+.dark .group-options-trigger { color: var(--dark-muted); }
+.dark .group-options-trigger:hover { background: var(--dark-control); color: var(--dark-text); }
 .group-options-trigger:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 .group-options-menu { z-index: 1000; width: 200px; max-width: calc(100vw - 16px); padding: 5px; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; color: #3f3f46; box-shadow: 0 8px 30px rgb(0 0 0 / 12%); }
 .group-options-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 9px 10px; border-radius: 8px; text-align: left; font-size: 12px; font-weight: 500; }
 .group-options-menu button:is(:hover, :focus-visible) { outline: none; background: #f4f4f5; }
-.dark .group-options-menu { background: #242426; border-color: #3f3f46; color: #f4f4f5; }
-.dark .group-options-menu button:is(:hover, :focus-visible) { background: #353538; }
+.dark .group-options-menu { background: var(--dark-surface); border-color: var(--dark-border); color: var(--dark-text); }
+.dark .group-options-menu button:is(:hover, :focus-visible) { background: var(--dark-control); }

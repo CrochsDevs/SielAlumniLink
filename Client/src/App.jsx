@@ -11,6 +11,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
 import { useAuth } from "./context/useAuth";
 import GraduationCapLoader from "./components/ui/GraduationCapLoader";
+import { PageSkeleton } from "./components/ui/Skeleton";
 import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
 
 import AdminDashboard from "./pages/admin/adminDashboard";
@@ -78,7 +79,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
-    return <GraduationCapLoader label="Checking your session" />;
+    return <PageSkeleton label="Checking your session" />;
   }
 
   if (!isAuthenticated) {
@@ -647,7 +648,7 @@ function MemberPages() {
     setWorkspaceThemeEnabled(workspaceTheme);
   }, [workspaceTheme]);
   if (loading && !isAuthPage) {
-    return <GraduationCapLoader label="Checking your session" />;
+    return <PageSkeleton label="Checking your session" />;
   }
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (

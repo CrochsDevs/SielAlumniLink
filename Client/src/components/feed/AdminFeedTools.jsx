@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Shield, Users } from "lucide-react";
@@ -101,7 +102,7 @@ export default function AdminFeedTools() {
           </p>
         )}
         {loading ? (
-          <p className="mt-3 text-xs text-zinc-500">Loading members…</p>
+          <ContentSkeleton variant="list" count={3} label="Loading members…" />
         ) : !members.length ? (
           <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
             No restricted members.

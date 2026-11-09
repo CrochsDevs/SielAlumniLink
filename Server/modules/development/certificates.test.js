@@ -39,6 +39,17 @@ test('self-reported attendance does not automatically issue a certificate', asyn
   assert.equal((await service.listMine(student)).length, 0); assert.equal((await service.pending(admin)).length, 1);
   await assert.rejects(service.confirm(student, 'dddddddddddddddddddddddd', participation), error => error.status === 403);
 });
+
+test('admin lists include every record when more than 200 students need certificates', async () => {
+  const { service, seed } = fixture();
+  for (let index = 0; index < 225; index++) {
+    seed('student_event_attendance', { _id: (index + 1).toString(16).padStart(24, '0'), authId: student._id, title: `Activity ${index}`, date: participation.date });
+    seed('digital_certificates', { _id: `certificate-${index}`, studentAuthId: student._id, issuedAt: new Date() });
+  }
+  assert.equal((await service.pending(admin)).length, 225);
+  assert.equal((await service.all(admin)).length, 225);
+  await assert.rejects(service.all(student), error => error.status === 403);
+});
 test('admin confirmation issues a certificate and removes attendance from the review queue', async () => {
   const { service, seed } = fixture();
   seed('student_event_attendance', { _id: 'dddddddddddddddddddddddd', authId: student._id, title: participation.title, date: participation.date });
@@ -62,6 +73,26 @@ test('retries and concurrent confirmations create exactly one immutable certific
   assert.equal(new Set(results.map(record => record._id)).size, 1); assert.equal((await service.listMine(student)).length, 1);
   const again = await service.issue(admin, student._id, { ...participation, organizer: 'Changed organizer' });
   assert.equal(again.organizer, participation.organizer);
+});
+
+test('new and legacy certificate IDs use the CLSU prefix across lists, retries and downloads', async () => {
+  const { service, seed, bucket } = fixture();
+  const created = await service.issue(admin, student._id, participation);
+  assert.match(created.certificateNumber, /^CLSU-[A-F0-9]{16}$/);
+  assert.equal(bucket('digital_certificates').get(created._id).certificateNumber, created.certificateNumber);
+  const suffix = created.certificateNumber.slice(5);
+  seed('digital_certificates', { ...created, certificateNumber: `SL-${suffix}` });
+  for (const certificate of [
+    await service.get(admin, created._id),
+    (await service.all(admin))[0],
+    (await service.listMine(student))[0],
+    await service.issue(admin, student._id, participation),
+  ]) {
+    assert.equal(certificate.certificateNumber, `CLSU-${suffix}`);
+    assert.equal(certificate._id, created._id);
+    assert.ok(certificateSvg(certificate).includes(`Certificate ID: CLSU-${suffix}`));
+  }
+  assert.equal(bucket('digital_certificates').size, 1);
 });
 test('scheduled activities must have ended and repeated issuance matches existing attendance', async () => {
   const { service, seed } = fixture();

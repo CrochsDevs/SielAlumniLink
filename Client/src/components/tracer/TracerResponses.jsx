@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import {
   flexRender,
   getCoreRowModel,
@@ -31,7 +32,7 @@ import {
 
 const STATUS_STYLE = {
   Employed:
-    "bg-brand/10 text-brand ring-emerald-200/60 dark:bg-emerald-950 dark:text-brand dark:ring-brand",
+    "bg-brand/10 text-brand ring-emerald-200/60 dark:bg-zinc-800 dark:text-brand dark:ring-brand",
   "Self-employed":
     "bg-blue-50 text-blue-600 ring-blue-200/60 dark:bg-blue-950 dark:text-blue-300 dark:ring-blue-800",
   Unemployed:
@@ -449,14 +450,10 @@ export default function TracerResponses() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td
+                <tr><td
                     colSpan={TABLE_COLUMNS.length}
                     className="px-4 py-8 text-zinc-400 dark:text-zinc-500"
-                  >
-                    Loading responses...
-                  </td>
-                </tr>
+                  ><ContentSkeleton variant="table" count={5} label="Loading responses..." /></td></tr>
               ) : (
                 paged.map((r) => (
                   <tr
@@ -465,7 +462,7 @@ export default function TracerResponses() {
                   >
                     <td className="md:sticky md:left-0 z-10 border-r border-zinc-200 bg-white px-4 py-4 group-hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:group-hover:bg-zinc-800">
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[12px] font-bold text-brand ring-1 ring-black/5 dark:bg-emerald-950 dark:text-brand dark:ring-white/10">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-[12px] font-bold text-brand ring-1 ring-black/5 dark:bg-zinc-800 dark:text-brand dark:ring-white/10">
                           <ProfileAvatar user={r} fallback={r.email || 'U'} />
                         </span>
                         <span className="min-w-0">
@@ -518,7 +515,7 @@ export default function TracerResponses() {
                 <tr>
                   <td colSpan={TABLE_COLUMNS.length} className="px-4 py-10">
                     <div className="sticky left-0 w-[min(480px,85vw)] text-center">
-                      <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
+                      <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand">
                         <ClipboardList className="h-6 w-6" />
                       </span>
                       <p className="text-[13px] font-bold text-zinc-700 dark:text-zinc-200">

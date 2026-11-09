@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+import GraduationCapLoader from '../components/ui/GraduationCapLoader';
 import clsuLogo from '../assets/logo/clsu_logo.png';
 import './forget-password.css';
 import { useNavigate, Link } from 'react-router-dom';
@@ -159,7 +160,8 @@ const ForgetPassword = () => {
                 <div className="recovery-field"><label htmlFor="recovery-password">New password</label><div className="recovery-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="recovery-password" name="newPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Create a new password" value={newPassword} onChange={event => setNewPassword(event.target.value)} aria-describedby="recovery-password-help" required disabled={loading} /><button className="recovery-password-toggle" type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide passwords' : 'Show passwords'} aria-pressed={showPassword}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div><p id="recovery-password-help">Use at least 6 characters.</p></div>
                 <div className="recovery-field"><label htmlFor="recovery-confirm">Confirm password</label><div className="recovery-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="recovery-confirm" name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" placeholder="Re-enter your new password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} required disabled={loading} /></div></div>
               </>}
-              <button className="recovery-submit" type="submit" disabled={loading || (step === 1 && resendSeconds > 0)}>{loading ? <LoaderCircle size={17} className="animate-spin" /> : null}{loading ? loadingLabels[step - 1] : step === 1 && resendSeconds > 0 ? `Send again in ${resendSeconds}s` : submitLabels[step - 1]}{!loading && <ArrowRight size={16} />}</button>
+              {loading && <GraduationCapLoader fullScreen={false} compact className="graduation-cap-loader--inline" label={step === 1 ? 'Sending reset code' : step === 2 ? 'Verifying your code' : 'Resetting your password'} />}
+              <button className="recovery-submit" type="submit" disabled={loading || (step === 1 && resendSeconds > 0)}>{loading ? loadingLabels[step - 1] : step === 1 && resendSeconds > 0 ? `Send again in ${resendSeconds}s` : submitLabels[step - 1]}{!loading && <ArrowRight size={16} />}</button>
             </form> : <div className="recovery-success" role="status"><p>Taking you back to login...</p><Link to="/login" className="recovery-submit">Continue to login<ArrowRight size={16} /></Link></div>}
             <Link to="/login" className="recovery-back"><ArrowLeft size={13} />Back to login</Link>
             <p className="recovery-footer"><ShieldCheck size={14} />A secure way back to your account</p>

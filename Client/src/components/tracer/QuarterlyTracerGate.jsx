@@ -3,7 +3,7 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { TracerQuarterContext } from "../../context/TracerQuarterContext";
 import api from "../../utils/axios";
-import GraduationCapLoader from "../ui/GraduationCapLoader";
+import { PageSkeleton } from "../ui/Skeleton";
 
 const accessErrorMessage = (error) => {
   if ([401, 403].includes(error.response?.status))
@@ -99,7 +99,7 @@ export default function QuarterlyTracerGate({ children }) {
 
   if (!enabled) return children;
   if (result?.owner !== owner || !result)
-    return <GraduationCapLoader label="Checking your Tracer Study update" />;
+    return <PageSkeleton label="Checking your Tracer Study update" />;
   // A failed refresh must preserve a confirmed status and any form in progress.
   // A previous-quarter confirmation cannot unlock the new reporting period.
   const hasCurrentStatus = result.data && (

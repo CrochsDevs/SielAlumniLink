@@ -1,3 +1,4 @@
+import ContentSkeleton from "../ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Newspaper, Sparkles } from "lucide-react";
@@ -234,12 +235,7 @@ export default function AlumniFeed({
         </div>
       )}
       {loading ? (
-        <p
-          role="status"
-          className="p-6 text-center text-sm text-zinc-500 dark:text-zinc-400"
-        >
-          Loading feed…
-        </p>
+        <ContentSkeleton variant="feed" count={3} label="Loading feed…" />
       ) : (
         <>
           {!posts.length && !error && (
@@ -247,7 +243,7 @@ export default function AlumniFeed({
               role="status"
               className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-6 py-10 text-center dark:border-zinc-700 dark:bg-zinc-900"
             >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-brand dark:bg-emerald-950 dark:text-brand">
+              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-brand dark:bg-zinc-800 dark:text-brand">
                 {onlyType === "story" ? (
                   <Sparkles
                     className="h-9 w-9"
