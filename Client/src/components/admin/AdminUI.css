@@ -129,6 +129,21 @@
   font-size: 12px;
 }
 .admin-workspace main :is(a, button, input, select, textarea):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
+:root:not(.dark) .admin-workspace main input:is([type="search"], [placeholder^="Search" i]) {
+  --admin-line: #94a3b8;
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #20242a;
+}
+:root:not(.dark) .admin-workspace main input:is([type="search"], [placeholder^="Search" i])::placeholder {
+  color: #526174;
+  opacity: 1;
+}
+:root:not(.dark) .admin-workspace main input:is([type="search"], [placeholder^="Search" i]):focus {
+  --admin-line: hsl(var(--primary));
+  background-color: #fff;
+  border-color: hsl(var(--primary));
+}
 .admin-workspace .admin-switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 12px; border: 1px solid transparent; border-radius: 10px; text-align: left; transition: background-color 160ms ease; }
 .admin-workspace .admin-switch-copy { display: grid; gap: 3px; min-width: 0; }
 .admin-workspace .admin-switch-label { color: var(--admin-ink); font-size: 12px; line-height: 18px; font-weight: 500; }

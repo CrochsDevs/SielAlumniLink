@@ -1,6 +1,8 @@
 @media screen {
   .member-workspace[data-workspace-role] main.workspace-page.admin-connections {
-    max-width: 1200px;
+    --table-scale: 1;
+    --table-cell-padding: 0.625rem 1rem;
+    --table-font-size: 0.8125rem;
   }
 
   .member-workspace[data-workspace-role] main.workspace-page.admin-connections table {
@@ -9,14 +11,18 @@
     min-width: 640px;
   }
 
-  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(1) { width: 42%; }
-  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(2) { width: 16%; }
-  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(3) { width: 17%; }
-  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(4) { width: 25%; }
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(2) { width: 120px; }
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(3) { width: 130px; }
+  .member-workspace[data-workspace-role] main.admin-connections table :is(th, td):nth-child(4) { width: 160px; }
 
-  .member-workspace[data-workspace-role] main.workspace-page.admin-connections table > :is(thead, tbody) > tr > :is(th, td) {
-    padding: 0.75rem 1rem;
+  .admin-connections td:first-child > div > span { width: 36px; height: 36px; }
+  .admin-workspace .admin-connections .connections-details-button {
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
   }
+  .admin-workspace .admin-connections .connections-details-button:hover { filter: brightness(0.94); }
 
   .admin-connections td:first-child img,
   .admin-connections td:first-child [class*="rounded-full"] {

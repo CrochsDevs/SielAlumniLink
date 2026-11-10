@@ -2,7 +2,7 @@ import ContentSkeleton from "../../components/ui/Skeleton";
 import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gooeyToast as toast } from "goey-toast";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
@@ -132,9 +132,12 @@ export default function AdminAuditLogs() {
               <div className="flex flex-wrap gap-3 border-b border-zinc-100 p-4 dark:border-zinc-800">
                 <label className="min-w-0 flex-1 text-xs text-zinc-500 dark:text-zinc-400">
                   Search audit logs
-                  <input value={auditQuery} onChange={event => { setAuditQuery(event.target.value); setAuditPage(1); }}
+                  <span className="relative mt-1 block">
+                  <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                  <input type="search" value={auditQuery} onChange={event => { setAuditQuery(event.target.value); setAuditPage(1); }}
                     placeholder="Search actor, action, or target..."
-                    className="mt-1 block h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
+                    className="block h-10 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
+                  </span>
                 </label>
                 <label className="text-xs text-zinc-500 dark:text-zinc-400">Event type
                   <select aria-label="Event type" value={auditCategory} onChange={event => { setAuditCategory(event.target.value); setAuditPage(1); }}

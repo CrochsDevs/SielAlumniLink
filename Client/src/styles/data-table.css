@@ -1,5 +1,11 @@
 /* One table design for every workspace role. Edit --table-* in design-tokens.css. */
 @media screen {
+  :root:not(.dark) .member-workspace[data-workspace-role="admin"] {
+    --table-line: #b8c2ce;
+  }
+  :root:not(.dark) .member-workspace[data-workspace-role="admin"] main.workspace-page table > :is(thead, tbody, tfoot) > tr > :is(th, td):not(:last-child) {
+    border-right: 1px solid var(--table-line);
+  }
   .member-workspace[data-workspace-role] main.workspace-page:has(table) {
     --workspace-max-width: 100%;
   }
@@ -60,6 +66,12 @@
     box-shadow: none;
   }
   .member-workspace[data-workspace-role] main.workspace-page table > tbody > tr:last-child > :is(td, th) { border-bottom: 0; }
+  :root:not(.dark) .member-workspace[data-workspace-role="admin"] main.workspace-page table > tbody > tr:nth-child(odd) > :is(td, th) {
+    background: #dceee3;
+  }
+  :root:not(.dark) .member-workspace[data-workspace-role="admin"] main.workspace-page table > tbody > tr:is(:hover, :focus-within) > :is(td, th) {
+    background: #c8e5d3;
+  }
   .member-workspace[data-workspace-role] main.workspace-page table > tbody > tr:is(:hover, :focus-within) > :is(td, th) {
     background: var(--table-row-hover);
   }

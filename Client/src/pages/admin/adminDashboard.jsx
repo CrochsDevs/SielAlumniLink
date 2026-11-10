@@ -5,14 +5,16 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AdminTabs, AdminButton } from "../../components/admin/AdminUI";
+import { useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/ui/PageHeader";
 import {
   CoverageGauge,
   DashboardCalendar,
 } from "../../components/admin/DashboardVisuals";
 import "./adminDashboard.css";
+import DashboardTracerCharts from "../../components/admin/DashboardTracerCharts";
 import { useEffect, useState } from "react";
-import { RefreshCw, Plus } from "lucide-react";
+import { RefreshCw, Plus, LayoutDashboard, ChartNoAxesCombined } from "lucide-react";
 import {
   OverviewStats,
   AttentionPanel,
@@ -170,6 +172,16 @@ function Chart({ report, period }) {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get("view") === "tracer" ? "tracer" : "overview";
+  const changeView = (nextView) => {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous);
+      if (nextView === "tracer") next.set("view", "tracer");
+      else next.delete("view");
+      return next;
+    });
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [date, setDate] = useState(today);
   const [period, setPeriod] = useState("yearly");
@@ -235,6 +247,18 @@ export default function AdminDashboard() {
               Announcement
             </AdminButton>
           </PageHeader>
+          <div className="dashboard-view-switch">
+            <AdminTabs
+              label="Dashboard view"
+              value={view}
+              onChange={changeView}
+              items={[
+                { id: "overview", label: "Overview", icon: LayoutDashboard },
+                { id: "tracer", label: "Tracer study insights", icon: ChartNoAxesCombined },
+              ]}
+            />
+          </div>
+          <div hidden={view !== "overview"} className="space-y-4">
           {!current && (
             <ContentSkeleton variant="cards" count={3} label="Loading dashboard reports..." />
           )}
@@ -322,6 +346,10 @@ export default function AdminDashboard() {
               </div>
             </>
           )}
+          </div>
+          <div hidden={view !== "tracer"}>
+            <DashboardTracerCharts revision={revision} />
+          </div>
         </main>
       </div>
     </div>

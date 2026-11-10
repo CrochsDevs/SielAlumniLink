@@ -1,7 +1,25 @@
 // A local, cross-discipline catalog: typing never sends an API request.
 // Users can also add a skill that is not in this catalog.
 const categories = {
-  Technology: [
+  "Programming Languages": [
+    "C", "C++", "C#", "Java", "JavaScript", "TypeScript", "Python",
+    "PHP", "Ruby", "Go", "Rust", "Swift", "Kotlin", "Dart", "Scala",
+    "R", "Julia", "MATLAB", "GNU Octave", "Perl", "Lua", "Bash",
+    "PowerShell", "SQL", "PL/SQL", "T-SQL", "Visual Basic", "VBA",
+    "VB.NET", "Objective-C", "Objective-C++", "F#", "Groovy", "Clojure",
+    "Haskell", "Erlang", "Elixir", "OCaml", "ReasonML", "ReScript",
+    "Elm", "PureScript", "Common Lisp", "Scheme", "Racket", "Prolog",
+    "Ada", "Fortran", "COBOL", "Pascal", "Delphi", "Assembly Language",
+    "Smalltalk", "D", "Nim", "Crystal", "Zig", "V", "Haxe", "GDScript",
+    "Solidity", "Vyper", "Move", "Cairo", "WebAssembly", "GLSL", "HLSL",
+    "WGSL", "Verilog", "SystemVerilog", "VHDL", "Tcl", "Awk", "Sed",
+    "AppleScript", "AutoHotkey", "AutoIt", "ABAP", "Apex", "SAS",
+    "Stata", "LabVIEW", "Scratch", "Logo", "BASIC", "QBasic", "Forth",
+    "RPG", "Raku", "Hack", "CoffeeScript", "LiveScript", "Ballerina",
+    "Pony", "Chapel", "Eiffel", "OpenCL", "CUDA C++", "MicroPython",
+    "CircuitPython", "Wolfram Language",
+  ],
+  "Technical Skills": [
     "React JS",
     "React Native",
     "JavaScript",
@@ -67,6 +85,61 @@ const categories = {
     "Postman",
     "OAuth 2.0",
     "JWT Authentication",
+    "HTML5", "CSS3", "Sass", "Less", "Tailwind CSS", "Bootstrap",
+    "Responsive Web Design", "Web Accessibility", "WCAG", "Semantic HTML",
+    "Frontend Development", "Backend Development", "Full Stack Development",
+    "Object-Oriented Programming", "Functional Programming", "Data Structures",
+    "Algorithms", "Design Patterns", "Software Architecture", "System Design",
+    "Microservices", "Distributed Systems", "Event-Driven Architecture",
+    "Spring Boot", "Spring Framework", "ASP.NET Core", ".NET", "Blazor",
+    "Ruby on Rails", "Flask", "FastAPI", "NestJS", "Nuxt.js", "SvelteKit",
+    "Svelte", "jQuery", "Redux", "Zustand", "TanStack Query", "Vite",
+    "Webpack", "Babel", "npm", "pnpm", "Yarn", "Maven", "Gradle",
+    "Android Development", "iOS Development", "Android Studio", "Xcode",
+    "Jetpack Compose", "SwiftUI", "Unity", "Unreal Engine", "Godot",
+    "Game Development", "Embedded Systems", "Firmware Development",
+    "Arduino", "Raspberry Pi", "Internet of Things", "MQTT", "Bluetooth",
+    "Database Design", "Database Administration", "Database Optimization",
+    "SQL Server", "SQLite", "Oracle Database", "MariaDB", "Redis",
+    "Elasticsearch", "Cassandra", "DynamoDB", "Firebase", "Supabase",
+    "Prisma", "Sequelize", "Mongoose", "Entity Framework", "Hibernate",
+    "Data Modeling", "Data Engineering", "ETL", "Data Warehousing",
+    "Data Visualization", "Data Cleaning", "Data Mining", "Big Data",
+    "Apache Spark", "Hadoop", "Apache Kafka", "Apache Airflow", "dbt",
+    "Snowflake", "Databricks", "Pandas", "NumPy", "SciPy", "Matplotlib",
+    "Seaborn", "Jupyter Notebook", "TensorFlow", "PyTorch", "scikit-learn",
+    "Deep Learning", "Natural Language Processing", "Computer Vision",
+    "Generative AI", "Prompt Engineering", "MLOps", "Model Evaluation",
+    "Retrieval-Augmented Generation", "Vector Databases", "LLM Integration",
+    "DevOps", "DevSecOps", "CI/CD", "GitHub Actions", "GitLab CI/CD",
+    "Jenkins", "Kubernetes", "Helm", "Terraform", "Ansible", "Puppet",
+    "Chef", "Google Cloud", "Linux", "Unix", "Windows Server",
+    "System Administration", "Shell Scripting", "Virtualization", "VMware",
+    "Hyper-V", "Proxmox", "Nginx", "Apache HTTP Server", "Load Balancing",
+    "Monitoring and Observability", "Prometheus", "Grafana", "Datadog",
+    "Disaster Recovery", "Backup and Recovery", "Site Reliability Engineering",
+    "Network Security", "Network Troubleshooting", "TCP/IP", "DNS", "DHCP",
+    "VPN", "Firewalls", "Cisco Networking", "Routing and Switching",
+    "Penetration Testing", "Ethical Hacking", "Vulnerability Assessment",
+    "Security Auditing", "Incident Response", "Digital Forensics", "SIEM",
+    "Identity and Access Management", "Zero Trust Security", "Cryptography",
+    "OWASP", "Secure Coding", "Threat Modeling", "Data Privacy",
+    "Unit Testing", "Integration Testing", "End-to-End Testing",
+    "Test Automation", "Manual Testing", "Regression Testing",
+    "Performance Testing", "Load Testing", "Jest", "Vitest", "JUnit",
+    "pytest", "Cypress", "Playwright", "Selenium", "Appium", "JMeter",
+    "Test-Driven Development", "Behavior-Driven Development", "Code Review",
+    "Debugging", "Agile", "Scrum", "Kanban", "Jira", "Confluence",
+    "Requirements Analysis", "Business Analysis", "UML", "BPMN",
+    "Technical Documentation", "Version Control", "IT Service Management",
+    "ITIL", "Help Desk Support", "Hardware Troubleshooting", "Computer Repair",
+    "Computer Assembly", "Operating System Installation", "Active Directory",
+    "Microsoft Entra ID", "Microsoft 365 Administration", "Google Workspace Administration",
+    "Excel Formulas", "Excel Pivot Tables", "Excel VBA", "Power Query",
+    "Power Automate", "Power Apps", "Google Sheets", "Google Apps Script",
+    "SAP", "Salesforce", "ERP Systems", "CRM Administration", "ServiceNow",
+    "WordPress", "Shopify", "Webflow", "Search Engine Marketing",
+    "Google Analytics", "Google Ads", "Meta Ads", "Marketing Automation",
   ],
   "Agriculture & Environment": [
     "Crop Production",
@@ -166,7 +239,6 @@ const categories = {
     "Technical Writing",
     "Laboratory Techniques",
     "SPSS",
-    "R Programming",
   ],
   "Healthcare & Community": [
     "Patient Care",
@@ -270,7 +342,7 @@ const categories = {
     "Records Management",
     "Virtual Assistance",
   ],
-  "Professional Skills": [
+  "Soft Skills": [
     "Communication",
     "Teamwork",
     "Leadership",
@@ -288,10 +360,60 @@ const categories = {
     "Coaching",
     "Organization",
     "Interpersonal Skills",
+    "Active Listening", "Written Communication", "Verbal Communication",
+    "Business Communication", "Cross-Cultural Communication",
+    "Nonverbal Communication", "Storytelling", "Persuasion",
+    "Emotional Intelligence", "Empathy", "Self-Awareness", "Self-Regulation",
+    "Resilience", "Patience", "Professionalism", "Work Ethic", "Integrity",
+    "Accountability", "Reliability", "Initiative", "Self-Motivation",
+    "Self-Discipline", "Continuous Learning", "Growth Mindset", "Curiosity",
+    "Open-Mindedness", "Resourcefulness", "Flexibility", "Stress Management",
+    "Prioritization", "Goal Setting", "Planning", "Task Management",
+    "Multitasking", "Follow-Through", "Analytical Thinking", "Logical Reasoning",
+    "Strategic Thinking", "Systems Thinking", "Creative Thinking",
+    "Design Thinking", "Innovation", "Brainstorming", "Root Cause Analysis",
+    "Negotiation", "Diplomacy", "Mediation", "Consensus Building",
+    "Relationship Building", "Networking", "Stakeholder Management",
+    "Customer Focus", "Service Orientation", "Cultural Sensitivity",
+    "Diversity and Inclusion", "Team Building", "Delegation", "Facilitation",
+    "Giving Feedback", "Receiving Feedback", "People Management",
+    "Change Management", "Influencing", "Motivating Others",
+    "Remote Collaboration", "Meeting Facilitation", "Ethical Judgment",
+    "Conflict Management", "Assertiveness", "Confidence", "Humility", "Public Speaking",
+    "Positive Attitude", "Learning Agility", "Adaptability to Technology",
   ],
 };
 
 const aliases = {
+  "JavaScript": "js ecmascript es6 es2015 java script",
+  "C++": "cpp cplusplus c plus plus",
+  "C#": "csharp c sharp dotnet",
+  "F#": "fsharp f sharp",
+  "Go": "golang go language",
+  "R": "r programming rlang",
+  "Bash": "shell scripting linux shell",
+  "PowerShell": "powershell scripting pwsh",
+  "Assembly Language": "assembler asm assembly",
+  "VB.NET": "vbnet visual basic dotnet",
+  "VBA": "visual basic for applications",
+  "PL/SQL": "plsql oracle procedural sql",
+  "T-SQL": "tsql transact sql",
+  "AWS": "amazon web services",
+  "Azure": "microsoft azure",
+  "Google Cloud": "gcp google cloud platform",
+  "CI/CD": "cicd continuous integration continuous delivery deployment",
+  "Object-Oriented Programming": "oop object oriented programming",
+  "Data Structures": "dsa data structures and algorithms",
+  "End-to-End Testing": "e2e end to end testing",
+  "Natural Language Processing": "nlp",
+  "Retrieval-Augmented Generation": "rag retrieval augmented generation",
+  "Internet of Things": "iot",
+  "UI Design": "user interface design",
+  "UX Research": "user experience research",
+  "Problem Solving": "problem-solving troubleshooting",
+  "Communication": "communication skills pakikipag-usap komunikasyon",
+  "Teamwork": "team work team player pagtutulungan",
+  "Leadership": "leadership skills pamumuno",
   "React JS": "reactjs react.js",
   "Node.js": "nodejs node js",
   "Express JS": "express express.js expressjs",
@@ -318,13 +440,23 @@ const aliases = {
 
 export const normalizeSkill = (value) =>
   value.trim().toLocaleLowerCase().replace(/\s+/g, " ");
+const seen = new Map();
 const catalog = Object.entries(categories).flatMap(([category, skills]) =>
   skills.map((label) => ({
     label,
     category,
-    search: normalizeSkill(`${label} ${aliases[label] || ""}`),
+    search: normalizeSkill(`${label} ${category} ${aliases[label] || ""}`),
   })),
-);
+).filter(skill => {
+  const key = normalizeSkill(skill.label);
+  const existing = seen.get(key);
+  if (existing) {
+    existing.search += ` ${normalizeSkill(skill.category)}`;
+    return false;
+  }
+  seen.set(key, skill);
+  return true;
+});
 
 export function suggestSkills(query, selected = []) {
   const term = normalizeSkill(query);
@@ -339,6 +471,8 @@ export function suggestSkills(query, selected = []) {
     )
     .sort(
       (a, b) =>
+        Number(normalizeSkill(b.label) === term) - Number(normalizeSkill(a.label) === term) ||
+        Number((aliases[b.label] || "").split(" ").includes(term)) - Number((aliases[a.label] || "").split(" ").includes(term)) ||
         Number(normalizeSkill(b.label).startsWith(term)) -
           Number(normalizeSkill(a.label).startsWith(term)) ||
         a.label.localeCompare(b.label),

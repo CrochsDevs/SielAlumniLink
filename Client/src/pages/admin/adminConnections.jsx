@@ -4,7 +4,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AdminTabs } from "../../components/admin/AdminUI";
+import { AdminTabs, AdminButton } from "../../components/admin/AdminUI";
 import PageHeader from "../../components/ui/PageHeader";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -247,7 +247,7 @@ export default function AdminConnections() {
           title="Connections"
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="workspace-page admin-connections mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+        <main className="workspace-page admin-connections mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
           <PageHeader
             title="Connections"
             description="Select a student or alumnus to see their community connections."
@@ -349,15 +349,15 @@ export default function AdminConnections() {
                             {member.connectionsCount}
                           </td>
                           <td className="px-5 py-4 text-right">
-                            <button
+                            <AdminButton
                               type="button"
                               aria-label={`View connections of ${member.email}`}
                               onClick={() => setSelectedMember(member)}
-                              className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-brand dark:bg-zinc-800 dark:text-brand"
+                              className="connections-details-button"
                             >
                               <Eye className="h-4 w-4" />
                               Connections
-                            </button>
+                            </AdminButton>
                           </td>
                         </tr>
                       ))}

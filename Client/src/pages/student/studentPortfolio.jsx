@@ -32,6 +32,7 @@ import ResumePreview from "../../components/student/ResumePreview";
 import PortfolioContactDetails from "../../components/student/PortfolioContactDetails";
 import { readResumeTheme, validResumeTheme } from "../../utils/resumeThemes";
 import { FeedDialog } from "../../components/feed/FeedComposer";
+import { suggestSkills } from "../../components/profile/skillSuggestions";
 
 
 const SECTIONS = [
@@ -158,6 +159,10 @@ export default function StudentPortfolio() {
   };
   const [editor, setEditor] = useState(null);
   const [draft, setDraft] = useState({ title: "", desc: "" });
+  const projectDescription = useRef(null);
+  const skillSuggestions = editor?.key === "skills"
+    ? suggestSkills(draft.title, data.skills.filter((_, index) => index !== editor.index)).slice(0, 8)
+    : [];
   const [preview, setPreview] = useState(false);
   const [view, setView] = useState("resume");
   const themeKey = `portfolio-resume-theme:${user?.authId || user?._id || "guest"}`;
@@ -697,12 +702,17 @@ export default function StudentPortfolio() {
         >
           <form onSubmit={save}>
             <fieldset disabled={state.busy} className="space-y-4">
-              <p className="text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-                {editor.hint}
-              </p>
+              {editor.key === "projects" ? (
+                <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-zinc-700 dark:bg-zinc-800">
+                  <span className="rounded-lg bg-white p-2 text-brand dark:bg-zinc-900"><FolderKanban size={20} aria-hidden="true" /></span>
+                  <div><p className="text-sm font-semibold">Show what you built</p><p className="mt-1 text-xs leading-5 text-zinc-600 dark:text-zinc-400">Add a class, personal, or team project. Highlight your contribution, the tools you used, and what you achieved.</p></div>
+                </div>
+              ) : <p className="text-xs leading-6 text-zinc-500 dark:text-zinc-400">{editor.hint}</p>}
               <label className="block text-xs font-medium">
                 {editor.type === "cards" ? "Title" : "Name"} *
                 <input
+                  aria-label={editor.key === "projects" ? "Project title" : undefined}
+                  aria-describedby={editor.key === "projects" ? "project-title-hint" : undefined}
                   autoFocus
                   required
                   maxLength={editor.type === "cards" ? 200 : 300}
@@ -711,24 +721,63 @@ export default function StudentPortfolio() {
                     setDraft({ ...draft, title: event.target.value })
                   }
                   placeholder={editor.example}
-                  className={field}
+                  className={`${field} font-normal placeholder:font-normal`}
                 />
+                {editor.key === "projects" && <span className="mt-2 flex justify-between gap-3 text-[11px] font-normal text-zinc-500 dark:text-zinc-400"><span id="project-title-hint">Give your project a clear, specific name.</span><span className="shrink-0 tabular-nums" aria-hidden="true">{draft.title.length} / 200</span></span>}
               </label>
-              {editor.type === "cards" && (
+              {editor.key === "skills" && (
+                <div className="space-y-2" aria-label="Skill suggestions">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400" aria-live="polite">
+                    {skillSuggestions.length
+                      ? "Suggested skills — choose one or keep your own."
+                      : draft.title.trim()
+                        ? "No new matching suggestions. You can save your own skill name."
+                        : "Start typing to see suggested skills. You can also add your own."}
+                  </p>
+                  {skillSuggestions.length > 0 && (
+                    <ul className="grid gap-2 sm:grid-cols-2">
+                      {skillSuggestions.map(skill => (
+                        <li key={skill.label}>
+                          <button
+                            type="button"
+                            aria-label={`Use skill ${skill.label}`}
+                            onClick={() => setDraft(previous => ({ ...previous, title: skill.label }))}
+                            className="flex w-full items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left transition hover:border-brand hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-brand"
+                          >
+                            <span className="min-w-0"><span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">{skill.label}</span><span className="mt-0.5 block text-[10px] text-zinc-500 dark:text-zinc-400">{skill.category}</span></span>
+                            <Plus size={14} className="shrink-0 text-brand" aria-hidden="true" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {editor.type === "cards" && (<div>
                 <label className="block text-xs font-medium">
-                  Description
+                  Description {editor.key === "projects" && <span className="font-normal text-zinc-500">(optional)</span>}
                   <textarea
-                    rows={4}
+                    ref={editor.key === "projects" ? projectDescription : undefined}
+                    aria-label={editor.key === "projects" ? "Project description" : undefined}
+                    aria-describedby={editor.key === "projects" ? "project-description-hint" : undefined}
+                    rows={editor.key === "projects" ? 6 : 4}
                     maxLength={2000}
                     value={draft.desc}
                     onChange={(event) =>
                       setDraft({ ...draft, desc: event.target.value })
                     }
-                    placeholder="Describe your contribution, the tools you used, and the result."
-                    className={field}
+                    placeholder={editor.key === "projects" ? "What did you build? What was your role? Which tools did you use, and what was the result?" : "Describe your contribution, the tools you used, and the result."}
+                    className={`${field} resize-y font-normal leading-6 placeholder:font-normal`}
                   />
                 </label>
-              )}
+                {editor.key === "projects" && <>
+                  <div className="mt-2 flex items-start justify-between gap-3 text-[11px] text-zinc-500 dark:text-zinc-400"><p id="project-description-hint">Focus on your role and include a concrete result when possible.</p><span className="shrink-0 tabular-nums">{draft.desc.length.toLocaleString()} / 2,000</span></div>
+                  {!draft.desc.trim() && <button type="button" onClick={() => {
+                    setDraft(previous => ({ ...previous, desc: "Project overview: \nMy contribution: \nTools and technologies: \nResult: " }));
+                    requestAnimationFrame(() => projectDescription.current?.focus());
+                  }} className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"><FileText size={14} aria-hidden="true" />Use a description outline</button>}
+                </>}
+              </div>)}
               {state.error && (
                 <p role="alert" className="text-xs text-red-600">
                   {state.error}
@@ -747,7 +796,7 @@ export default function StudentPortfolio() {
                   disabled={!draft.title.trim()}
                   className={primary}
                 >
-                  {state.busy ? "Saving..." : "Save entry"}
+                  {state.busy ? "Saving..." : editor.key === "projects" ? "Save project" : "Save entry"}
                 </button>
               </div>
             </fieldset>
