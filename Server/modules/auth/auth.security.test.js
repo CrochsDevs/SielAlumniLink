@@ -81,6 +81,14 @@ test('a stale tab cannot log out the newly signed-in account', async t => {
 });
 
 test('session responses identify the auth account even when no profile exists', async t => {
+    const previousEnv = process.env.NODE_ENV;
+    const previousSameSite = process.env.COOKIE_SAME_SITE;
+    process.env.NODE_ENV = 'production';
+    process.env.COOKIE_SAME_SITE = 'none';
+    t.after(() => {
+        if (previousEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousEnv;
+        if (previousSameSite === undefined) delete process.env.COOKIE_SAME_SITE; else process.env.COOKIE_SAME_SITE = previousSameSite;
+    });
     t.mock.method(AuthModel, 'findByEmail', async () => account);
     t.mock.method(UserModel, 'findByAuthId', async () => null);
     t.mock.method(bcrypt, 'compare', async () => true);
@@ -88,6 +96,10 @@ test('session responses identify the auth account even when no profile exists', 
     const signedIn = response();
     await login({ body: { email: account.email, password: 'Fixture-password' } }, signedIn);
     assert.equal(signedIn.body.data.user.authId, account._id);
+    assert.equal(signedIn.cookies.token.options.sameSite, 'none');
+    assert.equal(signedIn.cookies.token.options.secure, true);
+    assert.equal(signedIn.cookies.token.options.httpOnly, true);
+    assert.equal(signedIn.cookies.token.options.path, '/');
     const current = response(); await getMe({ user: account }, current);
     assert.equal(current.body.data.authId, account._id);
 });

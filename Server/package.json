@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test:auth-security": "node --test --test-isolation=none modules/auth/auth.security.test.js modules/auth/auth-limits.test.js modules/users/profile-operations.test.js modules/users/profile-contact.test.js",
+    "test:auth-security": "node --test --test-isolation=none config/session-cookie.test.js modules/auth/auth.security.test.js modules/auth/auth-limits.test.js modules/users/profile-operations.test.js modules/users/profile-contact.test.js",
     "test:tracer": "node --test --test-isolation=none modules/tracer/tracer.alignment.test.js modules/tracer/tracer.graduation.test.js modules/tracer/tracer.quarter.test.js modules/tracer/tracer.period-report.test.js",
     "test:tracer:integration": "node --test --test-isolation=none modules/tracer/tracer.responses.integration.test.js",
     "test:career": "node --test --test-isolation=none modules/development/development.test.js modules/development/competency.test.js modules/development/certificates.test.js modules/employment/employment.test.js modules/mentorship/mentorship.test.js modules/mentorship/matching.test.js",
@@ -19,7 +19,8 @@
     "test:feed": "node --test modules/feed/feed.test.js",
     "test:feed:integration": "node --test modules/feed/feed.integration.test.js",
     "test:search": "node --test modules/search/search.test.js",
-    "start": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "seed:users": "node scripts/seed-users.js",
     "promote-admin": "node scripts/promote-admin.js"
   },

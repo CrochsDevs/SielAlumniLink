@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { frontendOrigins } from "../config/cors.js";
+import { protectSessionOrigin } from "../config/session-cookie.js";
 import cookieParser from "cookie-parser";
 import userRoutes from "../modules/users/users.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
@@ -44,6 +45,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(protectSessionOrigin(frontendOrigins));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

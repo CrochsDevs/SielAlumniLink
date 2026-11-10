@@ -29,6 +29,7 @@ Thumbs.db
 *.sw?
 
 # Build files
+/backups/mongodb/
 /dist
 /build
 */dist

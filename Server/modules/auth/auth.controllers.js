@@ -8,6 +8,7 @@ import { authEmail, isOTP } from './auth.validation.js';
 import { createPasswordReset, resetTokenHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, activeAccount, sessionMatches, sessionVersion } from './session-token.js';
 import { requestAccountMatches, rejectChangedAccount } from './request-account.js';
+import { sessionCookieOptions } from '../../config/session-cookie.js';
 
 const hasUsableLocalPassword = (user) => (
     user?.passwordSetupRequired === false && typeof user?.password === 'string' && user.password.length > 0
@@ -56,12 +57,7 @@ export const login = async (req, res) => {
 
         const token = signSessionToken(user);
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        res.cookie('token', token, sessionCookieOptions());
 
         // Audit trail (fire-and-forget — never blocks login).
         void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', role: user.role, ip: req.ip });
@@ -134,12 +130,7 @@ export const setupPassword = async (req, res) => {
         const updatedAuth = { ...req.user, sessionVersion: sessionVersion(req.user) + 1 };
         const jwtToken = signSessionToken(updatedAuth);
 
-        res.cookie('token', jwtToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+        res.cookie('token', jwtToken, sessionCookieOptions());
 
         const userProfile = await UserModel.findByAuthId(req.user._id);
         res.status(200).json({
@@ -213,7 +204,7 @@ export const changePassword = async (req, res) => {
         if (['student', 'alumni', 'admin'].includes(user.role)) {
             await ActivityModel.logPasswordChange({ authId: user._id });
         }
-        res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+        res.clearCookie('token', sessionCookieOptions({ persistent: false }));
 
         res.status(200).json({
             success: true,
@@ -388,11 +379,7 @@ export const logout = async (req, res) => {
             }
         }
 
-        res.clearCookie('token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
-        });
+        res.clearCookie('token', sessionCookieOptions({ persistent: false }));
         res.status(200).json({
             success: true,
             message: 'Logged out successfully'
