@@ -39,8 +39,8 @@
     gap: var(--section-gap);
   }
   .member-workspace .member-topbar:not(:where(.messages-workspace .member-topbar)) {
-    max-width: var(--workspace-max-width);
-    padding-inline: var(--page-padding);
+    max-width: none;
+    padding: 0;
   }
   .member-workspace :is(.student-sidebar, .alumni-sidebar, .admin-sidebar) {
     width: var(--sidebar-width);

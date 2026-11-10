@@ -299,7 +299,7 @@ const AlumniDashboard = () => {
 
         <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] workspace-page">
           {/* LEFT: Sieles ID card */}
-          <aside className="alumni-dashboard-rail order-2 min-w-0 space-y-3 lg:order-none lg:self-start">
+          <aside className="alumni-dashboard-rail alumni-dashboard-profile-rail order-2 min-w-0 space-y-3 lg:order-none lg:self-start">
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="h-16 overflow-hidden bg-gradient-to-r from-brand via-brand to-brand dark:from-zinc-900 dark:to-zinc-900 dark:via-zinc-900">
                 {user?.bannerImage && (
@@ -466,7 +466,7 @@ const AlumniDashboard = () => {
           </section>
 
           {/* RIGHT: Connection requests + Suggested connects */}
-          <aside className="alumni-dashboard-rail order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:self-start">
+          <aside className="alumni-dashboard-rail alumni-dashboard-community-rail order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:self-start">
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5 dark:from-zinc-900 dark:to-zinc-900">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">

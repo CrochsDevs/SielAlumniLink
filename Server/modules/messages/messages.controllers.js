@@ -1,4 +1,4 @@
-import { ConversationModel, MessageModel } from './messages.models.js';
+import { ConversationModel, MessageModel, conversationPreference } from './messages.models.js';
 import AuthModel from '../auth/auth.models.js';
 import UserModel from '../users/users.models.js';
 import ConnectionModel from '../connections/connections.models.js';
@@ -61,7 +61,7 @@ const otherParticipant = (convo, authId) =>
   (convo.participants || []).find((p) => String(p.authId) !== String(authId)) || {};
 
 const enrich = async (convo, myAuthId) => {
-  const preference = await ConversationControls.preference(convo._id, myAuthId);
+  const preference = Object.hasOwn(convo, conversationPreference) ? convo[conversationPreference] : await ConversationControls.preference(convo._id, myAuthId);
   const clearedAt = preference?.clearedAt;
   const incoming = await MessageModel.latestIncoming(convo._id, myAuthId, clearedAt);
   const preview = { preview: incoming ? incoming.unsent ? 'Message deleted' : incoming.text ||

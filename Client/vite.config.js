@@ -25,6 +25,7 @@ const reloadChatHooks = {
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: { manifest: true },
   plugins: [react(), reloadChatHooks],
   resolve: {
     alias: {

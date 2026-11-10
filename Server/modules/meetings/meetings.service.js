@@ -5,7 +5,7 @@ import { createCertificateService } from '../development/certificates.service.js
 import { createActivityService, registrationId } from '../events/events.registration.js';
 import { meetingAccessWindow, requireMeetingAccess } from './meetings.policy.js';
 
-export const MEETING_LIMIT = 8;
+export const MEETING_LIMIT = 100;
 export const recordId = registrationId;
 export const attendanceId = (authId, title, date) => new ObjectId(createHash('sha256').update(JSON.stringify([String(authId), title.toLowerCase(), date])).digest('hex').slice(0, 24));
 const adminOnly = user => { if (user.role !== 'admin') fail(403, 'Only administrators can host meetings'); };
@@ -52,7 +52,7 @@ export function createMeetingService(db, { now = () => Date.now() } = {}) {
       if (meeting?.state !== 'active') fail(409, 'Wait for an administrator to start the meeting');
       if (meeting.blockedAuthIds?.includes(String(user._id))) fail(403, 'You have been removed from this meeting');
       const profile = await profileFor(user);
-      return { event, meeting, name: profile?.name || user.email };
+      return { event, meeting, name: profile?.name || user.email, profilePicture: profile?.profilePicture || '' };
     },
     async recordVisit(user, event, sessionId, joinedAt, leftAt = now()) {
       if (!['student', 'alumni'].includes(user.role)) return;

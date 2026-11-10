@@ -1,7 +1,7 @@
 import { createElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Briefcase, FileText, CalendarDays, BarChart3,
+  LayoutDashboard, LayoutGrid, Briefcase, FileText, CalendarDays, BarChart3,
   ClipboardList, Trophy, UserPlus, MessageSquare, Settings, LogOut, X,
 } from "lucide-react";
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
@@ -23,6 +23,7 @@ const menuGroups = [
   { label: "Community", items: [
     { to: "/alumni/success", label: "Success Stories", icon: Trophy, aliases: ["/stories"] },
     { to: "/alumni/events", label: "Events", icon: CalendarDays },
+    { to: "/activities", label: "Activities", icon: LayoutGrid },
     { to: "/alumni/surveys", label: "Surveys", icon: FileText },
     { to: "/alumni/requests", label: "Requests", icon: UserPlus },
     { to: "/alumni/message", label: "Messages", icon: MessageSquare },

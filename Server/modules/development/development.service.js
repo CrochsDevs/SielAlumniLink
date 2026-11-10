@@ -28,14 +28,19 @@ export const createDevelopmentService = db => {
       competencies.get(user),
       certificates.listMine(user),
     ]);
-    const mentors = [];
-    for (const connection of connections) {
+    const peers = connections.map(connection => {
       const isFrom = String(connection.requesterAuthId) === authId || connection.requesterEmail === user.email;
       const other = isFrom ? connection.recipientAuthId : connection.requesterAuthId;
       const email = isFrom ? connection.recipientEmail : connection.requesterEmail;
-      const account = await db.collection('auth').findOne({ $or: [{ _id: { $in: idValues(other) } }, { email }] });
-      if (String(account?.role).toLowerCase() === 'alumni') mentors.push(connection);
-    }
+      return { connection, other, email };
+    });
+    const accounts = peers.length ? await db.collection('auth').find({ $or: [
+      { _id: { $in: [...new Set(peers.map(peer => String(peer.other)).filter(id => id !== 'undefined' && id !== 'null'))].flatMap(idValues) } },
+      { email: { $in: [...new Set(peers.map(peer => peer.email).filter(Boolean))] } },
+    ] }, { projection: { role: 1, email: 1 } }).toArray() : [];
+    const byId = new Map(accounts.map(account => [String(account._id), account]));
+    const byEmail = new Map(accounts.map(account => [account.email, account]));
+    const mentors = peers.filter(peer => String((byId.get(String(peer.other)) || byEmail.get(peer.email))?.role).toLowerCase() === 'alumni').map(peer => peer.connection);
     const portfolio = Object.fromEntries(PORTFOLIO_SECTIONS.map(section => {
       const entries = storedPortfolio?.[section] ?? profile?.[section];
       return [section, Array.isArray(entries) ? entries : []];

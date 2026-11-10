@@ -37,7 +37,7 @@ import DataPagination from "../ui/data-pagination";
 import { FeedDialog } from "../feed/FeedComposer";
 import PageHeader from "../ui/PageHeader";
 import CareerSearch from "./CareerSearch";
-import OpportunityEditor from "./OpportunityEditor";
+import OpportunityEditor from "./LazyOpportunityEditor";
 import JobDescription from "./JobDescription";
 import { descriptionText } from "./description";
 import "./CareerBoard.css";

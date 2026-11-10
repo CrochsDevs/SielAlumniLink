@@ -20,7 +20,7 @@ import { useAuth } from "../../context/useAuth";
 import api from "../../utils/axios";
 import { formatTime } from "./messageFormat";
 import MessageThread from "./MessageThread";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker from "./LazyEmojiPicker";
 import ChatAvatar from "./ChatAvatar";
 import PresenceBadge from './PresenceBadge';
 import { presenceLabel, presenceTextColor } from './presenceStatus';

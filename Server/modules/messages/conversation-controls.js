@@ -11,6 +11,12 @@ export function createConversationControls(db) {
     preference(conversationId, authId) {
       return preferences.findOne({ _id: key(conversationId, authId) });
     },
+    async preferencesFor(conversationIds, authId) {
+      if (!conversationIds.length) return new Map();
+      const rows = await preferences.find({ _id: { $in: conversationIds.map(id => key(id, authId)) } }).toArray();
+      const byKey = new Map(rows.map(row => [row._id, row]));
+      return new Map(conversationIds.map(id => [String(id), byKey.get(key(id, authId)) || null]));
+    },
     async clear(conversationId, authId) {
       const clearedAt = new Date();
       const filter = { _id: key(conversationId, authId) };

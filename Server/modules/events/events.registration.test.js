@@ -7,6 +7,39 @@ import { validateEvent, validateRegistrationWindow } from './events.policy.js';
 const id = String(event._id);
 const activity = { ...event, startAt: new Date('2025-02-15T09:00:00+08:00'), endAt: new Date('2025-02-15T12:00:00+08:00'), registrationLimited: true, registrationOpensAt: new Date('2025-02-14T08:00:00+08:00'), registrationClosesAt: new Date('2025-02-15T08:00:00+08:00') };
 
+test('event descriptions preserve rich text and distinguish legacy plain text', () => {
+  const description = '<h2>Agenda</h2><ul><li><p><strong>Research seminar</strong></p></li></ul>';
+  assert.deepEqual(validateEvent({ description, descriptionFormat: 'html' }, true), { description, descriptionFormat: 'html' });
+  assert.deepEqual(validateEvent({ description: 'First line\nSecond line' }, true), { description: 'First line\nSecond line' });
+  assert.throws(() => validateEvent({ descriptionFormat: 'unsupported' }, true), error => error.status === 400);
+  // Formatting markup has a separate storage allowance from plain descriptions.
+  assert.equal(validateEvent({ description: `<p>${'a'.repeat(6000)}</p>`, descriptionFormat: 'html' }, true).descriptionFormat, 'html');
+  assert.throws(() => validateEvent({ description: 'a'.repeat(50001), descriptionFormat: 'html' }, true), error => error.status === 400);
+});
+
+test('published activity descriptions retain admin formatting in every audience listing', async () => {
+  const { db, seed } = createMemoryDb();
+  const description = '<h2>Seminar agenda</h2><p><strong>Welcome</strong><br><em>Bring your ID</em></p><ol start="3"><li><p>Registration</p></li></ol><p><a href="https://example.com">Details</a></p>';
+  seed('events', { ...event, description, descriptionFormat: 'html' });
+  const service = createActivityService(db);
+  for (const user of [host, student, { ...stranger, role: 'alumni' }]) {
+    const published = (await service.list(user))[0];
+    assert.equal(published.description, description);
+    assert.equal(published.descriptionFormat, 'html');
+  }
+});
+
+test('activity listings put the newest post first regardless of schedule or later edits', async () => {
+  const { db, seed } = createMemoryDb();
+  seed('events', { ...event, title: 'Older post', createdAt: new Date('2026-11-01'), updatedAt: new Date('2026-11-10'), startAt: new Date('2026-11-09') });
+  seed('events', { ...event, _id: '222222222222222222222222', title: 'Newest post', createdAt: new Date('2026-11-09'), startAt: new Date('2026-12-01') });
+  seed('events', { ...event, _id: '333333333333333333333333', title: 'Middle post', createdAt: new Date('2026-11-05'), startAt: new Date('2026-10-01') });
+  const service = createActivityService(db);
+  for (const user of [host, student, { ...stranger, role: 'alumni' }]) {
+    assert.deepEqual((await service.list(user)).map(item => item.title), ['Newest post', 'Middle post', 'Older post']);
+  }
+});
+
 test('registration settings validate optional opening, required deadline, chronology, and activity end', () => {
   const input = { ...activity, startAt: activity.startAt.toISOString(), endAt: activity.endAt.toISOString(), registrationOpensAt: activity.registrationOpensAt.toISOString(), registrationClosesAt: activity.registrationClosesAt.toISOString() };
   assert.equal(validateEvent(input).registrationLimited, true);

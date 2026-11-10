@@ -67,7 +67,6 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [scrollHidden, setScrollHidden] = useState(false);
   const {
     convos,
     conversationsLoading,
@@ -91,26 +90,6 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   const chatButtonRef = useRef(null);
   const notifRef = useRef(null);
   const notifButtonRef = useRef(null);
-
-  useEffect(() => {
-    let previousY = Math.max(0, window.scrollY);
-    const reset = requestAnimationFrame(() => setScrollHidden(false));
-    const onScroll = () => {
-      const currentY = Math.max(0, window.scrollY);
-      if (currentY <= 80) {
-        setScrollHidden(false);
-        previousY = currentY;
-      } else if (Math.abs(currentY - previousY) >= 8) {
-        setScrollHidden(currentY > previousY);
-        previousY = currentY;
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(reset);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [location.pathname]);
 
   useEffect(() => {
     if (chatOpen) refreshConvos();
@@ -158,9 +137,9 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
   };
 
   return (
-    <div className={`member-topbar ${scrollHidden && !dropdownOpen && !chatOpen && !notifOpen ? "is-scroll-hidden" : ""} sticky top-3 z-10 mx-auto max-w-7xl px-4 pt-3 sm:px-6`}>
+    <div className="member-topbar sticky top-0 z-10 w-full">
       <header
-        className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand/10 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 px-3 py-3 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-4 sm:py-0"
+        className="flex flex-wrap items-center gap-3 border-b border-brand/10 dark:border-zinc-700 bg-white/95 dark:bg-zinc-900/95 px-4 py-3 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-6 sm:py-0"
         style={{
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
         }}

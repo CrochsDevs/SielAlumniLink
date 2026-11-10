@@ -10,6 +10,7 @@ import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
 import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import CertificatePreview from "../../components/student/CertificatePreview";
 import api from "../../utils/axios";
+import useVisiblePolling from "../../hooks/useVisiblePolling";
 
 const card =
   "admin-panel";
@@ -46,9 +47,8 @@ export default function AdminActivityAttendance() {
   }, [eventId]);
   useEffect(() => {
     Promise.resolve().then(load);
-    const timer = setInterval(load, 15000);
-    return () => clearInterval(timer);
   }, [load]);
+  useVisiblePolling(load, 15000);
   const submit = async (person, action) => {
     if (posting.current) return;
     posting.current = true;

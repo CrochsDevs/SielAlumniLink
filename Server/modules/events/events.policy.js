@@ -7,7 +7,11 @@ export function validateRegistrationWindow(event) {
 }
 export function validateEvent(input, partial = false) {
   const result = {};
-  for (const [key, max, required] of [['title', 300, true], ['description', 5000, false], ['location', 300, false], ['organizer', 200, false]]) {
+  if (!partial || input.descriptionFormat !== undefined) {
+    result.descriptionFormat = input.descriptionFormat || 'text';
+    if (!['text', 'html'].includes(result.descriptionFormat)) fail(400, 'Choose a valid description format');
+  }
+  for (const [key, max, required] of [['title', 300, true], ['description', input.descriptionFormat === 'html' ? 50000 : 5000, false], ['location', 300, false], ['organizer', 200, false]]) {
     if (!partial || input[key] !== undefined) result[key] = text(input[key], key, max, required);
   }
   for (const [key, values, fallback] of [['activityType', ['event', 'training', 'seminar'], 'event'], ['deliveryMode', ['onsite', 'online'], 'onsite']]) {

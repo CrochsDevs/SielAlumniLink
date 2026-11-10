@@ -37,7 +37,7 @@ export function createActivityService(db, { now = () => Date.now() } = {}) {
   return {
     eventFor, registrationFor, details,
     async list(user, { all = false } = {}) {
-      const list = await events.find(user.role === 'admin' && all ? {} : { isActive: true }).sort({ startAt: 1 }).toArray();
+      const list = await events.find(user.role === 'admin' && all ? {} : { isActive: true }).sort({ createdAt: -1, _id: -1 }).toArray();
       const [mine, meetings] = await Promise.all([
         registrations.find({ authId: String(user._id) }).toArray(),
         sessions.find({ _id: { $in: list.map(event => String(event._id)) } }).toArray(),

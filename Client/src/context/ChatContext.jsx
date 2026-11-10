@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ChatContext } from "./chat-context.js";
 import { gooeyToast as toast } from 'goey-toast';
 import api from "../utils/axios";
 import { getSocket } from "../realtime/socket";
 import { useAuth } from "./useAuth";
-import ChatDock from "../components/chat/ChatDock";
 import CallManager from "../components/call/CallManager";
 import GroupCallProvider from "../components/call/GroupCallProvider";
 import { mergeMessageHistory } from '../components/chat/messageDelivery';
 import { messageUploadBody } from '../utils/chatAttachments';
 import { useChatPresence } from '../realtime/useChatPresence';
+
+const ChatDock = lazy(() => import("../components/chat/ChatDock"));
 
 const toInitial = (name, email) =>
   (name || email || "U").charAt(0).toUpperCase();
@@ -607,7 +608,7 @@ export const ChatProvider = ({ children }) => {
     >
       <GroupCallProvider key={myAuthId || "signed-out"} user={user}>
       {children}
-      <ChatDock
+      {openChats.length > 0 && <Suspense fallback={null}><ChatDock
         windows={openChats.map((window) => ({
           ...window,
           convo:
@@ -620,7 +621,7 @@ export const ChatProvider = ({ children }) => {
         onSend={sendChat}
         onEdit={editChatMessage}
         onUnsend={unsendChatMessage}
-      />
+      /></Suspense>}
       <CallManager
         getProfilePicture={(authId, email) => {
           const found = convos.find(conversation => !conversation.isGroup && (

@@ -1,10 +1,14 @@
-import { Building2, CalendarDays, Clock, MapPin, Video } from "lucide-react";
+import { Building2, CalendarDays, Clock, MapPin, Video, Pencil, ClipboardCheck } from "lucide-react";
 import { FeedDialog } from "../feed/FeedComposer";
 import ActivityAccess from "../student/ActivityAccess";
+import EventDescription from "./EventDescription";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 import { activityLabel, activityStyle, calendarDate, dateLabel, eventDateTime } from "../../utils/eventCalendar";
 import "./ActivityDetails.css";
 
 export default function ActivityDetails({ event, onClose, onRegistered }) {
+  const { user } = useAuth();
   const date = calendarDate(event.startAt);
   const online = event.deliveryMode === "online";
   return (
@@ -23,7 +27,7 @@ export default function ActivityDetails({ event, onClose, onRegistered }) {
           </div>
           <div className="activity-details-summary">
             <div className="activity-details-badges">
-              <span className={`activity-details-type ${activityStyle(event).card}`}>{activityLabel(event)}</span>
+              <span data-activity-type={event.activityType || "event"} className={`activity-details-type ${activityStyle(event).card}`}>{activityLabel(event)}</span>
               <span className="activity-details-mode">{online ? <Video size={12} /> : <MapPin size={12} />}{online ? "Online" : "On-site"}</span>
             </div>
             <h3>{event.title}</h3>
@@ -44,12 +48,16 @@ export default function ActivityDetails({ event, onClose, onRegistered }) {
 
         {event.description && <section className="activity-details-about">
           <h4>About this activity</h4>
-          <p>{event.description}</p>
+          <EventDescription event={event} />
         </section>}
       </div>
       <div className="activity-details-access">
-        <h4>Registration &amp; access</h4>
-        <ActivityAccess event={event} onRegistered={onRegistered} />
+        <h4>{user?.role === "admin" ? "Manage activity" : "Registration & access"}</h4>
+        {user?.role === "admin" ? <div className="flex flex-wrap gap-3">
+          <Link to={`/admin/events?edit=${encodeURIComponent(event._id)}`} className="events-button activity-admin-action activity-admin-edit"><Pencil size={15} />Edit activity</Link>
+          <Link to={`/admin/events/${event._id}/attendance`} className="events-button activity-admin-action activity-admin-attendance"><ClipboardCheck size={15} />Manage attendance</Link>
+          {online && <Link to={`/meetings/${event._id}`} className="events-button activity-admin-action activity-admin-meeting"><Video size={15} />Open meeting</Link>}
+        </div> : <ActivityAccess event={event} onRegistered={onRegistered} />}
       </div>
     </FeedDialog>
   );

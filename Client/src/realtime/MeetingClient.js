@@ -1,5 +1,6 @@
 import { getSocket } from "./socket";
 import api from "../utils/axios";
+import { createMeetingJoinSound } from "./meetingJoinSound";
 
 // New arrivals offer to the existing peers. Each pair has a single offerer.
 export default class MeetingClient {
@@ -8,6 +9,8 @@ export default class MeetingClient {
     this.namespace = namespace;
     this.joinInput = joinInput || { eventId };
     this.socket = getSocket();
+    this.joinSound = createMeetingJoinSound();
+    this.chatVisible = false;
     this.listeners = new Set();
     this.peers = new Map();
     this.local = new MediaStream();
@@ -26,6 +29,7 @@ export default class MeetingClient {
       self: null,
       peers: [],
       messages: [],
+      unreadChat: 0,
       stream: this.local,
       mic: false,
       camera: false,
@@ -47,13 +51,17 @@ export default class MeetingClient {
           void this.stopSharing({ release: false }).catch(() => this.update({ error: 'Unable to restore your camera. Please rejoin the call.' }));
         }
       },
-      "meeting:peer-joined": (peer) =>
+      "meeting:peer-joined": (peer) => {
+        if (!this.active || peer.id === this.state.self?.id) return;
+        const newArrival = this.state.joined && !this.state.peers.some(item => item.id === peer.id);
         this.update({
           peers: [
             ...this.state.peers.filter((item) => item.id !== peer.id),
             peer,
           ],
-        }),
+        });
+        if (newArrival && this.namespace === "meeting") this.joinSound.play();
+      },
       "meeting:peer-updated": (peer) => {
         if (this.state.self?.id === peer.id) return;
         this.update({
@@ -76,10 +84,14 @@ export default class MeetingClient {
               "A participant connection failed. Leave and rejoin to retry.",
           }),
         ),
-      "meeting:chat": (message) =>
+      "meeting:chat": (message) => {
+        if (!this.active || !this.state.joined || this.state.messages.some(item => item.id === message.id)) return;
+        const ownMessage = this.state.self?.id && message.id.startsWith(`${this.state.self.id}:`);
         this.update({
           messages: [...this.state.messages, message].slice(-100),
-        }),
+          unreadChat: this.state.unreadChat + (!this.chatVisible && !ownMessage ? 1 : 0),
+        });
+      },
       "meeting:ended": ({ reason }) => {
         this.cleanupMedia();
         this.update({ joined: false, notice: reason, peers: [] });
@@ -103,6 +115,10 @@ export default class MeetingClient {
     return () => this.listeners.delete(listener);
   };
   snapshot = () => this.state;
+  setChatVisible(visible) {
+    this.chatVisible = visible;
+    if (visible && this.state.unreadChat) this.update({ unreadChat: 0 });
+  }
   update(patch) {
     if (!this.active) return;
     this.state = { ...this.state, ...patch };
@@ -151,6 +167,7 @@ export default class MeetingClient {
   }
   async join(host) {
     if (this.joining || this.state.joined) return;
+    if (this.namespace === "meeting") this.joinSound.unlock();
     this.joining = true;
     this.update({ busy: true, error: "", notice: "" });
     try {
@@ -171,6 +188,7 @@ export default class MeetingClient {
         self: info.self,
         peers: info.peers,
         messages: info.messages,
+        unreadChat: 0,
       });
       this.status();
       await Promise.all(
@@ -428,6 +446,9 @@ export default class MeetingClient {
     }
   }
   cleanupMedia() {
+    this.chatVisible = false;
+    this.update({ unreadChat: 0 });
+    this.joinSound.stop();
     this.mediaGeneration++;
     this.peers.forEach(({ pc }) => pc.close());
     this.peers.clear();
@@ -464,5 +485,6 @@ export default class MeetingClient {
     );
     if (this.state.joined || this.joining) this.emit("meeting:leave");
     this.cleanupMedia();
+    this.joinSound.destroy();
   }
 }

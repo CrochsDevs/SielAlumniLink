@@ -1,9 +1,10 @@
 dialog.alumni-activity-dialog {
   --activity-surface: #fff;
-  --activity-soft: #f3f6f4;
-  --activity-line: #dce5df;
+  --activity-soft: #edf7f0;
+  --activity-line: #bfd5c6;
+  --activity-panel-shadow: 0 2px 5px rgb(26 68 42 / 10%), 0 6px 16px rgb(26 68 42 / 10%);
   --activity-ink: #20332a;
-  --activity-muted: #687c6e;
+  --activity-muted: #52675a;
   max-width: 620px;
   max-height: 90dvh;
   padding: 0;
@@ -11,32 +12,31 @@ dialog.alumni-activity-dialog {
   border-radius: 20px;
   background: var(--activity-surface);
   color: var(--activity-ink);
-  box-shadow: 0 12px 50px rgb(0 0 0 / 24%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 30%), 0 12px 30px rgb(0 0 0 / 22%), 0 28px 70px rgb(0 0 0 / 28%);
 }
-.dark dialog.alumni-activity-dialog { --activity-surface: var(--dark-surface); --activity-soft: var(--dark-control); --activity-line: var(--dark-border); --activity-ink: var(--dark-text); --activity-muted: var(--dark-muted); }
+.dark dialog.alumni-activity-dialog { --activity-surface: var(--dark-surface); --activity-soft: #253b2d; --activity-line: #4b6353; --activity-ink: var(--dark-text); --activity-muted: #b8c9bd; --activity-panel-shadow: 0 2px 6px rgb(0 0 0 / 25%), 0 8px 18px rgb(0 0 0 / 28%); }
 .alumni-activity-dialog::backdrop { background: rgb(15 25 19 / 58%); backdrop-filter: blur(4px); }
-.alumni-activity-dialog > div:first-child { position: sticky; top: 0; z-index: 2; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--activity-line); background: var(--activity-surface); }
+.alumni-activity-dialog > div:first-child { position: sticky; top: 0; z-index: 2; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--activity-line); background: var(--activity-soft); box-shadow: 0 3px 10px rgb(26 68 42 / 10%); }
 .alumni-activity-dialog .activity-dialog-heading { display: flex; align-items: center; gap: 11px; }
-.alumni-activity-dialog .activity-dialog-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--activity-line); border-radius: 11px; background: var(--activity-soft); color: hsl(var(--primary)); }
+.alumni-activity-dialog .activity-dialog-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--activity-line); border-radius: 11px; background: var(--activity-surface); color: hsl(var(--primary)); box-shadow: var(--activity-panel-shadow); }
 .alumni-activity-dialog .activity-dialog-heading p { margin-bottom: 2px; color: var(--activity-muted); font-size: 10px; line-height: 14px; }
 .alumni-activity-dialog .activity-dialog-heading h3 { margin: 0; color: var(--activity-ink); font-size: 14px; line-height: 20px; font-weight: 600; }
-.alumni-activity-dialog > div:first-child > button { width: 32px; height: 32px; border: 1px solid var(--activity-line); border-radius: 9px; background: var(--activity-soft); color: var(--activity-muted); }
+.alumni-activity-dialog > div:first-child > button { width: 32px; height: 32px; border: 1px solid var(--activity-line); border-radius: 9px; background: var(--activity-surface); color: var(--activity-muted); box-shadow: var(--activity-panel-shadow); }
 .alumni-activity-dialog .activity-details-body { padding: 24px; }
 .alumni-activity-dialog .activity-details-hero { display: flex; align-items: flex-start; gap: 16px; padding-bottom: 22px; }
-.alumni-activity-dialog .activity-details-date { display: flex; flex-direction: column; flex-shrink: 0; align-items: center; width: 64px; padding: 8px 6px; border: 1px solid var(--activity-line); border-radius: 12px; background: var(--activity-soft); box-shadow: 0 2px 7px rgb(0 0 0 / 7%); }
+.alumni-activity-dialog .activity-details-date { display: flex; flex-direction: column; flex-shrink: 0; align-items: center; width: 64px; padding: 8px 6px; border: 1px solid var(--activity-line); border-radius: 12px; background: var(--activity-soft); box-shadow: var(--activity-panel-shadow); }
 .alumni-activity-dialog .activity-details-date > span { color: hsl(var(--primary)); font-size: 10px; line-height: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .alumni-activity-dialog .activity-details-date strong { color: var(--activity-ink); font-size: 26px; line-height: 32px; font-weight: 600; }
 .alumni-activity-dialog .activity-details-date small { color: var(--activity-muted); font-size: 10px; line-height: 15px; }
 .alumni-activity-dialog .activity-details-summary { min-width: 0; flex: 1; }
 .alumni-activity-dialog .activity-details-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 9px; }
 .alumni-activity-dialog .activity-details-type { padding: 3px 8px; border: 1px solid; border-radius: 6px; font-size: 10px; line-height: 16px; font-weight: 600; }
-.alumni-activity-dialog .activity-details-mode { display: inline-flex; align-items: center; gap: 4px; color: var(--activity-muted); font-size: 10px; }
+.alumni-activity-dialog .activity-details-mode { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid var(--activity-line); border-radius: 6px; background: var(--activity-soft); color: var(--activity-ink); font-size: 10px; }
 .alumni-activity-dialog .activity-details-summary h3 { margin: 0; color: var(--activity-ink); font-size: 19px; line-height: 27px; font-weight: 600; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .alumni-activity-dialog .activity-details-organizer { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; color: var(--activity-muted); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
 .alumni-activity-dialog .activity-details-organizer svg { flex-shrink: 0; margin-top: 2px; }
-.alumni-activity-dialog .activity-details-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--activity-line); border-radius: 12px; background: var(--activity-soft); }
-.alumni-activity-dialog .activity-details-fact { padding: 16px; min-width: 0; }
-.alumni-activity-dialog .activity-details-fact + .activity-details-fact { border-left: 1px solid var(--activity-line); }
+.alumni-activity-dialog .activity-details-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.alumni-activity-dialog .activity-details-fact { padding: 16px; min-width: 0; border: 1px solid var(--activity-line); border-radius: 12px; background: var(--activity-soft); box-shadow: var(--activity-panel-shadow); }
 .alumni-activity-dialog .activity-details-fact dt { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; color: var(--activity-muted); font-size: 11px; font-weight: 500; }
 .alumni-activity-dialog .activity-details-fact dt svg { color: hsl(var(--primary)); }
 .alumni-activity-dialog .activity-details-fact dd { color: var(--activity-ink); font-size: 12px; line-height: 21px; font-weight: 500; overflow-wrap: anywhere; }
@@ -45,11 +45,30 @@ dialog.alumni-activity-dialog {
 .alumni-activity-dialog .activity-details-about { margin-top: 22px; }
 .alumni-activity-dialog :is(.activity-details-about, .activity-details-access) > h4 { margin-bottom: 9px; color: var(--activity-ink); font-size: 12px; font-weight: 600; }
 .alumni-activity-dialog .activity-details-about > p { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--activity-muted); font-size: 12px; line-height: 23px; }
-.alumni-activity-dialog .activity-details-access { position: sticky; bottom: 0; padding: 18px 24px; border-top: 1px solid var(--activity-line); background: var(--activity-surface); box-shadow: 0 -3px 12px rgb(0 0 0 / 4%); }
+.alumni-activity-dialog .activity-details-access { position: sticky; bottom: 0; padding: 18px 24px; border-top: 1px solid var(--activity-line); background: var(--activity-soft); box-shadow: 0 -4px 16px rgb(26 68 42 / 12%); }
 .alumni-activity-dialog .activity-details-access > div { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-top: 0; border-top: 0; }
 .alumni-activity-dialog .activity-details-access > div > * { margin-top: 0; }
 .alumni-activity-dialog .activity-details-access > div > p { flex: 1 1 220px; }
 .alumni-activity-dialog .activity-details-access > div > :is(button, a) { justify-content: center; min-height: 38px; padding-inline: 18px; border-radius: 9px; font-size: 12px; }
+.alumni-activity-dialog .activity-admin-action { display: inline-flex; align-items: center; gap: 8px; color: #fff; border-color: transparent; font-weight: 600; transition: background-color 150ms ease; }
+.alumni-activity-dialog .activity-admin-edit { background: #2563eb; }
+.alumni-activity-dialog .activity-admin-edit:hover { background: #1d4ed8; }
+.alumni-activity-dialog .activity-admin-attendance { background: #7c3aed; }
+.alumni-activity-dialog .activity-admin-attendance:hover { background: #6d28d9; }
+.alumni-activity-dialog .activity-admin-meeting { background: #008c35; }
+.alumni-activity-dialog .activity-admin-meeting:hover { background: #00752c; }
+.alumni-activity-dialog .activity-admin-action:focus-visible { outline: 2px solid var(--activity-ink); outline-offset: 3px; }
+.alumni-activity-dialog .activity-details-type[data-activity-type="seminar"] { background: #fff0ca; color: #805000; border-color: #dfb85c; }
+.alumni-activity-dialog .activity-details-type[data-activity-type="training"] { background: #ede5ff; color: #6337a6; border-color: #b49adf; }
+.alumni-activity-dialog .activity-details-type[data-activity-type="event"] { background: #deefff; color: #155b8b; border-color: #8ebadc; }
+.alumni-activity-dialog .activity-registration-status { flex: 0 0 auto; padding: 6px 10px; border: 1px solid #a5ceaf; border-radius: 8px; background: #def3e4; color: #156b32; box-shadow: 0 2px 5px rgb(26 68 42 / 10%); }
+.alumni-activity-dialog .activity-details-access > div > :is(button, a):not(:disabled) { box-shadow: var(--activity-panel-shadow); }
+.alumni-activity-dialog .activity-details-access > div > button:disabled { border: 1px solid #c4ccc7; background: #e4e9e6; color: #59665e; box-shadow: inset 0 1px 2px rgb(26 68 42 / 7%); }
+.dark .alumni-activity-dialog .activity-details-type[data-activity-type="seminar"] { background: #4b391b; color: #ffe09a; border-color: #8f743c; }
+.dark .alumni-activity-dialog .activity-details-type[data-activity-type="training"] { background: #392850; color: #dfc5ff; border-color: #795b9a; }
+.dark .alumni-activity-dialog .activity-details-type[data-activity-type="event"] { background: #203e55; color: #b8e0ff; border-color: #527f9f; }
+.dark .alumni-activity-dialog .activity-registration-status { background: #20482e; color: #9be9b2; border-color: #4c8059; }
+.dark .alumni-activity-dialog .activity-details-access > div > button:disabled { background: #343b37; color: #b4c0b8; border-color: #59645d; }
 @media (max-width: 479px) {
   .alumni-activity-dialog > div:first-child { padding: 12px 16px; }
   .alumni-activity-dialog .activity-details-body { padding: 18px 16px; }
@@ -57,7 +76,6 @@ dialog.alumni-activity-dialog {
   .alumni-activity-dialog .activity-details-date { width: 54px; }
   .alumni-activity-dialog .activity-details-summary h3 { font-size: 17px; line-height: 24px; }
   .alumni-activity-dialog .activity-details-facts { grid-template-columns: minmax(0, 1fr); }
-  .alumni-activity-dialog .activity-details-fact + .activity-details-fact { border-left: 0; border-top: 1px solid var(--activity-line); }
   .alumni-activity-dialog .activity-details-access { position: static; padding: 16px; }
   .alumni-activity-dialog .activity-details-access > div > :is(button, a) { width: 100%; }
 }

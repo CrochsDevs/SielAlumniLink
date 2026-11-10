@@ -5,6 +5,8 @@ import StudentSidebar from "../../layout/sidebar/student/studentSidebar";
 import StudentTopbar from "../../layout/topbar/student/studentTopbar";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
+import AdminSidebar from "../../layout/sidebar/admin/adminSidebar";
+import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 
 export const developmentCard =
   "rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900";
@@ -40,17 +42,18 @@ export default function DevelopmentShell({ title, children }) {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const alumni = user?.role === "alumni";
+  const admin = user?.role === "admin";
   return (
     <div
-      className={`${alumni ? "" : "student-page "}min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}
+      className={`${alumni || admin ? "" : "student-page "}min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}
     >
-      {createElement(alumni ? AlumniSidebar : StudentSidebar, {
+      {createElement(admin ? AdminSidebar : alumni ? AlumniSidebar : StudentSidebar, {
         user,
         mobileOpen: sidebarOpen,
         setMobileOpen: setSidebarOpen,
       })}
       <div className="lg:pl-64">
-        {createElement(alumni ? AlumniTopbar : StudentTopbar, {
+        {createElement(admin ? AdminTopbar : alumni ? AlumniTopbar : StudentTopbar, {
           user,
           title,
           onMenuClick: () => setSidebarOpen(true),

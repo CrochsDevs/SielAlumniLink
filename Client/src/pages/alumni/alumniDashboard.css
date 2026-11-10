@@ -28,3 +28,25 @@
 .alumni-suggested-connect:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .alumni-suggested-connect:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .alumni-suggested-connect { transition: none; } }
+@media (min-width: 1024px) {
+  .alumni-dashboard-profile-rail {
+    position: sticky;
+    top: 100px;
+    max-height: calc(100dvh - 116px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 8px;
+    margin: -8px;
+  }
+}
+@media (min-width: 1280px) {
+  .alumni-dashboard-community-rail {
+    position: sticky;
+    top: 100px;
+    max-height: calc(100dvh - 116px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 8px;
+    margin: -8px;
+  }
+}

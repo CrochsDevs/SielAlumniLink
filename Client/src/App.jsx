@@ -1,4 +1,4 @@
-import React, { useLayoutEffect } from "react";
+import React, { lazy, Suspense, useLayoutEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,63 +14,63 @@ import GraduationCapLoader from "./components/ui/GraduationCapLoader";
 import { PageSkeleton } from "./components/ui/Skeleton";
 import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
 
-import AdminDashboard from "./pages/admin/adminDashboard";
-import AdminUsers from "./pages/admin/adminUsers";
-import AdminAuditLogs from "./pages/admin/adminAuditLogs";
-import AdminTracer from "./pages/admin/adminTracer";
-import AdminJobs from "./pages/admin/adminJobs";
-import CareerOpportunityPage from "./pages/CareerOpportunityPage";
-import AdminSurveys from "./pages/admin/adminSurveys";
-import AdminEvents from "./pages/admin/adminEvents";
-import AdminCertificates from "./pages/admin/adminCertificates";
-import AdminActivityAttendance from "./pages/admin/adminActivityAttendance";
-import AdminConnections from "./pages/admin/adminConnections";
-import AdminAnnouncements from "./pages/admin/adminAnnouncements";
-import AdminMessage from "./pages/admin/adminMessage";
-import Settings from "./pages/admin/Settings";
+const AdminDashboard = lazy(() => import("./pages/admin/adminDashboard"));
+const AdminUsers = lazy(() => import("./pages/admin/adminUsers"));
+const AdminAuditLogs = lazy(() => import("./pages/admin/adminAuditLogs"));
+const AdminTracer = lazy(() => import("./pages/admin/adminTracer"));
+const AdminJobs = lazy(() => import("./pages/admin/adminJobs"));
+const CareerOpportunityPage = lazy(() => import("./pages/CareerOpportunityPage"));
+const AdminSurveys = lazy(() => import("./pages/admin/adminSurveys"));
+const AdminEvents = lazy(() => import("./pages/admin/adminEvents"));
+const AdminCertificates = lazy(() => import("./pages/admin/adminCertificates"));
+const AdminActivityAttendance = lazy(() => import("./pages/admin/adminActivityAttendance"));
+const AdminConnections = lazy(() => import("./pages/admin/adminConnections"));
+const AdminAnnouncements = lazy(() => import("./pages/admin/adminAnnouncements"));
+const AdminMessage = lazy(() => import("./pages/admin/adminMessage"));
+const Settings = lazy(() => import("./pages/admin/Settings"));
 
-import AlumniDashboard from "./pages/alumni/alumniDashboard";
-import AlumniProfile from "./pages/alumni/alumniProfile";
-import AlumniAccounts from "./pages/alumni/alumniAccounts";
-import AlumniMessage from "./pages/alumni/alumniMessage";
-import AlumniCareer from "./pages/alumni/alumniCareer";
-import AlumniMentorship from "./pages/alumni/alumniMentorship";
-import StudentEvaluation from "./pages/alumni/studentEvaluation";
-import AlumniEmployment from "./pages/alumni/alumniEmployment";
-import AlumniReferral from "./pages/alumni/alumniReferral";
-import AlumniSuccess from "./pages/alumni/alumniSuccess";
-import SuccessStoriesPage from "./pages/SuccessStoriesPage";
-import AlumniEvents from "./pages/alumni/alumniEvents";
-import AlumniTracer from "./pages/alumni/alumniTracer";
-import AlumniRequests from "./pages/alumni/alumniRequests";
-import AlumniSurveys from "./pages/alumni/alumniSurveys";
-import AlumniSurveyAnswer from "./pages/alumni/alumniSurveyAnswer";
-import SearchResults from "./pages/search/SearchResults";
-import FeedPage from "./pages/FeedPage";
+const AlumniDashboard = lazy(() => import("./pages/alumni/alumniDashboard"));
+const AlumniProfile = lazy(() => import("./pages/alumni/alumniProfile"));
+const AlumniAccounts = lazy(() => import("./pages/alumni/alumniAccounts"));
+const AlumniMessage = lazy(() => import("./pages/alumni/alumniMessage"));
+const AlumniCareer = lazy(() => import("./pages/alumni/alumniCareer"));
+const AlumniMentorship = lazy(() => import("./pages/alumni/alumniMentorship"));
+const StudentEvaluation = lazy(() => import("./pages/alumni/studentEvaluation"));
+const AlumniEmployment = lazy(() => import("./pages/alumni/alumniEmployment"));
+const AlumniReferral = lazy(() => import("./pages/alumni/alumniReferral"));
+const AlumniSuccess = lazy(() => import("./pages/alumni/alumniSuccess"));
+const SuccessStoriesPage = lazy(() => import("./pages/SuccessStoriesPage"));
+const AlumniEvents = lazy(() => import("./pages/alumni/alumniEvents"));
+const AlumniTracer = lazy(() => import("./pages/alumni/alumniTracer"));
+const AlumniRequests = lazy(() => import("./pages/alumni/alumniRequests"));
+const AlumniSurveys = lazy(() => import("./pages/alumni/alumniSurveys"));
+const AlumniSurveyAnswer = lazy(() => import("./pages/alumni/alumniSurveyAnswer"));
+const SearchResults = lazy(() => import("./pages/search/SearchResults"));
+const FeedPage = lazy(() => import("./pages/FeedPage"));
 
-import StudentDashboard from "./pages/student/studentDashboard";
-import StudentProfile from "./pages/student/studentProfile";
-import StudentJourney from "./pages/student/studentJourney";
-import StudentPortfolio from "./pages/student/studentPortfolio";
-import StudentCareer from "./pages/student/studentCareer";
-import StudentReferrals from "./pages/student/studentReferrals";
-import StudentMentorship from "./pages/student/studentMentorship";
-import StudentInternship from "./pages/student/studentInternship";
-import StudentReadiness from "./pages/student/studentReadiness";
-import StudentCompetency from "./pages/student/studentCompetency";
-import StudentCertificates from "./pages/student/studentCertificate";
-import StudentEvents from "./pages/student/studentEvents";
-import MeetingRoom from "./pages/meetings/MeetingRoom";
-import StudentRequests from "./pages/student/studentRequests";
-import StudentMessage from "./pages/student/studentMessage";
-import StudentAccounts from "./pages/student/studentAccounts";
+const StudentDashboard = lazy(() => import("./pages/student/studentDashboard"));
+const StudentProfile = lazy(() => import("./pages/student/studentProfile"));
+const StudentJourney = lazy(() => import("./pages/student/studentJourney"));
+const StudentPortfolio = lazy(() => import("./pages/student/studentPortfolio"));
+const StudentCareer = lazy(() => import("./pages/student/studentCareer"));
+const StudentReferrals = lazy(() => import("./pages/student/studentReferrals"));
+const StudentMentorship = lazy(() => import("./pages/student/studentMentorship"));
+const StudentInternship = lazy(() => import("./pages/student/studentInternship"));
+const StudentReadiness = lazy(() => import("./pages/student/studentReadiness"));
+const StudentCompetency = lazy(() => import("./pages/student/studentCompetency"));
+const StudentCertificates = lazy(() => import("./pages/student/studentCertificate"));
+const StudentEvents = lazy(() => import("./pages/student/studentEvents"));
+const MeetingRoom = lazy(() => import("./pages/meetings/MeetingRoom"));
+const StudentRequests = lazy(() => import("./pages/student/studentRequests"));
+const StudentMessage = lazy(() => import("./pages/student/studentMessage"));
+const StudentAccounts = lazy(() => import("./pages/student/studentAccounts"));
 
-import Login from "./auth/login";
-import Logout from "./auth/logout";
-import Signup from "./auth/signup";
-import ForgetPassword from "./auth/forget-password";
-import MagicLinkVerification from "./auth/magic-link-verify";
-import SetupPassword from "./auth/setup-password";
+const Login = lazy(() => import("./auth/login"));
+const Logout = lazy(() => import("./auth/logout"));
+const Signup = lazy(() => import("./auth/signup"));
+const ForgetPassword = lazy(() => import("./auth/forget-password"));
+const MagicLinkVerification = lazy(() => import("./auth/magic-link-verify"));
+const SetupPassword = lazy(() => import("./auth/setup-password"));
 import { Roles } from "./utils/roles";
 import { scrollToTop } from "./lib/scroll";
 import { setWorkspaceThemeEnabled } from "./lib/theme";
@@ -126,12 +126,7 @@ const InboxRedirect = () => {
 };
 
 const ActivitiesIndex = () => {
-  const { user } = useAuth();
-  return user?.role === Roles.ADMIN ? (
-    <Navigate to="/admin/events" replace />
-  ) : (
-    <StudentEvents />
-  );
+  return <StudentEvents />;
 };
 
 function AppRoutes() {
@@ -653,7 +648,7 @@ function MemberPages() {
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
     <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
-      <QuarterlyTracerGate><AppRoutes /></QuarterlyTracerGate>
+      <QuarterlyTracerGate><Suspense fallback={<PageSkeleton label="Loading page" />}><AppRoutes /></Suspense></QuarterlyTracerGate>
     </div>
   );
 }

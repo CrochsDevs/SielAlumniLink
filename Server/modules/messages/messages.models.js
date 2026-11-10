@@ -15,6 +15,8 @@ const toObjectId = async (id) => {
 };
 
 const key = (id) => String(id);
+// Request-scoped metadata stays out of JSON responses and persisted documents.
+export const conversationPreference = Symbol('conversationPreference');
 
 export const ConversationModel = {
   exitGroup(id, actorId, targetId) {
@@ -60,11 +62,13 @@ export const ConversationModel = {
       .find({ 'participants.authId': key(authId) })
       .sort({ updatedAt: -1 })
       .toArray();
-    const visible = await Promise.all(conversations.map(async conversation => {
-      const preference = await ConversationControls.preference(conversation._id, authId);
-      return visibleConversation(conversation, preference) ? conversation : null;
-    }));
-    return visible.filter(Boolean);
+    const preferences = await ConversationControls.preferencesFor(conversations.map(conversation => conversation._id), authId);
+    return conversations.filter(conversation => {
+      const preference = preferences.get(key(conversation._id));
+      if (!visibleConversation(conversation, preference)) return false;
+      Object.defineProperty(conversation, conversationPreference, { value: preference, configurable: true });
+      return true;
+    });
   },
 
   // Group chat (3+ connects): named conversation with many members.

@@ -26,12 +26,15 @@ import {
 import { useAuth } from "../../context/useAuth";
 import MeetingClient from "../../realtime/MeetingClient";
 import api from "../../utils/axios";
+import useVisiblePolling from "../../hooks/useVisiblePolling";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 import CertificatePreview from "../../components/student/CertificatePreview";
+import EventDescription from "../../components/events/EventDescription";
+import ChatAvatar from "../../components/chat/ChatAvatar";
 import { Bubble, BubbleContent, BubbleGroup } from "../../components/ui/bubble";
 import "./MeetingRoom.css";
 
-function VideoTile({ peer, stream, local = false }) {
+function VideoTile({ peer, stream, local = false, presenter = false }) {
   const video = useRef(null);
   const [playError, setPlayError] = useState(false);
   useEffect(() => {
@@ -57,13 +60,12 @@ function VideoTile({ peer, stream, local = false }) {
         autoPlay
         playsInline
         muted={local}
-        style={local && !peer.sharing ? { transform: 'scaleX(-1)' } : undefined}
         className={`h-full w-full ${peer.sharing ? "object-contain" : "object-cover"} ${!peer.camera && !peer.sharing ? "opacity-0" : ""}`}
       />
       {!peer.camera && !peer.sharing && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-800 text-2xl font-semibold text-zinc-300">
-            {peer.name?.slice(0, 1).toUpperCase()}
+          <span className="meeting-profile-avatar flex h-16 w-16 items-center justify-center overflow-hidden rounded-full text-2xl">
+            <ChatAvatar convo={peer} />
           </span>
         </div>
       )}
@@ -74,6 +76,7 @@ function VideoTile({ peer, stream, local = false }) {
           {peer.host ? " · Host" : ""}
         </span>
         {peer.hand && <Hand size={15} className="text-amber-400" />}
+        {presenter && <MonitorUp size={15} className="shrink-0 text-emerald-300" aria-label="Sharing screen" />}
         {!peer.mic && <MicOff size={14} />}
       </div>
       {["failed", "disconnected"].includes(peer.connection) && (
@@ -109,6 +112,10 @@ export default function MeetingRoom() {
   const [details, setDetails] = useState(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const [unavailable, setUnavailable] = useState(null);
+  const stoppedFor = useRef(null);
+  const loadPending = useRef(null);
+  const terminalStatus = unavailable?.eventId === eventId ? unavailable.status : null;
   const [panel, setPanel] = useState("participants"),
     [draft, setDraft] = useState(""),
     [sending, setSending] = useState(false);
@@ -117,21 +124,38 @@ export default function MeetingRoom() {
     [confirmEnd, setConfirmEnd] = useState(false),
     [actionBusy, setActionBusy] = useState(false),
     [certificate, setCertificate] = useState(null);
+  const [rosterError, setRosterError] = useState("");
+  const endedHost = host && !state.joined && details?.meeting?.state === "ended";
   const pending = useRef(false),
     chatEnd = useRef(null);
   const load = useCallback(async () => {
+    if (stoppedFor.current === eventId || loadPending.current?.eventId === eventId) return;
+    const request = { eventId };
+    loadPending.current = request;
     try {
       const response = await api.get(`/meetings/${eventId}`);
       setDetails(response.data.data);
       setError("");
-      if (host)
-        setRoster(
-          (await api.get(`/meetings/${eventId}/participants`)).data.data,
-        );
+      if (host) {
+        try {
+          setRoster((await api.get(`/meetings/${eventId}/participants`)).data.data);
+          setRosterError("");
+        } catch (err) {
+          setRosterError(err.response?.data?.message || "Unable to load attendance records. Please retry.");
+        }
+      }
     } catch (err) {
-      setDetails(null);
-      setError(err.response?.data?.message || "Unable to load this meeting.");
+      const status = err.response?.status;
+      if ([404, 410].includes(status)) {
+        stoppedFor.current = eventId;
+        setUnavailable({ eventId, status });
+        setDetails(null);
+      }
+      setError(err.response?.data?.message || (!err.response
+        ? "Cannot reach the meeting server. Check that the backend is running and try again."
+        : "Unable to load this meeting."));
     } finally {
+      if (loadPending.current === request) loadPending.current = null;
       setLoading(false);
     }
   }, [eventId, host]);
@@ -140,13 +164,22 @@ export default function MeetingRoom() {
     Promise.resolve().then(load);
     return () => controller.destroy();
   }, [controller, load]);
+  useVisiblePolling(load, state.joined ? 20000 : 8000, !terminalStatus);
   useEffect(() => {
-    const timer = setInterval(load, state.joined ? 20000 : 8000);
-    return () => clearInterval(timer);
-  }, [load, state.joined]);
+    if (endedHost) setPanel("attendance");
+  }, [endedHost]);
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ block: "nearest" });
   }, [state.messages.length]);
+  useEffect(() => {
+    const updateVisibility = () => controller.setChatVisible(state.joined && panelOpen && panel === "chat" && document.visibilityState === "visible");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", updateVisibility);
+      controller.setChatVisible(false);
+    };
+  }, [controller, state.joined, panelOpen, panel]);
   const action = async (job) => {
     if (pending.current) return;
     pending.current = true;
@@ -192,6 +225,7 @@ export default function MeetingRoom() {
     ...(state.self || {}),
     id: state.self?.id || "self",
     name: user?.name || "You",
+    profilePicture: state.self?.profilePicture || user?.profilePicture || "",
     host,
     mic: state.mic,
     camera: state.camera,
@@ -200,6 +234,7 @@ export default function MeetingRoom() {
   };
   const everyone = [self, ...state.peers];
   const sharer = everyone.find((peer) => peer.sharing);
+  const galleryPeers = everyone;
   const controls = [
     [
       "audio",
@@ -217,7 +252,7 @@ export default function MeetingRoom() {
     ],
   ];
   return (
-    <main className={`meeting-room ${state.joined ? "is-joined" : "is-preview"} ${panelOpen ? "has-panel" : ""} flex min-h-screen flex-col bg-[#111315] text-zinc-100`}>
+    <main className={`meeting-room ${state.joined ? "is-joined" : endedHost ? "is-ended" : "is-preview"} ${panelOpen ? "has-panel" : ""} flex min-h-screen flex-col bg-[#111315] text-zinc-100`}>
       <header className="meeting-header flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-4">
           <Link
@@ -241,13 +276,13 @@ export default function MeetingRoom() {
             className={`h-2 w-2 rounded-full ${state.joined ? "bg-brand" : "bg-zinc-500"}`}
           />
           {state.joined
-            ? `Live · ${everyone.length}/${details?.capacity || 8}`
+            ? `Live · ${everyone.length}/${details?.capacity || 100}`
             : details?.meeting?.state === "ended"
               ? "Meeting ended"
               : "Before you join"}
         </div>
       </header>
-      {(error || state.error || state.notice) && (
+      {!terminalStatus && (error || state.error || state.notice) && (
         <div
           role={error || state.error ? "alert" : "status"}
           className="m-4 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm text-amber-200"
@@ -263,15 +298,17 @@ export default function MeetingRoom() {
       {loading ? (
         <ContentSkeleton variant="detail" count={1} label="Loading meeting..." />
       ) : !event ? (
-        <p className="p-12 text-center text-zinc-400">
-          Meeting unavailable.{" "}
-          <Link to="/activities" className="ml-2 text-brand underline">
-            Back to Events
-          </Link>
-        </p>
+        <section className="meeting-unavailable" aria-label="Meeting status">
+          <VideoOff size={36} aria-hidden="true" />
+          <h2>{terminalStatus === 410 ? "Meeting closed" : "Meeting unavailable"}</h2>
+          <p role="status">{terminalStatus === 410 ? "This session has ended. You can now close this meeting." : terminalStatus ? error : "Return to Events or retry when the meeting server is available."}</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to={user?.role === "alumni" ? "/alumni" : host ? "/admin/events" : "/activities"} className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white"><X size={16} aria-hidden="true" />Close</Link>
+          </div>
+        </section>
       ) : (
         <div className="meeting-layout">
-          <section className="meeting-stage min-w-0">
+          <section className={`meeting-stage min-w-0 ${sharer ? "has-share" : ""}`}>
             {state.joined ? (
               <>
                 {sharer && (
@@ -283,22 +320,22 @@ export default function MeetingRoom() {
                     local={sharer.id === self.id}
                   />
                 )}
-                <div
-                  className={`meeting-gallery grid gap-3 ${everyone.length > 1 ? "sm:grid-cols-2" : ""} ${everyone.length > 4 ? "xl:grid-cols-3" : ""}`}
+                {galleryPeers.length > 0 && <div
+                  className={`meeting-gallery grid gap-3 ${galleryPeers.length > 1 ? "sm:grid-cols-2" : ""} ${galleryPeers.length > 4 ? "xl:grid-cols-3" : ""}`}
                 >
-                  {everyone
-                    .filter((peer) => peer.id !== sharer?.id)
+                  {galleryPeers
                     .map((peer) => (
                       <VideoTile
                         key={peer.id}
-                        peer={peer}
+                        peer={peer.id === sharer?.id ? { ...peer, sharing: false, camera: false } : peer}
                         stream={
-                          peer.id === self.id ? state.stream : peer.stream
+                          peer.id === sharer?.id ? null : peer.id === self.id ? state.stream : peer.stream
                         }
                         local={peer.id === self.id}
+                        presenter={peer.id === sharer?.id}
                       />
                     ))}
-                </div>
+                </div>}
                 <p className="text-center text-[11px] text-zinc-500">
                   Your attendance time is recorded while you are connected.
                   Certificates follow verified participation.
@@ -313,10 +350,13 @@ export default function MeetingRoom() {
                       ? "This session has ended"
                       : "Join meeting"}
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-zinc-400">
-                    {event.description ||
-                      "Meet, learn, and participate with your university community."}
-                  </p>
+                  {event.description ? (
+                    <EventDescription event={event} className="meeting-description mt-2 text-zinc-300" />
+                  ) : (
+                    <p className="mt-2 text-sm leading-6 text-zinc-300">
+                      Meet, learn, and participate with your university community.
+                    </p>
+                  )}
                   <p className="mt-3 text-xs text-zinc-500">
                     {new Date(event.startAt).toLocaleString([], {
                       dateStyle: "medium",
@@ -358,7 +398,7 @@ export default function MeetingRoom() {
                           : host
                             ? details.meeting?.state === "active"
                               ? "Join as host"
-                              : "Start & join meeting"
+                              : endedHost ? "Start a new session" : "Start & join meeting"
                             : details.meeting?.state === "active"
                               ? "Join meeting"
                               : details.meeting?.state === "ended"
@@ -396,9 +436,17 @@ export default function MeetingRoom() {
                 >
                   {createElement(icon, { size: 14 })}
                   {label}
+                  {key === "chat" && state.unreadChat > 0 && <span className="meeting-chat-badge">{state.unreadChat > 99 ? "99+" : state.unreadChat}</span>}
+                  {key !== "chat" && <span className="meeting-panel-count">{key === "participants" ? state.joined ? everyone.length : roster.length : roster.filter(person => person.attendedSeconds > 0).length}</span>}
                 </button>
               ))}
             </nav>
+            {endedHost && <dl className="meeting-session-summary">
+              <div><dt>Registered</dt><dd>{roster.length}</dd></div>
+              <div><dt>Attended</dt><dd>{roster.filter(person => person.attendedSeconds > 0).length}</dd></div>
+              <div><dt>Certificates issued</dt><dd>{roster.filter(person => person.certificateId).length}</dd></div>
+            </dl>}
+            {rosterError && host && <p role="alert" className="p-4 text-xs text-amber-200">{rosterError} <button type="button" onClick={load} className="underline">Retry</button></p>}
             {panel === "chat" && state.joined ? (
               <>
                 <div
@@ -455,13 +503,13 @@ export default function MeetingRoom() {
                 </form>
               </>
             ) : panel === "attendance" && host ? (
-              <div className="space-y-4 p-4">
+              <div className="meeting-attendance-list space-y-4 p-4">
                 <p className="text-[11px] leading-6 text-zinc-500">
                   Connected time is saved when participants leave or the meeting
                   ends. Confirm participation after the session to issue
                   certificates.
                 </p>
-                {!roster.length && (
+                {!roster.length && !rosterError && (
                   <p className="text-xs text-zinc-500">
                     No registered participants.
                   </p>
@@ -469,7 +517,7 @@ export default function MeetingRoom() {
                 {roster.map((person) => (
                   <article
                     key={person.authId}
-                    className="border-b border-zinc-800 pb-4"
+                    className="meeting-attendance-record rounded-lg border border-zinc-700 p-3"
                   >
                     <p className="break-words text-xs font-semibold">
                       {person.name}
@@ -505,8 +553,8 @@ export default function MeetingRoom() {
                 {state.joined ? (
                   everyone.map((peer) => (
                     <li key={peer.id} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs">
-                        {peer.name.slice(0, 1)}
+                      <span className="meeting-profile-avatar flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs">
+                        <ChatAvatar convo={peer} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-semibold">
@@ -535,6 +583,11 @@ export default function MeetingRoom() {
                       )}
                     </li>
                   ))
+                ) : endedHost ? (
+                  roster.length ? roster.map(person => <li key={person.authId} className="flex items-center gap-3">
+                    <span className="meeting-profile-avatar flex h-10 w-10 shrink-0 overflow-hidden rounded-full text-xs"><ChatAvatar convo={person} /></span>
+                    <div className="min-w-0 flex-1"><p className="break-words text-xs font-semibold">{person.name || "Registered participant"}</p><p className="mt-1 text-[11px] text-zinc-400">{person.attendedSeconds > 0 ? `Attended · ${Math.floor(person.attendedSeconds / 60)}m ${person.attendedSeconds % 60}s recorded` : "Registered · No recorded attendance"}</p></div>
+                  </li>) : !rosterError && <li className="text-xs text-zinc-400">No registered participants for this session.</li>
                 ) : (
                   <li className="text-xs leading-6 text-zinc-500">
                     Participants appear here after you join. Up to{" "}
@@ -592,12 +645,13 @@ export default function MeetingRoom() {
           <button
             type="button"
             aria-label="Chat"
+            aria-describedby={state.unreadChat > 0 ? "meeting-chat-unread" : undefined}
             aria-expanded={panelOpen && panel === "chat"}
             aria-controls="meeting-side-panel"
             onClick={() => { setPanel("chat"); setPanelOpen(!(panelOpen && panel === "chat")); }}
             className={smallButton}
           >
-            <MessageSquare size={18} />
+            <span className="meeting-chat-icon"><MessageSquare size={18} />{state.unreadChat > 0 && <span id="meeting-chat-unread" className="meeting-chat-badge" role="status" aria-label={`${state.unreadChat} unread messages`}>{state.unreadChat > 99 ? "99+" : state.unreadChat}</span>}</span>
             <span>Chat</span>
           </button>
           <button

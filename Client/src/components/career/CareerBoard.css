@@ -52,7 +52,6 @@
   border-color: hsl(var(--primary));
   box-shadow: 0 0 0 3px hsl(var(--primary) / 15%), 0 4px 14px rgb(24 59 35 / 14%);
 }
-.career-marketplace .career-search .rt-TextFieldSlot { padding: 0; }
 .career-marketplace .career-search svg { width: 18px; height: 18px; flex-shrink: 0; }
 .career-marketplace .career-search input {
   width: 100%;

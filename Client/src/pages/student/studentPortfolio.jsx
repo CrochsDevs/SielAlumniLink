@@ -27,11 +27,12 @@ import DevelopmentShell, {
 } from "../../components/student/DevelopmentShell";
 import ProfileAvatar from "../../components/profile/ProfileAvatar";
 import PortfolioResume from "../../components/student/PortfolioResume";
-import ResumeThemePicker from "../../components/student/ResumeThemePicker";
+import ResumeThemePicker, { ResumeThemeOptions } from "../../components/student/ResumeThemePicker";
 import ResumePreview from "../../components/student/ResumePreview";
 import PortfolioContactDetails from "../../components/student/PortfolioContactDetails";
 import { readResumeTheme, validResumeTheme } from "../../utils/resumeThemes";
 import { FeedDialog } from "../../components/feed/FeedComposer";
+
 
 const SECTIONS = [
   {
@@ -321,7 +322,7 @@ export default function StudentPortfolio() {
             {view === "resume" ? (
               <section
                 aria-label="Your resume"
-                className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-200/40 p-3 sm:p-5 dark:border-zinc-800 dark:bg-zinc-800/40"
+                className="portfolio-document-frame p-3 sm:p-5"
               >
                 {state.loading ? (
                   <ContentSkeleton variant="form" count={1} label="Loading resume..." />
@@ -789,30 +790,33 @@ export default function StudentPortfolio() {
       )}
       {preview && (
         <FeedDialog
-          wide
           title="Resume preview"
           onClose={() => setPreview(false)}
+          className="resume-preview-dialog"
+          header={
+            <div className="resume-preview-toolbar">
+              <span className="text-sm font-semibold">Resume preview</span>
+              <label className="flex items-center gap-2 text-xs">
+                Theme
+                <select
+                  value={theme}
+                  onChange={(event) => chooseTheme(event.target.value)}
+                  className="h-10 rounded-lg border border-zinc-300 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900"
+                >
+                  <ResumeThemeOptions />
+                </select>
+              </label>
+              <button type="button" disabled={disabled} onClick={() => window.print()} className={primary}>
+                <Printer size={15} />
+                Print / Save as PDF
+              </button>
+            </div>
+          }
         >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800">
-            <p className="max-w-sm text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-              Includes saved profile and portfolio details. Select Save as PDF
-              in the print dialog to download a copy.
-            </p>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => window.print()}
-              className={primary}
-            >
-              <Printer size={15} />
-              Print / Save as PDF
-            </button>
-          </div>
-          <div className="mb-4">
-            <ResumeThemePicker compact value={theme} onChange={chooseTheme} />
-          </div>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 shadow-sm">
-            <ResumePreview>{resume}</ResumePreview>
+          <div className="resume-preview-scroll">
+            <div className="portfolio-document-frame">
+              <ResumePreview>{resume}</ResumePreview>
+            </div>
           </div>
         </FeedDialog>
       )}

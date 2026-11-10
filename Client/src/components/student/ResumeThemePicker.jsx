@@ -1,61 +1,41 @@
-import { Check } from "lucide-react";
-import { RESUME_THEMES } from "../../utils/resumeThemes";
+import { useId } from "react";
+import { RESUME_THEMES, RESUME_THEME_GROUPS } from "../../utils/resumeThemes";
+
+export function ResumeThemeOptions() {
+  return RESUME_THEME_GROUPS.map((group) => (
+    <optgroup key={group.name} label={group.name}>
+      {group.ids.map((id) => {
+        const theme = RESUME_THEMES.find((item) => item.id === id);
+        return <option key={id} value={id}>{theme.name}</option>;
+      })}
+    </optgroup>
+  ));
+}
 
 export default function ResumeThemePicker({
   value,
   onChange,
-  compact = false,
 }) {
+  const id = useId();
+  const selected = RESUME_THEMES.find((theme) => theme.id === value) || RESUME_THEMES[0];
   return (
-    <fieldset>
-      <legend className="mb-3 text-xs font-semibold">Resume theme</legend>
-      <div
-        className={
-          compact ? "grid grid-cols-2 gap-2 sm:grid-cols-4" : "space-y-2"
-        }
+    <div>
+      <label htmlFor={id} className="mb-3 block text-xs font-semibold">Resume theme</label>
+      <select
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-describedby={`${id}-description`}
+        className="h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-xs text-zinc-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:[color-scheme:dark]"
       >
-        {RESUME_THEMES.map((theme) => (
-          <label
-            key={theme.id}
-            className={`relative flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${value === theme.id ? "border-brand bg-emerald-50/50 dark:border-brand dark:bg-zinc-800/20" : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"} ${compact ? "justify-center" : ""}`}
-          >
-            <input
-              type="radio"
-              name={compact ? "preview-resume-theme" : "resume-theme"}
-              value={theme.id}
-              checked={value === theme.id}
-              onChange={() => onChange(theme.id)}
-              className="sr-only peer"
-            />
-            {!compact && (
-              <span
-                aria-hidden="true"
-                className={`resume-theme-swatch resume-theme-swatch--${theme.id}`}
-              >
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-            )}
-            <span className="min-w-0 flex-1">
-              <span className="block text-xs font-semibold">{theme.name}</span>
-              {!compact && (
-                <span className="mt-1 block text-[10px] leading-5 text-zinc-500 dark:text-zinc-400">
-                  {theme.description}
-                </span>
-              )}
-            </span>
-            {value === theme.id && (
-              <Check
-                size={13}
-                className="shrink-0 text-brand dark:text-brand"
-              />
-            )}
-            <span className="pointer-events-none absolute inset-0 rounded-lg peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2" />
-          </label>
-        ))}
+        <ResumeThemeOptions />
+      </select>
+      <div className="mt-3 flex items-center gap-3" id={`${id}-description`}>
+        <span aria-hidden="true" className={`resume-theme-swatch resume-theme-swatch--${selected.id}`}>
+          <span /><span /><span /><span />
+        </span>
+        <p className="text-[10px] leading-5 text-zinc-500 dark:text-zinc-400">{selected.description}</p>
       </div>
-    </fieldset>
+    </div>
   );
 }

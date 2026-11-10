@@ -7,25 +7,25 @@ import { Bold, Italic, Underline, List, ListOrdered, Link, Unlink, Undo2, Redo2,
 import { descriptionHtml } from "./description";
 import "./OpportunityEditor.css";
 
-export default function OpportunityEditor({ value, format, onChange, disabled }) {
+export default function OpportunityEditor({ value, format, onChange, disabled, id = "career-description", placeholder = "Describe the role, responsibilities, qualifications, and benefits…" }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [linkError, setLinkError] = useState("");
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] }, codeBlock: false, code: false, horizontalRule: false, link: { openOnClick: false, defaultProtocol: "https" } }),
-      Placeholder.configure({ placeholder: "Describe the role, responsibilities, qualifications, and benefits…" }),
+      Placeholder.configure({ placeholder }),
       CharacterCount.configure({ limit: 10000 }),
     ],
     content: descriptionHtml(value, format),
-    editorProps: { attributes: { id: "career-description", role: "textbox", "aria-label": "Description", "aria-multiline": "true", class: "opportunity-prose opportunity-input" } },
+    editorProps: { attributes: { id, role: "textbox", "aria-label": "Description", "aria-multiline": "true", class: "opportunity-prose opportunity-input" } },
     onUpdate: ({ editor: current }) => onChange(current.isEmpty ? "" : current.getHTML()),
   });
   const state = useEditorState({ editor, selector: ({ editor: current }) => current ? {
     bold: current.isActive("bold"), italic: current.isActive("italic"), underline: current.isActive("underline"),
     bulletList: current.isActive("bulletList"), orderedList: current.isActive("orderedList"), link: current.isActive("link"),
     heading: current.isActive("heading", { level: 2 }) ? "2" : current.isActive("heading", { level: 3 }) ? "3" : "p",
-    undo: current.can().undo(), redo: current.can().redo(), count: current.storage.characterCount.characters(),
+    undo: current.can().undo(), redo: current.can().redo(), count: current.storage.characterCount?.characters() || 0,
   } : null });
   useEffect(() => { editor?.setEditable(!disabled); }, [editor, disabled]);
   if (!editor || !state) return null;
@@ -44,7 +44,7 @@ export default function OpportunityEditor({ value, format, onChange, disabled })
     } catch { setLinkError("Enter a valid website or email link."); }
   };
   return <div>
-    <label htmlFor="career-description" className="block text-xs font-medium">Description</label>
+    <label htmlFor={id} className="block text-xs font-medium">Description</label>
     <div className="opportunity-editor mt-1.5" aria-disabled={disabled}>
       <div className="opportunity-toolbar" role="group" aria-label="Description formatting">
         <select aria-label="Text style" value={state.heading} disabled={disabled} onChange={(event) => event.target.value === "p" ? editor.chain().focus().setParagraph().run() : editor.chain().focus().setHeading({ level: Number(event.target.value) }).run()}>

@@ -6,7 +6,7 @@
   background: var(--sidebar-surface);
   border-right: 1px solid var(--sidebar-line);
   font-family: ui-sans-serif, system-ui, sans-serif;
-  box-shadow: 4px 0 8px rgb(0 0 0 / 6%), 12px 0 28px rgb(0 0 0 / 8%);
+  box-shadow: 3px 0 6px rgb(0 0 0 / 12%), 10px 0 22px rgb(0 0 0 / 18%);
   height: 100vh;
   height: 100dvh;
 }
@@ -57,7 +57,7 @@
 .alumni-sidebar-logout > svg { flex-shrink: 0; }
 .alumni-sidebar-logout:hover { background: #ffe8e9; border-color: #e6afb5; }
 .dark .alumni-sidebar { --sidebar-ink: var(--dark-text); --sidebar-active: #b6e2c4; --sidebar-surface: var(--dark-surface); --sidebar-line: var(--dark-border); }
-.dark .alumni-sidebar { box-shadow: 4px 0 8px rgb(0 0 0 / 18%), 12px 0 28px rgb(0 0 0 / 24%); }
+.dark .alumni-sidebar { box-shadow: 3px 0 8px rgb(0 0 0 / 30%), 12px 0 26px rgb(0 0 0 / 45%); }
 .dark .alumni-brand-name { color: var(--dark-text); }
 .dark .alumni-brand-name > span { color: var(--dark-muted); }
 .dark .alumni-brand-caption,

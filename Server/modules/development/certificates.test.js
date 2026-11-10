@@ -8,14 +8,16 @@ const student = { _id: 'aaaaaaaaaaaaaaaaaaaaaaaa', role: 'student', email: 'stud
 const stranger = { _id: 'bbbbbbbbbbbbbbbbbbbbbbbb', role: 'student', email: 'other@example.test' };
 const participation = { title: 'Career Seminar', date: '2025-02-15', organizer: 'SielAlumni', type: 'seminar', completed: true };
 function fixture() {
+  const reads = { find: 0, findOne: 0 };
   const buckets = new Map();
   const bucket = name => { if (!buckets.has(name)) buckets.set(name, new Map()); return buckets.get(name); };
   const matches = (record, query) => Object.entries(query).every(([key, value]) => key === '$or' ? value.some(part => matches(record, part)) : value?.$in ? value.$in.some(item => String(record[key]) === String(item)) : value && Object.hasOwn(value, '$exists') ? Object.hasOwn(record, key) === value.$exists : String(record[key]) === String(value));
   const db = { collection(name) {
     const records = bucket(name);
     return {
-      findOne: async query => [...records.values()].find(record => matches(record, query)) || null,
+      findOne: async query => { reads.findOne++; return [...records.values()].find(record => matches(record, query)) || null; },
       find(query) {
+        reads.find++;
         let result = [...records.values()].filter(record => matches(record, query));
         const cursor = { sort(order) { const [key, direction] = Object.entries(order)[0]; result.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * direction); return cursor; }, limit(count) { result = result.slice(0, count); return cursor; }, toArray: async () => result };
         return cursor;
@@ -26,8 +28,25 @@ function fixture() {
   } };
   const seed = (name, doc) => bucket(name).set(String(doc._id), { ...doc });
   for (const user of [student, stranger]) { seed('auth', user); seed('users', { _id: user._id, authId: user._id, email: user.email, name: user === student ? 'Alex & Santos' : 'Other Student' }); }
-  return { service: createCertificateService(db), seed, bucket };
+  return { service: createCertificateService(db), seed, bucket, reads };
 }
+
+test('large certificate queues use batch lookups and retain legacy profile matching', async () => {
+  const { service, seed, reads } = fixture();
+  seed('users', { _id: stranger._id, email: stranger.email, name: 'Legacy Email Profile', program: 'BSIT' });
+  for (let index = 0; index < 225; index++) seed('student_event_attendance', {
+    _id: (index + 1).toString(16).padStart(24, '0'), authId: index % 2 ? student._id : stranger._id, title: `Activity ${index}`, date: participation.date,
+  });
+  const pending = await service.pending(admin);
+  assert.equal(pending.length, 225);
+  assert.equal(reads.find, 3, 'One attendance, one account and one profile query');
+  assert.equal(reads.findOne, 0, 'No per-record lookups');
+  assert.ok(pending.some(record => record.studentName === 'Legacy Email Profile'));
+  const before = reads.find;
+  const participants = await service.participants(admin);
+  assert.equal(reads.find - before, 2, 'Two queries regardless of recipient count');
+  assert.equal(participants.find(person => person.authId === stranger._id).program, 'BSIT');
+});
 
 test('participation requires confirmation, a supported activity, organizer and past date', () => {
   assert.equal(validateParticipation(participation).type, 'seminar');

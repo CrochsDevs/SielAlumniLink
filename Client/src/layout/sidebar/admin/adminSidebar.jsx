@@ -8,6 +8,7 @@ import {
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
+  LayoutGrid,
   Users,
   ClipboardCheck,
   Briefcase,
@@ -46,6 +47,7 @@ const menuGroups = [
       { to: "/admin/surveys", label: "Surveys", icon: FileText },
       { to: "/admin/certificates", label: "Certificates", icon: Award },
       { to: "/admin/events", label: "Calendar", icon: Calendar },
+      { to: "/activities", label: "Activities", icon: LayoutGrid },
     ],
   },
   {

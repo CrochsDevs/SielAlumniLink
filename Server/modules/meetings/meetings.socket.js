@@ -12,7 +12,7 @@ export function createMeetingRuntime(io, service, { now = () => Date.now() } = {
     queues.set(id, result); result.finally(() => { if (queues.get(id) === result) queues.delete(id); }).catch(() => {});
     return result;
   };
-  const publicPeer = peer => ({ id: peer.socket.id, authId: String(peer.user._id), name: peer.name, host: peer.user.role === 'admin', ...peer.status });
+  const publicPeer = peer => ({ id: peer.socket.id, authId: String(peer.user._id), name: peer.name, profilePicture: peer.profilePicture || '', host: peer.user.role === 'admin', ...peer.status });
   const save = async (room, peer) => service.recordVisit(peer.user, room.event, room.sessionId, peer.joinedAt, now());
   const end = (id, user) => serialized(id, async () => {
     if (user.role !== 'admin') fail(403, 'Only administrators can end meetings');
@@ -66,7 +66,7 @@ export function createMeetingRuntime(io, service, { now = () => Date.now() } = {
           if ([...room.peers.values()].some(peer => String(peer.user._id) === String(user._id))) fail(409, 'You are already in this meeting in another tab');
           if (!socket.connected) fail(409, 'Connection closed');
           const peers = [...room.peers.values()].map(publicPeer);
-          const peer = { socket, user, name: info.name, joinedAt: now(), status: { mic: false, camera: false, sharing: false, hand: false } };
+          const peer = { socket, user, name: info.name, profilePicture: info.profilePicture, joinedAt: now(), status: { mic: false, camera: false, sharing: false, hand: false } };
           rooms.set(String(eventId), room); room.peers.set(socket.id, peer);
           socket.data.meetingId = String(eventId); await socket.join(roomKey(eventId));
           socket.to(roomKey(eventId)).emit('meeting:peer-joined', publicPeer(peer));
@@ -79,7 +79,8 @@ export function createMeetingRuntime(io, service, { now = () => Date.now() } = {
       if (!input || typeof input !== 'object') return;
       const { to, description, candidate } = input;
       if (Date.now() - signalWindow > 10000) { signalCount = 0; signalWindow = Date.now(); }
-      if (++signalCount > 300) return;
+      // Allow each peer's initial offer/answer and ICE burst at room capacity.
+      if (++signalCount > Math.max(300, MEETING_LIMIT * 12)) return;
       const room = rooms.get(socket.data.meetingId), target = room?.peers.get(to);
       if (!room?.peers.has(socket.id) || !target || target.socket.id === socket.id) return;
       if (description && (!['offer', 'answer'].includes(description.type) || typeof description.sdp !== 'string' || description.sdp.length > 100000)) return;

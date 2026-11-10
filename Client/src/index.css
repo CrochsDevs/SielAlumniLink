@@ -43,7 +43,7 @@
     min-height: 100vh;
     background: var(--alumni-page-background);
   }
-  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) > .min-h-screen {
+  .member-workspace:is([data-workspace-role="alumni"], [data-workspace-role="admin"]) > .min-h-screen:not(.meeting-room) {
     background: var(--alumni-page-background);
   }
   .member-workspace main.workspace-page {

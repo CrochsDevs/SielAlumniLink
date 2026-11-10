@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 import { gooeyToast as toast } from "goey-toast";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -22,6 +22,7 @@ import {
   Trash2,
   Calendar,
   CalendarDays,
+  LayoutGrid,
   CalendarPlus,
   Power,
   MapPin,
@@ -40,6 +41,9 @@ import AdminTopbar from "../../layout/topbar/alumni/adminTopbar";
 import PageHeader from "../../components/ui/PageHeader";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
+import OpportunityEditor from "../../components/career/LazyOpportunityEditor";
+import EventDescription from "../../components/events/EventDescription";
+import "./adminEvents.css";
 
 const EVENT_COLUMNS = [
   {
@@ -74,6 +78,7 @@ const toInputValue = (iso) => {
 const EMPTY_FORM = {
   title: "",
   description: "",
+  descriptionFormat: "text",
   location: "",
   startAt: "",
   endAt: "",
@@ -534,6 +539,7 @@ function TimeGrid({ days, eventsOnDay, onOpen, onCreate, onPickDay, now }) {
 /* ---------- page ---------- */
 export default function AdminEvents() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -688,11 +694,12 @@ export default function AdminEvents() {
     setModalOpen(true);
   };
 
-  const openEdit = (event) => {
+  const openEdit = useCallback((event) => {
     setEditing(event);
     setForm({
       title: event.title || "",
       description: event.description || "",
+      descriptionFormat: event.descriptionFormat || "text",
       location: event.location || "",
       startAt: toInputValue(event.startAt),
       endAt: toInputValue(event.endAt),
@@ -705,7 +712,18 @@ export default function AdminEvents() {
       registrationClosesAt: toInputValue(event.registrationClosesAt),
     });
     setModalOpen(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || loading) return;
+    const event = events.find(item => item._id === editId);
+    if (!event) return;
+    openEdit(event);
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  }, [events, loading, searchParams, setSearchParams, openEdit]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -1281,7 +1299,9 @@ export default function AdminEvents() {
             <PageHeader
               title="Calendar"
               description="Manage community events, schedules, and reminders."
-            />
+            >
+              <AdminButton to="/activities"><LayoutGrid size={15} />Browse activities</AdminButton>
+            </PageHeader>
             <AdminStatGrid columns={3}>
               {[
                 {
@@ -1345,7 +1365,7 @@ export default function AdminEvents() {
             role="dialog"
             aria-modal="true"
             aria-label={selectedEvent.title}
-            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white shadow-xl dark:bg-zinc-900 sm:rounded-3xl"
+            className="max-h-[94dvh] w-full max-w-4xl overflow-y-auto rounded-t-3xl bg-white shadow-xl dark:bg-zinc-900 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className={`h-2 ${colorFor(selectedEvent).bar}`} />
@@ -1397,9 +1417,7 @@ export default function AdminEvents() {
                   </div>
                 )}
                 {selectedEvent.description && (
-                  <p className="border-t border-zinc-100 pt-3 leading-relaxed text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-                    {selectedEvent.description}
-                  </p>
+                  <EventDescription event={selectedEvent} className="border-t border-zinc-100 pt-3 leading-relaxed text-zinc-600 dark:border-zinc-800 dark:text-zinc-400" />
                 )}
               </div>
 
@@ -1456,7 +1474,7 @@ export default function AdminEvents() {
             role="dialog"
             aria-modal="true"
             aria-label={editing ? "Edit event" : "New event"}
-            className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 shadow-xl dark:bg-zinc-900 sm:rounded-3xl"
+            className="admin-event-editor max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-xl dark:bg-zinc-900 sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
@@ -1512,7 +1530,7 @@ export default function AdminEvents() {
               {form.deliveryMode === "online" && (
                 <p className="rounded-lg bg-emerald-50 p-3 text-xs leading-6 text-brand dark:bg-zinc-800 dark:text-brand">
                   An in-app meeting room will be available for this activity.
-                  Students register before joining. The room supports up to 8
+                  Students register before joining. The room supports up to 100
                   people, including the host.
                 </p>
               )}
@@ -1593,20 +1611,14 @@ export default function AdminEvents() {
                   />
                 </div>
               </div>
-              <div>
-                <label className={labelClass} htmlFor="ev-desc">
-                  Description
-                </label>
-                <textarea
-                  id="ev-desc"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, description: e.target.value }))
-                  }
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-[12.5px] text-zinc-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
+              <OpportunityEditor
+                id="ev-desc"
+                value={form.description}
+                format={form.descriptionFormat}
+                placeholder="Describe the activity, agenda, participation requirements, and other details…"
+                disabled={saving}
+                onChange={description => setForm(previous => ({ ...previous, description, descriptionFormat: "html" }))}
+              />
               <div className="space-y-3 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                 <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200">
                   <input

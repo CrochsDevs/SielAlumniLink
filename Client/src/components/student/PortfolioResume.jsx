@@ -15,7 +15,7 @@ import {
   UserRound,
 } from "lucide-react";
 import "./PortfolioResume.css";
-import { validResumeTheme } from "../../utils/resumeThemes";
+import { RESUME_THEMES, validResumeTheme } from "../../utils/resumeThemes";
 import { resumeLinks, websiteUrl } from "../../utils/resumeContact";
 
 function ResumeWebsite({ link }) {
@@ -295,9 +295,9 @@ export default function PortfolioResume({
 }) {
   const [failedPhoto, setFailedPhoto] = useState(null);
   const selectedTheme = validResumeTheme(theme);
-  const portrait = selectedTheme === "modern";
+  const portrait = selectedTheme === "modern" || selectedTheme === "ledger";
   const photo =
-    (portrait || selectedTheme === "professional") &&
+    RESUME_THEMES.find((item) => item.id === selectedTheme)?.photo &&
     user?.profilePicture &&
     user.profilePicture !== failedPhoto
       ? user.profilePicture

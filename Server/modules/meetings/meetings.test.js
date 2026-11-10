@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import { io as connect } from '../../../Client/node_modules/socket.io-client/build/esm/index.js';
-import { createMeetingService } from './meetings.service.js';
+import { createMeetingService, MEETING_LIMIT } from './meetings.service.js';
 import { createMeetingRuntime } from './meetings.socket.js';
 import { createMemoryDb, event, host, student, stranger } from './meetings.fixture.js';
 import { validateEvent } from '../events/events.policy.js';
@@ -52,6 +52,20 @@ test('after a meeting ends, students cannot reopen it; an ongoing session remain
   assert.equal(meetingAccessWindow(scheduled, null, clock).state, 'ended');
 });
 
+test('alumni access opens at exactly T minus 15 minutes, even when the host has started early', async () => {
+  const { db, seed } = createMemoryDb();
+  const scheduled = { ...event, startAt: new Date('2026-11-09T10:00:00+08:00'), endAt: new Date('2026-11-09T12:00:00+08:00') };
+  seed('events', scheduled);
+  const alumni = { ...student, role: 'alumni' };
+  let clock = new Date('2026-11-09T09:44:59.999+08:00').getTime();
+  const service = createMeetingService(db, { now: () => clock });
+  await service.register(alumni, id); await service.start(host, id);
+  await assert.rejects(service.join(alumni, id), forbidden);
+  clock++;
+  assert.equal((await service.details(alumni, id)).meetingAccess.state, 'open');
+  assert.equal((await service.join(alumni, id)).name, student.name);
+});
+
 test('event creation validates activity type, online mode, and dates; legacy defaults remain onsite', () => {
   assert.equal(validateEvent({ title: 'Test', startAt: new Date().toISOString() }).deliveryMode, 'onsite');
   for (const change of [{ activityType: 'job' }, { deliveryMode: 'zoom' }, { startAt: 'bad' }, { endAt: event.startAt.toISOString() }]) assert.throws(() => validateEvent({ ...event, startAt: event.startAt.toISOString(), endAt: event.endAt.toISOString(), ...change }), error => error.status === 400);
@@ -94,6 +108,8 @@ test('server elapsed time accumulates across visits, confirmed certificates pres
 });
 test('real Socket.IO: host gate, same-room signaling, chat, removal, room capacity, and host disconnect save attendance', { timeout: 20000 }, async () => {
   const { db, seed } = createMemoryDb(); let clock = Date.now();
+  seed('users', { ...host, authId: String(host._id), profilePicture: 'https://example.test/host.jpg' });
+  seed('users', { ...student, authId: String(student._id), profilePicture: 'https://example.test/student.jpg' });
   const service = createMeetingService(db, { now: () => clock });
   const http = createServer(), server = new Server(http);
   const runtime = createMeetingRuntime(server, service, { now: () => clock });
@@ -108,8 +124,17 @@ test('real Socket.IO: host gate, same-room signaling, chat, removal, room capaci
     await service.start(host, id); await service.register(student, id); await service.register(stranger, id);
     const a = await open('host'), b = await open('student'), outside = await open('stranger');
     assert.equal((await request(b, 'meeting:join', { eventId: id })).success, false);
-    assert.equal((await request(a, 'meeting:join', { eventId: id })).success, true);
-    assert.equal((await request(b, 'meeting:join', { eventId: id })).data.peers.length, 1);
+    const hostJoin = await request(a, 'meeting:join', { eventId: id });
+    assert.equal(hostJoin.success, true);
+    assert.equal(hostJoin.data.self.profilePicture, 'https://example.test/host.jpg');
+    const peerJoined = new Promise(resolve => a.once('meeting:peer-joined', resolve));
+    const studentJoin = await request(b, 'meeting:join', { eventId: id });
+    assert.equal(studentJoin.data.peers.length, 1);
+    assert.equal(studentJoin.data.peers[0].profilePicture, 'https://example.test/host.jpg');
+    assert.equal((await peerJoined).profilePicture, 'https://example.test/student.jpg');
+    const peerUpdated = new Promise(resolve => a.once('meeting:peer-updated', resolve));
+    await request(b, 'meeting:status', { mic: true, profilePicture: 'https://example.test/forged.jpg' });
+    assert.equal((await peerUpdated).profilePicture, 'https://example.test/student.jpg');
     a.emit('meeting:signal', null); a.emit('meeting:signal', 'invalid');
     const signal = new Promise(resolve => b.once('meeting:signal', resolve));
     a.emit('meeting:signal', { to: b.id, description: { type: 'offer', sdp: 'fixture-offer' } }); assert.equal((await signal).from, a.id);
@@ -123,13 +148,13 @@ test('real Socket.IO: host gate, same-room signaling, chat, removal, room capaci
     assert.equal((await request(b, 'meeting:join', { eventId: id })).success, false);
     assert.equal((await service.roster(host, id)).find(row => row.authId === String(student._id)).attendedSeconds, 30);
     await request(outside, 'meeting:join', { eventId: id });
-    // Fill the remaining six seats with distinct authenticated fixture accounts.
-    for (let n = 0; n < 6; n++) {
-      const user = { ...student, _id: `00000000000000000000000${n}`, email: `seat${n}@example.test` }; users[`seat${n}`] = user;
+    // The host and the outside participant occupy the first two seats.
+    for (let n = 0; n < MEETING_LIMIT - 2; n++) {
+      const user = { ...student, _id: String(n + 1).padStart(24, '0'), email: `seat${n}@example.test` }; users[`seat${n}`] = user;
       seed('auth', user); seed('users', { ...user, authId: user._id });
       await service.register(user, id); const socket = await open(`seat${n}`); assert.equal((await request(socket, 'meeting:join', { eventId: id })).success, true);
     }
-    const extraUser = { ...student, _id: '000000000000000000000009', email: 'extra@example.test' }; users.extra = extraUser;
+    const extraUser = { ...student, _id: 'ffffffffffffffffffffffff', email: 'extra@example.test' }; users.extra = extraUser;
     seed('auth', extraUser); seed('users', { ...extraUser, authId: extraUser._id }); await service.register(extraUser, id);
     const extra = await open('extra'); assert.match((await request(extra, 'meeting:join', { eventId: id })).message, /full/);
     clock += 60000;

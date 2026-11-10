@@ -11,7 +11,7 @@ const toObjectId = async (id) => {
 export const EventModel = {
   async findAll({ activeOnly = false } = {}) {
     const filter = activeOnly ? { isActive: true } : {};
-    return await eventsCollection.find(filter).sort({ startAt: 1 }).toArray();
+    return await eventsCollection.find(filter).sort({ createdAt: -1, _id: -1 }).toArray();
   },
 
   async findById(id) {
@@ -27,6 +27,7 @@ export const EventModel = {
     const doc = {
       title: data.title,
       description: data.description || '',
+      descriptionFormat: data.descriptionFormat === 'html' ? 'html' : 'text',
       location: data.location || '',
       activityType: data.activityType || 'event',
       deliveryMode: data.deliveryMode || 'onsite',
@@ -49,7 +50,7 @@ export const EventModel = {
     try {
       const objectId = await toObjectId(id);
       const update = {};
-      ['title', 'description', 'location', 'isActive', 'activityType', 'deliveryMode', 'organizer', 'registrationLimited'].forEach((key) => {
+      ['title', 'description', 'descriptionFormat', 'location', 'isActive', 'activityType', 'deliveryMode', 'organizer', 'registrationLimited'].forEach((key) => {
         if (data[key] !== undefined) update[key] = data[key];
       });
       if (data.startAt !== undefined) update.startAt = data.startAt ? new Date(data.startAt) : null;

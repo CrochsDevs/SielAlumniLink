@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Phone, PhoneOff, Users, Video } from "lucide-react";
 import { gooeyToast as toast } from "goey-toast";
 import { GroupCallContext } from "../../context/group-call-context";
@@ -6,11 +6,12 @@ import { getSocket } from "../../realtime/socket";
 import MeetingClient from "../../realtime/MeetingClient";
 import { acquireCall, isCallBusy, releaseCall } from "../../realtime/callActivity";
 import GroupCallDialog from "./GroupCallDialog";
-import GroupCallRoom from "./GroupCallRoom";
 import ChatAvatar from "../chat/ChatAvatar";
 import { createCallRinger } from "./callRinger";
 import { createRingingTimeout } from "./ringingTimeout";
 import "./GroupCall.css";
+
+const GroupCallRoom = lazy(() => import("./GroupCallRoom"));
 
 export default function GroupCallProvider({ user, children }) {
   const [rooms, setRooms] = useState({});
@@ -180,7 +181,7 @@ export default function GroupCallProvider({ user, children }) {
   }, [authenticated, authId, close]);
   return <GroupCallContext.Provider value={{ rooms, start, inspect }}>
     {children}
-    {session && <GroupCallRoom session={session} onClose={close} user={user} ringing={ringing} speakerMuted={speakerMuted} onSpeakerChange={() => setSpeakerMuted(previous => !previous)} />}
+    {session && <Suspense fallback={<div role="status" className="fixed bottom-4 right-4 z-50 rounded-lg bg-zinc-900 p-4 text-sm text-white">Opening call…</div>}><GroupCallRoom session={session} onClose={close} user={user} ringing={ringing} speakerMuted={speakerMuted} onSpeakerChange={() => setSpeakerMuted(previous => !previous)} /></Suspense>}
     {incoming && !session && <GroupCallDialog title="Incoming group call" onClose={dismiss}>
       <div className="group-call-incoming"><span className="group-call-incoming-icon">{incoming.callerProfilePicture ? <ChatAvatar convo={{ name: incoming.callerName, profilePicture: incoming.callerProfilePicture }} /> : <Users size={30} />}</span><h3>{incoming.name}</h3><p>{incoming.callerName} is calling</p><span className="group-call-kind">{incoming.kind === "video" ? <Video size={14} /> : <Phone size={14} />} Group {incoming.kind} call</span><div className="group-call-incoming-actions">
         <button type="button" onClick={dismiss} className="group-call-decline"><PhoneOff size={16} />Decline</button>

@@ -1,7 +1,7 @@
 import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search, RefreshCw } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Search, RefreshCw, LayoutGrid } from "lucide-react";
 import ActivityDetails from "../../components/events/ActivityDetails";
 import EventCalendar from "../../components/events/EventCalendar";
 import { activityLabel, activityStyle } from "../../utils/eventCalendar";
@@ -10,6 +10,7 @@ import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import AlumniFeed from "../../components/feed/AlumniFeed";
 import api from "../../utils/axios";
+import useVisiblePolling from "../../hooks/useVisiblePolling";
 
 const field =
   "min-h-10 rounded-lg border border-zinc-200 bg-white text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 dark:border-zinc-700 dark:bg-zinc-900";
@@ -62,10 +63,7 @@ export default function AlumniEvents() {
       cancelled = true;
     };
   }, [loadEvents]);
-  useEffect(() => {
-    const timer = setInterval(() => loadEvents(true), 15000);
-    return () => clearInterval(timer);
-  }, [loadEvents]);
+  useVisiblePolling(() => loadEvents(true), 15000);
   const visible = events.filter(
     (event) =>
       Number.isFinite(new Date(event.startAt).getTime()) &&
@@ -117,6 +115,8 @@ export default function AlumniEvents() {
                 Plan your next university event, training, or seminar.
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to="/activities" className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white"><LayoutGrid size={15} />Browse activities</Link>
             {activeTab === "calendar" && (
               <button
                 type="button"
@@ -131,6 +131,7 @@ export default function AlumniEvents() {
                 Refresh
               </button>
             )}
+            </div>
           </header>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <nav

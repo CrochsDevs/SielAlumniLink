@@ -1,9 +1,13 @@
 # SielAlumni Meetings
 
 An in-app WebRTC room for online events, training, and seminars. This initial
-implementation supports eight participants, including administrators, using one
-peer connection per participant pair. It is intended for small meetings; large
-seminars need an SFU media server and a different client transport.
+implementation allows up to 100 participants, including administrators, using one
+peer connection per participant pair. This is an admission limit, not a guarantee
+of smooth audio/video at full capacity. Large seminars need an SFU media server
+and a different client transport for predictable performance.
+
+See [the 100-participant benchmark report](../../../docs/meeting-capacity-100.md)
+for measured signaling/media results and their limitations.
 
 ## User flow
 

@@ -1,0 +1,9 @@
+.admin-event-editor :is(input:not([type="checkbox"]), select, textarea, .opportunity-editor) {
+  box-shadow: var(--shadow-field);
+}
+
+.admin-event-editor :is(input:not([type="checkbox"]), select, textarea):focus,
+.admin-event-editor .opportunity-editor:focus-within {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 15%), var(--shadow-field);
+}

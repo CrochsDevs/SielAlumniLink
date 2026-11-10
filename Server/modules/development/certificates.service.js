@@ -19,6 +19,19 @@ export function createCertificateService(db) {
   const adminOnly = user => { if (user.role !== 'admin') fail(403, 'Only administrators can confirm participation'); };
   const accountFor = id => db.collection('auth').findOne({ _id: { $in: ids(id) }, role: { $in: ['student', 'alumni'] } });
   const profileFor = account => db.collection('users').findOne({ $or: [{ authId: { $in: ids(account._id) } }, { email: account.email }] });
+  const profilesFor = async accounts => {
+    if (!accounts.length) return new Map();
+    const profiles = await db.collection('users').find({ $or: [
+      { authId: { $in: accounts.flatMap(account => ids(account._id)) } },
+      { email: { $in: accounts.map(account => account.email).filter(Boolean) } },
+    ] }, { projection: { authId: 1, email: 1, name: 1, program: 1 } }).toArray();
+    const byId = new Map(), byEmail = new Map();
+    for (const profile of profiles) {
+      if (profile.authId && !byId.has(String(profile.authId))) byId.set(String(profile.authId), profile);
+      if (profile.email && !byEmail.has(profile.email)) byEmail.set(profile.email, profile);
+    }
+    return new Map(accounts.map(account => [String(account._id), byId.get(String(account._id)) || byEmail.get(account.email)]));
+  };
   const listMine = async user => (await certificates.find({ studentAuthId: String(user._id) }).sort({ issuedAt: -1 }).toArray()).map(formatCertificate);
   const issue = async (admin, studentId, input, existingAttendance = null) => {
     adminOnly(admin);
@@ -63,20 +76,26 @@ export function createCertificateService(db) {
     },
     async participants(user) {
       adminOnly(user);
-      const accounts = await db.collection('auth').find({ role: { $in: ['student', 'alumni'] } }).toArray();
-      return Promise.all(accounts.map(async account => {
-        const profile = await profileFor(account);
+      const accounts = await db.collection('auth').find({ role: { $in: ['student', 'alumni'] } }, { projection: { email: 1, role: 1 } }).toArray();
+      const profiles = await profilesFor(accounts);
+      return accounts.map(account => {
+        const profile = profiles.get(String(account._id));
         return { authId: String(account._id), name: profile?.name || account.email, email: account.email, program: profile?.program || '', role: account.role };
-      }));
+      });
     },
     async pending(user) {
       adminOnly(user);
       const records = await attendance.find({ certificateId: { $exists: false } }).sort({ date: -1 }).toArray();
+      if (!records.length) return [];
+      const accountIds = [...new Set(records.map(record => String(record.authId)))].flatMap(id => ids(id));
+      const accounts = await db.collection('auth').find({ _id: { $in: accountIds }, role: { $in: ['student', 'alumni'] } }, { projection: { email: 1, role: 1 } }).toArray();
+      const profiles = await profilesFor(accounts);
+      const byId = new Map(accounts.map(account => [String(account._id), account]));
       const result = [];
       for (const record of records) {
-        const account = await accountFor(record.authId);
+        const account = byId.get(String(record.authId));
         if (!account) continue;
-        const profile = await profileFor(account);
+        const profile = profiles.get(String(account._id));
         result.push({ ...record, studentName: profile?.name || account.email, studentEmail: account.email });
       }
       return result;

@@ -1,25 +1,34 @@
 import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Award, BadgeCheck, Building2, CalendarDays, Clock3, MapPin, Search, Video, ArrowUpRight } from "lucide-react";
+import { Award, BadgeCheck, Building2, CalendarDays, Clock3, MapPin, Search, Video, ArrowUpRight, Pencil } from "lucide-react";
 import ActivityAccess from "../../components/student/ActivityAccess";
+import ActivityDetails from "../../components/events/ActivityDetails";
+import { descriptionText } from "../../components/career/description";
 import DevelopmentShell from "../../components/student/DevelopmentShell";
 import api from "../../utils/axios";
 import PageTitle from "../../components/ui/PageTitle";
 import StatCard from "../../components/ui/stat-card";
 import DataPagination from "../../components/ui/data-pagination";
+import { useAuth } from "../../context/useAuth";
+import useVisiblePolling from "../../hooks/useVisiblePolling";
 import "./studentEvents.css";
 
 const formatDate = (value, options) => new Date(value).toLocaleString("en-PH", { timeZone: "Asia/Manila", ...options });
 const PAGE_SIZE = 12;
 
 export default function StudentEvents() {
+  const { user } = useAuth();
+  const admin = user?.role === "admin";
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [type, setType] = useState("all");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState(null);
+  const selectedEvent = events.find(event => event._id === selectedId);
+  const updateEvent = updated => setEvents(list => list.map(item => item._id === updated._id ? updated : item));
   const filters = useRef(null);
   const load = useCallback(async () => {
     setLoading(true);
@@ -29,12 +38,10 @@ export default function StudentEvents() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { Promise.resolve().then(load); }, [load]);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      api.get("/events").then(response => setEvents(response.data.data || [])).catch(() => {});
-    }, 15000);
-    return () => clearInterval(timer);
-  }, []);
+  useVisiblePolling(async () => {
+    const response = await api.get("/events");
+    setEvents(response.data.data || []);
+  }, 15000);
   const visible = events.filter(event =>
     (type === "all" || (event.activityType || "event") === type) &&
     `${event.title} ${event.organizer || ""}`.toLowerCase().includes(query.trim().toLowerCase()),
@@ -52,12 +59,16 @@ export default function StudentEvents() {
     <main className="events-page workspace-page mx-auto max-w-7xl space-y-6 p-3 sm:p-6">
       <header className="workspace-page-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div><PageTitle icon={CalendarDays}>Events &amp; learning</PageTitle><p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">Discover events, training, and seminars. Register and keep learning with your alumni community.</p></div>
-        <Link to="/student/certificate" className="events-button self-start"><Award size={16} />Your certificates<ArrowUpRight size={14} /></Link>
+        <div className="flex flex-wrap gap-2 self-start">
+          {user?.role === "alumni" && <Link to="/alumni/events" className="events-button"><CalendarDays size={16} />Event calendar</Link>}
+          {admin && <Link to="/admin/events" className="events-button"><CalendarDays size={16} />Event calendar</Link>}
+          <Link to={admin ? "/admin/certificates" : "/student/certificate"} className="events-button"><Award size={16} />{admin ? "Manage certificates" : "Your certificates"}<ArrowUpRight size={14} /></Link>
+        </div>
       </header>
       <dl className="grid gap-3 sm:grid-cols-3" aria-label="Activity summary">
         <StatCard loading={loading} label="Available activities" value={loading || error ? "—" : events.length} icon={CalendarDays} note="Events, training, and seminars" />
         <StatCard loading={loading} label="Online sessions" value={loading || error ? "—" : events.filter(event => event.deliveryMode === "online").length} icon={Video} note="Join through SielAlumni" />
-        <StatCard loading={loading} label="Your registrations" value={loading || error ? "—" : events.filter(event => event.registration).length} icon={BadgeCheck} note="Activities you registered for" />
+        <StatCard loading={loading} label={admin ? "On-site activities" : "Your registrations"} value={loading || error ? "—" : events.filter(event => admin ? event.deliveryMode !== "online" : event.registration).length} icon={BadgeCheck} note={admin ? "Activities with on-site attendance" : "Activities you registered for"} />
       </dl>
       <div ref={filters} className="events-panel events-filters scroll-mt-24">
         <label className="relative min-w-0 flex-1"><span className="sr-only">Search activities</span><Search size={17} className="pointer-events-none absolute left-3 top-3.5 text-zinc-400" /><input type="search" value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Search activities or organizer" className="events-field events-search" /></label>
@@ -71,9 +82,9 @@ export default function StudentEvents() {
             <div className="event-card-header"><div className="event-date" aria-hidden="true"><span>{formatDate(event.startAt, { month: "short" })}</span><strong>{formatDate(event.startAt, { day: "2-digit" })}</strong></div><div className="event-badges"><span className="event-type-badge">{event.activityType || "event"}</span><span className="event-mode">{event.deliveryMode === "online" ? <Video size={13} /> : <MapPin size={13} />}{event.deliveryMode === "online" ? "Online" : "On site"}</span></div></div>
             <div className="event-card-body"><h2>{event.title}</h2><p className="event-organizer"><Building2 size={14} />{event.organizer || "SielAlumni"}</p>
               <div className="event-schedule"><p><CalendarDays size={15} /><time dateTime={event.startAt}>{formatDate(event.startAt, { dateStyle: "medium" })}</time></p><p><Clock3 size={15} />{formatDate(event.startAt, { timeStyle: "short" })}<span className="event-timezone">PHT</span></p>{event.location && <p><MapPin size={15} /><span>{event.location}</span></p>}</div>
-              {event.description && (event.description.length > 180 ? <details className="event-description-details"><summary>About this activity</summary><p className="event-description">{event.description}</p></details> : <p className="event-description">{event.description}</p>)}
+              {event.description && <p className="event-description event-description-preview">{descriptionText(event.description, event.descriptionFormat).replace(/\s+/g, " ").trim()}</p>}
             </div>
-            <div className="event-card-actions"><ActivityAccess event={event} onRegistered={updated => setEvents(list => list.map(item => item._id === updated._id ? updated : item))} /></div>
+            <div className="event-card-actions"><button type="button" aria-haspopup="dialog" aria-label={`View details for ${event.title}`} className="events-button event-card-details" onClick={() => setSelectedId(event._id)}>View details<ArrowUpRight size={14} /></button>{admin ? <div className="event-admin-actions"><Link to={`/admin/events?edit=${encodeURIComponent(event._id)}`} aria-label={`Edit ${event.title}`} className="events-button"><Pencil size={14} />Edit</Link><Link to={`/admin/events/${event._id}/attendance`} className="events-button">Attendance</Link></div> : <ActivityAccess event={event} compact onRegistered={updateEvent} />}</div>
           </article>)}
         </section>}
         {visible.length > 0 && <nav aria-label="Activity pagination" className="events-panel overflow-hidden">
@@ -82,5 +93,6 @@ export default function StudentEvents() {
         <p className="events-muted flex items-start gap-2"><Clock3 size={15} className="mt-0.5 shrink-0" />All schedules use Philippine time. Register to see meeting access or your on-site registration details.</p>
       </>}
     </main>
+    {selectedEvent && <ActivityDetails event={selectedEvent} onClose={() => setSelectedId(null)} onRegistered={updateEvent} />}
   </DevelopmentShell>;
 }

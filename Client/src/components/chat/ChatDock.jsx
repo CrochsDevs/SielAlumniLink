@@ -9,7 +9,7 @@ import GroupCallButtons from "../call/GroupCallButtons";
 import MessageThread from "./MessageThread";
 import PresenceBadge from './PresenceBadge';
 import { presenceLabel, presenceTextColor } from './presenceStatus';
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker from "./LazyEmojiPicker";
 import { Link } from "react-router-dom";
 import { profilePath } from "../search/searchLinks";
 
