@@ -105,3 +105,19 @@ test('Brevo retains usable branding without an HTTPS frontend origin', async () 
   } });
   assert.deepEqual(await send(recipient, magicLinkEmail(link)), { success: true });
 });
+
+
+test('request-scoped delivery diagnostics merge into one request event without separate console messages', async () => {
+  for (const status of [201, 401, 429]) {
+    const events = [];
+    const { send, logs } = fixture({ fetchImpl: async () => Response.json(status === 201 ? { messageId: '<fixture-message>' } : { message: 'PRIVATE_PROVIDER_ERROR' }, { status }) });
+    const result = await send(recipient, magicLinkEmail(link), { onDelivery: value => events.push(value) });
+    assert.equal(result.success, status === 201);
+    assert.equal(logs.length, 0);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].emailProvider, 'brevo');
+    assert.equal(events[0].emailDelivery, status === 201 ? 'accepted' : 'failed');
+    assert.equal(events[0].providerStatus, status);
+    assert.doesNotMatch(JSON.stringify(events), /PRIVATE_|recipient@|sender@/);
+  }
+});

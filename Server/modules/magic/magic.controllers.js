@@ -8,7 +8,7 @@ import { sendMagicLinkEmail } from '../../utils/email.js';
 import { authEmail } from '../auth/auth.validation.js';
 import { signSessionToken, activeAccount, sessionVersion } from '../auth/session-token.js';
 import { sessionCookieOptions } from '../../config/session-cookie.js';
-import { logAccountAuth } from '../auth/auth-account-log.js';
+import { logAccountAuth, authDeliveryContext } from '../auth/auth-account-log.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
@@ -40,6 +40,7 @@ export const sendMagicLink = async (req, res) => {
       const profile = await UserModel.findByEmail(email);
       const role = String(profile?.role || '').toLowerCase();
       if (!profile || ![Roles.STUDENT, Roles.ALUMNI].includes(role)) {
+        logAccountAuth(res, { operation: 'magic_link_send', outcome: 'not_eligible', email });
         return res.status(200).json({ success: true, message: 'If an account exists, a login link has been sent.' });
       }
       const newAuth = await AuthModel.createSyncedUser({ email, role });
@@ -47,8 +48,12 @@ export const sendMagicLink = async (req, res) => {
       await UserModel.updateById(String(profile._id), { authId: newAuth._id });
       user = newAuth;
     }
-    if (!activeAccount(user)) return res.status(200).json({ success: true, message: 'If an account exists, a login link has been sent.' });
+    if (!activeAccount(user)) {
+      logAccountAuth(res, { operation: 'magic_link_send', outcome: 'not_eligible', user });
+      return res.status(200).json({ success: true, message: 'If an account exists, a login link has been sent.' });
+    }
 
+    logAccountAuth(res, { operation: 'magic_link_send', outcome: 'processing', user });
     const token = generateToken();
     const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000);
 
@@ -64,22 +69,23 @@ export const sendMagicLink = async (req, res) => {
     });
 
     const loginUrl = `${FRONTEND_URL}/verify-magic-link?token=${token}`;
-    const emailResult = await sendMagicLinkEmail(email, loginUrl);
+    const emailResult = await sendMagicLinkEmail(email, loginUrl, authDeliveryContext(res));
 
     if (!emailResult.success) {
       await MagicLinkModel.deleteToken(token);
+      logAccountAuth(res, { operation: 'magic_link_send', outcome: 'delivery_failed', user });
       return res.status(200).json({
         success: true,
         message: 'If an account exists, a login link has been sent.'
       });
     }
 
+    logAccountAuth(res, { operation: 'magic_link_send', outcome: 'accepted_for_delivery', user });
     res.status(200).json({
       success: true,
       message: 'If an account exists, a login link has been sent.'
     });
   } catch {
-    console.error('Login link request failed');
     res.status(500).json({
       success: false,
       message: 'Unable to process the login link request. Please try again later.'
@@ -138,7 +144,6 @@ export const verifyMagicLink = async (req, res) => {
       }
     });
   } catch {
-    console.error('Login link verification failed');
     res.status(500).json({
       success: false,
       message: 'Unable to verify the login link. Please try again later.'

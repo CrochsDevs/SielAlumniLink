@@ -818,8 +818,8 @@ test('recovery diagnostics correlate eligibility and delivery without leaking th
         await forgotPassword({ body: { email: account.email } }, res);
         assert.equal(res.statusCode, 200);
         assert.equal(res.body.message, 'If the account is eligible, a reset code has been sent.');
-        const entry = logs.filter(line => line.startsWith('{')).map(line => JSON.parse(line)).findLast(item => item.event === 'auth.recovery');
-        assert.deepEqual(entry, { event: 'auth.recovery', operation: 'password_recovery', requestId: 'fixture-request-id', outcome,
+        const entry = res.locals.authAccount;
+        assert.deepEqual(entry, { outcome, identityType: 'target_account',
             maskedEmail: 'me***@example.test', ...(current ? { authId: account._id } : {}) });
         assert.doesNotMatch(logs.join(''), /member@example|PRIVATE_PROVIDER_DETAIL/);
         if (savedCode) assert.equal(logs.join('').includes(savedCode), false);
@@ -831,7 +831,9 @@ test('account diagnostics use masked identity fields and never serialize private
     const lines = [];
     const user = { _id: 'fixture-account', email: 'fixture@example.test', password: 'PRIVATE_PASSWORD', resetOTP: 'PRIVATE_OTP', token: 'PRIVATE_TOKEN' };
     for (const operation of ['password_login', 'magic_link_verify', 'password_recovery']) {
-        logAccountAuth({ getHeader: () => 'fixture-request' }, { operation, outcome: 'signed_in', user }, { log: line => lines.push(JSON.parse(line)) });
+        const res = {};
+        logAccountAuth(res, { operation, outcome: 'signed_in', user });
+        lines.push(res.locals.authAccount);
     }
     assert.equal(lines.length, 3);
     assert.ok(lines.every(line => line.authId === 'fixture-account' && line.maskedEmail === 'fi***@example.test'));
@@ -839,5 +841,16 @@ test('account diagnostics use masked identity fields and never serialize private
     assert.equal(maskedAuthEmail('a@example.test'), '***@example.test');
     assert.equal(maskedAuthEmail({ $ne: null }), undefined);
     assert.equal(maskedAuthEmail('x@example.test\r\nInjected'), undefined);
-    assert.doesNotThrow(() => logAccountAuth({}, { operation: 'password_login', outcome: 'signed_in', user }, { log() { throw new Error('fixture'); } }));
+    assert.doesNotThrow(() => logAccountAuth(Object.freeze({}), { operation: 'password_login', outcome: 'signed_in', user }));
+});
+
+
+test('logout retains the verified account identity for the single final request log', async t => {
+    t.mock.method(AuthModel, 'findById', async () => account);
+    t.mock.method(AuthModel, 'revokeSessionsById', async () => ({ modifiedCount: 1 }));
+    t.mock.method(ActivityModel, 'log', async () => {});
+    const res = response();
+    await logout({ cookies: { token: signSessionToken(account) }, headers: {} }, res);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.locals.authAccount, { outcome: 'signed_out', identityType: 'authenticated', maskedEmail: 'me***@example.test', authId: account._id });
 });

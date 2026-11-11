@@ -9,7 +9,7 @@ import { createPasswordReset, resetTokenHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, activeAccount, sessionMatches, sessionVersion } from './session-token.js';
 import { requestAccountMatches, rejectChangedAccount } from './request-account.js';
 import { sessionCookieOptions } from '../../config/session-cookie.js';
-import { logAccountAuth } from './auth-account-log.js';
+import { logAccountAuth, authDeliveryContext } from './auth-account-log.js';
 
 const hasUsableLocalPassword = (user) => (
     user?.passwordSetupRequired === false && typeof user?.password === 'string' && user.password.length > 0
@@ -56,6 +56,7 @@ export const login = async (req, res) => {
             });
         }
 
+        logAccountAuth(res, { operation: 'password_login', outcome: 'processing', user });
         const userProfile = await UserModel.findByAuthId(user._id);
 
         const token = signSessionToken(user);
@@ -244,12 +245,13 @@ export const forgotPassword = async (req, res) => {
             return recoveryResponse(res);
         }
 
+        logRecoveryOutcome(res, 'processing', user, email);
         const otp = generateOTP();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
         await AuthModel.updateOTP(email, otp, otpExpires);
 
-        const emailResult = await sendOTPEmail(email, otp);
+        const emailResult = await sendOTPEmail(email, otp, authDeliveryContext(res));
         if (!emailResult.success) {
             // Match this request's code so a failed send cannot clear a newer resend.
             await AuthModel.clearOTP(email, otp);
@@ -261,7 +263,6 @@ export const forgotPassword = async (req, res) => {
         logRecoveryOutcome(res, 'accepted_for_delivery', user, email);
         return recoveryResponse(res);
     } catch {
-        console.error('Password recovery request failed');
         res.status(500).json({
             success: false,
             message: 'Unable to process password recovery. Please try again later.'
@@ -297,6 +298,7 @@ export const verifyOTP = async (req, res) => {
             });
         }
 
+        logAccountAuth(res, { operation: 'otp_verify', outcome: 'otp_verified', user });
         res.status(200).json({
             success: true,
             message: 'OTP verified successfully',
@@ -363,6 +365,7 @@ export const resetPassword = async (req, res) => {
             await ActivityModel.logPasswordChange({ authId: user._id, action: 'password_reset' });
         }
 
+        logAccountAuth(res, { operation: 'password_reset', outcome: 'password_reset', user });
         res.status(200).json({
             success: true,
             message: 'Password reset successful. You can now login with your new password.'
@@ -383,9 +386,11 @@ export const logout = async (req, res) => {
         if (decoded) {
             const user = await AuthModel.findById(decoded.sub);
             if (sessionMatches(decoded, user)) {
+                logAccountAuth(res, { operation: 'logout', outcome: 'session_verified', user });
                 if (!requestAccountMatches(req, user)) return rejectChangedAccount(res);
                 const result = await AuthModel.revokeSessionsById(user._id);
                 if (!result.modifiedCount) throw new Error('Session revocation did not complete');
+                logAccountAuth(res, { operation: 'logout', outcome: 'signed_out', user });
                 // Audit logging is optional; session revocation above is mandatory.
                 void ActivityModel.log({ authId: user._id, email: user.email, action: 'logout', role: user.role, ip: req.ip }).catch(() => {});
             }

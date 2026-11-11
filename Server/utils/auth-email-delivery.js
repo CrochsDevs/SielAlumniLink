@@ -13,7 +13,7 @@ export function createAuthEmailSender({
   logger = console,
   timeoutMs = EMAIL_DELIVERY_TIMEOUT_MS,
 } = {}) {
-  return async (to, message) => {
+  return async (to, message, { onDelivery } = {}) => {
     let timer, transport, controller, providerStatus;
     const provider = env.EMAIL_PROVIDER?.trim() || 'smtp';
     try {
@@ -76,13 +76,20 @@ export function createAuthEmailSender({
         });
       })();
       await Promise.race([delivery, deadline]);
-      logger.log(`Authentication email accepted for delivery (${provider})`);
+      if (onDelivery) {
+        try { onDelivery({ emailProvider: provider, emailDelivery: 'accepted',
+          ...(Number.isInteger(providerStatus) ? { providerStatus } : {}) }); } catch { /* Diagnostics only. */ }
+      } else logger.log(`Authentication email accepted for delivery (${provider})`);
       return { success: true };
     } catch (error) {
       // Never log a provider response, recipient, link, OTP, or credentials.
       const code = ['ETIMEDOUT', 'EAUTH', 'ECONNECTION', 'ESOCKET', 'EDNS', 'ECONFIG', 'ERATELIMIT', 'EPROVIDER', 'EREQUEST'].includes(error?.code)
         ? error.code : 'EDELIVERY';
-      logger.error(`Authentication email delivery failed (${code}; provider=${['smtp', 'brevo'].includes(provider) ? provider : 'unsupported'}${Number.isInteger(providerStatus) ? `; status=${providerStatus}` : ''})`);
+      const safeProvider = ['smtp', 'brevo'].includes(provider) ? provider : 'unsupported';
+      if (onDelivery) {
+        try { onDelivery({ emailProvider: safeProvider, emailDelivery: 'failed', deliveryCode: code,
+          ...(Number.isInteger(providerStatus) ? { providerStatus } : {}) }); } catch { /* Diagnostics only. */ }
+      } else logger.error(`Authentication email delivery failed (${code}; provider=${safeProvider}${Number.isInteger(providerStatus) ? `; status=${providerStatus}` : ''})`);
       return { success: false };
     } finally {
       clearTimeout(timer);

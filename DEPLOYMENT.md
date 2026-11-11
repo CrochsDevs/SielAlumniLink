@@ -120,7 +120,7 @@ and EMAIL_PASS can be removed from the production backend after switching.
 6. Deploy the backend code together with these environment settings. Changing
    variables on an older SMTP-only deployment will not enable Brevo.
 7. Request one fresh link for a registered account. Backend logs should show
-   `Authentication email accepted for delivery (brevo)`. Confirm the message is
+   `"operation":"magic_link_send"` with `"emailDelivery":"accepted"` and `"emailProvider":"brevo"`. Confirm the message is
    delivered in **Brevo > Transactional > Logs**, then check Inbox/Spam and finish
    sign-in. An API acceptance is not proof of inbox delivery. Retry/reuse of an
    already consumed token must fail. Also verify the password-reset OTP flow.
@@ -163,24 +163,35 @@ When a cross-origin response has no CORS headers, the browser cannot reveal its
 status to JavaScript; the app therefore shows a temporary email-request failure
 and waits one minute before another send instead of claiming the backend is down.
 
-Filter backend Render Logs by `auth.request`. Each relevant request logs
-`received` and `finished` (or `closed`) with an opaque request ID, operation,
-status, and duration. It never logs bodies, query strings, email addresses, IPs,
-cookies, passwords, codes, or tokens. Email acceptance/failure is a separate event;
-an HTTP 200 from a generic send response is not proof of delivery.
+Filter backend Render Logs by `auth.request`. Each auth action emits exactly one
+JSON event at `finished` or `closed`, with request ID, operation, status, duration,
+`maskedEmail` (for example `le***@gmail.com`), and `authId` when safely resolved.
+Login/logout, magic-link sends/verification, password recovery, OTP verification,
+password reset/setup/change and disabled signup are covered. `/auth/me` polling
+and preflight OPTIONS are excluded to avoid noise.
 
-Successful password and magic-link logins also emit `auth.account`; password
-recovery emits `auth.recovery`. These outcome events include `maskedEmail`
-(for example `le***@gmail.com`), the account `authId` when resolved, and the
-request ID. General request logs still exclude bodies, credentials, full emails
-and IPs. Use the admin Audit Logs for full successful-login identity records.
+`identityType=authenticated` means a validated session/login identity;
+`target_account` identifies the account targeted by email recovery rather than
+proving who sent the request. Failed/limited requests may have a `submitted`
+masked email without an account ID. `unknown` means no trustworthy identity was
+available (for example an expired cookie with no submitted email); never infer
+an actor from client-supplied account IDs or unverified JWT claims.
+
+Email delivery metadata is merged into the same event: `emailProvider`,
+`emailDelivery`, and fixed `deliveryCode`/numeric `providerStatus` where available.
+There are no additional received/auth.account/auth.recovery/provider log lines
+for these HTTP requests. Standalone transport calls outside the request context
+retain their redacted provider diagnostic. Bodies, full emails, IPs, passwords,
+OTPs and login tokens are never logged. Full successful-login identity records
+remain in the admin Audit Logs. HTTP 200 or provider acceptance is not proof of
+inbox delivery.
 
 App-generated 429s retain CORS and expose `Retry-After` and `X-Request-Id`. If the
-failed request has no corresponding `received` event, investigate Render's edge,
+completed request has no corresponding `auth.request` event, investigate Render's edge,
 proxy, or browser/network blocking. Application CORS changes cannot modify a
 response produced before the request reaches Express.
 
-If `forwardedAddressPresent=true` and `proxyConfigured=false`, verify the actual
+For IP-based rate limits, verify the actual
 Render proxy chain and configure `TRUST_PROXY` with its trusted IP/CIDR ranges.
 Without it, requests may share a proxy IP bucket. Never blindly trust all
 `X-Forwarded-For` headers or disable rate limits to bypass a 429.
