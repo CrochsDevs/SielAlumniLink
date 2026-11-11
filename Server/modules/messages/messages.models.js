@@ -4,6 +4,8 @@ import { promoteGroupAdmin } from './group-admin.js';
 import { exitGroup } from './group-exit.js';
 import { ConversationControls, visibleConversation } from './conversation-controls.js';
 import { recordMessageReads, receivedMessageFilter } from './read-receipts.js';
+import { resolveMessageMentions } from './message-mentions.js';
+import UserModel from '../users/users.models.js';
 
 const db = client.db('SielAlumni');
 const convosCollection = db.collection('conversations');
@@ -117,7 +119,7 @@ export const MessageModel = {
       ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) },
     { sort: { createdAt: -1, _id: -1 }, projection: { _id: 1, text: 1, createdAt: 1, unsent: 1, 'attachment.kind': 1 } });
   },
-  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId }) {
+  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId, mentions = [] }) {
     if (attachment && (!attachment.publicId || attachment.deliveryType !== 'authenticated')) {
       throw new Error('Message attachments must be uploaded to Cloudinary first');
     }
@@ -130,6 +132,7 @@ export const MessageModel = {
       ...(call ? { call } : {}),
       ...(activity ? { activity } : {}),
       text: String(text || '').slice(0, 2000),
+      mentions,
       attachment: attachment || null,
       read: false,
       readBy: [],
@@ -171,7 +174,7 @@ export const MessageModel = {
   },
 
   // Sender-only edit (marks edited:true).
-  async editMessage(messageId, senderAuthId, text) {
+  async editMessage(messageId, senderAuthId, text, mentionAuthIds) {
     try {
       const objectId = await toObjectId(messageId);
       const message = await messagesCollection.findOne({ _id: objectId });
@@ -182,12 +185,14 @@ export const MessageModel = {
       if (!conversation?.participants?.some(member => String(member.authId) === key(senderAuthId))) return null;
       const other = conversation.participants.find(member => String(member.authId) !== key(senderAuthId));
       if (!conversation.isGroup && other && await ConversationControls.isBlocked(senderAuthId, other.authId)) return null;
+      const mentions = await resolveMessageMentions(conversation, text, mentionAuthIds ?? [...new Set((message.mentions || []).map(mention => mention.authId))], ids => UserModel.findChatProfilesByAuthIds(ids));
       await messagesCollection.updateOne(
         { _id: objectId },
-        { $set: { text: String(text || '').slice(0, 2000), edited: true } }
+        { $set: { text: String(text || '').slice(0, 2000), mentions, edited: true } }
       );
       return await messagesCollection.findOne({ _id: objectId });
-    } catch {
+    } catch (error) {
+      if (error.status) throw error;
       return null;
     }
   },

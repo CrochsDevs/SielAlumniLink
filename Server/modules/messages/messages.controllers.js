@@ -10,6 +10,7 @@ import { groupRoles } from './group-admin.js';
 import { messageWasRead } from './read-receipts.js';
 import { messageSenders } from './message-senders.js';
 import { mapConcurrent } from '../../utils/map-concurrent.js';
+import { resolveMessageMentions } from './message-mentions.js';
 import cloudUpload, { cloudinary } from '../../config/cloudinary.js';
 import { uploadMessageAttachment, messageAttachmentDto } from './message-attachments.js';
 
@@ -194,6 +195,7 @@ export const listMessages = async (req, res) => {
         clientMessageId: m.clientMessageId,
         from: String(m.senderAuthId) === String(req.user._id) ? 'me' : 'them',
         text: m.text,
+        mentions: m.unsent ? [] : m.mentions || [],
         at: m.createdAt,
         edited: !!m.edited,
         unsent: !!m.unsent,
@@ -259,6 +261,8 @@ export const sendMessage = async (req, res) => {
       });
     }
 
+    const messageText = (text || '').trim().slice(0, 2000);
+    const mentions = await resolveMessageMentions(convo, messageText, req.body.mentionAuthIds, ids => UserModel.findChatProfilesByAuthIds(ids));
     const attachment = await uploadMessageAttachment(req.file, req.user, req.params.id, cloudUpload);
     let message;
     try { message = await MessageModel.create({
@@ -266,7 +270,8 @@ export const sendMessage = async (req, res) => {
       senderAuthId: req.user._id,
       senderEmail: req.user.email,
       clientMessageId,
-      text: (text || '').trim(),
+      text: messageText,
+      mentions,
       attachment,
     }); } catch (error) {
       if (attachment?.publicId) await cloudinary.uploader.destroy(attachment.publicId, { resource_type: attachment.resourceType, type: 'authenticated' }).catch(() => {});
@@ -287,6 +292,7 @@ export const sendMessage = async (req, res) => {
         _id: message._id,
         clientMessageId,
         text: message.text,
+        mentions: message.mentions || [],
         at: message.createdAt,
         senderAuthId: String(req.user._id),
         senderEmail: req.user.email,
@@ -301,7 +307,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: { _id: message._id, clientMessageId, from: 'me', text: message.text, attachment: messageAttachmentDto(message), at: message.createdAt, read: false, ...sender }
+      data: { _id: message._id, clientMessageId, from: 'me', text: message.text, mentions: message.mentions || [], attachment: messageAttachmentDto(message), at: message.createdAt, read: false, ...sender }
     });
   } catch (error) {
     res.status(error.status || 500).json({
@@ -428,13 +434,13 @@ export const renameGroup = async (req, res) => {
 export const editMessage = async (req, res) => {
   try {
     const { text } = req.body;
-    if (!text || !String(text).trim()) {
+    if (typeof text !== 'string' || !text.trim() || text.length > 2000) {
       return res.status(400).json({
         success: false,
         message: 'Message cannot be empty'
       });
     }
-    const message = await MessageModel.editMessage(req.params.msgId, req.user._id, text.trim());
+    const message = await MessageModel.editMessage(req.params.msgId, req.user._id, text.trim(), req.body.mentionAuthIds);
     if (!message) {
       return res.status(403).json({
         success: false,
@@ -443,11 +449,11 @@ export const editMessage = async (req, res) => {
     }
     emitToMembers(message.conversationId, 'message:edited', {
       conversationId: String(message.conversationId),
-      message: { _id: message._id, text: message.text, edited: true },
+      message: { _id: message._id, text: message.text, mentions: message.mentions || [], edited: true },
     });
     res.status(200).json({ success: true, data: message });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     });

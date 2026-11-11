@@ -1,4 +1,5 @@
 import ContentSkeleton from "../ui/Skeleton";
+import MentionInput from './MentionInput';
 import { useChat } from "../../context/useChat";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -561,7 +562,11 @@ const ThreadPane = ({
             }}
           />
         </label>
-        <input
+        <MentionInput
+          key={activeId}
+          conversationId={activeId}
+          isGroup={active.isGroup}
+          composer={composer}
           ref={bindInput}
           value={draft}
           disabled={composer.saving}

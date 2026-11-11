@@ -15,6 +15,7 @@ import { messageDeliveryLabel } from './messageDelivery';
 import MessageActions from './MessageActions';
 import ChatPhoto from './ChatPhoto';
 import { chatAttachmentUrl } from '../../utils/chatAttachments';
+import { mentionParts } from './mentionText';
 import './MessageBubble.css';
 
 const sharedPostId = (text) => {
@@ -146,7 +147,7 @@ export default function MessageBubble({
                   View shared post →
                 </Link>
               ) : (
-                <p>{msg.text}</p>
+                <p>{mentionParts(msg.text, msg.mentions || []).map((part, index) => part.authId ? <span key={index} data-mention-auth-id={part.authId} className="rounded bg-black/10 px-0.5 font-semibold underline decoration-current/40 underline-offset-2 dark:bg-white/10">{part.text}</span> : part.text)}</p>
               ))}
           </BubbleContent>}
           {msg.edited && !mine && (
@@ -156,7 +157,7 @@ export default function MessageBubble({
           )}
           {(canEdit || canUnsend) && (
             <MessageActions canEdit={canEdit} canDelete={canUnsend}
-              onEdit={() => onEdit(convoId, msg._id, msg.text)}
+              onEdit={() => onEdit(convoId, msg._id, msg.text, msg.mentions || [])}
               onDelete={confirmUnsend} />
           )}
         </>

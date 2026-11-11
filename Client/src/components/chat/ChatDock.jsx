@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X, Minus, Send, Smile, ImagePlus, Paperclip } from "lucide-react";
 import { useMessageComposer } from './useMessageComposer';
+import MentionInput from './MentionInput';
 import ComposerEditNotice from './ComposerEditNotice';
 import ComposerImagePreview from './ComposerImagePreview';
 import ChatAvatar from "./ChatAvatar";
@@ -267,7 +268,11 @@ const ChatWindow = ({
                 }}
               />
             </label>
-            <input
+            <MentionInput
+              key={id}
+              conversationId={id}
+              isGroup={convo.isGroup}
+              composer={composer}
               ref={bindInput}
               value={draft}
               disabled={composer.saving}

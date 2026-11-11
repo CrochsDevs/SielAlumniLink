@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { gooeyToast as toast } from 'goey-toast';
 import { CHAT_IMAGE_ACCEPT, MAX_CHAT_FILE_BYTES } from '../../utils/chatAttachments';
 
-const emptyComposer = conversationId => ({ conversationId, draft: '', edit: null, saving: false, attachment: null });
+const emptyComposer = conversationId => ({ conversationId, draft: '', mentionAuthIds: [], edit: null, saving: false, attachment: null });
 
 // Full-page and floating chats share the same edit/save/cancel behavior.
 export function useMessageComposer(conversationId, onSend, onEdit) {
@@ -17,17 +17,21 @@ export function useMessageComposer(conversationId, onSend, onEdit) {
     setState(emptyComposer(conversationId));
   }
   const focus = () => inputRef.current?.focus();
-  const setDraft = value => setState(previous => previous.saving ? previous : ({ ...previous,
-    draft: typeof value === 'function' ? value(previous.draft) : value }));
-  const startEdit = (id, messageId, text) => {
+  const setDraft = value => setState(previous => {
+    if (previous.saving) return previous;
+    const draft = typeof value === 'function' ? value(previous.draft) : value;
+    return { ...previous, draft, ...(!draft ? { mentionAuthIds: [] } : {}) };
+  });
+  const addMention = authId => setState(previous => ({ ...previous, mentionAuthIds: [...new Set([...previous.mentionAuthIds, authId])] }));
+  const startEdit = (id, messageId, text, mentions = []) => {
     if (String(id) !== String(conversationId) || state.saving) return;
-    setState(previous => ({ ...previous, draft: text,
-      edit: { messageId, originalText: text, restoreDraft: previous.edit?.restoreDraft ?? previous.draft } }));
+    setState(previous => ({ ...previous, draft: text, mentionAuthIds: [...new Set(mentions.map(mention => mention.authId))],
+      edit: { messageId, originalText: text, originalMentions: [...new Set(mentions.map(mention => mention.authId))], restoreDraft: previous.edit?.restoreDraft ?? previous.draft, restoreMentions: previous.edit?.restoreMentions ?? previous.mentionAuthIds } }));
     focus();
   };
   const cancelEdit = () => {
     if (state.saving) return;
-    setState(previous => ({ ...previous, draft: previous.edit?.restoreDraft ?? previous.draft, edit: null }));
+    setState(previous => ({ ...previous, draft: previous.edit?.restoreDraft ?? previous.draft, mentionAuthIds: previous.edit?.restoreMentions ?? [], edit: null }));
     focus();
   };
   const removeImage = () => {
@@ -63,29 +67,29 @@ export function useMessageComposer(conversationId, onSend, onEdit) {
         const attachment = state.attachment;
         setState(previous => ({ ...previous, saving: true }));
         let saved = false;
-        try { saved = (await onSend(conversationId, state.draft.trim(), attachment)) !== false; }
+        try { saved = (await onSend(conversationId, state.draft.trim(), attachment, state.mentionAuthIds)) !== false; }
         finally {
           setState(previous => previous.conversationId !== conversationId || previous.attachment !== attachment ? previous : ({ ...previous, saving: false,
-            ...(saved ? { draft: '', attachment: null } : {}) }));
+            ...(saved ? { draft: '', mentionAuthIds: [], attachment: null } : {}) }));
         }
         return;
       }
-      void onSend(conversationId, state.draft.trim());
+      void onSend(conversationId, state.draft.trim(), null, state.mentionAuthIds);
       setDraft('');
       return;
     }
     const edit = state.edit;
-    if (state.draft.trim() === edit.originalText) { cancelEdit(); return; }
+    if (state.draft.trim() === edit.originalText && JSON.stringify([...state.mentionAuthIds].sort()) === JSON.stringify([...edit.originalMentions].sort())) { cancelEdit(); return; }
     setState(previous => ({ ...previous, saving: true }));
     let saved = false;
-    try { saved = (await onEdit(conversationId, edit.messageId, state.draft.trim())) !== false; }
+    try { saved = (await onEdit(conversationId, edit.messageId, state.draft.trim(), state.mentionAuthIds)) !== false; }
     finally {
       setState(previous => previous.edit !== edit ? previous : ({ ...previous, saving: false,
-        ...(saved ? { edit: null, draft: edit.restoreDraft } : {}) }));
+        ...(saved ? { edit: null, draft: edit.restoreDraft, mentionAuthIds: edit.restoreMentions } : {}) }));
     }
   };
-  return { draft: state.draft, setDraft, editing: !!state.edit, saving: state.saving,
+  return { draft: state.draft, setDraft, mentionAuthIds: state.mentionAuthIds, editing: !!state.edit, saving: state.saving,
     attachment: state.attachment, removeImage, onPaste, attachFile,
     canSubmit: !!(state.draft.trim() || (!state.edit && state.attachment)) && !state.saving,
-    startEdit, cancelEdit, submit, bindInput };
+    startEdit, cancelEdit, submit, bindInput, addMention };
 }

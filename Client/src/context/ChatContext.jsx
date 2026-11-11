@@ -284,6 +284,7 @@ export const ChatProvider = ({ children }) => {
               senderName: message.senderName,
               senderProfilePicture: message.senderProfilePicture,
               text: message.text,
+              mentions: message.mentions || [],
               at: message.at,
               call: message.call || null,
               activity: message.activity || null,
@@ -319,7 +320,7 @@ export const ChatProvider = ({ children }) => {
         ...prev,
         [conversationId]: (prev[conversationId] || []).map((m) =>
           String(m._id) === String(message._id)
-            ? { ...m, text: message.text, edited: true }
+            ? { ...m, text: message.text, mentions: message.mentions || [], edited: true }
             : m,
         ),
       }));
@@ -481,7 +482,7 @@ export const ChatProvider = ({ children }) => {
     );
   }, []);
 
-  const sendChat = useCallback(async (id, text, attachment = null) => {
+  const sendChat = useCallback(async (id, text, attachment = null, mentionAuthIds = []) => {
     if (convosRef.current.find(conversation => String(conversation._id) === String(id))?.blocked) {
       toast.error('Messaging unavailable', { description: 'This conversation is blocked.' });
       return false;
@@ -496,7 +497,7 @@ export const ChatProvider = ({ children }) => {
         attachment: attachment ? { kind: attachment.kind, name: attachment.name, url: attachment.url } : null, pendingId }],
     }));
     try {
-      const response = await api.post(`/conversations/${id}/messages`, messageUploadBody(text, pendingId, attachment), { timeout: attachment ? 90000 : 30000 });
+      const response = await api.post(`/conversations/${id}/messages`, messageUploadBody(text, pendingId, attachment, mentionAuthIds), { timeout: attachment ? 90000 : 30000 });
       const saved = response.data.data;
       if (myAuthIdRef.current !== owner || (threadEpochs.current.get(String(id)) || 0) !== epoch) return true;
       setThreads(previous => {
@@ -525,7 +526,7 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const editChatMessage = useCallback(
-    async (convoId, msgId, text) => {
+    async (convoId, msgId, text, mentionAuthIds = []) => {
       setThreads((prev) => ({
         ...prev,
         [convoId]: (prev[convoId] || []).map((m) =>
@@ -533,7 +534,8 @@ export const ChatProvider = ({ children }) => {
         ),
       }));
       try {
-        await api.put(`/conversations/messages/${msgId}`, { text });
+        const response = await api.put(`/conversations/messages/${msgId}`, { text, mentionAuthIds });
+        setThreads(previous => ({ ...previous, [convoId]: (previous[convoId] || []).map(message => String(message._id) === String(msgId) ? { ...message, mentions: response.data.data.mentions || [] } : message) }));
         return true;
       } catch (err) {
         toast.error("Error", { description: err.response?.data?.message || "Cannot edit message" });
