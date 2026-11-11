@@ -3,13 +3,17 @@ import api from '../../utils/axios';
 import { getSocket } from '../../realtime/socket';
 import { mentionQuery } from './mentionText';
 import ChatAvatar from './ChatAvatar';
+import MentionEditor from './MentionEditor';
+import { composerText, composerSelection, setComposerSelection } from './mentionEditorSelection';
 
 export default function MentionInput({ conversationId, isGroup, composer, value, onChange, onKeyDown, className, ref: bindInput, ...props }) {
   const input = useRef(null);
+  const explicitSelection = useRef(false);
   const id = useId();
   const [query, setQuery] = useState(null);
   const [selected, setSelected] = useState(0);
   const [result, setResult] = useState({ owner: null, members: [], error: '' });
+  const Editor = isGroup ? MentionEditor : 'input';
   const open = !!isGroup && !!query && !props.disabled;
   useEffect(() => {
     const socket = getSocket();
@@ -30,8 +34,7 @@ export default function MentionInput({ conversationId, isGroup, composer, value,
   const candidates = result.owner === conversationId ? result.members.filter(member => member.name?.toLowerCase().includes(query?.query.trim().toLowerCase() || '')).slice(0, 20) : [];
   const findQuery = (text, caret) => {
     const found = mentionQuery(text, caret);
-    if (found && result.members.some(member => member.name?.toLowerCase().startsWith(found.query.trim().toLowerCase()))) return found;
-    if (found && result.members.some(member => composer.mentionAuthIds.includes(member.authId) && found.query.startsWith(`${member.name} `))) return null;
+    if (found && composer.mentionPeople.some(member => found.query.startsWith(`${member.name} `))) return null;
     return found;
   };
   const choose = member => {
@@ -39,13 +42,15 @@ export default function MentionInput({ conversationId, isGroup, composer, value,
     const next = value.slice(0, query.start) + label + value.slice(query.end);
     if (next.length > 2000) return;
     onChange({ target: { value: next } });
-    composer.addMention(member.authId);
+    composer.addMention(member.authId, member.name);
+    explicitSelection.current = true;
     const caret = query.start + label.length;
     setQuery(null);
-    requestAnimationFrame(() => { input.current?.focus(); input.current?.setSelectionRange(caret, caret); });
+    requestAnimationFrame(() => { input.current?.focus(); setComposerSelection(input.current, caret); });
   };
   const showMembers = () => {
-    const caret = input.current?.selectionStart ?? value.length;
+    explicitSelection.current = true;
+    const caret = input.current ? composerSelection(input.current).start : value.length;
     let next = value, position = caret;
     if (!mentionQuery(next, position)) {
       const token = caret > 0 && !/\s/.test(value[caret - 1]) ? ' @' : '@';
@@ -57,26 +62,26 @@ export default function MentionInput({ conversationId, isGroup, composer, value,
     setResult({ owner: null, members: [], error: '' });
     setQuery(mentionQuery(next, position));
     setSelected(0);
-    requestAnimationFrame(() => { input.current?.focus(); input.current?.setSelectionRange(position, position); });
+    requestAnimationFrame(() => { input.current?.focus(); setComposerSelection(input.current, position); });
   };
   return <div className="relative min-w-0 flex-1">
     {open && <div id={id} role="listbox" aria-label="Mention group member" className="absolute bottom-full left-0 z-50 mb-2 max-h-56 w-64 max-w-[calc(100vw-4rem)] overflow-y-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl">
-      {result.owner !== conversationId ? <p role="status" className="px-3 py-2 text-xs">Loading members…</p> : result.error ? <p role="alert" className="px-3 py-2 text-xs">{result.error} <button type="button" onPointerDown={event => event.preventDefault()} onClick={() => setResult({ owner: null, members: [], error: '' })} className="underline">Retry</button></p> : candidates.length ? candidates.map((member, index) => <button key={member.authId} id={`${id}-${index}`} type="button" role="option" aria-selected={index === selected} onPointerDown={event => event.preventDefault()} onClick={() => choose(member)} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${index === selected ? 'bg-primary/10 font-semibold text-primary' : 'hover:bg-muted'}`}><span aria-hidden="true" className="h-8 w-8 shrink-0 text-xs"><ChatAvatar convo={member} /></span><span className="min-w-0 truncate font-bold">@{member.name}</span></button>) : <p className="px-3 py-2 text-xs">No matching group members.</p>}
+      {result.owner !== conversationId ? <p role="status" className="px-3 py-2 text-xs">Loading members…</p> : result.error ? <p role="alert" className="px-3 py-2 text-xs">{result.error} <button type="button" onPointerDown={event => event.preventDefault()} onClick={() => setResult({ owner: null, members: [], error: '' })} className="underline">Retry</button></p> : candidates.length ? candidates.map((member, index) => <button key={member.authId} id={`${id}-${index}`} type="button" role="option" aria-selected={index === selected} onPointerDown={event => event.preventDefault()} onClick={() => choose(member)} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${index === selected ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}><span aria-hidden="true" className="h-8 w-8 shrink-0 text-xs"><ChatAvatar convo={member} /></span><span className="min-w-0 truncate font-normal">@{member.name}</span></button>) : <p className="px-3 py-2 text-xs">No matching group members.</p>}
     </div>}
-    <input {...props} ref={node => { input.current = node; bindInput?.(node); }} value={value} maxLength={2000} className={`${className} w-full ${isGroup ? '!pr-9' : ''}`} autoComplete="off"
+    <Editor {...props} {...(isGroup ? { people: composer.mentionPeople } : { maxLength: 2000, autoComplete: 'off' })} ref={node => { input.current = node; bindInput?.(node); }} value={value} className={`${className} w-full ${isGroup ? '!pr-9' : ''}`}
       role={isGroup ? 'combobox' : undefined} aria-expanded={isGroup ? open : undefined} aria-autocomplete={isGroup ? 'list' : undefined} aria-controls={open ? id : undefined} aria-activedescendant={open && candidates[selected] ? `${id}-${selected}` : undefined}
       onFocus={event => {
         const element = event.currentTarget;
         // Let the browser restore the caret and finish its blur/focus sequence.
         requestAnimationFrame(() => {
-          if (input.current !== element || document.activeElement !== element) return;
-          setQuery(findQuery(element.value, element.selectionStart));
+          if (input.current !== element || document.activeElement !== element || explicitSelection.current) return;
+          setQuery(findQuery(composerText(element), composerSelection(element).start));
           setSelected(0);
         });
       }}
       onBlur={() => setQuery(null)}
-      onChange={event => { onChange(event); setQuery(findQuery(event.target.value, event.target.selectionStart)); setSelected(0); }}
-      onClick={event => { setQuery(findQuery(value, event.currentTarget.selectionStart)); setSelected(0); }}
+      onChange={event => { explicitSelection.current = false; onChange(event); setQuery(findQuery(event.target.value, event.target.selectionStart)); setSelected(0); }}
+      onClick={event => { explicitSelection.current = false; setQuery(findQuery(value, composerSelection(event.currentTarget).start)); setSelected(0); }}
       onKeyDown={event => {
         if (open && event.key === 'Escape') { event.preventDefault(); setQuery(null); return; }
         if (open && event.key === 'Tab' && event.shiftKey) { setQuery(null); return; }

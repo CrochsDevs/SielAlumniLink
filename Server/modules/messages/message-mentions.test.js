@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveMessageMentions } from './message-mentions.js';
-import { mentionQuery, mentionParts } from '../../../Client/src/components/chat/mentionText.js';
+import { mentionQuery, mentionParts, draftMentionRanges } from '../../../Client/src/components/chat/mentionText.js';
 import { Collection, ObjectId } from 'mongodb';
 import { ConversationModel, MessageModel } from './messages.models.js';
 import UserModel from '../users/users.models.js';
@@ -141,4 +141,13 @@ test('mention notifications open the same group for alumni, students and admins'
   }
   assert.equal(messageNotificationLink('/message-elsewhere', 'admin'), null);
   assert.equal(messageNotificationLink('https://example.test/message', 'admin'), null);
+});
+
+
+test('composer bolds selected account names only, handles overlapping names and removes altered mentions', () => {
+  const text = 'Hi @Ann Lee, @Ann and @Unknown';
+  assert.deepEqual(draftMentionRanges(text, people).map(mention => text.slice(mention.start, mention.end)), ['@Ann Lee', '@Ann']);
+  assert.deepEqual(draftMentionRanges('@Ann edited', []), []);
+  assert.deepEqual(draftMentionRanges('@Annex', people), []);
+  assert.deepEqual(draftMentionRanges('@Ann Lee!', [people[1], people[1]]).map(mention => mention.authId), [b]);
 });

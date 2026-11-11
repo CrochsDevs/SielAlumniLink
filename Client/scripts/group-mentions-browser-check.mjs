@@ -63,13 +63,28 @@ try {
       await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
       const memberOption = page.getByRole('option', { name: '@Jordan Lee', exact: true });
       assert.equal(await memberOption.locator('img').getAttribute('src'), memberPhoto);
+      assert.equal(await memberOption.locator('span').last().evaluate(node => getComputedStyle(node).fontWeight), '400', 'Suggestion names keep normal weight');
       assert.equal(await memberOption.locator('img').evaluate(image => image.complete && image.naturalWidth > 0), true, 'Member picture must load in suggestions');
       await input.press('Enter');
       assert.equal(sends, 0, 'Enter chooses a member instead of submitting prematurely');
-      assert.equal(await input.inputValue(), 'Hello @Jordan Lee ');
+      assert.equal(await input.textContent(), 'Hello @Jordan Lee ');
+      assert.equal(await input.locator('strong').textContent(), '@Jordan Lee');
+      assert.equal(await input.locator('strong').evaluate(node => getComputedStyle(node).fontWeight), '700');
+      await page.waitForTimeout(50);
+      assert.equal(await page.getByRole('listbox', { name: 'Mention group member' }).count(), 0, 'Choosing a mention closes the picker');
+      await page.screenshot({ path: path.resolve(`../artifacts/bold-composer-${name}.png`), fullPage: true });
       await input.pressSequentially('welcome!');
+      assert.equal(await input.locator('strong').textContent(), '@Jordan Lee', 'Ordinary message text must not inherit mention bold');
+      await input.evaluate(element => {
+        const event = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'clipboardData', { value: { items: [], getData: type => type === 'text/plain' ? ' <b>plain</b>' : '<b>plain</b>' } });
+        element.dispatchEvent(event);
+      });
+      await page.waitForTimeout(50);
+      assert.equal(await input.textContent(), 'Hello @Jordan Lee welcome! <b>plain</b>');
+      assert.equal(await input.locator('b').count(), 0, 'Pasted HTML must stay literal text');
       assert.equal(await page.getByRole('listbox', { name: 'Mention group member' }).count(), 0);
-      await page.getByRole('button', { name: 'Send message', exact: true }).click();
+      await input.press('Enter');
       await page.locator(`[data-mention-auth-id="${jordan}"]`).waitFor();
       assert.equal(messages[0].mentions[0].authId, jordan);
       assert.equal(await page.locator(`[data-mention-auth-id="${jordan}"]`).evaluate(node => getComputedStyle(node).fontWeight), '700', 'Account mentions must render bold');
@@ -80,6 +95,7 @@ try {
       await page.getByRole('button', { name: 'Message options', exact: true }).click();
       await page.getByRole('menuitem', { name: 'Edit message', exact: true }).click();
       input = page.getByRole('combobox', { name: 'Edit message text' });
+      assert.equal(await input.locator('strong').textContent(), '@Jordan Lee', 'Editing preserves bold mention identity');
       await input.fill('Updated @Sa');
       await page.getByRole('option', { name: '@Sam Cruz', exact: true }).click();
       await page.getByRole('button', { name: 'Save edit', exact: true }).click();
@@ -121,7 +137,7 @@ try {
         await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
         await input.press('Shift+Tab');
         assert.equal(await page.getByRole('listbox', { name: 'Mention group member' }).count(), 0);
-        assert.equal(await input.inputValue(), '@jordan', 'Leaving the field must not select a mention');
+        assert.equal(await input.textContent(), '@jordan', 'Leaving the field must not select a mention');
         // WebKit can keep focus on text fields when full keyboard access is off.
         // Explicitly blur before verifying an actual focus transition.
         await input.evaluate(element => element.blur());
@@ -131,8 +147,14 @@ try {
         await page.getByRole('button', { name: 'Mention a group member', exact: true }).click();
         await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
         await page.getByRole('option', { name: '@Jordan Lee', exact: true }).click();
-        assert.equal(await input.inputValue(), '@Jordan Lee ');
+        assert.equal(await input.textContent(), '@Jordan Lee ');
       }
+      await input.fill('@Jordan Leex');
+      assert.equal(await input.locator('strong').count(), 0, 'Changing the selected name removes bold mention formatting');
+      await input.fill('x'.repeat(2010));
+      assert.equal((await input.textContent()).length, 2000, 'Rich composer keeps the message length limit');
+      await input.fill('');
+      assert.equal(await input.locator('strong').count(), 0);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       assert.deepEqual(errors, []);
       console.log(`PASS ${name}: picker, send/edit/reload, attachments, floating chat, alumni/student typing, Shift+Tab, and refocus suggestions`);

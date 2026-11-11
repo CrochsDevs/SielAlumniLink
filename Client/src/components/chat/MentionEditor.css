@@ -1,0 +1,16 @@
+.mention-editor {
+  display: block;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  line-height: 40px;
+  font-weight: 400;
+}
+.mention-editor::-webkit-scrollbar { display: none; }
+.mention-editor[data-empty="true"]::before {
+  content: attr(placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+}
+.mention-editor .composer-mention { font-weight: 700 !important; }
