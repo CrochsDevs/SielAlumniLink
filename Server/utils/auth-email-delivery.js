@@ -14,7 +14,7 @@ export function createAuthEmailSender({
   timeoutMs = EMAIL_DELIVERY_TIMEOUT_MS,
 } = {}) {
   return async (to, message) => {
-    let timer, transport, controller;
+    let timer, transport, controller, providerStatus;
     const provider = env.EMAIL_PROVIDER?.trim() || 'smtp';
     try {
       const user = env.EMAIL_USER?.trim();
@@ -48,6 +48,7 @@ export function createAuthEmailSender({
             body: JSON.stringify({ sender: { name: 'SielAlumni', email: user },
               to: [{ email: to, removeTrackingPixel: true }], subject: message.subject, htmlContent }),
           });
+          providerStatus = response.status;
           // Never print provider bodies: they can include recipients or secrets.
           if (!response.ok) {
             const code = response.status === 429 ? 'ERATELIMIT'
@@ -81,7 +82,7 @@ export function createAuthEmailSender({
       // Never log a provider response, recipient, link, OTP, or credentials.
       const code = ['ETIMEDOUT', 'EAUTH', 'ECONNECTION', 'ESOCKET', 'EDNS', 'ECONFIG', 'ERATELIMIT', 'EPROVIDER', 'EREQUEST'].includes(error?.code)
         ? error.code : 'EDELIVERY';
-      logger.error(`Authentication email delivery failed (${code}; provider=${['smtp', 'brevo'].includes(provider) ? provider : 'unsupported'})`);
+      logger.error(`Authentication email delivery failed (${code}; provider=${['smtp', 'brevo'].includes(provider) ? provider : 'unsupported'}${Number.isInteger(providerStatus) ? `; status=${providerStatus}` : ''})`);
       return { success: false };
     } finally {
       clearTimeout(timer);

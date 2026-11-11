@@ -801,3 +801,25 @@ test('password-reset OTPs are stored only as an account-bound keyed hash', async
     assert.notEqual(otpHash(account.email, '123456'), otpHash('other@example.test', '123456'));
     assert.equal(update.$unset.resetOTP, '');
 });
+
+
+test('recovery diagnostics correlate eligibility and delivery without leaking the account or code', async t => {
+    const logs = captureLogs(t);
+    let current, savedCode;
+    t.mock.method(AuthModel, 'findByEmail', async () => current);
+    t.mock.method(AuthModel, 'updateOTP', async (_email, code) => { savedCode = code; });
+    t.mock.method(AuthModel, 'clearOTP', async () => {});
+    for (const outcome of ['not_eligible', 'delivery_failed', 'accepted_for_delivery']) {
+        current = outcome === 'not_eligible' ? null : account;
+        deliver = async () => { if (outcome === 'delivery_failed') throw new Error('PRIVATE_PROVIDER_DETAIL'); };
+        const res = response();
+        res.getHeader = () => 'fixture-request-id';
+        await forgotPassword({ body: { email: account.email } }, res);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.body.message, 'If the account is eligible, a reset code has been sent.');
+        const entry = logs.filter(line => line.startsWith('{')).map(line => JSON.parse(line)).findLast(item => item.event === 'auth.recovery');
+        assert.deepEqual(entry, { event: 'auth.recovery', operation: 'password_recovery', requestId: 'fixture-request-id', outcome });
+        assert.doesNotMatch(logs.join(''), /member@example|PRIVATE_PROVIDER_DETAIL/);
+        if (savedCode) assert.equal(logs.join('').includes(savedCode), false);
+    }
+});

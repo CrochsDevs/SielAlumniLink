@@ -12,6 +12,11 @@ app.use(express.json());
 let saveCookie = true, discoveryGate = Promise.resolve();
 let magicUsed = false, verificationRequests = 0;
 let sendStatus = 200;
+let recoveryRequests = 0;
+app.post('/api/auth/forgot-password', (_req, res) => {
+  recoveryRequests++;
+  res.json({ success: true, message: 'If the account is eligible, a reset code has been sent.' });
+});
 app.post('/api/auth/magic-link/send', (_req, res) => {
   if (sendStatus === 429) return res.set('Retry-After', '3').status(429).json({ success: false });
   res.json({ success: true, message: 'If an account exists, a login link has been sent.' });
@@ -57,6 +62,19 @@ try {
     const browser = await engine.launch({ headless: true, ...options });
     const errors = [];
     try {
+      const recoveryContext = await browser.newContext();
+      try {
+        const page = await recoveryContext.newPage();
+        page.on('pageerror', error => errors.push(error.message));
+        await page.goto(origin + '/forgot-password');
+        await page.locator('input[type="email"]').fill(user.email);
+        await page.getByRole('button', { name: 'Send reset code', exact: true }).click();
+        await page.getByText('If your account is eligible, a reset code has been sent. Check Inbox and Spam; the code expires in 10 minutes.', { exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Verify code', exact: true }).waitFor();
+        assert.equal(recoveryRequests, engines.findIndex(entry => entry[0] === name) + 1);
+        assert.equal(await page.getByRole('button', { name: /Resend code \(/ }).isDisabled(), true);
+        console.log(`PASS ${name}: password recovery submits once and preserves private eligibility feedback`);
+      } finally { await recoveryContext.close(); }
       for (const initialPath of ['/', '/login']) {
         let release;
         discoveryGate = new Promise(resolve => { release = resolve; });

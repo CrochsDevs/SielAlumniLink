@@ -24,6 +24,12 @@ const dummyPasswordHash = bcrypt.hashSync('alumnilink-login-timing-placeholder',
 const recoveryResponse = res => res.status(200).json({
     success: true, message: 'If the account is eligible, a reset code has been sent.'
 });
+const logRecoveryOutcome = (res, outcome) => {
+    try {
+        console.log(JSON.stringify({ event: 'auth.recovery', operation: 'password_recovery',
+            requestId: res.getHeader?.('X-Request-Id'), outcome }));
+    } catch { /* Operational diagnostics must not change recovery behavior. */ }
+};
 
 // Keep the old endpoint explicitly closed, including for callers bypassing the UI.
 export const signup = (_req, res) => res.status(403).json({
@@ -236,6 +242,7 @@ export const forgotPassword = async (req, res) => {
 
         const user = await AuthModel.findByEmail(email);
         if (!activeAccount(user) || !hasUsableLocalPassword(user)) {
+            logRecoveryOutcome(res, 'not_eligible');
             return recoveryResponse(res);
         }
 
@@ -248,10 +255,12 @@ export const forgotPassword = async (req, res) => {
         if (!emailResult.success) {
             // Match this request's code so a failed send cannot clear a newer resend.
             await AuthModel.clearOTP(email, otp);
+            logRecoveryOutcome(res, 'delivery_failed');
             // Delivery status must not disclose that this account exists.
             return recoveryResponse(res);
         }
 
+        logRecoveryOutcome(res, 'accepted_for_delivery');
         return recoveryResponse(res);
     } catch {
         console.error('Password recovery request failed');

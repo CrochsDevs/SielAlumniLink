@@ -53,6 +53,7 @@ test('Brevo rejections, quota exhaustion, and failures never retry or disclose p
     assert.deepEqual(await send(recipient, magicLinkEmail(link)), { success: false });
     assert.equal(calls, 1);
     assert.match(logs.join(''), new RegExp(`${code}; provider=brevo`));
+    assert.match(logs.join(''), new RegExp(`status=${status}`));
     assertPrivate(logs);
   }
 });

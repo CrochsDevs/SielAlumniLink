@@ -98,8 +98,8 @@ const ForgetPassword = () => {
         setResetToken("");
         setMessage(
           isResend
-            ? "A new code has been sent. Please use the latest code from your email."
-            : "OTP sent to your email! Valid for 10 minutes.",
+            ? "If your account is eligible, a new code has been sent. Use only the latest code."
+            : "If your account is eligible, a reset code has been sent. Check Inbox and Spam; the code expires in 10 minutes.",
         );
         setStep(2);
         if (isResend) otpRef.current?.focus();
@@ -176,7 +176,7 @@ const ForgetPassword = () => {
   ];
   const descriptions = [
     "No worries. We'll help you get back into your account.",
-    "Enter the 6-digit code we sent to your registered email.",
+    "Enter the 6-digit reset code if you receive one. First-time users should use the single-use login link to set a password.",
     "Choose a password you can remember and keep it private.",
   ];
   const submitLabels = ["Send reset code", "Verify code", "Reset password"];
@@ -279,7 +279,7 @@ const ForgetPassword = () => {
                     <div className="recovery-email-summary">
                       <Mail size={18} />
                       <div>
-                        <span>Code sent to</span>
+                        <span>Recovery email</span>
                         <strong>{email}</strong>
                       </div>
                       <button
