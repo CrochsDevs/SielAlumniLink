@@ -60,6 +60,19 @@ try {
   await page.getByRole('button', { name: 'Close messages', exact: true }).click();
   assert.ok(await icon.evaluate(element => document.activeElement === element));
   await page.setViewportSize({ width: 1440, height: 900 });
+  // A saved dock must be suppressed on Messages for every role, even after reload.
+  for (role of ['student', 'alumni', 'admin']) {
+    await page.evaluate(() => localStorage.setItem('chatdock:self', JSON.stringify({ openChats: [{ id: 'conversation3', convo: { _id: 'conversation3', authId: 'member3', name: 'Member 3' }, minimized: false }], threads: {} })));
+    await page.goto(`http://localhost:5173/${role}/message?conversation=conversation19`, { waitUntil: 'networkidle' });
+    await page.locator('.inbox-message-list').getByText('Thread conversation19', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Close chat', exact: true }).count(), 0);
+    await icon.click();
+    await page.getByRole('region', { name: 'Messages', exact: true }).getByRole('button', { name: /Member 3 University/ }).click();
+    await page.locator('.inbox-message-list').getByText('Thread conversation3', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Close chat', exact: true }).count(), 0);
+  }
+  await page.goto('http://localhost:5173/admin/settings', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Close chat', exact: true }).waitFor();
   const before = page.url();
   await icon.click();
   const dropdown = page.getByRole('region', { name: 'Messages', exact: true });
@@ -74,5 +87,5 @@ try {
   await panel.getByText('No conversations yet.', { exact: true }).waitFor();
   await page.keyboard.press('Escape');
   assert.deepEqual(errors, []);
-  console.log('PASS: full-screen mobile inbox for all roles, search, explicit thread selection, same-page switching, reload, back to list, groups, empty state, close/focus and desktop floating chats.');
+  console.log('PASS: mobile inbox for all roles; desktop Messages suppresses saved docks and switches conversations in the inbox; other pages retain floating chats.');
 } finally { await browser.close(); }

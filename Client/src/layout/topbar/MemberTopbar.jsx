@@ -212,7 +212,12 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
               messagePath={`${homePath}/message`}
               triggerRef={chatButtonRef}
               onClose={() => setChatOpen(false)}
-              onDesktopSelect={openChat}
+              onDesktopSelect={conversation => {
+                const messagePath = `${homePath}/message`;
+                if (location.pathname.replace(/\/+$/, '').toLowerCase() === messagePath.toLowerCase()) {
+                  navigate(`${messagePath}?conversation=${encodeURIComponent(conversation._id)}`);
+                } else openChat(conversation);
+              }}
             />}
           </div>
 

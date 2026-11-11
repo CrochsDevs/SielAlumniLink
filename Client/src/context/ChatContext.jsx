@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from 'react-router-dom';
 import { ChatContext } from "./chat-context.js";
 import { gooeyToast as toast } from 'goey-toast';
 import api from "../utils/axios";
@@ -20,6 +21,8 @@ const unreadCount = (value) => Math.max(0, Number(value) || 0);
 // page navigation. Logging out clears the windows and their saved cache.
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
+  const { pathname } = useLocation();
+  const inMessages = /^\/(?:alumni|student|admin)\/message\/*$/i.test(pathname);
   // Compare against the AUTH id (senderAuthId from the server is the
   // auth-record id, while user._id is the profile id — they differ!).
   const myAuthId = user?.authId
@@ -609,7 +612,7 @@ export const ChatProvider = ({ children }) => {
     >
       <GroupCallProvider key={myAuthId || "signed-out"} user={user}>
       {children}
-      {openChats.length > 0 && <Suspense fallback={null}><ChatDock
+      {!inMessages && openChats.length > 0 && <Suspense fallback={null}><ChatDock
         windows={openChats.map((window) => ({
           ...window,
           convo:
