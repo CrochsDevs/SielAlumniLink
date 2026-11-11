@@ -77,3 +77,33 @@ The current Gmail SMTP transport requires outbound SMTP access; Render Free
 web services block ports 25, 465, and 587. See https://render.com/docs/free.
 The generic send response intentionally does not disclose whether an account
 exists or whether email delivery succeeded.
+
+### Email delivery on Render Free
+
+The backend supports Resend's HTTPS API without an additional npm package.
+In Resend, verify a domain you control, then create a sending API key restricted
+to that domain where supported. A Gmail address is not a verified sender domain.
+The provider's default test sender cannot send production login links to arbitrary
+recipients. See https://resend.com/docs/send-with-nodejs.
+
+Set these only in the **backend** Render environment, then redeploy the backend:
+
+```text
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=<server-only key>
+EMAIL_FROM=AlumniLink <login@your-verified-domain.example>
+FRONTEND_URL=https://sielalumnilink.onrender.com
+```
+
+Never add the API key to `Client/.env.production` or a `VITE_*` variable. Delete
+unused Gmail credentials after switching. Revoke any password/key exposed in a
+screenshot or log. Delivery waits at most 12 seconds, aborts stalled HTTPS requests,
+closes stalled SMTP connections, and does not automatically retry sensitive emails.
+Server logs contain fixed failure categories (`ETIMEDOUT`, `EAUTH`, `ECONFIG`,
+`EPROVIDER`), never provider bodies, recipients, links, codes, or credentials.
+
+Paid hosts/local development can keep `EMAIL_PROVIDER=smtp`, `EMAIL_USER`, and
+a Gmail App Password in `EMAIL_PASS`; TLS certificate validation remains enabled.
+The generic send response still does not confirm actual inbox delivery. Check the
+provider dashboard and backend log for accepted/rejected delivery. After a successful
+deployment, request a fresh link and complete the session test in the intended browser.
