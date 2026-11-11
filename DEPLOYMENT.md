@@ -73,44 +73,79 @@ verification consumes the link even if the browser later blocks the session
 cookie. Request a fresh link after correcting deployment or cookie issues.
 
 If emails do not arrive, check backend email delivery logs and provider settings.
-The current Gmail SMTP transport requires outbound SMTP access; Render Free
-web services block ports 25, 465, and 587. See https://render.com/docs/free.
-The generic send response intentionally does not disclose whether an account
-exists or whether email delivery succeeded.
+Use the Brevo HTTPS API on Render Free. SMTP ports 25, 465, and 587 are blocked
+on free web services (https://render.com/docs/free). A generic HTTP 200 send
+response intentionally does not disclose account existence or delivery status.
 
-### Gmail SMTP configuration
+### Brevo setup for Render Free
 
-The backend uses Gmail SMTP with an App Password. OAuth and HTTP email API setup
-are no longer part of this implementation. Set these only on the backend service:
+1. Create a free account at https://www.brevo.com/ and complete the account
+   information/transactional sending activation requested by Brevo.
+2. In account settings, open **Senders, Domains & Dedicated IPs > Senders**
+   (menu wording may vary). Add the name `SielAlumni` and the sender email you
+   control. Complete email verification. Account sending approval and sender
+   verification are separate; both must be ready before production sending.
+3. Prefer your own authenticated sending domain with DKIM/DMARC when available.
+   For a public Gmail sender, Brevo cannot authenticate gmail.com and may replace
+   the From address with a Brevo sending domain. This is a provider workaround,
+   not a promise of permanent support or inbox delivery. Follow any sender/domain
+   requirements Brevo presents. See
+   https://help.brevo.com/hc/en-us/articles/16045394674066-Troubleshooting-Domain-authentication.
+4. Open **SMTP & API > API Keys** and create a dedicated backend API key. Grant
+   only the transactional sending permissions needed where supported. Use an
+   **API key**, not an SMTP password. Keep account 2FA and API IP protections
+   enabled; authorize the actual Render outbound addresses if Brevo blocks them.
+5. On the backend Render service `siel-alumni-link-api`, add:
 
 ```text
-EMAIL_PROVIDER=smtp
-EMAIL_USER=<sender Gmail address>
-EMAIL_PASS=<new Gmail App Password>
+EMAIL_PROVIDER=brevo
+EMAIL_USER=<the exact verified sender email>
+BREVO_API_KEY=<your private Brevo API key>
 FRONTEND_URL=https://sielalumnilink.onrender.com
 ```
 
-Use the existing authorized sender account with Google 2-Step Verification and a
-fresh App Password. Do not use the normal Google password. Revoke App Passwords
-that were exposed in chat/screenshots. Pasted display spaces are stripped from the
-App Password. Never place it in frontend configuration or VITE_* variables.
+Do not put these credentials in the frontend, VITE variables, Git, screenshots,
+or chat. No Google OAuth client, refresh token, or Gmail App Password is required
+for Brevo. Revoke credentials exposed during earlier setup. Old Google variables
+and EMAIL_PASS can be removed from the production backend after switching.
 
-The host must permit outbound Gmail SMTP connections. Render Free blocks SMTP
-ports 25, 465, and 587. Use a paid Render web-service instance or another host that
-permits Gmail SMTP. A Gmail quota of up to 500 emails/day does not remove a hosting
-network restriction, and Gmail may impose account-specific anti-abuse limits.
-See https://render.com/docs/free and https://support.google.com/mail/answer/22839.
+6. Deploy the backend code together with these environment settings. Changing
+   variables on an older SMTP-only deployment will not enable Brevo.
+7. Request one fresh link for a registered account. Backend logs should show
+   `Authentication email accepted for delivery (brevo)`. Confirm the message is
+   delivered in **Brevo > Transactional > Logs**, then check Inbox/Spam and finish
+   sign-in. An API acceptance is not proof of inbox delivery. Retry/reuse of an
+   already consumed token must fail. Also verify the password-reset OTP flow.
 
-If EMAIL_PROVIDER was set to gmail_api or resend, change it to smtp. Unused Google
-OAuth/API variables are not required and can be removed from server settings.
-Keep downloaded credentials private even though the OAuth helper was removed.
+The free plan includes 300 emails/day, shared by login and password-reset sends.
+After this allowance, Brevo may queue transactional mail, which can outlive a
+15-minute login link or 10-minute OTP. Monitor credits and delivery events; do
+not assume queued emails will still be usable. See
+https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan.
 
-The transport validates TLS certificates, has a 12-second hard deadline, closes
-stalled connections, and never automatically retries sensitive emails. Logs include
-only fixed failure categories and provider=smtp, never recipients, passwords,
-login links, or OTPs. EAUTH indicates authentication rejection; ETIMEDOUT indicates
-a connection/delivery timeout. Neither a deploy nor a generic HTTP 200 proves inbox
-delivery. After the backend is Live, request one new link and complete sign-in.
+The transport uses the fixed HTTPS endpoint https://api.brevo.com/v3/smtp/email,
+rejects redirects, aborts after 12 seconds, and never automatically retries or
+falls back to SMTP. Logs contain fixed failure categories only: EAUTH for API
+permission/key/IP rejection, ERATELIMIT for HTTP 429, EREQUEST for other client
+rejections (check verified sender/credits/activation in Brevo), EPROVIDER for
+5xx, ETIMEDOUT for deadline expiry, and EDELIVERY for unconfirmed acceptance or
+network errors. It never logs provider response bodies, recipients, OTPs, links,
+or API keys. Errors keep the existing account-enumeration-safe auth responses.
+
+Brevo receives recipient addresses and email bodies as the delivery processor.
+Restrict access to transactional logs, which may contain sensitive email content.
+The request asks Brevo to remove the recipient tracking pixel. Click rewriting
+can still depend on Brevo account settings; do not assume this API call disables
+it. Check actual delivered messages and the available account tracking controls.
+The server transmits the original login URL and does not add analytics parameters.
+For Brevo HTML emails, the seal loads from the public frontend
+`/clsu_favicon.png`; SMTP keeps its local CID attachment. No public homepage or
+Google Branding setup is needed for this Brevo integration, though Brevo can
+require account/business verification.
+
+Gmail SMTP remains an explicit local option: `EMAIL_PROVIDER=smtp`, `EMAIL_USER`,
+and `EMAIL_PASS` (Gmail App Password). With no provider selected the transport
+keeps its existing SMTP default. On Render Free, explicitly select `brevo`.
 
 ### HTTP 429 and CORS diagnostics
 
