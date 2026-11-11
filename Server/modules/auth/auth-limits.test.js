@@ -64,3 +64,15 @@ test('WebSocket Origin policy accepts configured origins and rejects foreign, nu
         assert.equal(allowedSocketOrigin(origin), false);
     }
 });
+
+
+test('password-change limits follow the authenticated account despite forged body emails and rotating IPs', async () => {
+    const { db } = fixture();
+    const limiter = createAuthLimiter('change', db, () => 1000);
+    for (let i = 0; i < 11; i++) {
+        const res = response(); let allowed = false;
+        await limiter({ user: { email: 'owner@example.test' }, body: { email: `forged${i}@example.test` }, ip: `192.0.2.${i}` }, res, () => { allowed = true; });
+        assert.equal(allowed, i < 10);
+        if (i === 10) assert.equal(res.code, 429);
+    }
+});

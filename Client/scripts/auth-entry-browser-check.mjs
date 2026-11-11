@@ -135,6 +135,8 @@ try {
           } else {
             const message = kind === 'expired' ? 'This login link has expired' : 'Your sign-in session could not be saved. Please reload the page and try again.';
             await page.getByText(message, { exact: true }).waitFor();
+            assert.equal(new URL(page.url()).searchParams.has('token'), false);
+            assert.equal(await page.locator('meta[name="referrer"]').getAttribute('content'), 'no-referrer');
             await page.locator('a[href="/login"]').click();
             await page.locator('input[name="email"]').waitFor();
             assert.equal(await page.locator('.graduation-cap-loader').count(), 0);

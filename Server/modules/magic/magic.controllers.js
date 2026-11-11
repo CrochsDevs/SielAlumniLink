@@ -101,7 +101,7 @@ export const verifyMagicLink = async (req, res) => {
 
     const magicLink = await MagicLinkModel.claimToken(token);
     if (!magicLink) {
-      return invalidMagicLink(res, 'This login link has already been used');
+      return invalidMagicLink(res, 'This login link is invalid, expired, or already used. Please request a new link.');
     }
 
     if (new Date(magicLink.expiresAt) < new Date()) {

@@ -4,6 +4,7 @@ import { frontendOrigins } from "../config/cors.js";
 import { protectSessionOrigin } from "../config/session-cookie.js";
 import { serveClient } from "../config/client-app.js";
 import { logAuthRequests } from '../middlewares/auth-request-log.js';
+import { protectApiResponses } from '../middlewares/api-response-security.js';
 import cookieParser from "cookie-parser";
 import userRoutes from "../modules/users/users.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
@@ -34,6 +35,17 @@ import reportRoutes from "../modules/reports/reports.routes.js";
 //SYLLABUS INTEGRATION API
 
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+    'Content-Security-Policy': "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+  });
+  if (process.env.NODE_ENV === 'production') res.setHeader('Strict-Transport-Security', 'max-age=15552000');
+  next();
+});
 // Configure exact proxy IPs/CIDRs when deployed behind a reverse proxy.
 if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
 app.use(logAuthRequests());
@@ -52,6 +64,7 @@ app.use(cookieParser());
 app.use(protectSessionOrigin(frontendOrigins));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api', protectApiResponses);
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", (_req, res, next) => {
@@ -95,8 +108,18 @@ app.get("/", (req, res) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.originalUrl} not found`,
+    message: 'Route not found',
   });
+});
+
+// Parser/unhandled errors must never render Express's HTML stack trace or echo
+// credentials, request bodies, database connection strings, or provider errors.
+app.use((error, _req, res, _next) => {
+  if (res.headersSent) return _next(error);
+  const status = error.type === 'entity.too.large' ? 413
+    : error.type === 'entity.parse.failed' ? 400 : 500;
+  res.status(status).json({ success: false, message: status === 413 ? 'Request is too large.'
+    : status === 400 ? 'Invalid request body.' : 'Unable to process this request. Please try again later.' });
 });
 
 export default app;

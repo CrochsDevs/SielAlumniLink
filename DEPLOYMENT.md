@@ -1,5 +1,13 @@
 # Render deployment with Safari sessions
 
+Security rollout: see SECURITY_REVIEW.md before deploying the 11 November 2026
+authentication hardening. Production startup now requires a cryptographically
+random JWT_SECRET of at least 32 UTF-8 bytes and an explicit HTTPS FRONTEND_URL
+origin. Rotate exposed credentials first. Changing JWT_SECRET logs out existing
+sessions; old magic links/OTPs must be requested again after the storage upgrade.
+New passwords require at least 15 characters and at most 72 UTF-8 bytes.
+Use `npm run test:security --prefix Server` for isolated security regressions.
+
 When service URL overrides are unset, production React requests `/api` and
 `/socket.io` on the current page's origin.
 Serve the built client from the Node server so Safari does not need third-party

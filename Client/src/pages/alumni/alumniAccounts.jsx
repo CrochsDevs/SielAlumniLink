@@ -1,3 +1,4 @@
+import { newPasswordError } from '../../utils/password-policy';
 import ProfileAvatar from "../../components/profile/ProfileAvatar";
 import AccountSettingsNavigation from "../../components/ui/AccountSettingsNavigation";
 import MemberActivity from "../../components/profile/MemberActivity";
@@ -296,6 +297,8 @@ const AlumniAccounts = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
+    const passwordError = newPasswordError(pwForm.newPassword);
+    if (passwordError) { toast.error(passwordError); return; }
     if (pwForm.newPassword !== pwForm.confirmPassword) {
       toast.error("Error", { description: "New passwords do not match" });
       return;
@@ -406,7 +409,7 @@ const AlumniAccounts = () => {
                       </span>
                     </h2>
                     <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
-                      Use at least 6 characters with a mix of letters and
+                      Use at least 15 characters with a mix of letters and
                       numbers.
                     </p>
                   </div>
@@ -436,7 +439,7 @@ const AlumniAccounts = () => {
                         <input
                           type="password"
                           required
-                          minLength={6}
+                          minLength={15}
                           value={pwForm.newPassword}
                           onChange={(e) =>
                             setPwForm({
@@ -444,7 +447,7 @@ const AlumniAccounts = () => {
                               newPassword: e.target.value,
                             })
                           }
-                          placeholder="At least 6 characters"
+                          placeholder="At least 15 characters"
                           className={inputClass}
                         />
                       </div>
@@ -453,7 +456,7 @@ const AlumniAccounts = () => {
                         <input
                           type="password"
                           required
-                          minLength={6}
+                          minLength={15}
                           value={pwForm.confirmPassword}
                           onChange={(e) =>
                             setPwForm({

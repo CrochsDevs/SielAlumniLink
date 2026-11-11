@@ -4,7 +4,7 @@ import AuthModel from './auth.models.js';
 import UserModel from '../users/users.models.js';
 import ActivityModel from '../activity/activity.models.js';
 import { sendOTPEmail } from '../../utils/email.js';
-import { authEmail, isOTP } from './auth.validation.js';
+import { authEmail, isOTP, newPasswordError } from './auth.validation.js';
 import { createPasswordReset, resetTokenHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, activeAccount, sessionMatches, sessionVersion } from './session-token.js';
 import { requestAccountMatches, rejectChangedAccount } from './request-account.js';
@@ -74,10 +74,10 @@ export const login = async (req, res) => {
                 }
             }
         });
-    } catch (error) {
+    } catch {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Unable to sign in. Please try again later.'
         });
     }
 };
@@ -86,7 +86,7 @@ export const setupPassword = async (req, res) => {
     try {
         const { newPassword, confirmPassword } = req.body;
 
-        if (!newPassword || !confirmPassword) {
+        if (typeof newPassword !== 'string' || typeof confirmPassword !== 'string' || !newPassword || !confirmPassword) {
             return res.status(400).json({
                 success: false,
                 message: 'Please provide your new password and confirmation'
@@ -100,10 +100,11 @@ export const setupPassword = async (req, res) => {
             });
         }
 
-        if (newPassword.length < 6) {
+        const passwordError = newPasswordError(newPassword);
+        if (passwordError) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 6 characters'
+                message: passwordError
             });
         }
 
@@ -145,10 +146,10 @@ export const setupPassword = async (req, res) => {
                 }
             }
         });
-    } catch (error) {
+    } catch {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Unable to set your password. Please try again later.'
         });
     }
 };
@@ -158,7 +159,9 @@ export const changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword, confirmPassword } = req.body;
 
-        if (!currentPassword || !newPassword || !confirmPassword) {
+        if (typeof currentPassword !== 'string' || currentPassword.length > 1024 ||
+            typeof newPassword !== 'string' || typeof confirmPassword !== 'string' ||
+            !currentPassword || !newPassword || !confirmPassword) {
             return res.status(400).json({
                 success: false,
                 message: 'Please provide current password, new password and confirmation'
@@ -172,10 +175,11 @@ export const changePassword = async (req, res) => {
             });
         }
 
-        if (newPassword.length < 6) {
+        const passwordError = newPasswordError(newPassword);
+        if (passwordError) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 6 characters'
+                message: passwordError
             });
         }
 
@@ -211,10 +215,10 @@ export const changePassword = async (req, res) => {
             message: 'Password changed successfully. Please sign in again.',
             reauthenticationRequired: true
         });
-    } catch (error) {
+    } catch {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Unable to change your password. Please try again later.'
         });
     }
 };
@@ -311,10 +315,11 @@ export const resetPassword = async (req, res) => {
             });
         }
 
-        if (newPassword.length < 6) {
+        const passwordError = newPasswordError(newPassword);
+        if (passwordError) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 6 characters'
+                message: passwordError
             });
         }
 
@@ -412,10 +417,10 @@ export const getMe = async (req, res) => {
                 passwordSetupRequired: !hasUsableLocalPassword(req.user)
             }
         });
-    } catch (error) {
+    } catch {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Unable to load your session. Please try again later.'
         });
     }
 };

@@ -28,8 +28,8 @@ router.post('/logout', logout);
 router.post('/forgot-password', createAuthLimiter('send'), forgotPassword);
 router.post('/verify-otp', createAuthLimiter('verify'), verifyOTP);
 router.post('/reset-password', createAuthLimiter('reset'), resetPassword);
-router.post('/password/setup', protect, setupPassword);
-router.post('/password/change', protect, changePassword);
+router.post('/password/setup', protect, createAuthLimiter('change'), setupPassword);
+router.post('/password/change', protect, createAuthLimiter('change'), changePassword);
 router.get('/me', optionalProtect, getMe);
 
 export default router;

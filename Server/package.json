@@ -7,6 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "test:security": "node --test --test-isolation=none --test-force-exit config/runtime-security.test.js config/session-cookie.test.js middlewares/api-response-security.test.js middlewares/auth-request-log.test.js utils/gmail-smtp.test.js utils/brevo-email.test.js modules/auth/auth.security.test.js modules/auth/auth-limits.test.js modules/magic/magic.security.test.js src/app.cors.test.js",
     "test:auth-security": "node --test --test-isolation=none config/session-cookie.test.js utils/gmail-smtp.test.js utils/brevo-email.test.js modules/auth/auth.security.test.js modules/auth/auth-limits.test.js modules/users/profile-operations.test.js modules/users/profile-contact.test.js",
     "test:tracer": "node --test --test-isolation=none modules/tracer/tracer.alignment.test.js modules/tracer/tracer.graduation.test.js modules/tracer/tracer.quarter.test.js modules/tracer/tracer.period-report.test.js",
     "test:tracer:integration": "node --test --test-isolation=none modules/tracer/tracer.responses.integration.test.js",
@@ -38,6 +39,6 @@
     "socket.io": "^4.8.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "3.1.11"
   }
 }

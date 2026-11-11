@@ -4,8 +4,8 @@ import { Collection } from 'mongodb';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { authEmail, isOTP } from './auth.validation.js';
-import { createPasswordReset, resetTokenHash } from './password-reset.js';
+import { authEmail, isOTP, newPasswordError } from './auth.validation.js';
+import { createPasswordReset, resetTokenHash, otpHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, sessionMatches } from './session-token.js';
 
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/auth_security_fixture';
@@ -154,7 +154,7 @@ test('setup signs the version of its own write instead of adopting a later revoc
     const reread = t.mock.method(AuthModel, 'findById', async () => ({ ...user, sessionVersion: 9 }));
     t.mock.method(UserModel, 'findByAuthId', async () => null);
     const res = response();
-    await setupPassword({ user, body: { newPassword: 'First-password', confirmPassword: 'First-password' } }, res);
+    await setupPassword({ user, body: { newPassword: 'First-password-fixture', confirmPassword: 'First-password-fixture' } }, res);
     assert.equal(res.statusCode, 200);
     assert.equal(verifySessionToken(res.cookies.token.value).sv, 8);
     assert.equal(reread.mock.callCount(), 0);
@@ -181,7 +181,7 @@ test('an in-flight password change rejected by the conditional write cannot clai
         assert.equal(expected, account); return { modifiedCount: 0 };
     });
     const res = response();
-    await changePassword({ user: account, body: { currentPassword: 'Current-password', newPassword: 'New-password', confirmPassword: 'New-password' } }, res);
+    await changePassword({ user: account, body: { currentPassword: 'Current-password', newPassword: 'New-password-fixture', confirmPassword: 'New-password-fixture' } }, res);
     assert.equal(res.statusCode, 409);
     assert.equal(res.body.success, false);
     assert.equal(res.clearedCookie, undefined);
@@ -199,7 +199,7 @@ test('successful student, alumni, and admin password changes record only their o
     for (const role of ['student', 'alumni', 'admin']) {
         user = { ...account, role };
         const res = response();
-        await changePassword({ user, body: { currentPassword: 'Old-secret', newPassword: 'New-secret', confirmPassword: 'New-secret' } }, res);
+        await changePassword({ user, body: { currentPassword: 'Old-secret', newPassword: 'New-secret-fixture', confirmPassword: 'New-secret-fixture' } }, res);
         assert.equal(res.statusCode, 200);
         assert.equal(res.body.reauthenticationRequired, true);
         assert.deepEqual(log.mock.calls.at(-1).arguments, [{ authId: user._id }]);
@@ -207,7 +207,7 @@ test('successful student, alumni, and admin password changes record only their o
     assert.equal(log.mock.callCount(), 3);
     compare.mock.mockImplementation(async () => false);
     const res = response();
-    await changePassword({ user: account, body: { currentPassword: 'Wrong-secret', newPassword: 'New-secret', confirmPassword: 'New-secret' } }, res);
+    await changePassword({ user: account, body: { currentPassword: 'Wrong-secret', newPassword: 'New-secret-fixture', confirmPassword: 'New-secret-fixture' } }, res);
     assert.equal(res.statusCode, 401);
     assert.equal(log.mock.callCount(), 3);
 });
@@ -292,7 +292,8 @@ test('recovery model rejects query objects even when called without a controller
 test('valid OTP lookup uses exact scalar comparisons and an expiry check', async t => {
     t.mock.method(Collection.prototype, 'findOne', async query => {
         assert.equal(query.email, account.email);
-        assert.equal(query.resetOTP, '000001');
+        assert.equal(query.resetOTPHash, otpHash(account.email, '000001'));
+        assert.equal(query.resetOTP, undefined);
         assert.ok(query.resetOTPExpires.$gt instanceof Date);
         return account;
     });
@@ -377,10 +378,10 @@ for (const environment of ['production', 'development']) {
 test('failed OTP cleanup cannot invalidate a newer concurrently issued code', async t => {
     let currentCode = '222222';
     t.mock.method(Collection.prototype, 'updateOne', async (filter, update) => {
-        assert.deepEqual(filter, { email: account.email, resetOTP: '111111' });
-        assert.equal(update.$set.resetOTP, null);
+        assert.deepEqual(filter, { email: account.email, resetOTPHash: otpHash(account.email, '111111') });
+        assert.equal(update.$set.resetOTPHash, null);
         assert.equal(update.$set.resetOTPExpires, null);
-        if (filter.resetOTP === currentCode) currentCode = update.$set.resetOTP;
+        if (filter.resetOTPHash === otpHash(account.email, currentCode)) currentCode = update.$set.resetOTPHash;
         return { matchedCount: 0, modifiedCount: 0 };
     });
     await AuthModel.clearOTP(account.email, '111111');
@@ -432,7 +433,7 @@ test('magic-link verification errors do not expose the requested token', async t
 // No MongoDB connection is opened. Read snapshots are detached like real driver results.
 function recoveryFixture(t) {
     const state = { ...account, password: bcrypt.hashSync('Previous-password', 4),
-        resetOTP: '123456', resetOTPExpires: new Date(Date.now() + 600000) };
+        resetOTPHash: otpHash(account.email, '123456'), resetOTPExpires: new Date(Date.now() + 600000) };
     const matches = filter => Object.entries(filter).every(([key, expected]) => {
         if (key === '$or') return expected.some(matches);
         if (expected && typeof expected === 'object' && !(expected instanceof Date)) {
@@ -538,6 +539,7 @@ test('OTP exchange and password reset are each single-use and store only a token
     assert.equal(state.passwordResetTokenHash, resetTokenHash(token));
     assert.equal(JSON.stringify(state).includes(token), false);
     assert.equal(state.resetOTP, undefined);
+    assert.equal(state.resetOTPHash, undefined);
     assert.equal((await verifyCode()).statusCode, 400);
     assert.equal((await resetWith(token)).statusCode, 200);
     assert.ok(await bcrypt.compare('Updated-password', state.password));
@@ -615,7 +617,7 @@ test('magic-link login and first-time password setup issue accepted session toke
     t.mock.method(AuthModel, 'updatePasswordById', async () => ({ modifiedCount: 1 }));
     t.mock.method(AuthModel, 'findById', async () => ({ ...user, sessionVersion: 1 }));
     const setup = response();
-    await setupPassword({ user, body: { newPassword: 'First-password', confirmPassword: 'First-password' } }, setup);
+    await setupPassword({ user, body: { newPassword: 'First-password-fixture', confirmPassword: 'First-password-fixture' } }, setup);
     assert.equal(setup.body.data.user.passwordSetupRequired, false);
     assert.equal(verifySessionToken(setup.cookies.token.value).sub, account._id);
 });
@@ -759,4 +761,43 @@ test('later imports cannot recreate a disabled account profile', async t => {
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.data.skipped[0].reason, 'Account is disabled');
     assert.equal(create.mock.callCount(), 0); assert.equal(update.mock.callCount(), 0);
+});
+
+
+test('new password endpoints reject malformed, weak, and bcrypt-truncated inputs before hashing or writing', async t => {
+    t.mock.method(bcrypt, 'hash', async () => assert.fail('invalid password must not be hashed'));
+    t.mock.method(AuthModel, 'updatePasswordById', async () => assert.fail('invalid password must not be persisted'));
+    for (const value of [123456789012345, ['fixture-password'], {}, 'short', 'a'.repeat(73), '\u754c'.repeat(25)]) {
+        for (const handler of [setupPassword, changePassword, resetPassword]) {
+            const res = response();
+            await handler({ user: account, body: { currentPassword: 'Fixture-current-password', newPassword: value, confirmPassword: value, token: 'a'.repeat(64) } }, res);
+            assert.equal(res.statusCode, 400);
+            assert.doesNotMatch(JSON.stringify(res.body), /fixture-hash|TypeError|bcrypt/);
+        }
+    }
+    assert.equal(newPasswordError('A long passphrase with spaces!'), null);
+    assert.equal(newPasswordError('\u754c'.repeat(24)), null);
+    assert.ok(newPasswordError('\u754c'.repeat(25)));
+});
+
+test('login and session lookup failures never expose internal database errors', async t => {
+    t.mock.method(AuthModel, 'findByEmail', async () => { throw new Error('PRIVATE_DATABASE_URI'); });
+    t.mock.method(UserModel, 'findByAuthId', async () => { throw new Error('PRIVATE_DATABASE_URI'); });
+    for (const handler of [login, getMe]) {
+        const res = response();
+        await handler({ user: account, body: { email: account.email, password: 'Fixture-password' } }, res);
+        assert.equal(res.statusCode, 500);
+        assert.doesNotMatch(JSON.stringify(res.body), /PRIVATE_DATABASE_URI/);
+    }
+});
+
+
+test('password-reset OTPs are stored only as an account-bound keyed hash', async t => {
+    let update;
+    t.mock.method(Collection.prototype, 'updateOne', async (_filter, value) => { update = value; return { modifiedCount: 1 }; });
+    await AuthModel.updateOTP(account.email, '123456', new Date(Date.now() + 600000));
+    assert.equal(update.$set.resetOTP, undefined);
+    assert.equal(update.$set.resetOTPHash, otpHash(account.email, '123456'));
+    assert.notEqual(otpHash(account.email, '123456'), otpHash('other@example.test', '123456'));
+    assert.equal(update.$unset.resetOTP, '');
 });

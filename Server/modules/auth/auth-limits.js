@@ -7,6 +7,7 @@ export const AUTH_LIMITS = {
     send: { ip: 10, account: 1, windowMs: 60 * 1000 },
     verify: { ip: 60, account: 20, windowMs: 15 * 60 * 1000 },
     reset: { ip: 20, windowMs: 15 * 60 * 1000 },
+    change: { ip: 60, account: 10, windowMs: 15 * 60 * 1000 },
 };
 
 export async function ensureAuthSecurityIndexes(db) {
@@ -19,7 +20,7 @@ export function createAuthLimiter(kind, db = client.db('SielAlumni'), now = () =
         try {
             const time = now(), window = Math.floor(time / policy.windowMs);
             const expiresAt = new Date((window + 1) * policy.windowMs);
-            const email = authEmail(req.body?.email)?.toLowerCase();
+            const email = authEmail(req.user?.email || req.body?.email)?.toLowerCase();
             const buckets = [['ip', String(req.ip || req.socket?.remoteAddress || 'unknown'), policy.ip],
                 ...(email && policy.account ? [['account', email, policy.account]] : [])];
             for (const [scope, identity, limit] of buckets) {

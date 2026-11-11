@@ -66,3 +66,19 @@ test('cross-site sessions accept the configured frontend and reject foreign muta
   assert.equal(run('GET').accepted, true);
   assert.equal(run('POST').accepted, true); // Non-browser login clients without cookies.
 });
+
+
+test('strict and lax cookies still reject cross-origin login and state changes', t => {
+  environment(t, { NODE_ENV: 'production', COOKIE_SAME_SITE: undefined });
+  for (const sameSite of ['lax', 'strict']) {
+    process.env.COOKIE_SAME_SITE = sameSite;
+    const guard = protectSessionOrigin(['https://frontend.example.test']);
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      let accepted = false;
+      const res = { status(code) { this.code = code; return this; }, json() {} };
+      guard({ method, headers: { origin: 'https://evil.example.test' }, cookies: {} }, res, () => { accepted = true; });
+      assert.equal(accepted, false);
+      assert.equal(res.code, 403);
+    }
+  }
+});

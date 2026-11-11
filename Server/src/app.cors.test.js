@@ -50,3 +50,27 @@ test('auth rate-limit responses preserve credentialed CORS and expose Retry-Afte
     }
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
+
+
+test('HTTP hardening prevents sensitive caching, framing, referrer leaks, and raw parser error responses', async () => {
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const me = await fetch(`${base}/api/auth/me`);
+    assert.equal(me.headers.get('x-powered-by'), null);
+    assert.equal(me.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(me.headers.get('x-frame-options'), 'DENY');
+    assert.equal(me.headers.get('referrer-policy'), 'no-referrer');
+    assert.match(me.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+    assert.match(me.headers.get('cache-control'), /no-store/);
+    const unknown = await fetch(`${base}/api/missing?token=PRIVATE_QUERY_TOKEN`);
+    assert.equal(unknown.status, 404);
+    assert.doesNotMatch(await unknown.text(), /PRIVATE_QUERY_TOKEN/);
+    const invalid = await fetch(`${base}/api/missing`, { method: 'POST',
+      headers: { Origin: frontendOrigins[0], 'Content-Type': 'application/json' }, body: '{"PRIVATE_PASSWORD":' });
+    assert.equal(invalid.status, 400);
+    assert.match(invalid.headers.get('content-type'), /application\/json/);
+    assert.doesNotMatch(await invalid.text(), /PRIVATE_PASSWORD|SyntaxError|node_modules|stack/i);
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});

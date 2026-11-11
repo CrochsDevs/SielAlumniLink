@@ -9,9 +9,13 @@ import { ensureFeedIndexes } from '../modules/feed/feed.service.js';
 import { ensureNotificationRetention } from '../modules/notifications/notifications.retention.js';
 import { ensureAuthSecurityIndexes } from '../modules/auth/auth-limits.js';
 import { ensurePerformanceIndexes } from '../config/performance-indexes.js';
+import { validateProductionSecurity } from '../config/runtime-security.js';
+import { ensureMagicLinkIndexes } from '../modules/magic/magic.models.js';
 
+validateProductionSecurity();
 await connectDB();
 await ensureAuthSecurityIndexes(client.db('SielAlumni'));
+await ensureMagicLinkIndexes(client.db('SielAlumni'));
 await ensureNotificationRetention(client.db('SielAlumni'));
 await ensureSearchIndexes(client.db('SielAlumni'));
 await ensureFeedIndexes(client.db('SielAlumni'));

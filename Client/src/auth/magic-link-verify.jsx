@@ -7,7 +7,7 @@ import GraduationCapLoader from "../components/ui/GraduationCapLoader";
 const MagicLinkVerification = () => {
   const navigate = useNavigate();
   const { verifyMagicLink } = useAuth();
-  const token = new URLSearchParams(window.location.search).get("token");
+  const [token] = useState(() => new URLSearchParams(window.location.search).get("token"));
   const hasVerified = useRef(false);
   const [status, setStatus] = useState(token ? "checking" : "error");
   const [message, setMessage] = useState(
@@ -20,6 +20,10 @@ const MagicLinkVerification = () => {
     }
 
     hasVerified.current = true;
+    // Keep the one-time credential out of subsequent browser history/referrers.
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('token');
+    window.history.replaceState(window.history.state, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
 
     verifyMagicLink(token).then((result) => {
       if (result.success) {

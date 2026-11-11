@@ -13,12 +13,12 @@ export function sessionCookieOptions({ persistent = true } = {}) {
   };
 }
 
-// CORS alone does not stop form submissions. Validate origins when the cookie
-// is allowed cross-site, including anonymous login requests (login CSRF).
+// CORS and SameSite alone do not stop every cross-origin form submission.
+// Check unsafe requests for all cookie modes, including anonymous login CSRF.
 export function protectSessionOrigin(allowedOrigins) {
   const allowed = new Set(allowedOrigins.map(value => new URL(value).origin));
   return (req, res, next) => {
-    if (sessionCookieOptions().sameSite !== 'none' || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
     const origin = req.headers.origin;
     let refererOrigin;
     try { if (req.headers.referer) refererOrigin = new URL(req.headers.referer).origin; } catch { /* Invalid references are untrusted. */ }

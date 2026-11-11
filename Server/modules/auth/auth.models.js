@@ -1,7 +1,7 @@
 import { client } from '../../config/db.js';
 import Roles from '../../constant/roles.js';
 import { authEmail, isOTP } from './auth.validation.js';
-import { isResetToken } from './password-reset.js';
+import { isResetToken, otpHash } from './password-reset.js';
 import { ObjectId } from 'mongodb';
 import { sessionsRevoked } from './session-events.js';
 import { sessionVersion } from './session-token.js';
@@ -65,12 +65,12 @@ export const AuthModel = {
             { email },
             {
                 $set: {
-                    resetOTP: otp,
+                    resetOTPHash: otpHash(email, otp),
                     resetOTPExpires: otpExpires,
                     resetOTPAttempts: 0,
                     updatedAt: new Date()
                 },
-                $unset: { passwordResetTokenHash: '', passwordResetTokenExpires: '' }
+                $unset: { resetOTP: '', passwordResetTokenHash: '', passwordResetTokenExpires: '' }
             }
         );
     },
@@ -80,7 +80,7 @@ export const AuthModel = {
         if (!email || !isOTP(otp)) return null;
         return await authCollection.findOne({
             email: email,
-            resetOTP: otp,
+            resetOTPHash: otpHash(email, otp),
             resetOTPExpires: { $gt: new Date() }
         });
     },
@@ -89,8 +89,8 @@ export const AuthModel = {
         email = authEmail(email);
         if (!email || !isOTP(otp)) throw new TypeError('Invalid recovery input');
         return await authCollection.updateOne(
-            { email, resetOTP: otp },
-            { $set: { resetOTP: null, resetOTPExpires: null, updatedAt: new Date() } }
+            { email, resetOTPHash: otpHash(email, otp) },
+            { $set: { resetOTPHash: null, resetOTPExpires: null, updatedAt: new Date() }, $unset: { resetOTP: '' } }
         );
     },
 
@@ -101,17 +101,17 @@ export const AuthModel = {
         }
         // Charge every guess atomically against the current challenge, across IPs.
         const attempt = await authCollection.findOneAndUpdate(
-            { email, disabledAt: null, resetOTPExpires: { $gt: new Date() }, resetOTP: { $type: 'string' },
+            { email, disabledAt: null, resetOTPExpires: { $gt: new Date() }, resetOTPHash: { $type: 'string' },
                 $or: [{ resetOTPAttempts: { $exists: false } }, { resetOTPAttempts: { $lt: 5 } }] },
             { $inc: { resetOTPAttempts: 1 } }, { returnDocument: 'after' }
         );
-        if (!attempt || attempt.resetOTP !== otp) return null;
+        if (!attempt || attempt.resetOTPHash !== otpHash(email, otp)) return null;
         // Only one concurrent verifier can replace this OTP with a reset credential.
         return await authCollection.findOneAndUpdate(
-            { email, disabledAt: null, resetOTP: otp, resetOTPExpires: attempt.resetOTPExpires,
+            { email, disabledAt: null, resetOTPHash: otpHash(email, otp), resetOTPExpires: attempt.resetOTPExpires,
                 passwordSetupRequired: false, password: { $type: 'string', $ne: '' } },
             { $set: { passwordResetTokenHash: tokenHash, passwordResetTokenExpires: expiresAt, updatedAt: new Date() },
-                $unset: { resetOTP: '', resetOTPExpires: '', resetOTPAttempts: '' } },
+                $unset: { resetOTP: '', resetOTPHash: '', resetOTPExpires: '', resetOTPAttempts: '' } },
             { returnDocument: 'after' }
         );
     },
@@ -130,7 +130,7 @@ export const AuthModel = {
             { _id: accountId(authId), disabledAt: null, passwordResetTokenHash: tokenHash, passwordResetTokenExpires: { $gt: new Date() },
                 passwordSetupRequired: false, password: { $type: 'string', $ne: '' } },
             { $set: { password: hashedPassword, passwordSetupRequired: false, updatedAt: new Date() }, $inc: { sessionVersion: 1 },
-                $unset: { passwordResetTokenHash: '', passwordResetTokenExpires: '', resetOTP: '', resetOTPExpires: '', resetOTPAttempts: '' } }
+                $unset: { passwordResetTokenHash: '', passwordResetTokenExpires: '', resetOTP: '', resetOTPHash: '', resetOTPExpires: '', resetOTPAttempts: '' } }
         ));
     },
 
@@ -157,6 +157,7 @@ export const AuthModel = {
                     password: hashedPassword,
                     passwordSetupRequired: false,
                     resetOTP: null,
+                    resetOTPHash: null,
                     resetOTPExpires: null,
                     updatedAt: new Date()
                 },
@@ -185,7 +186,7 @@ export const AuthModel = {
         return await notifyChange(authId, authCollection.updateOne(
             { _id: accountId(authId) },
             { $set: { email, updatedAt: new Date() }, $inc: { sessionVersion: 1 },
-                $unset: { passwordResetTokenHash: '', passwordResetTokenExpires: '', resetOTP: '', resetOTPExpires: '' } }
+                $unset: { passwordResetTokenHash: '', passwordResetTokenExpires: '', resetOTP: '', resetOTPHash: '', resetOTPExpires: '' } }
         ));
     },
 
@@ -198,7 +199,7 @@ export const AuthModel = {
         // Retain an identity tombstone so old links/imports cannot recreate access.
         return notifyChange(authId, authCollection.updateOne({ _id: accountId(authId) },
             { $set: { disabledAt: new Date(), updatedAt: new Date() }, $inc: { sessionVersion: 1 },
-                $unset: { password: '', resetOTP: '', resetOTPExpires: '', resetOTPAttempts: '',
+                $unset: { password: '', resetOTP: '', resetOTPHash: '', resetOTPExpires: '', resetOTPAttempts: '',
                     passwordResetTokenHash: '', passwordResetTokenExpires: '' } }));
     },
 

@@ -1,3 +1,4 @@
+import { newPasswordError } from '../../utils/password-policy';
 import AccountSettingsNavigation from "../../components/ui/AccountSettingsNavigation";
 import MemberActivity from "../../components/profile/MemberActivity";
 import { AdminTabs, AdminSwitch } from "../../components/admin/AdminUI";
@@ -137,6 +138,8 @@ export default function Settings() {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
+    const passwordError = newPasswordError(pwForm.newPassword);
+    if (passwordError) { toast.error(passwordError); return; }
     if (pwForm.newPassword !== pwForm.confirmPassword) {
       toast.error("Error", { description: "New passwords do not match" });
       return;
@@ -299,12 +302,12 @@ export default function Settings() {
                       <input
                         type="password"
                         required
-                        minLength={6}
+                        minLength={15}
                         value={pwForm.newPassword}
                         onChange={(e) =>
                           setPwForm({ ...pwForm, newPassword: e.target.value })
                         }
-                        placeholder="At least 6 characters"
+                        placeholder="At least 15 characters"
                         className={inputClass}
                       />
                     </div>
@@ -315,7 +318,7 @@ export default function Settings() {
                       <input
                         type="password"
                         required
-                        minLength={6}
+                        minLength={15}
                         value={pwForm.confirmPassword}
                         onChange={(e) =>
                           setPwForm({

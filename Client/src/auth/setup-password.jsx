@@ -1,3 +1,4 @@
+import { newPasswordError } from '../utils/password-policy';
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
@@ -33,8 +34,9 @@ const SetupPassword = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters");
+    const passwordError = newPasswordError(newPassword);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -109,7 +111,7 @@ const SetupPassword = () => {
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               required
-              minLength={6}
+              minLength={15}
               placeholder="Enter a new password"
               className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />
@@ -124,7 +126,7 @@ const SetupPassword = () => {
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
-              minLength={6}
+              minLength={15}
               placeholder="Confirm your new password"
               className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />

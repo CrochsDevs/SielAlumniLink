@@ -1,12 +1,22 @@
 import { client } from '../../config/db.js';
+import { resetTokenHash } from '../auth/password-reset.js';
 
 const db = client.db('SielAlumni');
 const magicLinkCollection = db.collection('magic_links');
 
+export async function ensureMagicLinkIndexes(database) {
+  await database.collection('magic_links').createIndex({ tokenHash: 1 }, { unique: true, sparse: true });
+  await database.collection('magic_links').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+}
+
 export const MagicLinkModel = {
   async create(magicLinkData) {
+    const { token, ...data } = magicLinkData;
+    const tokenHash = resetTokenHash(token);
+    if (!tokenHash) throw new TypeError('Invalid login credential');
     const newMagicLink = {
-      ...magicLinkData,
+      ...data,
+      tokenHash,
       createdAt: new Date(),
     };
     const result = await magicLinkCollection.insertOne(newMagicLink);
@@ -14,7 +24,8 @@ export const MagicLinkModel = {
   },
 
   async findByToken(token) {
-    return await magicLinkCollection.findOne({ token });
+    const tokenHash = resetTokenHash(token);
+    return tokenHash ? await magicLinkCollection.findOne({ tokenHash }) : null;
   },
 
   async findByEmail(email) {
@@ -26,20 +37,25 @@ export const MagicLinkModel = {
   },
 
   async deleteToken(token) {
-    return await magicLinkCollection.deleteOne({ token });
+    const tokenHash = resetTokenHash(token);
+    return tokenHash ? await magicLinkCollection.deleteOne({ tokenHash }) : { deletedCount: 0 };
   },
 
   async claimToken(token) {
+    const tokenHash = resetTokenHash(token);
+    if (!tokenHash) return null;
     return await magicLinkCollection.findOneAndUpdate(
-      { token, usedAt: null },
+      { tokenHash, usedAt: null, expiresAt: { $gt: new Date() } },
       { $set: { usedAt: new Date(), updatedAt: new Date() } },
       { returnDocument: 'after' }
     );
   },
 
   async markAsUsed(token) {
+    const tokenHash = resetTokenHash(token);
+    if (!tokenHash) return { modifiedCount: 0 };
     return await magicLinkCollection.updateOne(
-      { token },
+      { tokenHash },
       { $set: { usedAt: new Date(), updatedAt: new Date() } }
     );
   },
