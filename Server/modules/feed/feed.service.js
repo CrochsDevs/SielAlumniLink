@@ -212,6 +212,7 @@ export const createFeedService = (db, changed = () => {}) => {
     return { comments: await Promise.all(page.map(async c => ({
       _id: c._id, body: c.body, createdAt: c.createdAt, author: await person(c.authorAuthId),
       parentCommentId: c.parentCommentId || null, repliesCount: replyCounts.get(String(c._id)) || 0,
+      replyTo: c.replyToAuthId && String(c.replyToAuthId) !== String(c.authorAuthId) ? await person(c.replyToAuthId) : null,
       isMine: String(c.authorAuthId) === String(user._id), canDelete: isFeedAdmin(user) || String(c.authorAuthId) === String(user._id),
     }))), nextCursor: rows.length > 30 ? String(rows[29]._id) : null };
   };
@@ -222,17 +223,19 @@ export const createFeedService = (db, changed = () => {}) => {
     const post = await readable(id, user);
     if (post.moderation?.commentsDisabled) fail(403, 'Comments are turned off for this post');
     let parentId = null;
+    let replyToAuthId = null;
     if (parentCommentId !== null && parentCommentId !== undefined) {
       if (typeof parentCommentId !== 'string' || !/^[a-f\d]{24}$/i.test(parentCommentId)) fail(400, 'Invalid reply target');
       const parent = await comments.findOne({ _id: objectId(parentCommentId), postId: post._id, deletedAt: null });
       if (!parent) fail(404, 'Comment not found');
+      if (String(parent.authorAuthId) !== String(user._id)) replyToAuthId = String(parent.authorAuthId);
       parentId = parent.parentCommentId || parent._id;
       if (parent.parentCommentId && !await comments.findOne({ _id: parentId, postId: post._id, parentCommentId: null, deletedAt: null })) fail(404, 'Comment not found');
     }
-    const doc = { postId: post._id, parentCommentId: parentId, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
+    const doc = { postId: post._id, parentCommentId: parentId, replyToAuthId, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
     const result = await comments.insertOne(doc);
     changed();
-    return { _id: result.insertedId, parentCommentId: parentId, repliesCount: 0, body: valid, createdAt: doc.createdAt, author: await author(user._id), isMine: true, canDelete: true };
+    return { _id: result.insertedId, parentCommentId: parentId, repliesCount: 0, replyTo: replyToAuthId ? await author(replyToAuthId) : null, body: valid, createdAt: doc.createdAt, author: await author(user._id), isMine: true, canDelete: true };
   };
 
   const removeComment = async (user, id, commentId) => {

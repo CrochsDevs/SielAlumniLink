@@ -163,6 +163,23 @@ test('reply deletion requires ownership and deleting a parent removes its thread
   await rejects(f.feed.comment(f.author, p._id, 'Deleted parent', String(root._id)), 404);
 });
 
+test('reply mentions identify the clicked author, persist across reloads, and omit self mentions', async () => {
+  const f = await fixture(), p = await f.feed.create(f.author, post());
+  const root = await f.feed.comment(f.friend, p._id, 'Parent');
+  const reply = await f.feed.comment(f.author, p._id, 'Reply to friend', String(root._id));
+  assert.equal(reply.replyTo.authId, String(f.friend._id));
+  const self = await f.feed.comment(f.author, p._id, 'Reply to myself', String(reply._id));
+  assert.equal(self.replyTo, null);
+  const nested = await f.feed.comment(f.student, p._id, 'Reply to author', String(reply._id));
+  assert.equal(nested.replyTo.authId, String(f.author._id));
+  const rootSelf = await f.feed.comment(f.friend, p._id, 'Reply to my own comment', String(root._id));
+  assert.equal(rootSelf.replyTo, null);
+  const restored = (await f.feed.listComments(f.author, p._id, undefined, String(root._id))).comments;
+  assert.equal(restored.find(c => equal(c._id, reply._id)).replyTo.authId, String(f.friend._id));
+  assert.equal(restored.find(c => equal(c._id, nested._id)).replyTo.authId, String(f.author._id));
+  assert.equal(restored.find(c => equal(c._id, self._id)).replyTo, null);
+});
+
 test('admin moderation appends actor/target audit events without logging failed or member actions', async () => {
   const f = await fixture();
   const p = await f.feed.create(f.author, post({ title: 'Audit fixture' }));

@@ -21,7 +21,8 @@ app.use('/api', async (req, res) => {
     if (failSend) return res.status(503).json({ success: false, message: 'Reply test unavailable' });
     // Keep the response outstanding long enough to exercise double-submit protection.
     await new Promise(resolve => setTimeout(resolve, 150));
-    data = { _id: String(replies.length + 3).padStart(24, '0'), parentCommentId: root._id, body: req.body.body, author: user, createdAt: root.createdAt, isMine: true };
+    const target = [root, ...replies].find(row => row._id === req.body.parentCommentId);
+    data = { _id: String(replies.length + 3).padStart(24, '0'), parentCommentId: root._id, replyTo: target.author.authId === user.authId ? null : target.author, body: req.body.body, author: user, createdAt: root.createdAt, isMine: true };
     replies.unshift(data);
   } else if (req.path.includes('/comments/') && req.method === 'DELETE') replies = replies.filter(row => row._id !== req.path.split('/').at(-1));
   else if (req.path.endsWith('/comments')) data = { comments: req.query.parentCommentId ? replies : [{ ...root, repliesCount: replies.length }], nextCursor: null };
@@ -41,7 +42,7 @@ try {
       await context.routeWebSocket('**/socket.io/**', socket => socket.close());
       const page = await context.newPage();
       const errors = [];
-      page.on('pageerror', error => errors.push(error.message));
+      page.on('pageerror', error => { errors.push(error.message); console.error(`${name} page error: ${error.message}`); });
       await page.goto(origin + '/feed');
       await page.getByRole('button', { name: 'Comment', exact: true }).click();
       await page.getByText('Original comment', { exact: true }).waitFor();
@@ -49,15 +50,16 @@ try {
       const draft = page.getByRole('textbox', { name: 'Reply to Comment Author', exact: true });
       await draft.fill('First reply');
       await draft.evaluate(element => { const form = element.closest('form'); form.requestSubmit(); form.requestSubmit(); });
-      await page.locator('p').filter({ hasText: /^First reply$/ }).waitFor();
+      await page.locator('p').filter({ hasText: /First reply$/ }).waitFor();
       assert.equal(writes.length, 1, 'Double submit must issue only one write');
       assert.equal(writes[0].parentCommentId, root._id);
       await page.waitForLoadState('networkidle');
       await page.reload();
       await page.getByRole('button', { name: 'Comment', exact: true }).click();
       await page.getByRole('button', { name: 'View 1 reply', exact: true }).click();
-      await page.getByText('First reply', { exact: true }).waitFor();
+      await page.locator('p').filter({ hasText: /First reply$/ }).waitFor();
       const thread = page.getByLabel('Replies to Comment Author', { exact: true });
+      assert.equal(await thread.getByText('@Comment Author', { exact: true }).count(), 1, 'Mention must survive reload');
       await thread.getByRole('button', { name: 'Reply', exact: true }).click();
       const nested = page.getByRole('textbox', { name: 'Reply to Reply Author', exact: true });
       await nested.fill('Nested reply draft');
@@ -69,6 +71,8 @@ try {
       await page.getByRole('button', { name: 'Post reply', exact: true }).click();
       await page.locator('p').filter({ hasText: /^Nested reply draft$/ }).waitFor();
       assert.equal(writes.at(-1).parentCommentId, replies[1]._id);
+      assert.equal(await thread.getByText('@Reply Author', { exact: true }).count(), 0, 'Self replies must not mention the author');
+      await page.screenshot({ path: path.resolve(`../artifacts/feed-replies-${name}.png`), fullPage: true });
       await page.getByRole('button', { name: 'Delete reply', exact: true }).first().click();
       await page.locator('p').filter({ hasText: /^Nested reply draft$/ }).waitFor({ state: 'detached' });
       assert.equal(await page.getByRole('button', { name: 'Delete comment', exact: true }).count(), 0);
@@ -81,7 +85,7 @@ try {
       assert.equal(await page.getByRole('button', { name: 'Reply', exact: true }).count(), 0);
       await page.waitForLoadState('networkidle');
       assert.deepEqual(errors, []);
-      console.log(`PASS ${name}: reply, double-submit guard, refresh persistence, nested reply, failed draft, deletion, disabled comments, mobile layout`);
+      console.log(`PASS ${name}: reply, double-submit guard, persisted mention, no self mention, nested reply, failed draft, deletion, disabled comments, compact mobile layout`);
       await context.close();
     } finally { await browser.close(); }
   }

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import api from "../../utils/axios";
 import { useChat } from "../../context/useChat";
+import { useAuth } from "../../context/useAuth";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import { profilePath } from "../search/searchLinks";
 import { AudienceSelect, FeedDialog } from "./FeedComposer";
@@ -33,19 +34,19 @@ const formatDate = (value) =>
     timeStyle: "short",
   });
 
-function Author({ person, createdAt, audience }) {
+function Author({ person, createdAt, audience, compact = false }) {
   const content = (
     <>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand">
+      <span className={`flex ${compact ? 'h-7 w-7' : 'h-10 w-10'} shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand`}>
         <ProfileAvatar user={person} />
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-bold">{person.name}</span>
-        <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">
+        {!compact && <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">
           {[person.program, person.batch && `Batch ${person.batch}`]
             .filter(Boolean)
             .join(" · ")}
-        </span>
+        </span>}
       </span>
     </>
   );
@@ -61,7 +62,7 @@ function Author({ person, createdAt, audience }) {
       ) : (
         <div className="flex items-center gap-2">{content}</div>
       )}
-      <span className="mt-1 flex flex-wrap items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <span className={`${compact ? 'mt-0.5 text-[11px]' : 'mt-1 text-xs'} flex flex-wrap items-center gap-1 text-zinc-500 dark:text-zinc-400`}>
         {formatDate(createdAt)}
         {audience && (
           <>
@@ -157,9 +158,17 @@ function PostContent({ post, onRsvp, busy = false }) {
   );
 }
 
+function ReplyMention({ person }) {
+  if (!person) return null;
+  const style = 'font-semibold text-brand hover:underline';
+  return <>{person._id ? <Link to={profilePath(person)} className={style}>@{person.name}</Link> : <span className="font-semibold text-brand">@{person.name}</span>}{' '}</>;
+}
+
 function CommentReplies({ postId, comment, revision, onChanged, isAdmin, disabled }) {
+  const { user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [target, setTarget] = useState(null);
+  const mentionTarget = target && String(target.author.authId) !== String(user?.authId || user?._id) ? target.author : null;
   const [body, setBody] = useState('');
   const [items, setItems] = useState([]);
   const [cursor, setCursor] = useState(null);
@@ -226,24 +235,24 @@ function CommentReplies({ postId, comment, revision, onChanged, isAdmin, disable
     } catch (err) { setError(err.response?.data?.message || 'Unable to delete reply.'); }
     finally { pending.current = false; setBusy(false); }
   };
-  return <div className="mt-1">
+  return <div>
     <div className="flex flex-wrap items-center gap-3">
-      {!disabled && <button type="button" disabled={busy} onClick={() => replyTo(comment)} className="min-h-9 px-2 text-xs font-semibold text-brand hover:underline">Reply</button>}
-      {(comment.repliesCount > 0 || items.length > 0) && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} className="min-h-9 text-xs font-semibold text-zinc-500 hover:underline dark:text-zinc-400">{expanded ? 'Hide replies' : `View ${comment.repliesCount || items.length} ${(comment.repliesCount || items.length) === 1 ? 'reply' : 'replies'}`}</button>}
+      {!disabled && <button type="button" disabled={busy} onClick={() => replyTo(comment)} className="min-h-7 px-2 text-xs font-semibold text-brand hover:underline">Reply</button>}
+      {(comment.repliesCount > 0 || items.length > 0) && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} className="min-h-7 text-xs font-semibold text-zinc-500 hover:underline dark:text-zinc-400">{expanded ? 'Hide replies' : `View ${comment.repliesCount || items.length} ${(comment.repliesCount || items.length) === 1 ? 'reply' : 'replies'}`}</button>}
     </div>
-    {expanded && <div className="ml-3 space-y-3 border-l-2 border-zinc-200 pl-3 sm:ml-8 dark:border-zinc-700" aria-label={`Replies to ${comment.author.name}`}>
+    {expanded && <div className="ml-3 space-y-1.5 border-l-2 border-zinc-200 pl-2 sm:ml-5 dark:border-zinc-700" aria-label={`Replies to ${comment.author.name}`}>
       {loading && <p role="status" className="text-xs text-zinc-500">Loading replies…</p>}
-      {items.map(row => <div key={row._id} className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800">
+      {items.map(row => <div key={row._id} className="rounded-xl bg-zinc-50 px-2.5 py-2 dark:bg-zinc-800">
         <div className="flex items-start justify-between gap-2">
-          <Author person={row.author} createdAt={row.createdAt} />
+          <Author person={row.author} createdAt={row.createdAt} compact />
           {(row.isMine || isAdmin) && <button type="button" disabled={busy} aria-label="Delete reply" onClick={() => remove(row._id)} className="p-1 text-zinc-500 hover:text-red-600"><Trash2 size={14} /></button>}
         </div>
-        <p className="mt-2 whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">{row.body}</p>
-        {!disabled && <button type="button" disabled={busy} onClick={() => replyTo(row)} className="mt-1 min-h-9 text-xs font-semibold text-brand hover:underline">Reply</button>}
+        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 [overflow-wrap:anywhere]"><ReplyMention person={row.replyTo} />{row.body}</p>
+        {!disabled && <button type="button" disabled={busy} onClick={() => replyTo(row)} className="min-h-7 text-xs font-semibold text-brand hover:underline">Reply</button>}
       </div>)}
       {cursor && <button type="button" disabled={loading || busy} onClick={() => load(cursor)} className={buttonClass}>Older replies</button>}
       {target && !disabled && <form onSubmit={submit} className="space-y-2">
-        <p className="text-xs text-zinc-500">Replying to {target.author.name} <button type="button" disabled={busy} onClick={() => setTarget(null)} className="ml-2 underline">Cancel reply</button></p>
+        <p className="text-xs text-zinc-500">{mentionTarget ? <>Replying to <ReplyMention person={mentionTarget} /></> : 'Your reply'}<button type="button" disabled={busy} onClick={() => setTarget(null)} className="ml-2 underline">Cancel reply</button></p>
         <div className="flex items-start gap-2">
           <textarea ref={input} disabled={busy} aria-label={`Reply to ${target.author.name}`} rows={2} required maxLength={2000} value={body} onChange={event => setBody(event.target.value)} placeholder="Write a reply…" className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700" />
           <button type="submit" disabled={busy || !body.trim()} className={buttonClass}>{busy ? 'Sending…' : 'Post reply'}</button>
@@ -327,7 +336,7 @@ function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
     }
   };
   return (
-    <div className="space-y-3 border-t border-zinc-100 p-4 dark:border-zinc-800">
+    <div className="space-y-2 border-t border-zinc-100 p-3 dark:border-zinc-800">
       {disabled ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Commenting is unavailable for this post.
@@ -369,9 +378,9 @@ function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
       )}
       {items.map((c) => (
         <div key={c._id}>
-        <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800">
+        <div className="rounded-xl bg-zinc-50 px-2.5 py-2 dark:bg-zinc-800">
           <div className="flex items-start justify-between gap-2">
-            <Author person={c.author} createdAt={c.createdAt} />
+            <Author person={c.author} createdAt={c.createdAt} compact />
             {(c.isMine || isAdmin) && (
               <button
                 type="button"
@@ -384,7 +393,7 @@ function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
               </button>
             )}
           </div>
-          <p className="mt-2 whitespace-pre-wrap break-words text-sm">
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5">
             {c.body}
           </p>
         </div>
