@@ -43,17 +43,42 @@ export default function MentionInput({ conversationId, isGroup, composer, value,
     setQuery(null);
     requestAnimationFrame(() => { input.current?.focus(); input.current?.setSelectionRange(caret, caret); });
   };
+  const showMembers = () => {
+    const caret = input.current?.selectionStart ?? value.length;
+    let next = value, position = caret;
+    if (!mentionQuery(next, position)) {
+      const token = caret > 0 && !/\s/.test(value[caret - 1]) ? ' @' : '@';
+      next = value.slice(0, caret) + token + value.slice(caret);
+      if (next.length > 2000) return;
+      position += token.length;
+      onChange({ target: { value: next } });
+    }
+    setResult({ owner: null, members: [], error: '' });
+    setQuery(mentionQuery(next, position));
+    setSelected(0);
+    requestAnimationFrame(() => { input.current?.focus(); input.current?.setSelectionRange(position, position); });
+  };
   return <div className="relative min-w-0 flex-1">
     {open && <div id={id} role="listbox" aria-label="Mention group member" className="absolute bottom-full left-0 z-50 mb-2 max-h-56 w-64 max-w-[calc(100vw-4rem)] overflow-y-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl">
       {result.owner !== conversationId ? <p role="status" className="px-3 py-2 text-xs">Loading members…</p> : result.error ? <p role="alert" className="px-3 py-2 text-xs">{result.error} <button type="button" onPointerDown={event => event.preventDefault()} onClick={() => setResult({ owner: null, members: [], error: '' })} className="underline">Retry</button></p> : candidates.length ? candidates.map((member, index) => <button key={member.authId} id={`${id}-${index}`} type="button" role="option" aria-selected={index === selected} onPointerDown={event => event.preventDefault()} onClick={() => choose(member)} className={`block w-full truncate rounded-lg px-3 py-2 text-left text-sm ${index === selected ? 'bg-primary/10 font-semibold text-primary' : 'hover:bg-muted'}`}>@{member.name}</button>) : <p className="px-3 py-2 text-xs">No matching group members.</p>}
     </div>}
-    <input {...props} ref={node => { input.current = node; bindInput?.(node); }} value={value} maxLength={2000} className={`${className} w-full`} autoComplete="off"
+    <input {...props} ref={node => { input.current = node; bindInput?.(node); }} value={value} maxLength={2000} className={`${className} w-full ${isGroup ? '!pr-9' : ''}`} autoComplete="off"
       role={isGroup ? 'combobox' : undefined} aria-expanded={isGroup ? open : undefined} aria-autocomplete={isGroup ? 'list' : undefined} aria-controls={open ? id : undefined} aria-activedescendant={open && candidates[selected] ? `${id}-${selected}` : undefined}
+      onFocus={event => {
+        const element = event.currentTarget;
+        // Let the browser restore the caret and finish its blur/focus sequence.
+        requestAnimationFrame(() => {
+          if (input.current !== element || document.activeElement !== element) return;
+          setQuery(findQuery(element.value, element.selectionStart));
+          setSelected(0);
+        });
+      }}
       onBlur={() => setQuery(null)}
       onChange={event => { onChange(event); setQuery(findQuery(event.target.value, event.target.selectionStart)); setSelected(0); }}
       onClick={event => { setQuery(findQuery(value, event.currentTarget.selectionStart)); setSelected(0); }}
       onKeyDown={event => {
         if (open && event.key === 'Escape') { event.preventDefault(); setQuery(null); return; }
+        if (open && event.key === 'Tab' && event.shiftKey) { setQuery(null); return; }
         if (open && candidates.length && ['ArrowDown', 'ArrowUp', 'Enter', 'Tab'].includes(event.key)) {
           event.preventDefault();
           if (['Enter', 'Tab'].includes(event.key)) choose(candidates[Math.min(selected, candidates.length - 1)]);
@@ -63,5 +88,6 @@ export default function MentionInput({ conversationId, isGroup, composer, value,
         if (open && event.key === 'Enter') { event.preventDefault(); return; }
         onKeyDown?.(event);
       }} />
+    {isGroup && <button type="button" disabled={props.disabled} aria-label="Mention a group member" title="Mention a group member" aria-haspopup="listbox" aria-expanded={open} onPointerDown={event => event.preventDefault()} onClick={showMembers} className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-sm font-semibold text-brand hover:bg-primary/10 disabled:opacity-40">@</button>}
   </div>;
 }

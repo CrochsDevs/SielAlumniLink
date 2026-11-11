@@ -36,6 +36,7 @@ app.use('/api', async (req, res) => {
     data.edited = true;
   } else if (req.path.endsWith('/messages')) data = req.path.includes(groupId) ? messages : [];
   else if (req.path === '/notifications/unread-count') data = { count: 0 };
+  else if (req.path === '/tracer/access') data = { updateRequired: false, quarter: '2026-Q4', nextUpdateAt: '2027-01-01T00:00:00Z' };
   res.json({ success: true, data });
 });
 serveClient(app, path.resolve(process.env.CLIENT_BUILD_DIR || 'dist'));
@@ -44,6 +45,8 @@ await new Promise(resolve => server.once('listening', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 try {
   for (const [name, engine, options] of [['Edge', chromium, { channel: 'msedge' }], ['Firefox', firefox, {}], ['WebKit', webkit, {}]]) {
+    if (process.env.BROWSER_ENGINE && process.env.BROWSER_ENGINE !== name) continue;
+    user.role = 'admin';
     messages = []; memberReads = 0; sends = 0; uploads = 0;
     const browser = await engine.launch({ headless: true, ...options });
     try {
@@ -103,9 +106,31 @@ try {
       await page.getByRole('link', { name: 'mention.txt', exact: true }).waitFor();
       assert.equal(uploads, 1);
       assert.equal(messages.at(-1).mentions[0].authId, jordan);
+      for (const role of ['alumni', 'student']) {
+        user.role = role;
+        await page.waitForLoadState('networkidle');
+        await page.goto(`${origin}/${role}/message?conversation=${groupId}`);
+        input = page.getByPlaceholder('Message group...');
+        await input.waitFor();
+        await input.pressSequentially('@jordan', { delay: 40 });
+        await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
+        await input.press('Shift+Tab');
+        assert.equal(await page.getByRole('listbox', { name: 'Mention group member' }).count(), 0);
+        assert.equal(await input.inputValue(), '@jordan', 'Leaving the field must not select a mention');
+        // WebKit can keep focus on text fields when full keyboard access is off.
+        // Explicitly blur before verifying an actual focus transition.
+        await input.evaluate(element => element.blur());
+        await input.focus();
+        await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
+        await input.press('Escape');
+        await page.getByRole('button', { name: 'Mention a group member', exact: true }).click();
+        await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
+        await page.getByRole('option', { name: '@Jordan Lee', exact: true }).click();
+        assert.equal(await input.inputValue(), '@Jordan Lee ');
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       assert.deepEqual(errors, []);
-      console.log(`PASS ${name}: picker, keyboard selection, cached member fetch, send, reload, edited mentions, direct-chat exclusion, floating chat, mobile attachment mentions`);
+      console.log(`PASS ${name}: picker, send/edit/reload, attachments, floating chat, alumni/student typing, Shift+Tab, and refocus suggestions`);
       await context.close();
     } finally { await browser.close(); }
   }
