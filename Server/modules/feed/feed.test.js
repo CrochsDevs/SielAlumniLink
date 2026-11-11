@@ -62,6 +62,7 @@ const memoryDb = () => {
       insertOne: async doc => { doc._id ??= new ObjectId(); rows.push(doc); return { insertedId: doc._id }; },
       deleteOne: async filter => { const index = rows.findIndex(r => matches(r, filter)); if (index !== -1) rows.splice(index, 1); return { deletedCount: index === -1 ? 0 : 1 }; },
       updateOne: async (filter, change, options = {}) => ({ matchedCount: update(filter, change, options.upsert) ? 1 : 0 }),
+      updateMany: async (filter, change) => { const selected = rows.filter(r => matches(r, filter)); for (const row of selected) update({ _id: row._id }, change); return { matchedCount: selected.length }; },
       findOneAndUpdate: async (filter, change) => update(filter, change),
       aggregate: stages => {
         let result = rows.map(r => ({ ...r }));
@@ -70,6 +71,16 @@ const memoryDb = () => {
           if (stage.$sort) { const dir = stage.$sort._id; result.sort((a, b) => String(a._id).localeCompare(String(b._id)) * dir); }
           if (stage.$lookup) result = result.map(r => ({ ...r, original: rows.filter(o => equal(o._id, r.originalPostId)) }));
           if (stage.$limit) result = result.slice(0, stage.$limit);
+          if (stage.$group) {
+            const groups = new Map();
+            for (const row of result) {
+              const id = at(row, stage.$group._id.slice(1)), key = String(id);
+              const group = groups.get(key) || { _id: id, count: 0 };
+              group.count++;
+              groups.set(key, group);
+            }
+            result = [...groups.values()];
+          }
           if (stage.$project) result = result.map(({ original, ...rest }) => rest);
         }
         return cursor(result);
@@ -100,6 +111,57 @@ const fixture = async () => {
 };
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
+
+test('comment replies stay in one paginated thread and include legacy comments', async () => {
+  const f = await fixture(), p = await f.feed.create(f.author, post());
+  const root = await f.feed.comment(f.friend, p._id, 'Parent');
+  const reply = await f.feed.comment(f.author, p._id, 'Reply', String(root._id));
+  await f.feed.comment(f.student, p._id, 'Reply to reply', String(reply._id));
+  const legacy = { postId: p._id, authorAuthId: String(f.author._id), body: 'Legacy', createdAt: new Date(), deletedAt: null };
+  await f.db.collection('feed_comments').insertOne(legacy);
+  const roots = (await f.feed.listComments(f.friend, p._id)).comments;
+  assert.equal(roots.length, 2);
+  assert.equal(roots.find(c => equal(c._id, root._id)).repliesCount, 2);
+  const replies = (await f.feed.listComments(f.friend, p._id, undefined, String(root._id))).comments;
+  assert.equal(replies.length, 2);
+  assert.ok(replies.every(c => equal(c.parentCommentId, root._id)));
+  assert.equal((await f.feed.get(f.author, p._id)).commentsCount, 4);
+  for (let i = 0; i < 32; i++) await f.feed.comment(f.author, p._id, `Reply ${i}`, String(root._id));
+  const page = await f.feed.listComments(f.author, p._id, undefined, String(root._id));
+  assert.equal(page.comments.length, 30);
+  const older = await f.feed.listComments(f.author, p._id, page.nextCursor, String(root._id));
+  assert.equal(older.comments.length, 4);
+  assert.ok(older.comments.every(c => !page.comments.some(current => equal(current._id, c._id))));
+});
+
+test('replies cannot bypass post access, moderation, or parent validation', async () => {
+  const f = await fixture(), p = await f.feed.create(f.author, post({ audience: 'connections' }));
+  const root = await f.feed.comment(f.friend, p._id, 'Parent');
+  const other = await f.feed.create(f.author, post());
+  await rejects(f.feed.comment(f.stranger, p._id, 'Hidden reply', String(root._id)), 404);
+  await rejects(f.feed.listComments(f.stranger, p._id, undefined, String(root._id)), 404);
+  await rejects(f.feed.comment(f.author, other._id, 'Wrong post', String(root._id)), 404);
+  for (const target of [{ $ne: null }, [], 'invalid', '']) await rejects(f.feed.comment(f.author, p._id, 'Invalid', target), 400);
+  await f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: true, reason: 'Paused' });
+  await rejects(f.feed.comment(f.friend, p._id, 'Paused reply', String(root._id)), 403);
+  await f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: false });
+  await f.feed.restrictAuthor(f.admin, f.friend._id, { enabled: true, reason: 'Spam' });
+  await rejects(f.feed.comment(f.friend, p._id, 'Restricted reply', String(root._id)), 403);
+});
+
+test('reply deletion requires ownership and deleting a parent removes its thread', async () => {
+  const f = await fixture(), p = await f.feed.create(f.author, post());
+  const root = await f.feed.comment(f.friend, p._id, 'Parent');
+  const reply = await f.feed.comment(f.author, p._id, 'Reply', String(root._id));
+  await rejects(f.feed.removeComment(f.student, p._id, reply._id), 404);
+  await f.feed.removeComment(f.author, p._id, reply._id);
+  assert.equal((await f.feed.listComments(f.author, p._id)).comments[0].repliesCount, 0);
+  await f.feed.comment(f.student, p._id, 'Remaining', String(root._id));
+  await f.feed.removeComment(f.friend, p._id, root._id);
+  assert.equal((await f.feed.get(f.author, p._id)).commentsCount, 0);
+  await rejects(f.feed.listComments(f.author, p._id, undefined, String(root._id)), 404);
+  await rejects(f.feed.comment(f.author, p._id, 'Deleted parent', String(root._id)), 404);
+});
 
 test('admin moderation appends actor/target audit events without logging failed or member actions', async () => {
   const f = await fixture();

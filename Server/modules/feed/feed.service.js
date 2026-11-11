@@ -194,26 +194,45 @@ export const createFeedService = (db, changed = () => {}) => {
     return serialize(updated, user);
   };
 
-  const listComments = async (user, id, before) => {
+  const listComments = async (user, id, before, parentCommentId = null) => {
     const post = await readable(id, user);
-    const filter = { postId: post._id, deletedAt: null };
+    const parentId = parentCommentId ? objectId(parentCommentId) : null;
+    if (parentId && !await comments.findOne({ _id: parentId, postId: post._id, parentCommentId: null, deletedAt: null })) fail(404, 'Comment not found');
+    const filter = { postId: post._id, parentCommentId: parentId, deletedAt: null };
     if (before) filter._id = { $lt: objectId(before) };
     const rows = await comments.find(filter).sort({ _id: -1 }).limit(31).toArray();
-    return { comments: await Promise.all(rows.slice(0, 30).map(async c => ({
-      _id: c._id, body: c.body, createdAt: c.createdAt, author: await author(c.authorAuthId),
+    const page = rows.slice(0, 30);
+    const counts = !parentId && page.length ? await comments.aggregate([
+      { $match: { postId: post._id, parentCommentId: { $in: page.map(c => c._id) }, deletedAt: null } },
+      { $group: { _id: '$parentCommentId', count: { $sum: 1 } } },
+    ]).toArray() : [];
+    const replyCounts = new Map(counts.map(row => [String(row._id), row.count]));
+    const authors = new Map();
+    const person = id => { const key = String(id); if (!authors.has(key)) authors.set(key, author(id)); return authors.get(key); };
+    return { comments: await Promise.all(page.map(async c => ({
+      _id: c._id, body: c.body, createdAt: c.createdAt, author: await person(c.authorAuthId),
+      parentCommentId: c.parentCommentId || null, repliesCount: replyCounts.get(String(c._id)) || 0,
       isMine: String(c.authorAuthId) === String(user._id), canDelete: isFeedAdmin(user) || String(c.authorAuthId) === String(user._id),
     }))), nextCursor: rows.length > 30 ? String(rows[29]._id) : null };
   };
 
-  const comment = async (user, id, body) => {
+  const comment = async (user, id, body, parentCommentId = null) => {
     await ensureFeedParticipation(db, user);
     const valid = validateComment(body);
     const post = await readable(id, user);
     if (post.moderation?.commentsDisabled) fail(403, 'Comments are turned off for this post');
-    const doc = { postId: post._id, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
+    let parentId = null;
+    if (parentCommentId !== null && parentCommentId !== undefined) {
+      if (typeof parentCommentId !== 'string' || !/^[a-f\d]{24}$/i.test(parentCommentId)) fail(400, 'Invalid reply target');
+      const parent = await comments.findOne({ _id: objectId(parentCommentId), postId: post._id, deletedAt: null });
+      if (!parent) fail(404, 'Comment not found');
+      parentId = parent.parentCommentId || parent._id;
+      if (parent.parentCommentId && !await comments.findOne({ _id: parentId, postId: post._id, parentCommentId: null, deletedAt: null })) fail(404, 'Comment not found');
+    }
+    const doc = { postId: post._id, parentCommentId: parentId, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
     const result = await comments.insertOne(doc);
     changed();
-    return { _id: result.insertedId, body: valid, createdAt: doc.createdAt, author: await author(user._id), isMine: true };
+    return { _id: result.insertedId, parentCommentId: parentId, repliesCount: 0, body: valid, createdAt: doc.createdAt, author: await author(user._id), isMine: true, canDelete: true };
   };
 
   const removeComment = async (user, id, commentId) => {
@@ -222,6 +241,8 @@ export const createFeedService = (db, changed = () => {}) => {
       ...(isFeedAdmin(user) ? {} : { authorAuthId: String(user._id) }), deletedAt: null },
     { $set: { deletedAt: new Date(), deletedBy: String(user._id) } });
     if (!result.matchedCount) fail(404, 'Comment not found');
+    await comments.updateMany({ postId: post._id, parentCommentId: objectId(commentId), deletedAt: null },
+      { $set: { deletedAt: new Date(), deletedBy: String(user._id) } });
     await recordAdminAudit(db, user, 'comment_deleted', { type: 'comment', id: commentId, label: post.title || 'Post comment' },
       `Removed comment from post ${post._id}.`);
     changed();
@@ -318,6 +339,7 @@ export const ensureFeedIndexes = async (db) => {
   await db.collection('feed_posts').createIndex({ authorAuthId: 1, audience: 1, _id: -1 });
   await db.collection('feed_posts').createIndex({ originalPostId: 1, deletedAt: 1 });
   await db.collection('feed_comments').createIndex({ postId: 1, deletedAt: 1, _id: -1 });
+  await db.collection('feed_comments').createIndex({ postId: 1, parentCommentId: 1, deletedAt: 1, _id: -1 });
   await db.collection('feed_comments').createIndex({ authorAuthId: 1, _id: -1 });
   await db.collection('member_activity').createIndex({ authorAuthId: 1, _id: -1 });
   await db.collection('feed_images').createIndex({ ownerAuthId: 1, createdAt: -1 });

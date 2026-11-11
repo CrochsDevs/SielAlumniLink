@@ -157,6 +157,103 @@ function PostContent({ post, onRsvp, busy = false }) {
   );
 }
 
+function CommentReplies({ postId, comment, revision, onChanged, isAdmin, disabled }) {
+  const [expanded, setExpanded] = useState(false);
+  const [target, setTarget] = useState(null);
+  const [body, setBody] = useState('');
+  const [items, setItems] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const pending = useRef(false);
+  const request = useRef(0);
+  const input = useRef(null);
+  const load = useCallback(async (before = null) => {
+    const ticket = ++request.current;
+    setLoading(true);
+    try {
+      const response = await api.get(`/feed/${postId}/comments`, { params: { parentCommentId: comment._id, before: before || undefined } });
+      if (ticket !== request.current) return;
+      const data = response.data.data;
+      setItems(previous => before ? [...previous, ...data.comments.filter(row => !previous.some(current => current._id === row._id))] : data.comments);
+      setCursor(data.nextCursor);
+      setError('');
+    } catch (err) {
+      if (ticket === request.current) setError(err.response?.data?.message || 'Unable to load replies.');
+    } finally {
+      if (ticket === request.current) setLoading(false);
+    }
+  }, [postId, comment._id]);
+  useEffect(() => {
+    let active = true;
+    if (expanded) Promise.resolve().then(() => { if (active) void load(); });
+    return () => {
+      active = false;
+      // Request sequence counter; discard results for a closed/unmounted thread.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      ++request.current;
+    };
+  }, [expanded, load, revision]);
+  const replyTo = row => {
+    setExpanded(true);
+    setTarget(row);
+    requestAnimationFrame(() => input.current?.focus());
+  };
+  const submit = async event => {
+    event.preventDefault();
+    if (pending.current || disabled || !body.trim() || !target) return;
+    pending.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await api.post(`/feed/${postId}/comments`, { body, parentCommentId: target._id });
+      setBody('');
+      setTarget(null);
+      await load();
+      onChanged();
+    } catch (err) { setError(err.response?.data?.message || 'Unable to post reply. Your draft is saved here.'); }
+    finally { pending.current = false; setBusy(false); }
+  };
+  const remove = async id => {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    try {
+      await api.delete(`/feed/${postId}/comments/${id}`);
+      await load();
+      onChanged();
+    } catch (err) { setError(err.response?.data?.message || 'Unable to delete reply.'); }
+    finally { pending.current = false; setBusy(false); }
+  };
+  return <div className="mt-1">
+    <div className="flex flex-wrap items-center gap-3">
+      {!disabled && <button type="button" disabled={busy} onClick={() => replyTo(comment)} className="min-h-9 px-2 text-xs font-semibold text-brand hover:underline">Reply</button>}
+      {(comment.repliesCount > 0 || items.length > 0) && <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} className="min-h-9 text-xs font-semibold text-zinc-500 hover:underline dark:text-zinc-400">{expanded ? 'Hide replies' : `View ${comment.repliesCount || items.length} ${(comment.repliesCount || items.length) === 1 ? 'reply' : 'replies'}`}</button>}
+    </div>
+    {expanded && <div className="ml-3 space-y-3 border-l-2 border-zinc-200 pl-3 sm:ml-8 dark:border-zinc-700" aria-label={`Replies to ${comment.author.name}`}>
+      {loading && <p role="status" className="text-xs text-zinc-500">Loading replies…</p>}
+      {items.map(row => <div key={row._id} className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800">
+        <div className="flex items-start justify-between gap-2">
+          <Author person={row.author} createdAt={row.createdAt} />
+          {(row.isMine || isAdmin) && <button type="button" disabled={busy} aria-label="Delete reply" onClick={() => remove(row._id)} className="p-1 text-zinc-500 hover:text-red-600"><Trash2 size={14} /></button>}
+        </div>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">{row.body}</p>
+        {!disabled && <button type="button" disabled={busy} onClick={() => replyTo(row)} className="mt-1 min-h-9 text-xs font-semibold text-brand hover:underline">Reply</button>}
+      </div>)}
+      {cursor && <button type="button" disabled={loading || busy} onClick={() => load(cursor)} className={buttonClass}>Older replies</button>}
+      {target && !disabled && <form onSubmit={submit} className="space-y-2">
+        <p className="text-xs text-zinc-500">Replying to {target.author.name} <button type="button" disabled={busy} onClick={() => setTarget(null)} className="ml-2 underline">Cancel reply</button></p>
+        <div className="flex items-start gap-2">
+          <textarea ref={input} disabled={busy} aria-label={`Reply to ${target.author.name}`} rows={2} required maxLength={2000} value={body} onChange={event => setBody(event.target.value)} placeholder="Write a reply…" className="min-w-0 flex-1 rounded-xl border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700" />
+          <button type="submit" disabled={busy || !body.trim()} className={buttonClass}>{busy ? 'Sending…' : 'Post reply'}</button>
+        </div>
+      </form>}
+      {error && <p role="alert" className="text-sm text-red-600">{error} <button type="button" disabled={busy || loading} onClick={() => load()} className="underline">Retry loading replies</button></p>}
+    </div>}
+  </div>;
+}
+
 function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
   const [items, setItems] = useState([]);
   const [cursor, setCursor] = useState(null);
@@ -271,7 +368,8 @@ function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
         )
       )}
       {items.map((c) => (
-        <div key={c._id} className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800">
+        <div key={c._id}>
+        <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800">
           <div className="flex items-start justify-between gap-2">
             <Author person={c.author} createdAt={c.createdAt} />
             {(c.isMine || isAdmin) && (
@@ -289,6 +387,8 @@ function Comments({ postId, revision, onChanged, isAdmin, disabled = false }) {
           <p className="mt-2 whitespace-pre-wrap break-words text-sm">
             {c.body}
           </p>
+        </div>
+        <CommentReplies postId={postId} comment={c} revision={revision} onChanged={onChanged} isAdmin={isAdmin} disabled={disabled} />
         </div>
       ))}
       {cursor && (
