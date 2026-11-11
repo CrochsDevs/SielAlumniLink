@@ -11,6 +11,8 @@ import { signSessionToken, verifySessionToken, sessionMatches } from './session-
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/auth_security_fixture';
 process.env.JWT_SECRET = 'test-only-auth-security-key';
 process.env.DOTENV_CONFIG_QUIET = 'true';
+// Always use the mocked transport, even when local Google credentials exist.
+process.env.EMAIL_PROVIDER = 'smtp';
 
 // Stub transport creation before loading controllers: no SMTP or database connections.
 let deliver = async () => {};

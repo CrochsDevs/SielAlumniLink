@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { gmailApiConfiguration, sendGmailApiEmail } from './gmail-api.js';
 
 const logoPath = fileURLToPath(new URL('../assets/clsu_logo.png', import.meta.url));
 export const EMAIL_DELIVERY_TIMEOUT_MS = 12000;
@@ -16,7 +17,7 @@ export function createAuthEmailSender({
   timeoutMs = EMAIL_DELIVERY_TIMEOUT_MS,
 } = {}) {
   return async (to, message) => {
-    const provider = env.EMAIL_PROVIDER || (env.RESEND_API_KEY ? 'resend' : 'smtp');
+    const provider = env.EMAIL_PROVIDER || (env.GOOGLE_REFRESH_TOKEN ? 'gmail_api' : env.RESEND_API_KEY ? 'resend' : 'smtp');
     const controller = new AbortController();
     let timer, transport;
     try {
@@ -27,6 +28,22 @@ export function createAuthEmailSender({
         }, timeoutMs);
       });
       const delivery = (async () => {
+        if (provider === 'gmail_api') {
+          const config = gmailApiConfiguration(env);
+          const logo = await readLogo();
+          // Stream transport only builds MIME in memory. It never opens SMTP.
+          transport = createTransport({ streamTransport: true, buffer: true, newline: 'windows',
+            disableFileAccess: true, disableUrlAccess: true });
+          const composed = await transport.sendMail({
+            from: { name: 'SielAlumni', address: config.sender }, to,
+            subject: message.subject, text: message.text, html: message.html,
+            attachments: [{ filename: 'clsu-logo.png', content: logo,
+              cid: 'clsu-logo@alumnilink', contentType: 'image/png', contentDisposition: 'inline' }],
+          });
+          if (!Buffer.isBuffer(composed?.message)) throw failure('EPROVIDER');
+          await sendGmailApiEmail({ config, raw: composed.message, fetchImpl, signal: controller.signal });
+          return;
+        }
         if (provider === 'resend') {
           if (!env.RESEND_API_KEY || !env.EMAIL_FROM || /[\r\n]/.test(env.EMAIL_FROM)) throw failure('ECONFIG');
           const logo = await readLogo();
@@ -70,7 +87,7 @@ export function createAuthEmailSender({
       return { success: true };
     } catch (error) {
       // Never log a provider response, recipient, link, OTP, or credentials.
-      const code = ['ETIMEDOUT', 'EAUTH', 'ECONNECTION', 'ESOCKET', 'EDNS', 'ECONFIG', 'EPROVIDER'].includes(error?.code)
+      const code = ['ETIMEDOUT', 'EAUTH', 'ECONNECTION', 'ESOCKET', 'EDNS', 'ECONFIG', 'EPROVIDER', 'EPERMISSION', 'EQUOTA'].includes(error?.code)
         ? error.code : 'EDELIVERY';
       logger.error(`Authentication email delivery failed (${code})`);
       return { success: false };

@@ -80,7 +80,28 @@ exists or whether email delivery succeeded.
 
 ### Email delivery on Render Free
 
-The backend supports Resend's HTTPS API without an additional npm package.
+Use **Gmail API over HTTPS** for the existing Google sender. Follow
+[Server/GMAIL_SETUP.md](Server/GMAIL_SETUP.md) to enable Gmail API, create the
+OAuth client, and run `npm run setup:gmail` locally. The loopback helper saves
+the refresh token into ignored `Server/.env` without printing it.
+
+Copy these settings privately into the backend Render Environment, then redeploy:
+
+```text
+EMAIL_PROVIDER=gmail_api
+EMAIL_USER=<authorized Gmail sender>
+GOOGLE_CLIENT_ID=<Google OAuth client ID>
+GOOGLE_CLIENT_SECRET=<server-only client secret>
+GOOGLE_REFRESH_TOKEN=<refresh token saved by setup>
+```
+
+This needs no new npm dependency or custom email domain. Only the sender grants
+Google access. The app requests `gmail.send`, not mailbox-read access. Client
+secrets and tokens never go in frontend configuration, URLs, or application logs.
+Google's Testing-mode token expiry and sending limits still apply; see the guide.
+Setting a Gmail App Password alone does not configure this HTTPS transport.
+
+The backend also supports Resend's HTTPS API without an additional npm package.
 In Resend, verify a domain you control, then create a sending API key restricted
 to that domain where supported. A Gmail address is not a verified sender domain.
 The provider's default test sender cannot send production login links to arbitrary

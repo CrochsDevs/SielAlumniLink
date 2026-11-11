@@ -8,6 +8,7 @@ node_modules/
 .env.*.local
 Server/.env
 Client/.env
+/Server/google-oauth.credentials.local.json
 
 # Logs
 *.log
