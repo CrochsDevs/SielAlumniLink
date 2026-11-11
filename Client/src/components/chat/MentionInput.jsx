@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import api from '../../utils/axios';
 import { getSocket } from '../../realtime/socket';
 import { mentionQuery } from './mentionText';
+import ChatAvatar from './ChatAvatar';
 
 export default function MentionInput({ conversationId, isGroup, composer, value, onChange, onKeyDown, className, ref: bindInput, ...props }) {
   const input = useRef(null);
@@ -60,7 +61,7 @@ export default function MentionInput({ conversationId, isGroup, composer, value,
   };
   return <div className="relative min-w-0 flex-1">
     {open && <div id={id} role="listbox" aria-label="Mention group member" className="absolute bottom-full left-0 z-50 mb-2 max-h-56 w-64 max-w-[calc(100vw-4rem)] overflow-y-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl">
-      {result.owner !== conversationId ? <p role="status" className="px-3 py-2 text-xs">Loading members…</p> : result.error ? <p role="alert" className="px-3 py-2 text-xs">{result.error} <button type="button" onPointerDown={event => event.preventDefault()} onClick={() => setResult({ owner: null, members: [], error: '' })} className="underline">Retry</button></p> : candidates.length ? candidates.map((member, index) => <button key={member.authId} id={`${id}-${index}`} type="button" role="option" aria-selected={index === selected} onPointerDown={event => event.preventDefault()} onClick={() => choose(member)} className={`block w-full truncate rounded-lg px-3 py-2 text-left text-sm ${index === selected ? 'bg-primary/10 font-semibold text-primary' : 'hover:bg-muted'}`}>@{member.name}</button>) : <p className="px-3 py-2 text-xs">No matching group members.</p>}
+      {result.owner !== conversationId ? <p role="status" className="px-3 py-2 text-xs">Loading members…</p> : result.error ? <p role="alert" className="px-3 py-2 text-xs">{result.error} <button type="button" onPointerDown={event => event.preventDefault()} onClick={() => setResult({ owner: null, members: [], error: '' })} className="underline">Retry</button></p> : candidates.length ? candidates.map((member, index) => <button key={member.authId} id={`${id}-${index}`} type="button" role="option" aria-selected={index === selected} onPointerDown={event => event.preventDefault()} onClick={() => choose(member)} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${index === selected ? 'bg-primary/10 font-semibold text-primary' : 'hover:bg-muted'}`}><span aria-hidden="true" className="h-8 w-8 shrink-0 text-xs"><ChatAvatar convo={member} /></span><span className="min-w-0 truncate">@{member.name}</span></button>) : <p className="px-3 py-2 text-xs">No matching group members.</p>}
     </div>}
     <input {...props} ref={node => { input.current = node; bindInput?.(node); }} value={value} maxLength={2000} className={`${className} w-full ${isGroup ? '!pr-9' : ''}`} autoComplete="off"
       role={isGroup ? 'combobox' : undefined} aria-expanded={isGroup ? open : undefined} aria-autocomplete={isGroup ? 'list' : undefined} aria-controls={open ? id : undefined} aria-activedescendant={open && candidates[selected] ? `${id}-${selected}` : undefined}

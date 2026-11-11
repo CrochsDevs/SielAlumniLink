@@ -10,7 +10,8 @@ import { chromium, firefox, webkit } from '../node_modules/.search-validation/no
 const self = 'aaaaaaaaaaaaaaaaaaaaaaaa', jordan = 'bbbbbbbbbbbbbbbbbbbbbbbb', sam = 'cccccccccccccccccccccccc';
 const groupId = 'dddddddddddddddddddddddd', directId = 'eeeeeeeeeeeeeeeeeeeeeeee';
 const user = { _id: self, authId: self, role: 'admin', name: 'Group Admin', email: 'admin@example.test', passwordSetupRequired: false };
-const members = [{ authId: self, name: user.name }, { authId: jordan, name: 'Jordan Lee' }, { authId: sam, name: 'Sam Cruz' }];
+const memberPhoto = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32"%3E%3Crect width="32" height="32" fill="green"/%3E%3C/svg%3E';
+const members = [{ authId: self, name: user.name }, { authId: jordan, name: 'Jordan Lee', profilePicture: memberPhoto }, { authId: sam, name: 'Sam Cruz' }];
 const group = { _id: groupId, isGroup: true, name: 'Mention Group', participants: members, memberCount: 3, adminAuthIds: [self], createdBy: self, unread: 0 };
 const direct = { _id: directId, isGroup: false, name: 'Jordan Lee', authId: jordan, unread: 0 };
 let messages = [], memberReads = 0, sends = 0, uploads = 0;
@@ -60,6 +61,9 @@ try {
       assert.equal(memberReads, 0, 'Member picker loads on demand');
       await input.fill('Hello @Jo');
       await page.getByRole('option', { name: '@Jordan Lee', exact: true }).waitFor();
+      const memberOption = page.getByRole('option', { name: '@Jordan Lee', exact: true });
+      assert.equal(await memberOption.locator('img').getAttribute('src'), memberPhoto);
+      assert.equal(await memberOption.locator('img').evaluate(image => image.complete && image.naturalWidth > 0), true, 'Member picture must load in suggestions');
       await input.press('Enter');
       assert.equal(sends, 0, 'Enter chooses a member instead of submitting prematurely');
       assert.equal(await input.inputValue(), 'Hello @Jordan Lee ');
