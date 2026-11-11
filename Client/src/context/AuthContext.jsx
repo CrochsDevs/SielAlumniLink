@@ -189,7 +189,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await api.post("/auth/magic-link/send", { email: email.trim() });
       if (response.data.success) {
-        return { success: true, message: response.data.message };
+        return { success: true, message: response.data.message, retryAfter: 60 };
       }
 
       return {
@@ -197,9 +197,18 @@ export const AuthProvider = ({ children }) => {
         error: response.data.message || "Failed to send magic link",
       };
     } catch (err) {
-      const message = authErrorMessage(err, "Failed to send login link");
+      const limited = err.response?.status === 429;
+      const unavailable = !err.response;
+      const seconds = Number(err.response?.headers?.['retry-after']);
+      const retryAfter = limited || unavailable
+        ? (Number.isFinite(seconds) && seconds > 0 ? Math.min(900, Math.ceil(seconds)) : 60) : 0;
+      const message = limited
+        ? `Too many login-link requests. Please wait ${retryAfter} seconds and try again.`
+        : unavailable
+          ? 'The email request could not be completed. Please wait a minute and try again.'
+          : authErrorMessage(err, "Failed to send login link");
       setError(message);
-      return { success: false, error: message };
+      return { success: false, error: message, retryAfter };
     }
   }, []);
 

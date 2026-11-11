@@ -3,6 +3,7 @@ import cors from "cors";
 import { frontendOrigins } from "../config/cors.js";
 import { protectSessionOrigin } from "../config/session-cookie.js";
 import { serveClient } from "../config/client-app.js";
+import { logAuthRequests } from '../middlewares/auth-request-log.js';
 import cookieParser from "cookie-parser";
 import userRoutes from "../modules/users/users.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
@@ -35,6 +36,7 @@ import reportRoutes from "../modules/reports/reports.routes.js";
 const app = express();
 // Configure exact proxy IPs/CIDRs when deployed behind a reverse proxy.
 if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
+app.use(logAuthRequests());
 
 app.use(
   cors({
@@ -42,6 +44,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Account-Id"],
+    exposedHeaders: ["Retry-After", "X-Request-Id"],
   }),
 );
 

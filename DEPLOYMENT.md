@@ -107,3 +107,27 @@ a Gmail App Password in `EMAIL_PASS`; TLS certificate validation remains enabled
 The generic send response still does not confirm actual inbox delivery. Check the
 provider dashboard and backend log for accepted/rejected delivery. After a successful
 deployment, request a fresh link and complete the session test in the intended browser.
+
+### HTTP 429 and CORS diagnostics
+
+The app limits link sends to one per email per minute and ten per IP per minute.
+Login shows a resend countdown and reads `Retry-After` on app-generated 429s.
+When a cross-origin response has no CORS headers, the browser cannot reveal its
+status to JavaScript; the app therefore shows a temporary email-request failure
+and waits one minute before another send instead of claiming the backend is down.
+
+Filter backend Render Logs by `auth.request`. Each relevant request logs
+`received` and `finished` (or `closed`) with an opaque request ID, operation,
+status, and duration. It never logs bodies, query strings, email addresses, IPs,
+cookies, passwords, codes, or tokens. Email acceptance/failure is a separate event;
+an HTTP 200 from a generic send response is not proof of delivery.
+
+App-generated 429s retain CORS and expose `Retry-After` and `X-Request-Id`. If the
+failed request has no corresponding `received` event, investigate Render's edge,
+proxy, or browser/network blocking. Application CORS changes cannot modify a
+response produced before the request reaches Express.
+
+If `forwardedAddressPresent=true` and `proxyConfigured=false`, verify the actual
+Render proxy chain and configure `TRUST_PROXY` with its trusted IP/CIDR ranges.
+Without it, requests may share a proxy IP bucket. Never blindly trust all
+`X-Forwarded-For` headers or disable rate limits to bypass a 429.

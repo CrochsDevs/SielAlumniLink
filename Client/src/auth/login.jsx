@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { gooeyToast as toast } from "goey-toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,7 +15,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [magicMessage, setMagicMessage] = useState("");
+  const [magicCooldown, setMagicCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (magicCooldown <= 0) return;
+    const timer = setTimeout(() => setMagicCooldown(seconds => Math.max(0, seconds - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [magicCooldown]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,9 +43,11 @@ const Login = () => {
 
   const handleMagicLinkSubmit = async (e) => {
     e.preventDefault();
+    if (loading || magicCooldown > 0) return;
     setMagicMessage("");
     setLoading(true);
     const result = await requestMagicLink(formData.email);
+    setMagicCooldown(result.retryAfter || 0);
     if (result.success) {
       setMagicMessage(result.message);
     } else {
@@ -217,7 +226,7 @@ const Login = () => {
 
                     <button
                       type="submit"
-                      disabled={loading}
+                      disabled={loading || magicCooldown > 0}
                       className="w-full h-8 rounded-lg bg-brand text-white text-[12px] font-semibold tracking-wide transition-all duration-200 hover:bg-brand disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
                     >
                       {loading ? (
@@ -244,7 +253,7 @@ const Login = () => {
                           Sending link...
                         </span>
                       ) : (
-                        "Send single-use link"
+                        magicCooldown > 0 ? `Try again in ${magicCooldown}s` : "Send single-use link"
                       )}
                     </button>
 

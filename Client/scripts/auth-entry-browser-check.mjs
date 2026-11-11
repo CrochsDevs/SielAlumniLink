@@ -11,7 +11,9 @@ const app = express();
 app.use(express.json());
 let saveCookie = true, discoveryGate = Promise.resolve();
 let magicUsed = false, verificationRequests = 0;
+let sendStatus = 200;
 app.post('/api/auth/magic-link/send', (_req, res) => {
+  if (sendStatus === 429) return res.set('Retry-After', '3').status(429).json({ success: false });
   res.json({ success: true, message: 'If an account exists, a login link has been sent.' });
 });
 app.get('/api/auth/magic-link/verify', (req, res) => {
@@ -121,6 +123,7 @@ try {
           await page.locator('input[name="email"]').fill(user.email);
           await page.getByRole('button', { name: 'Send single-use link', exact: true }).click();
           await page.getByText(/If an account exists, a login link has been sent/).waitFor();
+          assert.equal(await page.getByRole('button', { name: /Try again in \d+s/ }).isDisabled(), true);
           const token = (kind === 'setup' ? 'b' : kind === 'expired' ? 'c' : 'a').repeat(64);
           await page.goto(origin + '/verify-magic-link?token=' + token);
           if (kind === 'existing') {
@@ -138,6 +141,31 @@ try {
           }
           assert.equal(verificationRequests, 1, 'a single-use link must be verified only once');
           console.log(`PASS ${name}: single-use link send -> ${kind}`);
+        } finally { await context.close(); }
+      }
+      for (const kind of ['limited', 'network']) {
+        sendStatus = kind === 'limited' ? 429 : 200;
+        const context = await browser.newContext();
+        await context.routeWebSocket('**/socket.io/**', socket => socket.close());
+        if (kind === 'network') await context.route('**/api/auth/magic-link/send', route => route.abort('failed'));
+        const page = await context.newPage();
+        page.on('pageerror', error => errors.push(error.message));
+        try {
+          await page.goto(origin + '/login');
+          await page.locator('input[name="email"]').fill(user.email);
+          await page.getByRole('button', { name: 'Send single-use link', exact: true }).click();
+          const message = kind === 'limited'
+            ? 'Too many login-link requests. Please wait 3 seconds and try again.'
+            : 'The email request could not be completed. Please wait a minute and try again.';
+          await page.getByText(message, { exact: true }).first().waitFor();
+          assert.equal(await page.getByRole('button', { name: /Try again in \d+s/ }).isDisabled(), true);
+          if (kind === 'limited') {
+            await page.getByRole('button', { name: 'Send single-use link', exact: true }).waitFor();
+            sendStatus = 200;
+            await page.getByRole('button', { name: 'Send single-use link', exact: true }).click();
+            await page.getByText(/If an account exists, a login link has been sent/).waitFor();
+          }
+          console.log(`PASS ${name}: ${kind} send response shows a cooldown and appropriate feedback`);
         } finally { await context.close(); }
       }
       assert.deepEqual(errors, []);
