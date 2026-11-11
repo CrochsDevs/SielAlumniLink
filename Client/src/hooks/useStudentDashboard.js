@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "../utils/axios";
+import { createPendingTask } from "../utils/pendingTask";
 
 const sources = {
   jobs: "/jobs",
@@ -19,7 +20,8 @@ const initial = () =>
 export default function useStudentDashboard(accountId, refreshKey) {
   const [resources, setResources] = useState(initial);
   const generation = useRef(0);
-  const load = useCallback(async () => {
+  const pending = useRef(createPendingTask());
+  const load = useCallback(() => pending.current.run(async () => {
     const request = ++generation.current;
     // Each source settles independently so one unavailable module cannot hide the others.
     await Promise.allSettled(
@@ -48,8 +50,11 @@ export default function useStudentDashboard(accountId, refreshKey) {
         }
       }),
     );
-  }, []);
+  }), []);
   useEffect(() => {
+    const gate = pending.current;
+    // Clear the previous account's cards while its replacement is loading.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResources(initial());
     void load();
     const reload = () => {
@@ -58,7 +63,10 @@ export default function useStudentDashboard(accountId, refreshKey) {
     window.addEventListener("focus", reload);
     const timer = setInterval(reload, 60000);
     return () => {
+      // Request sequence counter, not a DOM reference.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       ++generation.current;
+      gate.clear();
       clearInterval(timer);
       window.removeEventListener("focus", reload);
     };

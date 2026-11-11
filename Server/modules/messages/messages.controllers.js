@@ -9,6 +9,7 @@ import { createGroupMemberActivityRecorder, createGroupMemberRemovalRecorder, cr
 import { groupRoles } from './group-admin.js';
 import { messageWasRead } from './read-receipts.js';
 import { messageSenders } from './message-senders.js';
+import { mapConcurrent } from '../../utils/map-concurrent.js';
 import cloudUpload, { cloudinary } from '../../config/cloudinary.js';
 import { uploadMessageAttachment, messageAttachmentDto } from './message-attachments.js';
 
@@ -112,7 +113,7 @@ const enrich = async (convo, myAuthId) => {
 export const listConversations = async (req, res) => {
   try {
     const convos = await ConversationModel.findMine(req.user._id);
-    const data = await Promise.all(convos.map((c) => enrich(c, req.user._id)));
+    const data = await mapConcurrent(convos, 8, c => enrich(c, req.user._id));
     res.status(200).json({ success: true, data });
   } catch (error) {
     res.status(500).json({

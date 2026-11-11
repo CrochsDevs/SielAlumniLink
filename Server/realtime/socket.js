@@ -5,6 +5,7 @@ import {
   sessionMatches,
 } from "../modules/auth/session-token.js";
 import { sessionEvents } from "../modules/auth/session-events.js";
+import { sessionValidation } from './session-validation.js';
 import AuthModel from "../modules/auth/auth.models.js";
 import PresenceStore from "./presence.store.js";
 import { attachPresence } from "./presence.socket.js";
@@ -214,7 +215,7 @@ export const initSocket = (server) => {
       socket.disconnect(true);
       return;
     }
-    const validate = async () => {
+    const validate = sessionValidation(async () => {
       try {
         const claims = verifySessionToken(socket.sessionToken);
         const current = await AuthModel.findById(claims.sub);
@@ -230,9 +231,9 @@ export const initSocket = (server) => {
         socket.disconnect(true);
         return false;
       }
-    };
+    });
     socket.use(async (_packet, next) => {
-      if (await validate()) next();
+      if (await validate() && socket.connected) next();
       else next(new Error("Authentication required"));
     });
     const timer = setInterval(() => {

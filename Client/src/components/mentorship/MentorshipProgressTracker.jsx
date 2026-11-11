@@ -8,6 +8,7 @@ import { useAuth } from '../../context/useAuth';
 import ProfileAvatar from '../profile/ProfileAvatar';
 import api from '../../utils/axios';
 import MentorProgressWorkspace from './MentorProgressWorkspace';
+import { createPendingTask } from '../../utils/pendingTask';
 const STATUSES = [{
   key: 'not_started',
   label: 'Not Started',
@@ -125,13 +126,14 @@ export default function MentorshipProgressTracker({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const generation = useRef(0);
+  const pending = useRef(createPendingTask());
   const dirtyGoals = useRef(new Set());
   const [dirty, setDirty] = useState(false);
   const onDirty = useCallback((key, dirty) => {
     if (dirty) dirtyGoals.current.add(key);else dirtyGoals.current.delete(key);
     setDirty(dirtyGoals.current.size > 0);
   }, []);
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback((silent = false) => pending.current.run(async () => {
     const request = ++generation.current;
     if (!silent) setLoading(true);
     setError("");
@@ -143,8 +145,9 @@ export default function MentorshipProgressTracker({
     } finally {
       if (request === generation.current) setLoading(false);
     }
-  }, []);
+  }), []);
   useEffect(() => {
+    const gate = pending.current;
     void load();
     const refresh = () => {
       if (!document.hidden && !dirtyGoals.current.size) void load(true);
@@ -154,7 +157,10 @@ export default function MentorshipProgressTracker({
     return () => {
       window.removeEventListener('focus', refresh);
       clearInterval(timer);
+      // Request sequence counter, not a DOM reference.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       ++generation.current;
+      gate.clear();
     };
   }, [load]);
   const partner = tracker => user?.role === "alumni" ? tracker.student : tracker.mentor;
