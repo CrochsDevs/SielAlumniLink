@@ -230,10 +230,12 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         const message = authErrorMessage(err, "Invalid or expired login link");
         setError(message);
+        return { success: false, error: message };
+      } finally {
         if (magicCheckVersion === authCheckVersion.current) {
           setLoading(false);
+          sessionLoaded.current = true;
         }
-        return { success: false, error: message };
       }
     })();
 
