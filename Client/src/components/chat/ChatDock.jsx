@@ -269,6 +269,7 @@ const ChatWindow = ({
               />
             </label>
             <MentionInput
+              compact
               key={id}
               conversationId={id}
               isGroup={convo.isGroup}

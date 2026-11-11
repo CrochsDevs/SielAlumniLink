@@ -112,6 +112,19 @@ try {
       await dock.waitFor();
       input = page.getByPlaceholder('Write a message...');
       await input.fill('@Sa');
+      await page.getByRole('option', { name: '@Sam Cruz', exact: true }).waitFor();
+      const dockWindow = dock.locator('..');
+      const picker = page.getByRole('listbox', { name: 'Mention group member' });
+      const assertPickerFits = async () => {
+        const windowBounds = await dockWindow.boundingBox(), panel = await picker.boundingBox();
+        assert.ok(panel.x >= windowBounds.x && panel.x + panel.width <= windowBounds.x + windowBounds.width, 'Mention picker must stay inside floating chat width');
+        assert.ok(panel.y >= windowBounds.y && panel.y + panel.height <= windowBounds.y + windowBounds.height, 'Mention picker must stay inside floating chat height');
+      };
+      await assertPickerFits();
+      await page.setViewportSize({ width: 820, height: 584 });
+      await assertPickerFits();
+      await page.screenshot({ path: path.resolve(`../artifacts/floating-mention-layout-${name}.png`), fullPage: true });
+      await page.setViewportSize({ width: 1440, height: 900 });
       await page.getByRole('option', { name: '@Sam Cruz', exact: true }).click();
       await page.getByRole('button', { name: 'Send message', exact: true }).click();
       await dock.locator(`[data-mention-auth-id="${sam}"]`).nth(1).waitFor();
