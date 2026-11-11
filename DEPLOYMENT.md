@@ -169,6 +169,12 @@ status, and duration. It never logs bodies, query strings, email addresses, IPs,
 cookies, passwords, codes, or tokens. Email acceptance/failure is a separate event;
 an HTTP 200 from a generic send response is not proof of delivery.
 
+Successful password and magic-link logins also emit `auth.account`; password
+recovery emits `auth.recovery`. These outcome events include `maskedEmail`
+(for example `le***@gmail.com`), the account `authId` when resolved, and the
+request ID. General request logs still exclude bodies, credentials, full emails
+and IPs. Use the admin Audit Logs for full successful-login identity records.
+
 App-generated 429s retain CORS and expose `Retry-After` and `X-Request-Id`. If the
 failed request has no corresponding `received` event, investigate Render's edge,
 proxy, or browser/network blocking. Application CORS changes cannot modify a

@@ -9,6 +9,7 @@ import { createPasswordReset, resetTokenHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, activeAccount, sessionMatches, sessionVersion } from './session-token.js';
 import { requestAccountMatches, rejectChangedAccount } from './request-account.js';
 import { sessionCookieOptions } from '../../config/session-cookie.js';
+import { logAccountAuth } from './auth-account-log.js';
 
 const hasUsableLocalPassword = (user) => (
     user?.passwordSetupRequired === false && typeof user?.password === 'string' && user.password.length > 0
@@ -24,12 +25,8 @@ const dummyPasswordHash = bcrypt.hashSync('alumnilink-login-timing-placeholder',
 const recoveryResponse = res => res.status(200).json({
     success: true, message: 'If the account is eligible, a reset code has been sent.'
 });
-const logRecoveryOutcome = (res, outcome) => {
-    try {
-        console.log(JSON.stringify({ event: 'auth.recovery', operation: 'password_recovery',
-            requestId: res.getHeader?.('X-Request-Id'), outcome }));
-    } catch { /* Operational diagnostics must not change recovery behavior. */ }
-};
+const logRecoveryOutcome = (res, outcome, user, email) =>
+    logAccountAuth(res, { operation: 'password_recovery', outcome, user, email });
 
 // Keep the old endpoint explicitly closed, including for callers bypassing the UI.
 export const signup = (_req, res) => res.status(403).json({
@@ -64,6 +61,7 @@ export const login = async (req, res) => {
         const token = signSessionToken(user);
 
         res.cookie('token', token, sessionCookieOptions());
+        logAccountAuth(res, { operation: 'password_login', outcome: 'signed_in', user });
 
         // Audit trail (fire-and-forget — never blocks login).
         void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', role: user.role, ip: req.ip });
@@ -242,7 +240,7 @@ export const forgotPassword = async (req, res) => {
 
         const user = await AuthModel.findByEmail(email);
         if (!activeAccount(user) || !hasUsableLocalPassword(user)) {
-            logRecoveryOutcome(res, 'not_eligible');
+            logRecoveryOutcome(res, 'not_eligible', user, email);
             return recoveryResponse(res);
         }
 
@@ -255,12 +253,12 @@ export const forgotPassword = async (req, res) => {
         if (!emailResult.success) {
             // Match this request's code so a failed send cannot clear a newer resend.
             await AuthModel.clearOTP(email, otp);
-            logRecoveryOutcome(res, 'delivery_failed');
+            logRecoveryOutcome(res, 'delivery_failed', user, email);
             // Delivery status must not disclose that this account exists.
             return recoveryResponse(res);
         }
 
-        logRecoveryOutcome(res, 'accepted_for_delivery');
+        logRecoveryOutcome(res, 'accepted_for_delivery', user, email);
         return recoveryResponse(res);
     } catch {
         console.error('Password recovery request failed');

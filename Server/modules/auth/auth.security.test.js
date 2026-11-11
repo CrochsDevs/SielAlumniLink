@@ -4,6 +4,7 @@ import { Collection } from 'mongodb';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { logAccountAuth, maskedAuthEmail } from './auth-account-log.js';
 import { authEmail, isOTP, newPasswordError } from './auth.validation.js';
 import { createPasswordReset, resetTokenHash, otpHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, sessionMatches } from './session-token.js';
@@ -818,8 +819,25 @@ test('recovery diagnostics correlate eligibility and delivery without leaking th
         assert.equal(res.statusCode, 200);
         assert.equal(res.body.message, 'If the account is eligible, a reset code has been sent.');
         const entry = logs.filter(line => line.startsWith('{')).map(line => JSON.parse(line)).findLast(item => item.event === 'auth.recovery');
-        assert.deepEqual(entry, { event: 'auth.recovery', operation: 'password_recovery', requestId: 'fixture-request-id', outcome });
+        assert.deepEqual(entry, { event: 'auth.recovery', operation: 'password_recovery', requestId: 'fixture-request-id', outcome,
+            maskedEmail: 'me***@example.test', ...(current ? { authId: account._id } : {}) });
         assert.doesNotMatch(logs.join(''), /member@example|PRIVATE_PROVIDER_DETAIL/);
         if (savedCode) assert.equal(logs.join('').includes(savedCode), false);
     }
+});
+
+
+test('account diagnostics use masked identity fields and never serialize private account data', () => {
+    const lines = [];
+    const user = { _id: 'fixture-account', email: 'fixture@example.test', password: 'PRIVATE_PASSWORD', resetOTP: 'PRIVATE_OTP', token: 'PRIVATE_TOKEN' };
+    for (const operation of ['password_login', 'magic_link_verify', 'password_recovery']) {
+        logAccountAuth({ getHeader: () => 'fixture-request' }, { operation, outcome: 'signed_in', user }, { log: line => lines.push(JSON.parse(line)) });
+    }
+    assert.equal(lines.length, 3);
+    assert.ok(lines.every(line => line.authId === 'fixture-account' && line.maskedEmail === 'fi***@example.test'));
+    assert.doesNotMatch(JSON.stringify(lines), /PRIVATE_|fixture@example/);
+    assert.equal(maskedAuthEmail('a@example.test'), '***@example.test');
+    assert.equal(maskedAuthEmail({ $ne: null }), undefined);
+    assert.equal(maskedAuthEmail('x@example.test\r\nInjected'), undefined);
+    assert.doesNotThrow(() => logAccountAuth({}, { operation: 'password_login', outcome: 'signed_in', user }, { log() { throw new Error('fixture'); } }));
 });

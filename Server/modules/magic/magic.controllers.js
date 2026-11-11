@@ -8,6 +8,7 @@ import { sendMagicLinkEmail } from '../../utils/email.js';
 import { authEmail } from '../auth/auth.validation.js';
 import { signSessionToken, activeAccount, sessionVersion } from '../auth/session-token.js';
 import { sessionCookieOptions } from '../../config/session-cookie.js';
+import { logAccountAuth } from '../auth/auth-account-log.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
@@ -124,6 +125,7 @@ export const verifyMagicLink = async (req, res) => {
     const jwtToken = signSessionToken(user);
 
     res.cookie('token', jwtToken, sessionCookieOptions());
+    logAccountAuth(res, { operation: 'magic_link_verify', outcome: 'signed_in', user });
 
     // Audit trail (fire-and-forget).
     void ActivityModel.log({ authId: user._id, email: user.email, action: 'login', role: user.role, ip: req.ip });
