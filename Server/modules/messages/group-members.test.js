@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGroupMembersService } from './group-members.js';
+import { createGroupMemberActivityRecorder } from './group-member-activity.js';
 
 function fixture(count = 3) {
+  const messages = [], broadcasts = [];
   const group = { _id: 'group', name: 'Batch 2026', isGroup: true, participants: Array.from({ length: count }, (_, i) => ({ authId: `member${i}`, email: `member${i}@example.test` })), lastMessage: { text: 'Hello' } };
   const accounts = new Map([...group.participants, ...['new1', 'new2', 'pending', 'outsider'].map(authId => ({ authId, email: `${authId}@example.test` }))].map(person => [person.authId, { _id: person.authId, email: person.email }]));
   const conversations = {
+    async touch(id, lastMessage) { assert.equal(id, group._id); group.lastMessage = lastMessage; },
     async findById(id) { return id === 'group' ? structuredClone(group) : null; },
     async appendMembers(id, actor, expected, members) {
       if (id !== group._id || !group.isGroup || !group.participants.some(p => p.authId === actor) || JSON.stringify(expected) !== JSON.stringify(group.participants)) return null;
@@ -15,11 +18,15 @@ function fixture(count = 3) {
   };
   const service = createGroupMembersService({
     conversations,
+    onMembersAdded: createGroupMemberActivityRecorder({ conversations,
+      messages: { async create(message) { const saved = { ...message, _id: `message${messages.length}`, createdAt: new Date() }; messages.push(saved); return saved; } },
+      emit: (...args) => broadcasts.push(args),
+    }),
     accounts: { async findById(id) { return accounts.get(id) || null; } },
     profiles: { async findByAuthId(id) { return { name: `Name ${id}`, password: 'private' }; }, async findByEmail() { return null; } },
     connections: { async findMine() { return ['member1', 'new1', 'new2', 'pending'].map(id => ({ requesterAuthId: 'member0', recipientAuthId: id, status: id === 'pending' ? 'pending' : 'accepted' })); } },
   });
-  return { service, group, accounts, conversations };
+  return { service, group, accounts, conversations, messages, broadcasts };
 }
 
 test('members can list names and candidates contain only accepted connections outside the group', async () => {
@@ -42,17 +49,23 @@ test('nonmembers, missing groups and direct conversations cannot list or add mem
   assert.equal(group.participants.length, 3);
 });
 
-test('adding connections persists membership, preserves messages and deduplicates retries', async () => {
-  const { service, group } = fixture();
+test('adding connections records and broadcasts one saved activity despite concurrent retries', async () => {
+  const { service, group, messages, broadcasts } = fixture();
   const results = await Promise.all(Array.from({ length: 4 }, () => service.add('group', 'member0', ['new1', 'new1', 'member0'])));
   assert.ok(results.every(result => result.memberCount === 4));
   assert.equal(group.participants.filter(p => p.authId === 'new1').length, 1);
-  assert.equal(group.lastMessage.text, 'Hello');
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].text, 'Name member0 added Name new1 to the group');
+  assert.equal(messages[0].activity.type, 'members_added');
+  assert.deepEqual(messages[0].activity.memberAuthIds, ['new1']);
+  assert.equal(group.lastMessage.text, messages[0].text);
+  assert.deepEqual(broadcasts.map(([id]) => id), ['member0', 'member1', 'member2', 'new1']);
+  assert.ok(broadcasts.every(([, event, payload]) => event === 'message:new' && payload.message._id === messages[0]._id && payload.message.at === messages[0].createdAt));
   assert.equal((await service.list('group', 'new1')).memberCount, 4);
 });
 
 test('invalid input, pending connections and unavailable accounts cannot partially add members', async () => {
-  const { service, group, accounts } = fixture();
+  const { service, group, accounts, messages, broadcasts } = fixture();
   for (const input of [null, [], 'new1', [null], [''], Array(21).fill('new1')]) {
     await assert.rejects(service.add('group', 'member0', input), error => error.status === 400);
   }
@@ -60,6 +73,19 @@ test('invalid input, pending connections and unavailable accounts cannot partial
   accounts.delete('new2');
   await assert.rejects(service.add('group', 'member0', ['new1', 'new2']), error => error.status === 404);
   assert.equal(group.participants.length, 3);
+  assert.equal(messages.length, 0);
+  assert.equal(broadcasts.length, 0);
+});
+
+test('adding multiple people records their names and notifies all new members', async () => {
+  const { service, messages, broadcasts } = fixture();
+  await service.add('group', 'member0', ['new1', 'new2']);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].text, 'Name member0 added Name new1, Name new2 to the group');
+  assert.deepEqual(messages[0].activity.memberAuthIds, ['new1', 'new2']);
+  assert.deepEqual(broadcasts.map(([id]) => id), ['member0', 'member1', 'member2', 'new1', 'new2']);
+  await service.add('group', 'member0', ['new2']);
+  assert.equal(messages.length, 1);
 });
 
 test('concurrent additions preserve both updates and enforce the 20 member limit', async () => {

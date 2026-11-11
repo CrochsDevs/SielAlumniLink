@@ -3,7 +3,7 @@ import { groupRoles } from './group-admin.js';
 
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 
-export async function exitGroup(collection, id, actorId, targetId = actorId) {
+export async function exitGroup(collection, id, actorId, targetId = actorId, onExited = async () => {}) {
   if (!ObjectId.isValid(String(id))) fail(404, 'Group conversation not found');
   const actor = String(actorId);
   if (typeof targetId !== 'string' || !targetId) fail(400, 'Choose a group member');
@@ -24,7 +24,14 @@ export async function exitGroup(collection, id, actorId, targetId = actorId) {
       adminAuthIds: group.adminAuthIds ?? { $exists: false },
       createdBy: group.createdBy ?? { $exists: false },
     }, { $set: { participants, adminAuthIds, createdBy: roles.createdBy, updatedAt: new Date() } }, { returnDocument: 'after' });
-    if (updated) return updated;
+    if (updated) {
+      await onExited({
+        group: updated,
+        actor: group.participants.find(member => String(member.authId) === actor),
+        member: group.participants.find(member => String(member.authId) === targetId),
+      });
+      return updated;
+    }
   }
   fail(409, 'The group changed while saving. Please try again.');
 }

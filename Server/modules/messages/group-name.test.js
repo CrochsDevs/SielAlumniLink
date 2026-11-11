@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { ObjectId } from 'mongodb';
 import { renameGroup } from './group-name.js';
 import { groupRoles, promoteGroupAdmin } from './group-admin.js';
+import { createGroupRenameRecorder } from './group-member-activity.js';
 
 const id = 'aaaaaaaaaaaaaaaaaaaaaaaa';
 function fixture(isGroup = true) {
   const group = { _id: new ObjectId(id), isGroup, name: 'Original group', createdBy: 'member', adminAuthIds: ['member'], participants: [{ authId: 'member' }, { authId: 'other' }], lastMessage: { text: 'Hello' } };
   const matches = query => {
     if (String(query._id) !== String(group._id) || query.isGroup !== group.isGroup || !group.participants.some(p => p.authId === query['participants.authId'])) return false;
+    if (query.name?.$ne === group.name) return false;
     if (query.$or && !query.$or.some(condition => {
       if (typeof condition.adminAuthIds === 'string') return group.adminAuthIds?.includes(condition.adminAuthIds);
       if (condition.adminAuthIds?.$exists === false && Object.hasOwn(group, 'adminAuthIds')) return false;
@@ -27,6 +29,27 @@ function fixture(isGroup = true) {
   } };
   return { group, collection };
 }
+
+test('renaming saves and broadcasts a group activity, while identical retries create no extra message', async () => {
+  const { group, collection } = fixture();
+  const messages = [], broadcasts = [];
+  const record = createGroupRenameRecorder({
+    profiles: { async findByAuthId() { return { name: 'Alex', profilePicture: 'avatar.png' }; } },
+    conversations: { async touch(conversationId, lastMessage) { assert.equal(conversationId, id); group.lastMessage = lastMessage; } },
+    messages: { async create(message) { const saved = { ...message, _id: 'activity', createdAt: new Date() }; messages.push(saved); return saved; } },
+    emit: (...args) => broadcasts.push(args),
+  });
+  await Promise.all(Array.from({ length: 3 }, () => renameGroup(collection, id, 'member', '  New group  ', record)));
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].text, 'Alex changed the group name to New group');
+  assert.deepEqual(messages[0].activity, { type: 'group_renamed', actorName: 'Alex', groupName: 'New group' });
+  assert.equal(group.lastMessage.text, messages[0].text);
+  assert.deepEqual(broadcasts.map(([authId]) => authId), ['member', 'other']);
+  assert.ok(broadcasts.every(([, event, payload]) => event === 'message:new' && payload.message._id === 'activity' && payload.message.at === messages[0].createdAt));
+  await assert.rejects(renameGroup(collection, id, 'other', 'New group', record), error => error.status === 403);
+  await assert.rejects(renameGroup(collection, id, 'member', ' ', record), error => error.status === 400);
+  assert.equal(messages.length, 1);
+});
 
 test('the creator can rename a group while preserving members and messages', async () => {
   const { group, collection } = fixture();

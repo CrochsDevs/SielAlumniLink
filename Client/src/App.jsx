@@ -13,6 +13,7 @@ import { useAuth } from "./context/useAuth";
 import GraduationCapLoader from "./components/ui/GraduationCapLoader";
 import { PageSkeleton } from "./components/ui/Skeleton";
 import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
+import Login from "./auth/login";
 
 const AdminDashboard = lazy(() => import("./pages/admin/adminDashboard"));
 const AdminUsers = lazy(() => import("./pages/admin/adminUsers"));
@@ -65,7 +66,6 @@ const StudentRequests = lazy(() => import("./pages/student/studentRequests"));
 const StudentMessage = lazy(() => import("./pages/student/studentMessage"));
 const StudentAccounts = lazy(() => import("./pages/student/studentAccounts"));
 
-const Login = lazy(() => import("./auth/login"));
 const Logout = lazy(() => import("./auth/logout"));
 const Signup = lazy(() => import("./auth/signup"));
 const ForgetPassword = lazy(() => import("./auth/forget-password"));
@@ -79,11 +79,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
-    return <PageSkeleton label="Checking your session" />;
+    return <GraduationCapLoader label="Checking your session" />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   if (user?.passwordSetupRequired) {
@@ -643,12 +643,12 @@ function MemberPages() {
     setWorkspaceThemeEnabled(workspaceTheme);
   }, [workspaceTheme]);
   if (loading && !isAuthPage) {
-    return <PageSkeleton label="Checking your session" />;
+    return <GraduationCapLoader label="Checking your session" />;
   }
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
     <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
-      <QuarterlyTracerGate><Suspense fallback={<PageSkeleton label="Loading page" />}><AppRoutes /></Suspense></QuarterlyTracerGate>
+      <QuarterlyTracerGate><Suspense fallback={isAuthPage || !user ? <GraduationCapLoader label="Loading page" /> : <PageSkeleton label="Loading page" />}><AppRoutes /></Suspense></QuarterlyTracerGate>
     </div>
   );
 }

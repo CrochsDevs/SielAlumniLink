@@ -180,12 +180,9 @@ const MemberTopbar = ({ user, title, onMenuClick, memberRole, crumbLabel, crumbP
         <span className="min-w-0 flex-1 truncate text-sm font-bold dark:text-white sm:hidden">
           {pageTitle}
         </span>
-        <div className="order-last w-full sm:order-none sm:w-auto sm:min-w-0 sm:max-w-sm sm:flex-1">
-          <GlobalSearch />
-        </div>
-
         {/* Actions */}
         <div className="flex items-center gap-1">
+          <GlobalSearch />
           <div className="relative" ref={chatRef}>
             <button
               ref={chatButtonRef}

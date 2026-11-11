@@ -1,4 +1,4 @@
-import ContentSkeleton from "../../components/ui/Skeleton";
+import ContentSkeleton, { Skeleton } from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { gooeyToast as toast } from "goey-toast";
@@ -20,6 +20,7 @@ import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
 import ProfileAvatar from "../../components/profile/ProfileAvatar";
 import { profilePath } from "../../components/search/searchLinks";
 import api from "../../utils/axios";
+import { createPendingReads } from '../../utils/pendingRequests';
 import AlumniFeed from "../../components/feed/AlumniFeed";
 import { FeedDialog } from "../../components/feed/FeedComposer";
 import "./alumniDashboard.css";
@@ -29,11 +30,16 @@ const AlumniDashboard = () => {
   const { openChatByEmail } = useChat();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pendingReads = useRef(null);
+  const getDashboardData = useCallback((url, config) => {
+    pendingReads.current ??= createPendingReads((path, options) => api.get(path, options));
+    return pendingReads.current(url, config);
+  }, []);
 
   const [dashTab, setDashTab] = useState("feed");
   const [mentees, setMentees] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
-  const [menteesLoading, setMenteesLoading] = useState(false);
+  const [menteesLoading, setMenteesLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [suggestions, setSuggestions] = useState([]);
@@ -42,6 +48,9 @@ const AlumniDashboard = () => {
   const [connecting, setConnecting] = useState(null);
   const connectPending = useRef(false);
   const [announcements, setAnnouncements] = useState([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  const [announcementsError, setAnnouncementsError] = useState('');
+  const [profileStatsLoading, setProfileStatsLoading] = useState(true);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [showConnections, setShowConnections] = useState(false);
   const [connections, setConnections] = useState([]);
@@ -59,8 +68,8 @@ const AlumniDashboard = () => {
     setConnectionsError("");
     try {
       const [connsRes, usersRes] = await Promise.all([
-        api.get("/connections/me"),
-        api.get("/users"),
+        getDashboardData("/connections/me"),
+        getDashboardData("/users"),
       ]);
       const normalize = (email) =>
         String(email || "")
@@ -95,8 +104,8 @@ const AlumniDashboard = () => {
     setMenteesLoading(true);
     try {
       const [connsRes, usersRes] = await Promise.all([
-        api.get("/connections/me"),
-        api.get("/users"),
+        getDashboardData("/connections/me"),
+        getDashboardData("/users"),
       ]);
       const roleByEmail = {};
       const roleByAuthId = {};
@@ -117,10 +126,6 @@ const AlumniDashboard = () => {
             return { email, authId, ...(roleByAuthId[String(authId)] || roleByEmail[email]) };
           }).filter(person => person.role === 'student'),
       );
-      const pending = await api
-        .get("/connections/requests")
-        .catch(() => ({ data: { data: [] } }));
-      setPendingCount((pending.data.data || []).length);
     } catch (err) {
       toast.error("Error", {
         description: err.response?.data?.message || "Failed to load mentees",
@@ -128,12 +133,12 @@ const AlumniDashboard = () => {
     } finally {
       setMenteesLoading(false);
     }
-  }, [user]);
+  }, [user, getDashboardData]);
 
   const loadRequests = useCallback(async () => {
     setRequestsLoading(true);
     try {
-      const res = await api.get("/connections/requests");
+      const res = await getDashboardData("/connections/requests");
       setRequests(res.data.data || []);
       setPendingCount((res.data.data || []).length);
     } catch {
@@ -141,15 +146,15 @@ const AlumniDashboard = () => {
     } finally {
       setRequestsLoading(false);
     }
-  }, []);
+  }, [getDashboardData]);
 
   const loadSuggestions = useCallback(async () => {
     setSuggestionsLoading(true);
     setSuggestionsError("");
     try {
       const [usersRes, connsRes] = await Promise.all([
-        api.get("/users", { params: { role: "alumni" } }),
-        api.get("/connections/me"),
+        getDashboardData("/users", { params: { role: "alumni" } }),
+        getDashboardData("/connections/me"),
       ]);
       const normalizeEmail = (email) =>
         String(email || "")
@@ -186,9 +191,11 @@ const AlumniDashboard = () => {
     } finally {
       setSuggestionsLoading(false);
     }
-  }, [user?._id, user?.authId, user?.email]);
+  }, [user?._id, user?.authId, user?.email, getDashboardData]);
 
   const loadAnnouncements = useCallback(async () => {
+    setAnnouncementsLoading(true);
+    setAnnouncementsError('');
     try {
       const res = await api.get("/announcements");
       const all = res.data.data || [];
@@ -197,15 +204,18 @@ const AlumniDashboard = () => {
       );
       setAnnouncements(filtered.slice(0, 5));
     } catch {
-      // ignore
+      setAnnouncementsError('Unable to load announcements. Please try again.');
+    } finally {
+      setAnnouncementsLoading(false);
     }
   }, []);
 
   const loadProfileStats = useCallback(async () => {
+    setProfileStatsLoading(true);
     try {
       const [profileRes, connsRes] = await Promise.all([
         api.get("/users/me"),
-        api.get("/connections/me"),
+        getDashboardData("/connections/me"),
       ]);
       const p = profileRes.data.data || {};
       const connections = (connsRes.data.data || []).filter(
@@ -219,8 +229,10 @@ const AlumniDashboard = () => {
       });
     } catch {
       // ignore
+    } finally {
+      setProfileStatsLoading(false);
     }
-  }, []);
+  }, [getDashboardData]);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -319,8 +331,7 @@ const AlumniDashboard = () => {
                   <BadgeCheck className="h-4 w-4 shrink-0 text-brand dark:text-brand" />
                 </p>
                 <p className="text-[11.5px] text-zinc-500 dark:text-zinc-400">
-                  {profileStats.program}
-                  {profileStats.batch ? ` • Batch ${profileStats.batch}` : ""}
+                  {profileStatsLoading ? <Skeleton className="mx-auto mt-1 h-3 w-36" /> : <>{profileStats.program}{profileStats.batch ? ` • Batch ${profileStats.batch}` : ""}</>}
                 </p>
                 <span className="alumni-verified-badge mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-brand">
                   <GraduationCap className="h-3 w-3" />
@@ -337,7 +348,7 @@ const AlumniDashboard = () => {
                   >
                     <span>Total Connections</span>
                     <span className="font-bold text-brand dark:text-brand">
-                      {profileStats.connections}
+                      {profileStatsLoading ? <Skeleton className="h-3 w-5" /> : profileStats.connections}
                     </span>
                   </button>
                 </div>
@@ -629,7 +640,7 @@ const AlumniDashboard = () => {
                 </p>
               </div>
               <ul className="space-y-3 p-4">
-                {announcements.length === 0 ? (
+                {announcementsLoading ? <ContentSkeleton as="li" variant="list" count={2} label="Loading announcements..." /> : announcementsError ? <li className="text-xs text-zinc-500"><p role="alert">{announcementsError}</p><button type="button" onClick={loadAnnouncements} className="mt-2 font-semibold text-brand">Retry announcements</button></li> : announcements.length === 0 ? (
                   <li className="py-2 text-center text-[11.5px] text-zinc-400">
                     No announcements
                   </li>

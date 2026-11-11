@@ -1,11 +1,19 @@
 import { ObjectId } from 'mongodb';
 
-// A receipt applies only to incoming messages actually displayed by this member.
+// Group activity must be seen by each member, including the person who triggered it.
+export const receivedMessageFilter = readerId => ({
+  $or: [
+    { senderAuthId: { $ne: String(readerId) } },
+    { 'activity.type': { $in: ['members_added', 'member_removed', 'group_renamed'] } },
+  ],
+});
+
+// A receipt applies only to eligible messages actually displayed by this member.
 export async function recordMessageReads(collection, conversationId, readerId, messageIds, clearedAt) {
   const filter = {
     _id: { $in: messageIds.map(id => new ObjectId(id)) },
     conversationId: new ObjectId(String(conversationId)),
-    senderAuthId: { $ne: String(readerId) },
+    ...receivedMessageFilter(readerId),
     readBy: { $ne: String(readerId) },
     ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}),
   };

@@ -6,9 +6,9 @@ import { MongoClient, ObjectId } from 'mongodb';
 import { client } from '../../config/db.js';
 import { Writable } from 'node:stream';
 
-test('conversation controls and read receipts use isolated, per-member data', { timeout: 30000 }, async t => {
+test('conversation controls and read receipts use isolated, per-member data', { timeout: 120000 }, async t => {
   const connection = new MongoClient(process.env.TEST_MONGO_URI || process.env.MONGO_URI, { serverSelectionTimeoutMS: 5000 });
-  const name = `Siel_msg_test_${randomUUID().replaceAll('-', '')}`;
+  const name = `Siel_msg_test_${randomUUID().replaceAll('-', '').slice(0, 24)}`;
   const db = connection.db(name), originalDb = client.db;
   let connected = false;
   try {
@@ -144,6 +144,71 @@ test('conversation controls and read receipts use isolated, per-member data', { 
       assert.equal((await preview(b)).preview, '');
       assert.equal((await preview(b)).previewMessageId, null);
       assert.equal((await preview(b)).previewAt, null);
+    });
+    await t.test('membership activity previews include the actor and survive reload without exposing cleared history', async () => {
+      const thread = await conversations.createGroup({ name: 'Activity preview fixture', members: [a, b, c].map(user => ({ authId: user._id, email: user.email })) });
+      const preview = async user => (await invoke(actions.listConversations, user)).body.data.find(row => String(row._id) === String(thread._id));
+      await messages.create({ conversationId: thread._id, senderAuthId: c._id, text: 'Older call activity' });
+      for (const [type, text] of [['members_added', 'Alex added Bea to the group'], ['member_removed', 'Alex removed Chris from the group']]) {
+        const activity = await messages.create({ conversationId: thread._id, senderAuthId: a._id, text, activity: { type } });
+        await conversations.touch(thread._id, { text, at: activity.createdAt, by: String(a._id) });
+        for (const user of [a, b]) {
+          const row = await preview(user);
+          assert.equal(row.preview, text);
+          assert.equal(row.previewMessageId, String(activity._id));
+          assert.deepEqual(row.previewAt, activity.createdAt);
+        }
+        await messages.create({ conversationId: thread._id, senderAuthId: a._id, text: 'My ordinary reply' });
+        assert.equal((await preview(a)).preview, text, 'Own replies do not replace the group activity preview');
+      }
+      await controls.clear(thread._id, a._id);
+      await controls.show(thread._id, a._id);
+      assert.equal((await preview(a)).preview, '');
+    });
+    await t.test('renaming a group records centered activity metadata and updates previews for the actor and members', async () => {
+      const thread = await conversations.createGroup({ name: 'Rename fixture', members: [a, b, c].map(user => ({ authId: user._id, email: user.email })) });
+      const renamed = await invoke(actions.renameGroup, a, thread._id, { name: 'New project name' });
+      assert.equal(renamed.code, 200);
+      const history = (await invoke(actions.listMessages, b, thread._id)).body.data;
+      assert.equal(history.length, 1);
+      const activity = history[0];
+      assert.equal(activity.text, 'Updated Alex changed the group name to New project name');
+      assert.deepEqual(activity.activity, { type: 'group_renamed', actorName: 'Updated Alex', groupName: 'New project name' });
+      for (const user of [a, b]) {
+        const row = (await invoke(actions.listConversations, user)).body.data.find(row => String(row._id) === String(thread._id));
+        assert.equal(row.name, 'New project name');
+        assert.equal(row.preview, activity.text);
+        assert.equal(row.previewMessageId, String(activity._id));
+      }
+      assert.equal(await messages.editMessage(activity._id, a._id, 'Changed activity'), null);
+      assert.equal(await messages.unsendMessage(activity._id, a._id), null);
+      await invoke(actions.renameGroup, a, thread._id, { name: '  New project name  ' });
+      assert.equal((await messages.listByConversation(thread._id)).length, 1);
+      assert.equal((await invoke(actions.renameGroup, b, thread._id, { name: 'Blocked name' })).code, 403);
+      assert.equal((await messages.listByConversation(thread._id)).length, 1);
+    });
+    await t.test('group activity stays unread for each member including its actor until that member sees it', async () => {
+      const thread = await conversations.createGroup({ name: 'Unread activity fixture', members: [a, b, c].map(user => ({ authId: user._id, email: user.email })) });
+      const activities = [];
+      for (const type of ['members_added', 'member_removed', 'group_renamed']) {
+        activities.push(await messages.create({ conversationId: thread._id, senderAuthId: a._id, text: type, activity: { type } }));
+      }
+      const ownReply = await messages.create({ conversationId: thread._id, senderAuthId: a._id, text: 'Own ordinary message' });
+      const preview = async user => (await invoke(actions.listConversations, user)).body.data.find(row => String(row._id) === String(thread._id));
+      assert.equal((await preview(a)).unread, 3);
+      assert.equal((await preview(b)).unread, 4);
+      await invoke(actions.listMessages, a, thread._id);
+      assert.equal((await preview(a)).unread, 3, 'Fetching history alone does not mark activity as seen');
+      const ids = activities.map(message => String(message._id));
+      const seen = await invoke(actions.markMessagesRead, a, thread._id, { messageIds: [...ids, String(ownReply._id)] });
+      assert.deepEqual(seen.body.data.messageIds.sort(), ids.sort());
+      assert.equal(seen.body.data.unread, 0);
+      assert.equal((await preview(a)).unread, 0, 'Seen status persists across reloads');
+      assert.equal((await preview(b)).unread, 4, 'The actor seeing activity does not mark it as seen for other members');
+      const history = (await invoke(actions.listMessages, a, thread._id)).body.data;
+      assert.ok(history.filter(message => message.activity).every(message => message.readByMe));
+      assert.equal((await invoke(actions.markMessagesRead, b, thread._id, { messageIds: [...ids, String(ownReply._id)] })).body.data.unread, 0);
+      assert.equal((await preview(c)).unread, 4);
     });
     await t.test('history returns the newest 100 messages in chronological order', async () => {
       const baseline = Date.now() + 1000;

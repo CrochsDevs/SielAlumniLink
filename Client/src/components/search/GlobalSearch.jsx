@@ -20,6 +20,7 @@ export default function GlobalSearch() {
 
 function SearchInput({ initialQuery }) {
   const [query, setQuery] = useState(initialQuery);
+  const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const [result, setResult] = useState({
@@ -30,6 +31,7 @@ function SearchInput({ initialQuery }) {
   });
   const root = useRef(null);
   const input = useRef(null);
+  const trigger = useRef(null);
   const id = useId();
   const navigate = useNavigate();
   const term = query.trim();
@@ -38,12 +40,26 @@ function SearchInput({ initialQuery }) {
   const loading = !!term && (!current || result.loading);
 
   useEffect(() => {
+    if (visible) input.current?.focus();
+  }, [visible]);
+
+  const closeSearch = () => {
+    setVisible(false);
+    setOpen(false);
+    setActive(-1);
+  };
+
+  useEffect(() => {
     const outside = (event) => {
-      if (!root.current?.contains(event.target)) setOpen(false);
+      if (!root.current?.contains(event.target)) {
+        setOpen(false);
+        setVisible(false);
+      }
     };
     const shortcut = (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setVisible(true);
         input.current?.focus();
         setOpen(true);
       }
@@ -104,16 +120,42 @@ function SearchInput({ initialQuery }) {
     <form
       ref={root}
       role="search"
-      className="relative min-w-0 flex-1 sm:max-w-sm"
+      className="static shrink-0 sm:relative"
       onSubmit={(event) => {
         event.preventDefault();
         seeAll();
       }}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+        if (!event.currentTarget.contains(event.relatedTarget)) closeSearch();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeSearch();
+          trigger.current?.focus();
+        }
       }}
     >
-      <div className="relative">
+      <button
+        ref={trigger}
+        type="button"
+        aria-label={visible ? "Close search" : "Open search"}
+        aria-expanded={visible}
+        aria-controls={`${id}-panel`}
+        onClick={() => {
+          if (visible) closeSearch();
+          else setVisible(true);
+        }}
+        className={`flex h-10 w-10 items-center justify-center rounded-full transition ${visible ? "bg-emerald-50 text-brand dark:bg-zinc-800" : "text-zinc-500 hover:bg-emerald-50 hover:text-brand dark:hover:bg-zinc-800"}`}
+      >
+        {visible ? <X className="h-[18px] w-[18px]" /> : <Search className="h-[18px] w-[18px]" />}
+      </button>
+      <div
+        id={`${id}-panel`}
+        hidden={!visible}
+        className="absolute left-4 right-4 top-full z-50 mt-2 rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:left-auto sm:right-0 sm:w-[380px] sm:max-w-[calc(100vw-2rem)]"
+      >
+      <div className="global-search-input relative">
         <Search
           aria-hidden="true"
           className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-zinc-500"
@@ -188,7 +230,7 @@ function SearchInput({ initialQuery }) {
         )}
       </div>
       {expanded && (
-        <div className="absolute left-0 top-full z-50 mt-2 max-h-[70vh] w-full min-w-[230px] overflow-y-auto rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-white sm:left-auto sm:right-0 sm:w-[380px] sm:max-w-[calc(100vw-2rem)]">
+        <div className="mt-2 max-h-[min(60dvh,28rem)] overflow-y-auto text-zinc-900 dark:text-white">
           <div role="status" className="px-4 pt-3 text-xs text-zinc-500">
             {loading ? (
               <ContentSkeleton variant="list" count={3} label="Searching…" />
@@ -240,6 +282,7 @@ function SearchInput({ initialQuery }) {
           </ul>
         </div>
       )}
+      </div>
     </form>
   );
 }

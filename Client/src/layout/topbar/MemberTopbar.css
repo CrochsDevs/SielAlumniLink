@@ -5,6 +5,7 @@
   margin: 0;
 }
 .member-topbar > header {
+  position: relative;
   box-sizing: border-box;
   margin: 0;
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%), 0 7px 16px rgb(0 0 0 / 18%);
@@ -21,10 +22,10 @@
 .dark .member-topbar > header {
   box-shadow: 0 2px 5px rgb(0 0 0 / 30%), 0 8px 20px rgb(0 0 0 / 45%);
 }
-.member-topbar [role="search"] > div:first-child {
+.member-topbar .global-search-input {
   border-radius: 9999px;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 8%), 0 2px 6px rgb(0 0 0 / 20%), 0 5px 12px rgb(0 0 0 / 16%);
 }
-.dark .member-topbar [role="search"] > div:first-child {
+.dark .member-topbar .global-search-input {
   box-shadow: 0 0 0 1px rgb(0 0 0 / 20%), 0 2px 6px rgb(0 0 0 / 45%), 0 5px 12px rgb(0 0 0 / 35%);
 }

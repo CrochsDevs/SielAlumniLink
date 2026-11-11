@@ -2,7 +2,7 @@ import { groupRoles } from './group-admin.js';
 export const MAX_GROUP_MEMBERS = 20;
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
 
-export function createGroupMembersService({ conversations, connections, accounts, profiles }) {
+export function createGroupMembersService({ conversations, connections, accounts, profiles, onMembersAdded = async () => {} }) {
   const getGroup = async (id, authId) => {
     const group = await conversations.findById(id);
     if (!group?.isGroup || !group.participants.some(p => String(p.authId) === String(authId))) {
@@ -55,7 +55,15 @@ export function createGroupMembersService({ conversations, connections, accounts
           return { authId: String(account._id), email: account.email };
         }));
         const updated = await conversations.appendMembers(id, authId, group.participants, members);
-        if (updated) return details(updated);
+        if (updated) {
+          const data = await details(updated);
+          await onMembersAdded({
+            group: data,
+            actor: data.members.find(member => member.authId === String(authId)),
+            members: data.members.filter(member => ids.includes(member.authId)),
+          });
+          return data;
+        }
         group = await getGroup(id, authId);
       }
       fail(409, 'The group changed while saving. Please try again.');

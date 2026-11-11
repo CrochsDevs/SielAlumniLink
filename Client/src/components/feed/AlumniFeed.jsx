@@ -37,7 +37,7 @@ export default function AlumniFeed({
   const refresh = useCallback(async () => {
     const request = ++generation.current;
     try {
-      const status = await api.get("/feed/status");
+      const loadPosts = async () => {
       let nextPosts = [],
         nextCursor = null;
       if (postId) {
@@ -58,6 +58,12 @@ export default function AlumniFeed({
           if (!nextCursor) break;
         }
       }
+        return { nextPosts, nextCursor };
+      };
+      const [status, { nextPosts, nextCursor }] = await Promise.all([
+        api.get('/feed/status'),
+        loadPosts(),
+      ]);
       if (request !== generation.current) return;
       setParticipation(status.data.data);
       setPosts(nextPosts);

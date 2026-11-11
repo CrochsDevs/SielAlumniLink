@@ -10,10 +10,13 @@ import { profileOperations } from './profile-operations.js';
 import { EmploymentModel } from '../employment/employment.models.js';
 import { changeExperience, employmentState } from '../employment/employment.policy.js';
 import MagicLinkModel from '../magic/magic.models.js';
-import { visibleProfile, profileProjection } from './profile-visibility.js';
+import { visibleProfile } from './profile-visibility.js';
 import { client } from '../../config/db.js';
 import { recordProfileActivity } from '../activity/member-activity.service.js';
 import ActivityModel from '../activity/activity.models.js';
+import { createUserDirectory } from './user-directory.js';
+
+const listDirectory = createUserDirectory(client.db('SielAlumni'));
 
 const auditUser = (req, action, profile, details = '') => ActivityModel.logAdmin(req.user, action,
   { type: 'user', id: profile.authId || profile._id, label: profile.name || profile.email }, details, req.ip);
@@ -140,18 +143,7 @@ export const syncUsers = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await UserModel.findAll(profileProjection);
-    const safeUsers = await Promise.all(users.map(async (user) => {
-      const auth = user.authId ? await AuthModel.findById(user.authId) : user.email ? await AuthModel.findByEmail(user.email) : null;
-      if (auth?.disabledAt) return null;
-      return visibleProfile({ ...user, role: auth?.role || user.role || null }, req.user);
-    }));
-
-    // Optional role filter (?role=alumni) — used by mentorship discovery.
-    const { role } = req.query;
-    const data = role
-      ? safeUsers.filter((u) => u && (u.role || '').toLowerCase() === String(role).toLowerCase())
-      : safeUsers.filter(Boolean);
+    const data = await listDirectory(req.user, req.query.role);
 
     res.status(200).json({
       success: true,

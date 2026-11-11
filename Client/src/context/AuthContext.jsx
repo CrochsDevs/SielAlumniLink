@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AuthContext } from "./auth-context.js";
 import api from "../utils/axios";
+import { confirmSession } from '../auth/confirm-session.js';
 import { connectSocket, disconnectSocket, getSocket } from "../realtime/socket";
 import { accountId, sessionIdentity, setRequestAccount, publishSessionChange, subscribeToSessionChanges } from '../auth/session-sync.js';
 
@@ -13,6 +14,7 @@ const reloadBrowserSession = () => {
 };
 
 const authErrorMessage = (err, fallback) => {
+  if (err.message === 'Your sign-in session could not be saved. Please reload the page and try again.') return err.message;
   if (err.response?.data?.message) return err.response.data.message;
   if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
     return "The sign-in request timed out. Please try again.";
@@ -160,6 +162,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await api.post("/auth/login", { email: email.trim(), password });
       if (response.data.success) {
+        const verifiedUser = await confirmSession(api, response.data.data.user);
         // The cap animation takes 3.4s, including the returning tassel.
         // Allow a full cycle and a short settling period before entering.
         const remaining = 4000 - (Date.now() - startedAt);
@@ -167,7 +170,7 @@ export const AuthProvider = ({ children }) => {
           await new Promise(resolve => setTimeout(resolve, remaining));
         }
         // A slower initial /auth/me response must not clear this new session.
-        acceptSession(response.data.data.user);
+        acceptSession(verifiedUser);
         return { success: true };
       }
 
@@ -215,7 +218,7 @@ export const AuthProvider = ({ children }) => {
           params: { token },
         });
         if (response.data.success) {
-          const user = response.data.data?.user || null;
+          const user = await confirmSession(api, response.data.data?.user);
           acceptSession(user);
           return { success: true, user };
         }
@@ -225,8 +228,7 @@ export const AuthProvider = ({ children }) => {
           error: response.data.message || "Invalid or expired login link",
         };
       } catch (err) {
-        const message =
-          err.response?.data?.message || "Invalid or expired login link";
+        const message = authErrorMessage(err, "Invalid or expired login link");
         setError(message);
         if (magicCheckVersion === authCheckVersion.current) {
           setLoading(false);
@@ -254,7 +256,8 @@ export const AuthProvider = ({ children }) => {
         confirmPassword,
       });
       if (response.data.success) {
-        acceptSession(response.data.data.user);
+        const verifiedUser = await confirmSession(api, response.data.data.user);
+        acceptSession(verifiedUser);
         return { success: true };
       }
 
@@ -263,7 +266,7 @@ export const AuthProvider = ({ children }) => {
         error: response.data.message || "Password setup failed",
       };
     } catch (err) {
-      const message = err.response?.data?.message || "Password setup failed";
+      const message = authErrorMessage(err, "Password setup failed");
       setError(message);
       return { success: false, error: message };
     }

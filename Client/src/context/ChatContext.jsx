@@ -283,6 +283,7 @@ export const ChatProvider = ({ children }) => {
               text: message.text,
               at: message.at,
               call: message.call || null,
+              activity: message.activity || null,
               attachment: message.attachment || null,
               read: receivedReads.current.has(String(message._id)) || !!message.read,
             },
@@ -294,13 +295,13 @@ export const ChatProvider = ({ children }) => {
           c._id === conversationId || String(c._id) === String(conversationId)
             ? {
                 ...c,
-                ...(from !== 'me' && (!c.previewAt || new Date(message.at) >= new Date(c.previewAt)) ? {
+                ...((from !== 'me' || message.activity) && (!c.previewAt || new Date(message.at) >= new Date(c.previewAt)) ? {
                   preview: message.unsent ? 'Message deleted' : message.text || (message.attachment?.kind === 'image' ? '📷 Photo' : message.attachment?.kind === 'file' ? '📎 File' : ''),
                   previewMessageId: String(message._id), previewAt: message.at,
                 } : {}),
                 time: message.at,
                 unread:
-                  from === "me"
+                  from === "me" && !message.activity
                     ? unreadCount(c.unread)
                     : unreadCount(c.unread) + 1,
               }

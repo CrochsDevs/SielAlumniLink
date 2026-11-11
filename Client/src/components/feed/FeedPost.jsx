@@ -15,6 +15,8 @@ import {
   Ban,
   MessageSquareOff,
   Undo2,
+  UserRound,
+  LoaderCircle,
 } from "lucide-react";
 import api from "../../utils/axios";
 import { useChat } from "../../context/useChat";
@@ -52,7 +54,7 @@ function Author({ person, createdAt, audience }) {
       {person._id ? (
         <Link
           to={profilePath(person)}
-          className="flex items-center gap-2 hover:underline"
+          className="flex items-center gap-2 no-underline hover:no-underline"
         >
           {content}
         </Link>
@@ -84,9 +86,9 @@ function PostContent({ post, onRsvp, busy = false }) {
   const longBody = (post.body || "").length > 600;
   return (
     <>
-      <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-brand dark:bg-zinc-800 dark:text-brand">
+      {post.type !== 'update' && <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-brand dark:bg-zinc-800 dark:text-brand">
         {post.type === "story" ? "Success story" : post.type}
-      </span>
+      </span>}
       {post.title && <h3 className="mt-2 text-base font-bold">{post.title}</h3>}
       {post.body && (
         <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
@@ -417,11 +419,13 @@ function ShareLinkDialog({ post, onClose }) {
 }
 
 function SendDialog({ post, onClose }) {
-  const { openChatByEmail } = useChat();
+  const { openChatByEmail, openChat, refreshConvos } = useChat();
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [recipientType, setRecipientType] = useState('connections');
+  const [sendingTo, setSendingTo] = useState(null);
+  const busy = sendingTo !== null;
   const [error, setError] = useState("");
   const pending = useRef(false);
   useEffect(() => {
@@ -434,7 +438,7 @@ function SendDialog({ post, onClose }) {
       .catch(() => {
         if (!cancelled)
           setError(
-            "Unable to load connected alumni. Please close and try again.",
+            "Unable to load recipients. Please close and try again.",
           );
       })
       .finally(() => {
@@ -447,27 +451,32 @@ function SendDialog({ post, onClose }) {
   const send = async (person) => {
     if (pending.current) return;
     pending.current = true;
-    setBusy(true);
+    setSendingTo(person.conversationId || person.authId);
     setError("");
     try {
-      await api.post(`/feed/${post._id}/send`, {
-        recipientAuthId: person.authId,
-      });
-      await openChatByEmail(person.email);
+      const { data } = await api.post(`/feed/${post._id}/send`, person.isGroup
+        ? { conversationId: person.conversationId }
+        : { recipientAuthId: person.authId });
+      if (person.isGroup) {
+        await refreshConvos();
+        openChat({ _id: data.data.conversationId, name: person.name, isGroup: true, memberCount: person.memberCount });
+      } else await openChatByEmail(person.email);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || "Unable to send post");
     } finally {
-      setBusy(false);
+      setSendingTo(null);
       pending.current = false;
     }
   };
-  const filtered = people.filter((p) =>
-    `${p.name} ${p.email}`.toLowerCase().includes(query.toLowerCase()),
+  const groupsSelected = recipientType === 'groups';
+  const filtered = people.filter((person) =>
+    Boolean(person.isGroup) === groupsSelected &&
+    `${person.name} ${person.email || ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   );
   return (
     <FeedDialog
-      title="Send to a connected alumni"
+      title="Send to a connection or group"
       onClose={onClose}
       busy={busy}
     >
@@ -475,11 +484,29 @@ function SendDialog({ post, onClose }) {
         Send a post link and open your conversation. Recipients must have
         permission to view this post.
       </p>
+      <div role="group" aria-label="Recipient type" className="mb-3 flex gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800">
+        {[
+          { value: 'connections', label: 'Connections', icon: <UserRound size={17} aria-hidden="true" /> },
+          { value: 'groups', label: 'Groups', icon: <Users size={17} aria-hidden="true" /> },
+        ].map(({ value, label, icon }) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={recipientType === value}
+            disabled={busy}
+            onClick={() => { setRecipientType(value); setQuery(''); }}
+            className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50 ${recipientType === value ? 'bg-brand text-white shadow-sm' : 'text-zinc-600 hover:bg-white dark:text-zinc-300 dark:hover:bg-zinc-700'}`}
+          >
+            {icon}{label}
+          </button>
+        ))}
+      </div>
       <input
-        aria-label="Search connected alumni"
+        aria-label={groupsSelected ? 'Search groups' : 'Search connections'}
+        disabled={busy}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search connections…"
+        placeholder={groupsSelected ? 'Search groups…' : 'Search connections…'}
         className="mb-3 w-full rounded-xl border border-zinc-300 bg-transparent p-3 text-sm dark:border-zinc-700"
       />
       {error && (
@@ -488,28 +515,34 @@ function SendDialog({ post, onClose }) {
         </p>
       )}
       {loading ? (
-        <ContentSkeleton variant="list" count={3} label="Loading connections…" />
+        <ContentSkeleton variant="list" count={3} label="Loading recipients…" />
       ) : filtered.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          No connected alumni can receive this post. Connect with alumni first.
+          {query ? `No matching ${groupsSelected ? 'groups' : 'connections'}.` : groupsSelected ? 'No group chats available.' : 'No connections available.'}
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul aria-label={groupsSelected ? 'Group chats' : 'Connections'} className="max-h-[45dvh] space-y-2 overflow-y-auto overscroll-contain p-0.5">
           {filtered.map((person) => (
             <li
-              key={person.authId}
+              key={person.isGroup ? `group-${person.conversationId}` : person.authId}
               className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"
             >
-              <span className="min-w-0 truncate text-sm font-semibold">
-                {person.name}
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand dark:bg-brand/20" aria-hidden="true">
+                {person.isGroup ? <Users size={19} /> : (person.name || '?').charAt(0).toUpperCase()}
+              </span>
+              <span className="min-w-0 flex-1 text-sm font-semibold">
+                <span className="block truncate">{person.name}</span>
+                {person.isGroup && <span className="flex items-center gap-1 text-xs font-normal text-zinc-500 dark:text-zinc-400"><Users size={13} />Group chat</span>}
               </span>
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => send(person)}
-                className={buttonClass}
+                aria-label={`Send post to ${person.name}`}
+                aria-busy={sendingTo === (person.conversationId || person.authId)}
+                className="inline-flex min-h-11 min-w-24 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {busy ? "Sending…" : "Send"}
+                {sendingTo === (person.conversationId || person.authId) ? <><LoaderCircle size={16} className="animate-spin" aria-hidden="true" />Sending…</> : <><Send size={16} aria-hidden="true" />Send</>}
               </button>
             </li>
           ))}
@@ -806,7 +839,7 @@ export default function FeedPost({
             </button>
           )}
         {post.originalPost && (
-          <div className="mt-3 space-y-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
+          <div className="mt-3 space-y-3 rounded-xl border border-zinc-200 bg-white p-3 shadow-[0_4px_14px_rgba(0,0,0,0.16)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_4px_14px_rgba(0,0,0,0.4)]">
             <Author
               person={post.originalPost.author}
               audience={post.originalPost.audience}
@@ -826,12 +859,6 @@ export default function FeedPost({
                   : null
               }
             />
-            <Link
-              to={`/feed?post=${post.originalPost._id}`}
-              className="inline-block text-xs font-bold text-brand underline"
-            >
-              View original post
-            </Link>
           </div>
         )}
       </div>

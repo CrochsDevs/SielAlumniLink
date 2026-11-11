@@ -176,13 +176,13 @@ export default function FeedImages({ images = [] }) {
             type="button"
             aria-label={`View photo ${i + 1} of ${images.length}`}
             onClick={() => setSelected(i)}
-            className={`relative min-h-0 min-w-0 overflow-hidden focus-visible:z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-brand ${images.length === 2 || (images.length === 3 && i === 0) ? "row-span-2" : ""}`}
+            className={`relative min-h-0 min-w-0 overflow-hidden focus-visible:z-10 focus-visible:outline focus-visible:outline-4 focus-visible:outline-brand ${images.length === 1 ? "block w-full" : ""} ${images.length === 2 || (images.length === 3 && i === 0) ? "row-span-2" : ""}`}
           >
             <Photo
               image={image}
               className={
                 images.length === 1
-                  ? "mx-auto max-h-[560px] w-full object-contain"
+                  ? "mx-auto block h-auto max-h-[560px] w-full object-contain"
                   : "h-full w-full object-cover"
               }
             />

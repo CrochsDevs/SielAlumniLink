@@ -6,7 +6,7 @@ let socket = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:3002", {
+    socket = io(import.meta.env.PROD ? window.location.origin : (import.meta.env.VITE_SOCKET_URL || "http://localhost:3002"), {
       autoConnect: false,
       // Browser WebSocket handshakes include Origin even on same-origin deployments.
       transports: ['websocket'],

@@ -2,7 +2,8 @@ import axios from "axios";
 import { getRequestAccount } from '../auth/session-sync.js';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3002/api",
+  // Production uses the UI origin so Safari can keep the HttpOnly session cookie.
+  baseURL: import.meta.env.PROD ? "/api" : (import.meta.env.VITE_API_URL || "http://localhost:3002/api"),
   withCredentials: true,
   timeout: 30000,
 });

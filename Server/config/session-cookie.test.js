@@ -10,13 +10,23 @@ function environment(t, values) {
   }
 }
 
-test('production sessions use secure cross-site cookies and clear the same cookie scope', t => {
-  environment(t, { NODE_ENV: 'production', COOKIE_SAME_SITE: undefined });
+test('API-only production sessions retain explicit cross-site compatibility', t => {
+  environment(t, { NODE_ENV: 'production', COOKIE_SAME_SITE: undefined, SERVE_CLIENT: undefined });
   const options = sessionCookieOptions();
   assert.deepEqual(options, { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 604800000 });
   const { maxAge: _maxAge, ...scope } = options;
   assert.deepEqual(sessionCookieOptions({ persistent: false }), scope);
   assert.equal(Object.hasOwn(options, 'domain'), false);
+});
+
+test('combined production hosting defaults to secure first-party cookies', t => {
+  environment(t, { NODE_ENV: 'production', COOKIE_SAME_SITE: undefined, SERVE_CLIENT: 'true' });
+  assert.deepEqual(sessionCookieOptions(), {
+    httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 604800000,
+  });
+  assert.deepEqual(sessionCookieOptions({ persistent: false }), {
+    httpOnly: true, secure: true, sameSite: 'lax', path: '/',
+  });
 });
 
 test('local HTTP development keeps strict cookies without requiring HTTPS', t => {

@@ -51,9 +51,20 @@ export default function MessageBubble({
   const callDuration = Math.max(0, Math.floor(Number(msg.call?.duration) || 0));
   const durationLabel = `${Math.floor(callDuration / 60)}:${String(callDuration % 60).padStart(2, '0')}`;
   const hasPhoto = !msg.unsent && msg.attachment?.kind === 'image' && !!msg.attachment.url;
-  const canEdit = !msg.call && mine && msg._id && msg.text && onEdit;
-  const canUnsend = !msg.call && mine && msg._id && onUnsend;
+  const canEdit = !msg.call && !msg.activity && mine && msg._id && msg.text && onEdit;
+  const canUnsend = !msg.call && !msg.activity && mine && msg._id && onUnsend;
 
+  if (msg.activity) {
+    return (
+      <p
+        data-group-activity={msg.activity.type}
+        data-read-id={msg._id && !msg.readByMe ? msg._id : undefined}
+        className="w-full self-center break-words px-4 py-2 text-center text-xs leading-5 text-muted-foreground"
+      >
+        {msg.text}
+      </p>
+    );
+  }
 
   const confirmUnsend = async () => {
     const result = await Swal.fire({
@@ -126,7 +137,7 @@ export default function MessageBubble({
                 </div>
               </div>
             )}
-            {msg.text && !msg.call &&
+            {msg.text && !msg.call && !msg.activity &&
               (postId ? (
                 <Link
                   to={`/feed?post=${postId}`}
@@ -150,7 +161,7 @@ export default function MessageBubble({
           )}
         </>
       )}
-      {mine && !msg.unsent && !msg.call && (
+      {mine && !msg.unsent && !msg.call && !msg.activity && (
         <span className="self-end px-1 text-[10px] leading-4 text-muted-foreground" aria-live="polite"
           title={msg.read && isGroup ? 'Read by at least one other group member' : undefined}>
           {messageDeliveryLabel(msg)}

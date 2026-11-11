@@ -26,6 +26,7 @@ export default function MessageThread({
       <div ref={readRoot} className="message-stream" data-chat-thread>
         {groupMessages(messages, isGroup).map((group, index) => {
           const first = group[0];
+          if (first.activity) return <MessageBubble key={first._id || `${convoId}-${index}`} msg={first} mine={first.from === 'me'} />;
           const mine = first.from === "me";
           const name = mine
             ? user?.name || "You"
@@ -71,6 +72,7 @@ export default function MessageThread({
     <div ref={readRoot} className="flex min-w-0 flex-col gap-5" data-chat-thread>
       {groupMessages(messages, isGroup).map((group, index) => {
         const first = group[0];
+        if (first.activity) return <MessageBubble key={first._id || `${convoId}-${index}`} msg={first} mine={first.from === 'me'} />;
         const mine = first.from === 'me';
         const name = (isGroup ? first.senderName : conversation?.name || first.senderName) || 'Member';
         const avatar = { name, profilePicture: (isGroup ? first.senderProfilePicture : conversation?.profilePicture || first.senderProfilePicture) || null };

@@ -308,11 +308,6 @@ const ConvoList = ({
                 <span className="flex items-baseline justify-between gap-2">
                   <span className={`truncate text-[13px] text-zinc-900 dark:text-zinc-100 ${c.unread > 0 ? "font-bold" : "font-medium"}`}>
                     {c.name}
-                    {c.isGroup && c.memberCount ? (
-                      <span className="ml-1 font-medium text-zinc-400">
-                        • {c.memberCount}
-                      </span>
-                    ) : null}
                   </span>
                   <span className={`shrink-0 text-[10.5px] ${c.unread > 0 ? "font-bold text-zinc-700 dark:text-zinc-200" : "font-normal text-zinc-400 dark:text-zinc-500"}`}>
                     {formatTime(c.previewAt === undefined ? c.time : c.previewAt)}
@@ -443,11 +438,6 @@ const ThreadPane = ({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13.5px] font-bold text-zinc-900 dark:text-zinc-100">
             {active.name}
-            {active.isGroup && active.memberCount ? (
-              <span className="ml-1 font-medium text-zinc-400">
-                • {active.memberCount}
-              </span>
-            ) : null}
           </span>
           <span className={`block text-[11px] font-medium ${active.isGroup ? 'text-zinc-500 dark:text-zinc-400' : presenceTextColor(active.presenceStatus)}`}>
             {active.isGroup ? 'Group conversation' : presenceLabel(active.presenceStatus)}

@@ -56,18 +56,25 @@ export const createFeedService = (db, changed = () => {}) => {
   const serialize = async (post, user, authors = new Map()) => {
     const id = String(post.authorAuthId);
     if (!authors.has(id)) authors.set(id, author(id));
-    const original = post.originalPostId ? await posts.findOne({ _id: post.originalPostId, deletedAt: null }) : null;
-    const restriction = isFeedAdmin(user) ? await restrictions.findOne({ _id: id, blocked: true }) : null;
+    const originalRequest = post.originalPostId
+      ? Object.hasOwn(post, 'original') ? Promise.resolve(post.original[0] || null) : posts.findOne({ _id: post.originalPostId, deletedAt: null })
+      : Promise.resolve(null);
+    const [person, commentsCount, sharesCount, restriction, originalPost] = await Promise.all([
+      authors.get(id),
+      comments.countDocuments({ postId: post._id, deletedAt: null }),
+      posts.countDocuments({ originalPostId: post._id, deletedAt: null, 'moderation.blocked': { $ne: true } }),
+      isFeedAdmin(user) ? restrictions.findOne({ _id: id, blocked: true }) : null,
+      originalRequest.then(original => original ? serialize(original, user, authors) : null),
+    ]);
     return {
-      _id: post._id, author: await authors.get(id), type: post.type, title: post.title, body: post.body,
+      _id: post._id, author: person, type: post.type, title: post.title, body: post.body,
       audience: post.audience, details: post.details || {}, createdAt: post.createdAt, updatedAt: post.updatedAt,
       images: (post.images || []).map(image => ({ id: image.id, alt: image.alt || '', width: image.width, height: image.height,
         url: `/api/feed/${post._id}/images/${image.id}` })),
       likesCount: (post.likedBy || []).length, likedByMe: (post.likedBy || []).includes(String(user._id)),
-      commentsCount: await comments.countDocuments({ postId: post._id, deletedAt: null }),
-      sharesCount: await posts.countDocuments({ originalPostId: post._id, deletedAt: null, 'moderation.blocked': { $ne: true } }),
+      commentsCount, sharesCount,
       attendingCount: (post.attending || []).length, attendingByMe: (post.attending || []).includes(String(user._id)),
-      isMine: id === String(user._id), originalPost: original ? await serialize(original, user, authors) : null,
+      isMine: id === String(user._id), originalPost,
       commentsDisabled: !!post.moderation?.commentsDisabled,
       ...(isFeedAdmin(user) ? { moderation: {
         blocked: !!post.moderation?.blocked, reason: post.moderation?.reason || '',
@@ -117,7 +124,7 @@ export const createFeedService = (db, changed = () => {}) => {
           { $or: [{ 'original.0.audience': 'public' }, { 'original.0.authorAuthId': { $in: accessible } }] }]),
       ] }] } },
       ...(searchFilter ? [{ $match: searchFilter }] : []),
-      { $limit: limit + 1 }, { $project: { original: 0 } },
+      { $limit: limit + 1 },
     ]).toArray();
     const page = rows.slice(0, limit);
     const authors = new Map();

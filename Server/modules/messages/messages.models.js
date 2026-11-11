@@ -3,7 +3,7 @@ import { renameGroup } from './group-name.js';
 import { promoteGroupAdmin } from './group-admin.js';
 import { exitGroup } from './group-exit.js';
 import { ConversationControls, visibleConversation } from './conversation-controls.js';
-import { recordMessageReads } from './read-receipts.js';
+import { recordMessageReads, receivedMessageFilter } from './read-receipts.js';
 
 const db = client.db('SielAlumni');
 const convosCollection = db.collection('conversations');
@@ -19,8 +19,8 @@ const key = (id) => String(id);
 export const conversationPreference = Symbol('conversationPreference');
 
 export const ConversationModel = {
-  exitGroup(id, actorId, targetId) {
-    return exitGroup(convosCollection, id, String(actorId), targetId);
+  exitGroup(id, actorId, targetId, onExited) {
+    return exitGroup(convosCollection, id, String(actorId), targetId, onExited);
   },
   promoteAdmin(id, authId, targetId) {
     return promoteGroupAdmin(convosCollection, id, authId, targetId);
@@ -32,8 +32,8 @@ export const ConversationModel = {
       { returnDocument: 'after' },
     );
   },
-  renameGroup(id, authId, name) {
-    return renameGroup(convosCollection, id, authId, name);
+  renameGroup(id, authId, name, onRenamed) {
+    return renameGroup(convosCollection, id, authId, name, onRenamed);
   },
   // One conversation per pair of accounts (order-independent).
   async getOrCreate(aId, aEmail, bId, bEmail) {
@@ -111,11 +111,13 @@ export const ConversationModel = {
 
 export const MessageModel = {
   async latestIncoming(conversationId, readerAuthId, clearedAt = null) {
-    return messagesCollection.findOne({ conversationId: await toObjectId(conversationId), senderAuthId: { $ne: key(readerAuthId) },
+    // Group activity belongs to the whole group, including its actor.
+    return messagesCollection.findOne({ conversationId: await toObjectId(conversationId),
+      ...receivedMessageFilter(readerAuthId),
       ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) },
     { sort: { createdAt: -1, _id: -1 }, projection: { _id: 1, text: 1, createdAt: 1, unsent: 1, 'attachment.kind': 1 } });
   },
-  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, clientMessageId }) {
+  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId }) {
     if (attachment && (!attachment.publicId || attachment.deliveryType !== 'authenticated')) {
       throw new Error('Message attachments must be uploaded to Cloudinary first');
     }
@@ -126,6 +128,7 @@ export const MessageModel = {
       senderEmail,
       ...(clientMessageId ? { clientMessageId } : {}),
       ...(call ? { call } : {}),
+      ...(activity ? { activity } : {}),
       text: String(text || '').slice(0, 2000),
       attachment: attachment || null,
       read: false,
@@ -156,8 +159,10 @@ export const MessageModel = {
     try {
       return await messagesCollection.countDocuments({
         conversationId: await toObjectId(conversationId),
-        senderAuthId: { $ne: key(readerAuthId) },
-        $or: [{ readBy: { $exists: true, $ne: key(readerAuthId) } }, { readBy: { $exists: false }, read: false }],
+        $and: [
+          receivedMessageFilter(readerAuthId),
+          { $or: [{ readBy: { $exists: true, $ne: key(readerAuthId) } }, { readBy: { $exists: false }, read: false }] },
+        ],
         ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}),
       });
     } catch {
@@ -170,7 +175,7 @@ export const MessageModel = {
     try {
       const objectId = await toObjectId(messageId);
       const message = await messagesCollection.findOne({ _id: objectId });
-      if (!message || message.call || String(message.senderAuthId) !== key(senderAuthId) || message.unsent) {
+      if (!message || message.call || message.activity || String(message.senderAuthId) !== key(senderAuthId) || message.unsent) {
         return null;
       }
       const conversation = await ConversationModel.findById(message.conversationId);
@@ -192,7 +197,7 @@ export const MessageModel = {
     try {
       const objectId = await toObjectId(messageId);
       const message = await messagesCollection.findOne({ _id: objectId });
-      if (!message || message.call || String(message.senderAuthId) !== key(senderAuthId)) {
+      if (!message || message.call || message.activity || String(message.senderAuthId) !== key(senderAuthId)) {
         return null;
       }
       await messagesCollection.updateOne(

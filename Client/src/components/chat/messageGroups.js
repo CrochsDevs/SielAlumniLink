@@ -24,6 +24,8 @@ export function groupMessages(messages, isGroup = false) {
       sender === senderKey(previous, isGroup) &&
       !message.unsent &&
       !previous.unsent &&
+      !message.activity &&
+      !previous.activity &&
       closeInTime
     ) {
       group.push(message);

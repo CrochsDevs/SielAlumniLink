@@ -1,7 +1,8 @@
-// Render frontend/API services are separate sites. Cross-site cookies require HTTPS.
+// Combined hosting uses first-party cookies; retain explicit cross-site support
+// for older API-only deployments while they migrate to the shared origin.
 export function sessionCookieOptions({ persistent = true } = {}) {
   const production = process.env.NODE_ENV === 'production';
-  const sameSite = (process.env.COOKIE_SAME_SITE || (production ? 'none' : 'strict')).toLowerCase();
+  const sameSite = (process.env.COOKIE_SAME_SITE || (production ? (process.env.SERVE_CLIENT === 'true' ? 'lax' : 'none') : 'strict')).toLowerCase();
   if (!['strict', 'lax', 'none'].includes(sameSite)) throw new Error('COOKIE_SAME_SITE must be strict, lax, or none.');
   return {
     httpOnly: true,

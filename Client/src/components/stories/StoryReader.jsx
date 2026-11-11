@@ -1,6 +1,6 @@
 import ContentSkeleton from "../ui/Skeleton";
 import { useRef, useState } from "react";
-import { ArrowUpRight, BookOpen, PenLine, Trash2 } from "lucide-react";
+import { ArrowUpRight, BookOpen, Clock3, Globe, Users, PenLine, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FeedDialog } from "../feed/FeedComposer";
 import FeedImages from "../feed/FeedImages";
@@ -50,7 +50,7 @@ export default function StoryReader({
     }
   };
   return (
-    <FeedDialog title="Read success story" busy={busy} onClose={onClose} wide className="story-reader-dialog" header={<div className="story-reader-heading"><BookOpen size={23} aria-hidden="true" /><div><p>Read success story</p><span>Alumni experiences, milestones, and lessons</span></div></div>}>
+    <FeedDialog title="Read success story" busy={busy} onClose={onClose} wide className="story-reader-dialog" header={<div className="story-reader-heading"><span className="story-reader-heading-icon"><BookOpen size={20} aria-hidden="true" /></span><div><p>Success story</p><span>From our alumni community</span></div></div>}>
       <div className="story-reader-content" tabIndex={0} role="region" aria-label="Story content">
       {loading ? (
         <ContentSkeleton variant="detail" count={1} label="Loading story…" />
@@ -63,12 +63,15 @@ export default function StoryReader({
         </p>
       ) : (
         post && (
-          <>
+          <article className="story-reader-article">
+            <div className="story-reader-eyebrow">
             <span
               className={`inline-block rounded-full px-3 py-1.5 text-[10px] font-semibold ${storyTopic(post).style}`}
             >
               {storyTopic(post).singular}
             </span>
+              <span className="story-reader-reading-time"><Clock3 size={13} aria-hidden="true" />{readingTime(post)} min read</span>
+            </div>
             <h3 className="story-reader-title mt-4 break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
               {post.title}
             </h3>
@@ -88,16 +91,14 @@ export default function StoryReader({
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
-                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
-                  {storyDate(post.createdAt)} · <BookOpen size={12} />
-                  {readingTime(post)} min read ·{" "}
-                  {post.audience === "connections"
-                    ? "Connections only"
-                    : "Public"}
-                </p>
               </div>
             </div>
-            <div className="story-reader-media"><FeedImages images={post.images || []} /></div>
+            <div className="story-reader-meta">
+              <time dateTime={post.createdAt}>{storyDate(post.createdAt)}</time>
+              <span aria-hidden="true">·</span>
+              <span>{post.audience === 'connections' ? <Users size={13} aria-hidden="true" /> : <Globe size={13} aria-hidden="true" />}{post.audience === 'connections' ? 'Connections only' : 'Public'}</span>
+            </div>
+            {!!post.images?.length && <div className="story-reader-media"><FeedImages images={post.images} /></div>}
             <div className="story-reader-sections mt-6 space-y-7">
               {storySections(post).map(([title, body]) => (
                 <section key={title}>
@@ -143,7 +144,7 @@ export default function StoryReader({
                 </div>
               </div>
             )}
-          </>
+          </article>
         )
       )}
       </div>

@@ -34,3 +34,6 @@ Thumbs.db
 /build
 */dist
 */build
+
+# Local browser checks, screenshots and generated browser profiles
+/artifacts/

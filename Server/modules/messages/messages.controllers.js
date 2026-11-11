@@ -5,13 +5,16 @@ import ConnectionModel from '../connections/connections.models.js';
 import { emitToUser, removeGroupCallMember, endDirectCalls } from '../../realtime/socket.js';
 import { ConversationControls } from './conversation-controls.js';
 import { createGroupMembersService, MAX_GROUP_MEMBERS } from './group-members.js';
+import { createGroupMemberActivityRecorder, createGroupMemberRemovalRecorder, createGroupRenameRecorder } from './group-member-activity.js';
 import { groupRoles } from './group-admin.js';
 import { messageWasRead } from './read-receipts.js';
 import { messageSenders } from './message-senders.js';
 import cloudUpload, { cloudinary } from '../../config/cloudinary.js';
 import { uploadMessageAttachment, messageAttachmentDto } from './message-attachments.js';
 
-const groupMembers = createGroupMembersService({ conversations: ConversationModel, connections: ConnectionModel, accounts: AuthModel, profiles: UserModel });
+const groupMembers = createGroupMembersService({ conversations: ConversationModel, connections: ConnectionModel, accounts: AuthModel, profiles: UserModel,
+  onMembersAdded: createGroupMemberActivityRecorder({ conversations: ConversationModel, messages: MessageModel, emit: emitToUser }),
+});
 const groupAction = handler => async (req, res) => {
   try { res.status(200).json({ success: true, data: await handler(req) }); }
   catch (error) { res.status(error.status || 500).json({ success: false, message: error.status ? error.message : 'Unable to update this conversation. Please try again.' }); }
@@ -29,8 +32,9 @@ export const promoteGroupAdmin = groupAction(async req => {
   for (const member of data.members) emitToUser(member.authId, 'conversation:members', data);
   return data;
 });
+const recordMemberRemoval = createGroupMemberRemovalRecorder({ conversations: ConversationModel, messages: MessageModel, profiles: UserModel, emit: emitToUser });
 const exitGroup = async (req, targetId) => {
-  const group = await ConversationModel.exitGroup(req.params.id, req.user._id, targetId);
+  const group = await ConversationModel.exitGroup(req.params.id, req.user._id, targetId, recordMemberRemoval);
   await removeGroupCallMember(String(group._id), targetId);
   const data = { conversationId: String(group._id), removedAuthId: targetId, memberCount: group.participants.length, ...groupRoles(group) };
   emitToUser(targetId, 'conversation:removed', { conversationId: data.conversationId });
@@ -198,6 +202,7 @@ export const listMessages = async (req, res) => {
         ...senders.get(String(m.senderAuthId)),
         attachment: messageAttachmentDto(m),
         call: m.call || null,
+        activity: m.activity || null,
       }))
     });
   } catch (error) {
@@ -406,9 +411,10 @@ export const createGroup = async (req, res) => {
   }
 };
 
+const recordGroupRename = createGroupRenameRecorder({ conversations: ConversationModel, messages: MessageModel, profiles: UserModel, emit: emitToUser });
 export const renameGroup = async (req, res) => {
   try {
-    const group = await ConversationModel.renameGroup(req.params.id, req.user._id, req.body?.name);
+    const group = await ConversationModel.renameGroup(req.params.id, req.user._id, req.body?.name, recordGroupRename);
     const data = { conversationId: String(group._id), name: group.name };
     for (const member of group.participants) emitToUser(member.authId, 'conversation:renamed', data);
     res.status(200).json({ success: true, data });

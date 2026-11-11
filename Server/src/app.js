@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { frontendOrigins } from "../config/cors.js";
 import { protectSessionOrigin } from "../config/session-cookie.js";
+import { serveClient } from "../config/client-app.js";
 import cookieParser from "cookie-parser";
 import userRoutes from "../modules/users/users.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
@@ -50,7 +51,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/users", userRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+}, authRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/tracer", tracerRoutes);
 app.use("/api/jobs", jobsRoutes);
@@ -71,6 +75,8 @@ app.use("/api/meetings", meetingRoutes);
 app.use("/api/employment", employmentRoutes);
 app.use("/api/mentorship", mentorshipRoutes);
 app.use("/api/reports", reportRoutes);
+
+if (process.env.SERVE_CLIENT === 'true') serveClient(app);
 
 app.get("/", (req, res) => {
   res.status(200).json({
