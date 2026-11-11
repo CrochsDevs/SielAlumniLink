@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import express from '../../Server/node_modules/express/index.js';
 import { serveClient } from '../../Server/config/client-app.js';
-import { chromium, webkit } from '../node_modules/.search-validation/node_modules/playwright/index.mjs';
+import { chromium, firefox, webkit } from '../node_modules/.search-validation/node_modules/playwright/index.mjs';
 
 // Test the actual production build and first-party cookie jar, without live accounts.
 const user = { _id: 'fixture-profile', authId: 'fixture-auth', role: 'student', name: 'Safari Fixture', email: 'fixture@example.test', passwordSetupRequired: false };
@@ -54,6 +54,9 @@ const server = app.listen(0, '127.0.0.1');
 await new Promise(resolve => server.once('listening', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 const engines = [['Edge', chromium, { channel: 'msedge' }]];
+if (existsSync(chromium.executablePath())) engines.push(['Chromium', chromium, {}]);
+if (existsSync(firefox.executablePath())) engines.push(['Firefox', firefox, {}]);
+else console.log('Firefox runtime unavailable; Firefox verification remains a deployment check.');
 if (existsSync(webkit.executablePath())) engines.push(['WebKit', webkit, {}]);
 else console.log('WebKit runtime unavailable; real Safari verification remains a deployment check.');
 
