@@ -1,3 +1,9 @@
+export function messageNotificationLink(link, role) {
+  if (!['admin', 'student', 'alumni'].includes(role) || typeof link !== 'string') return null;
+  return /^\/(?:alumni\/)?message(?=[?#]|$)/.test(link)
+    ? link.replace(/^\/(?:alumni\/)?message/, `/${role}/message`) : null;
+}
+
 export function notificationTime(iso) {
   if (!iso) return "";
   const timestamp = new Date(iso).getTime();

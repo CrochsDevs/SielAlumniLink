@@ -72,6 +72,7 @@ try {
       await page.getByRole('button', { name: 'Send message', exact: true }).click();
       await page.locator(`[data-mention-auth-id="${jordan}"]`).waitFor();
       assert.equal(messages[0].mentions[0].authId, jordan);
+      assert.equal(await page.locator(`[data-mention-auth-id="${jordan}"]`).evaluate(node => getComputedStyle(node).fontWeight), '700', 'Account mentions must render bold');
       assert.equal(memberReads, 1, 'Typing must not fetch the members on each keypress');
       await page.waitForLoadState('networkidle');
       await page.reload();

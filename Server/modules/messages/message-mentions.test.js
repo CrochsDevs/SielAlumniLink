@@ -7,6 +7,9 @@ import { ConversationModel, MessageModel } from './messages.models.js';
 import UserModel from '../users/users.models.js';
 import { sendMessage, listMessages } from './messages.controllers.js';
 import { ConversationControls } from './conversation-controls.js';
+import NotificationModel from '../notifications/notifications.models.js';
+import { notifyMessageMentions } from './mention-notifications.js';
+import { messageNotificationLink } from '../../../Client/src/components/notifications/notificationFormat.js';
 
 const a = 'aaaaaaaaaaaaaaaaaaaaaaaa', b = 'bbbbbbbbbbbbbbbbbbbbbbbb', stranger = 'cccccccccccccccccccccccc';
 const group = { isGroup: true, participants: [{ authId: a }, { authId: b }] };
@@ -65,6 +68,8 @@ test('rendering reconstructs original text and ignores invalid or stale ranges',
 test('real send and history handlers carry validated mentions and reject nonmembers before saving', async t => {
   const conversation = { ...group, _id: new ObjectId() };
   let saved, writes = 0;
+  const notices = [];
+  t.mock.method(NotificationModel, 'notify', async notice => { notices.push(notice); return notice; });
   t.mock.method(ConversationModel, 'findById', async () => conversation);
   t.mock.method(ConversationModel, 'touch', async () => {});
   t.mock.method(UserModel, 'findChatProfilesByAuthIds', profiles);
@@ -80,6 +85,10 @@ test('real send and history handlers carry validated mentions and reject nonmemb
   assert.equal(sent.code, 201);
   assert.equal(saved.mentions[0].authId, b);
   assert.deepEqual(sent.body.data.mentions, saved.mentions);
+  assert.equal(notices.length, 1);
+  assert.equal(notices[0].recipientAuthId, b);
+  assert.equal(notices[0].kind, 'message_mention');
+  assert.equal(notices[0].link, `/message?conversation=${conversation._id}`);
   const history = await invoke(listMessages, {});
   assert.deepEqual(history.body.data[0].mentions, saved.mentions);
   assert.equal((await invoke(sendMessage, { text: '@Ann Lee', mentionAuthIds: [stranger] })).code, 400);
@@ -104,4 +113,32 @@ test('editing recomputes persisted ranges and cannot add mentions for nonmembers
   assert.equal(await MessageModel.editMessage(saved._id, b, 'Forged sender', [b]), null);
   const cleared = await MessageModel.editMessage(saved._id, a, 'No mention', []);
   assert.deepEqual(cleared.mentions, []);
+});
+
+
+test('mention notifications target accounts once, exclude self and outsiders, and emit after saving', async () => {
+  const calls = [], events = [];
+  const conversation = { ...group, _id: a, name: 'Study Group' };
+  const message = { senderAuthId: a, mentions: [{ authId: b }, { authId: b }, { authId: a }, { authId: stranger }] };
+  const results = await notifyMessageMentions({ conversation, message, senderName: 'Ann',
+    notifications: { notify: async notice => { calls.push(notice); return { ...notice, _id: 'notice' }; } },
+    emit: (...args) => events.push(args) });
+  assert.equal(results.length, 1);
+  assert.equal(calls[0].recipientAuthId, b);
+  assert.equal(calls[0].actorAuthId, a);
+  assert.equal(events[0][0], b);
+  assert.equal(events[0][1], 'notification:new');
+  assert.equal(events[0][2]._id, 'notice');
+  const failed = await notifyMessageMentions({ conversation, message, notifications: { notify: async () => { throw new Error('unavailable'); } }, emit: () => assert.fail('Unsaved notices cannot emit') });
+  assert.equal(failed[0].status, 'rejected');
+  assert.deepEqual(await notifyMessageMentions({ conversation: { isGroup: false }, message }), []);
+});
+
+test('mention notifications open the same group for alumni, students and admins', () => {
+  for (const role of ['alumni', 'student', 'admin']) {
+    assert.equal(messageNotificationLink(`/message?conversation=${a}`, role), `/${role}/message?conversation=${a}`);
+    assert.equal(messageNotificationLink(`/alumni/message?conversation=${a}`, role), `/${role}/message?conversation=${a}`);
+  }
+  assert.equal(messageNotificationLink('/message-elsewhere', 'admin'), null);
+  assert.equal(messageNotificationLink('https://example.test/message', 'admin'), null);
 });

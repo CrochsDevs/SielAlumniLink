@@ -1,3 +1,5 @@
+.chat-message-mention { font-weight: 700 !important; }
+
 .chat-call-card {
   --call-title: #27272a;
   --call-icon: hsl(var(--primary));

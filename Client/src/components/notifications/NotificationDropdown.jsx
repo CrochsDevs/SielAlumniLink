@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import ProfileAvatar from "../profile/ProfileAvatar";
-import { notificationTime, notificationText } from "./notificationFormat";
+import { notificationTime, notificationText, messageNotificationLink } from "./notificationFormat";
 import TopbarPanel from "../ui/TopbarPanel";
 import ContentSkeleton from "../ui/Skeleton";
 
@@ -53,6 +53,8 @@ const NotificationDropdown = ({ items, onRead, onReadAll, onClose, triggerRef, l
 
   const resolveLink = (link) => {
     if (!link) return null;
+    const messageLink = messageNotificationLink(link, user?.role);
+    if (messageLink) return messageLink;
     if (user?.role === "admin") return ADMIN_LINKS[link] || link;
     if (user?.role === "student") return STUDENT_LINKS[link] || link;
     if (link === "/requests") return "/alumni/requests";

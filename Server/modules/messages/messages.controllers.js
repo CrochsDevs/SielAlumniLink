@@ -11,6 +11,8 @@ import { messageWasRead } from './read-receipts.js';
 import { messageSenders } from './message-senders.js';
 import { mapConcurrent } from '../../utils/map-concurrent.js';
 import { resolveMessageMentions } from './message-mentions.js';
+import { notifyMessageMentions } from './mention-notifications.js';
+import NotificationModel from '../notifications/notifications.models.js';
 import cloudUpload, { cloudinary } from '../../config/cloudinary.js';
 import { uploadMessageAttachment, messageAttachmentDto } from './message-attachments.js';
 
@@ -304,6 +306,11 @@ export const sendMessage = async (req, res) => {
 
     // Live push to every socket of both participants.
     (convo.participants || []).forEach((p) => emitToUser(p.authId, 'message:new', payload));
+
+    // Notification failures must not turn a saved message into a failed send.
+    const notices = await notifyMessageMentions({ conversation: convo, message, senderName: sender?.senderName,
+      notifications: NotificationModel, emit: emitToUser });
+    if (notices.some(result => result.status === 'rejected')) console.warn('Group mention notification delivery failed');
 
     res.status(201).json({
       success: true,

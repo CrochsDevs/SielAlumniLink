@@ -147,7 +147,7 @@ export default function MessageBubble({
                   View shared post →
                 </Link>
               ) : (
-                <p>{mentionParts(msg.text, msg.mentions || []).map((part, index) => part.authId ? <span key={index} data-mention-auth-id={part.authId} className="rounded bg-black/10 px-0.5 font-semibold underline decoration-current/40 underline-offset-2 dark:bg-white/10">{part.text}</span> : part.text)}</p>
+                <p>{mentionParts(msg.text, msg.mentions || []).map((part, index) => part.authId ? <strong key={index} data-mention-auth-id={part.authId} className="chat-message-mention rounded bg-black/10 px-0.5 underline decoration-current/40 underline-offset-2 dark:bg-white/10">{part.text}</strong> : part.text)}</p>
               ))}
           </BubbleContent>}
           {msg.edited && !mine && (
