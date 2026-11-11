@@ -7,6 +7,9 @@ import {
   CalendarDays,
   Megaphone,
   Users,
+  MessageCircle,
+  ThumbsUp,
+  Repeat2,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import ProfileAvatar from "../profile/ProfileAvatar";
@@ -36,6 +39,9 @@ const kindIcons = {
   announcements: Megaphone,
   connection_request: Users,
   connection_response: Users,
+  feed_comment: MessageCircle,
+  feed_like: ThumbsUp,
+  feed_share: Repeat2,
 };
 
 // Shared notification dropdown panel (wired to useNotifications data).

@@ -7,7 +7,7 @@ const objectId = (value) => {
   return new ObjectId(value);
 };
 
-export const createFeedService = (db, changed = () => {}) => {
+export const createFeedService = (db, changed = () => {}, notify = null) => {
   const posts = db.collection('feed_posts');
   const comments = db.collection('feed_comments');
   const images = db.collection('feed_images');
@@ -51,6 +51,17 @@ export const createFeedService = (db, changed = () => {}) => {
     return { authId: String(id), _id: profile?._id || null, name: profile?.name || account?.name || 'Member',
       email: profile?.email || account?.email || '', profilePicture: profile?.profilePicture || null,
       program: profile?.program || '', batch: profile?.batch || '', role: profile?.role || account?.role || 'alumni' };
+  };
+
+  const notifyAuthor = async (user, post, kind, eventId) => {
+    if (!notify || String(user._id) === String(post.authorAuthId)) return;
+    try {
+      const person = await author(user._id);
+      await notify({ post, user, kind, eventId, actorName: person.name });
+    } catch {
+      // A saved interaction stays successful even if notifications are unavailable.
+      console.warn('Feed interaction notification delivery failed');
+    }
   };
 
   const serialize = async (post, user, authors = new Map()) => {
@@ -187,10 +198,12 @@ export const createFeedService = (db, changed = () => {}) => {
     if (typeof enabled !== 'boolean') fail(400, 'Provide a true or false action');
     const post = await readable(id, user);
     if (field === 'attending' && (post.type !== 'event' || post.originalPostId)) fail(400, 'RSVP on the original event post');
+    const wasMember = (post[field] || []).includes(String(user._id));
     const updated = await posts.findOneAndUpdate({ _id: post._id, deletedAt: null },
       membershipUpdate(field, user._id, enabled), { returnDocument: 'after' });
     if (!updated) fail(404, 'Post no longer available');
     changed();
+    if (field === 'likedBy' && enabled && !wasMember) await notifyAuthor(user, post, 'feed_like', post._id);
     return serialize(updated, user);
   };
 
@@ -235,6 +248,7 @@ export const createFeedService = (db, changed = () => {}) => {
     const doc = { postId: post._id, parentCommentId: parentId, replyToAuthId, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
     const result = await comments.insertOne(doc);
     changed();
+    await notifyAuthor(user, post, 'feed_comment', result.insertedId);
     return { _id: result.insertedId, parentCommentId: parentId, repliesCount: 0, replyTo: replyToAuthId ? await author(replyToAuthId) : null, body: valid, createdAt: doc.createdAt, author: await author(user._id), isMine: true, canDelete: true };
   };
 
@@ -265,6 +279,7 @@ export const createFeedService = (db, changed = () => {}) => {
     const result = await posts.insertOne(doc);
     doc._id = result.insertedId;
     changed();
+    await notifyAuthor(user, original, 'feed_share', doc._id);
     return serialize(doc, user);
   };
 

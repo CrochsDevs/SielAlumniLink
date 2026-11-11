@@ -36,6 +36,12 @@ export function notificationText(item) {
         ? " declined your connection request."
         : " accepted your connection request.",
     };
+  const feedActions = {
+    feed_comment: ' commented on your post.',
+    feed_like: ' liked your post.',
+    feed_share: ' shared your post.',
+  };
+  if (feedActions[item.kind]) return { lead: name, text: feedActions[item.kind], detail: item.body };
   const actions = {
     jobs: " shared a job: ",
     events: " shared an event: ",

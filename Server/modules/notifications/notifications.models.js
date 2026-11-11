@@ -1,5 +1,6 @@
 import { client } from '../../config/db.js';
 import { ObjectId } from 'mongodb';
+import { createHash } from 'node:crypto';
 import { notificationExpiresAt } from './notifications.retention.js';
 
 export const createNotificationModel = (db) => {
@@ -46,7 +47,7 @@ export const createNotificationModel = (db) => {
       return result.insertedCount;
     },
 
-    async notify({ recipientAuthId, recipientEmail, title, body, link, kind, actorAuthId }) {
+    async notify({ recipientAuthId, recipientEmail, title, body, link, kind, actorAuthId, dedupKey }) {
       const now = new Date();
       const doc = {
         recipientAuthId: String(recipientAuthId),
@@ -60,6 +61,18 @@ export const createNotificationModel = (db) => {
         createdAt: now,
         expiresAt: notificationExpiresAt(now),
       };
+      if (dedupKey) {
+        // The existing unique _id index makes duplicate/concurrent events atomic.
+        // Keep an ObjectId so ownership-checked read actions work unchanged.
+        doc._id = new ObjectId(createHash('sha256').update(JSON.stringify([doc.recipientAuthId, doc.kind, dedupKey])).digest('hex').slice(0, 24));
+        try {
+          const result = await notificationsCollection.updateOne({ _id: doc._id }, { $setOnInsert: doc }, { upsert: true });
+          return result.upsertedCount ? doc : null;
+        } catch (error) {
+          if (error.code === 11000) return null;
+          throw error;
+        }
+      }
       const result = await notificationsCollection.insertOne(doc);
       return { ...doc, _id: result.insertedId };
     },

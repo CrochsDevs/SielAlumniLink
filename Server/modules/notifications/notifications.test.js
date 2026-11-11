@@ -26,7 +26,12 @@ const fixture = (rows = [], users = []) => {
       };
     },
     async countDocuments(filter) { return rows.filter(doc => matches(doc, filter)).length; },
-    async updateOne(filter, update) { const doc = rows.find(doc => matches(doc, filter)); if (doc) Object.assign(doc, update.$set); },
+    async updateOne(filter, update, options = {}) {
+      const doc = rows.find(doc => matches(doc, filter));
+      if (doc) { Object.assign(doc, update.$set); return { matchedCount: 1, upsertedCount: 0 }; }
+      if (options.upsert) { rows.push({ ...update.$setOnInsert }); return { matchedCount: 0, upsertedCount: 1 }; }
+      return { matchedCount: 0, upsertedCount: 0 };
+    },
     async updateMany(filter, update) { rows.filter(doc => matches(doc, filter)).forEach(doc => Object.assign(doc, update.$set)); },
   };
   return { rows, model: createNotificationModel({ collection: name => name === 'notifications' ? collection : {
@@ -111,4 +116,23 @@ test('startup backfills expiry, hard-deletes the backlog, and installs a persist
   assert.deepEqual(calls[2], { method: 'createIndex', args: [
     { expiresAt: 1 }, { name: 'notifications_expiry_ttl', expireAfterSeconds: 0 },
   ] });
+});
+
+
+test('deduplicated notifications are atomic, preserve read status and remain compatible with markRead', async () => {
+  const f = fixture();
+  const event = { recipientAuthId: 'owner', actorAuthId: 'friend', title: 'Liked your post', kind: 'feed_like', dedupKey: 'post:friend:like' };
+  const results = await Promise.all(Array.from({ length: 20 }, () => f.model.notify(event)));
+  assert.equal(results.filter(Boolean).length, 1);
+  assert.equal(f.rows.length, 1);
+  assert.ok(f.rows[0]._id instanceof ObjectId);
+  const expiry = f.rows[0].expiresAt;
+  await f.model.markRead('owner', String(f.rows[0]._id));
+  assert.equal(f.rows[0].read, true);
+  assert.equal(await f.model.notify(event), null);
+  assert.equal(f.rows[0].read, true);
+  assert.equal(f.rows[0].expiresAt, expiry);
+  assert.ok(await f.model.notify({ ...event, recipientAuthId: 'another-owner' }));
+  assert.ok(await f.model.notify({ ...event, kind: 'feed_comment', dedupKey: 'comment1' }));
+  assert.equal(f.rows.length, 3);
 });

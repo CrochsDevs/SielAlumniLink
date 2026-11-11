@@ -7,11 +7,14 @@ import { createFeedService } from './feed.service.js';
 import { createFeedMessaging } from './feed-messaging.js';
 import { messageSenders } from '../messages/message-senders.js';
 import { createFeedImageDownload } from './feed.images.js';
+import NotificationModel from '../notifications/notifications.models.js';
+import { createFeedNotifier } from './feed-notifications.js';
 
 const router = express.Router();
 // Invalidation carries no private content or IDs. Every client reloads using
 // current server permissions; this also handles lost events on reconnect.
-const feed = createFeedService(client.db('SielAlumni'), () => getIO()?.emit('feed:changed'));
+const feed = createFeedService(client.db('SielAlumni'), () => getIO()?.emit('feed:changed'),
+  createFeedNotifier({ notifications: NotificationModel, emit: emitToUser }));
 const messaging = createFeedMessaging({ feed, conversations: ConversationModel, messages: MessageModel,
   senders: messageSenders, emit: emitToUser, origin: process.env.FRONTEND_URL || 'http://localhost:5173' });
 const action = (handler, status = 200) => async (req, res) => {

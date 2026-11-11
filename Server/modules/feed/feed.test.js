@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { ObjectId } from 'mongodb';
 import { createFeedService } from './feed.service.js';
 import { validatePost } from './feed.policy.js';
+import { createFeedNotifier } from './feed-notifications.js';
+import { notificationText } from '../../../Client/src/components/notifications/notificationFormat.js';
 import { createFeedImageDelete, createFeedImageDownload, createFeedImageUpload } from './feed.images.js';
 
 // A small Mongo collection double runs the service's query/permission paths
@@ -90,7 +92,7 @@ const memoryDb = () => {
   return { collection };
 };
 
-const fixture = async () => {
+const fixture = async ({ notifications = false } = {}) => {
   const db = memoryDb();
   const people = ['author', 'friend', 'stranger', 'student', 'admin'].map((name, i) => ({
     _id: new ObjectId(), email: `${name}@example.test`, name, role: i === 4 ? 'admin' : i === 3 ? 'student' : 'alumni',
@@ -106,8 +108,16 @@ const fixture = async () => {
   };
   const connection = await connect(people[0], people[1]);
   const invalidations = [];
-  const feed = createFeedService(db, () => invalidations.push('changed'));
-  return { db, feed, author: people[0], friend: people[1], stranger: people[2], student: people[3], admin: people[4], connect, connection, invalidations };
+  const notices = [], events = [], keys = new Set();
+  const notifier = createFeedNotifier({ notifications: { notify: async notice => {
+    if (keys.has(notice.dedupKey)) return null;
+    keys.add(notice.dedupKey);
+    const saved = { ...notice, _id: new ObjectId() };
+    notices.push(saved);
+    return saved;
+  } }, emit: (...event) => events.push(event) });
+  const feed = createFeedService(db, () => invalidations.push('changed'), notifications ? notifier : null);
+  return { db, feed, notices, events, author: people[0], friend: people[1], stranger: people[2], student: people[3], admin: people[4], connect, connection, invalidations };
 };
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
@@ -640,4 +650,69 @@ test('removing a draft photo deletes only the owner’s unused Cloudinary asset'
   await remove({ user: f.author, params: { id: String(asset._id) } }, allowed);
   assert.equal(allowed.statusCode, 200); assert.deepEqual(removed, [asset.publicId]);
   assert.equal(await f.db.collection('feed_images').findOne({ _id: asset._id }), null);
+});
+
+
+test('comments, likes and reposts notify only the post owner with the actor and post link', async () => {
+  const f = await fixture({ notifications: true }), p = await f.feed.create(f.author, post());
+  await f.feed.comment(f.friend, p._id, 'Congratulations');
+  await f.feed.setMembership(f.friend, p._id, 'likedBy', true);
+  await f.feed.share(f.friend, p._id, {});
+  assert.deepEqual(f.notices.map(n => n.kind), ['feed_comment', 'feed_like', 'feed_share']);
+  assert.ok(f.notices.every(n => String(n.recipientAuthId) === String(f.author._id) && String(n.actorAuthId) === String(f.friend._id)));
+  assert.ok(f.notices.every(n => n.link === `/feed?post=${p._id}` && n.title.startsWith('friend ')));
+  assert.equal(f.events.length, 3);
+  assert.ok(f.events.every(([id, name, data]) => String(id) === String(f.author._id) && name === 'notification:new' && data._id));
+  for (const notice of f.notices) {
+    const text = notificationText({ ...notice, actor: { name: 'Friend' } });
+    assert.equal(text.lead, 'Friend');
+    assert.ok(text.text.includes('your post.'));
+  }
+});
+
+test('repeated and concurrent likes do not duplicate notices, while distinct comments notify separately', async () => {
+  const f = await fixture({ notifications: true }), p = await f.feed.create(f.author, post());
+  await Promise.all(Array.from({ length: 20 }, () => f.feed.setMembership(f.friend, p._id, 'likedBy', true)));
+  await f.feed.setMembership(f.friend, p._id, 'likedBy', false);
+  await f.feed.setMembership(f.friend, p._id, 'likedBy', true);
+  assert.equal(f.notices.length, 1);
+  await f.feed.comment(f.friend, p._id, 'First comment');
+  await f.feed.comment(f.friend, p._id, 'Another comment');
+  assert.equal(f.notices.filter(n => n.kind === 'feed_comment').length, 2);
+  assert.equal(f.events.length, 3);
+});
+
+test('self actions and rejected actions cannot create feed notifications', async () => {
+  const f = await fixture({ notifications: true }), p = await f.feed.create(f.author, post({ audience: 'connections' }));
+  await f.feed.comment(f.author, p._id, 'My own comment');
+  await f.feed.setMembership(f.author, p._id, 'likedBy', true);
+  await f.feed.share(f.author, p._id, { audience: 'connections' });
+  await rejects(f.feed.comment(f.stranger, p._id, 'Not allowed'), 404);
+  await rejects(f.feed.share(f.stranger, p._id, {}), 404);
+  await rejects(f.feed.setMembership(f.stranger, p._id, 'likedBy', true), 404);
+  await f.feed.moderate(f.admin, p._id, { action: 'comments', enabled: true, reason: 'Closed' });
+  await rejects(f.feed.comment(f.friend, p._id, 'Comments closed'), 403);
+  assert.equal(f.notices.length, 0);
+  assert.equal(f.events.length, 0);
+});
+
+test('reposts notify the original owner and comments on a repost notify its own author', async () => {
+  const f = await fixture({ notifications: true }), p = await f.feed.create(f.author, post());
+  const repost = await f.feed.share(f.friend, p._id, {});
+  await f.feed.share(f.admin, repost._id, {});
+  await f.feed.comment(f.student, repost._id, 'On the repost');
+  assert.deepEqual(f.notices.map(n => String(n.recipientAuthId)), [String(f.author._id), String(f.author._id), String(f.friend._id)]);
+  assert.equal(f.notices[1].link, `/feed?post=${p._id}`);
+  assert.equal(f.notices[2].link, `/feed?post=${repost._id}`);
+});
+
+test('notification failures never undo saved comments, likes or reposts', async t => {
+  const f = await fixture(), p = await f.feed.create(f.author, post());
+  const warnings = [];
+  t.mock.method(console, 'warn', message => warnings.push(message));
+  const feed = createFeedService(f.db, () => {}, async () => { throw new Error('unavailable'); });
+  assert.ok((await feed.comment(f.friend, p._id, 'Still saved'))._id);
+  assert.equal((await feed.setMembership(f.friend, p._id, 'likedBy', true)).likesCount, 1);
+  assert.ok((await feed.share(f.friend, p._id, {}))._id);
+  assert.equal(warnings.length, 3);
 });
