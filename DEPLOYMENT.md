@@ -78,56 +78,39 @@ web services block ports 25, 465, and 587. See https://render.com/docs/free.
 The generic send response intentionally does not disclose whether an account
 exists or whether email delivery succeeded.
 
-### Email delivery on Render Free
+### Gmail SMTP configuration
 
-Use **Gmail API over HTTPS** for the existing Google sender. Follow
-[Server/GMAIL_SETUP.md](Server/GMAIL_SETUP.md) to enable Gmail API, create the
-OAuth client, and run `npm run setup:gmail` locally. The loopback helper saves
-the refresh token into ignored `Server/.env` without printing it.
-
-Copy these settings privately into the backend Render Environment, then redeploy:
+The backend uses Gmail SMTP with an App Password. OAuth and HTTP email API setup
+are no longer part of this implementation. Set these only on the backend service:
 
 ```text
-EMAIL_PROVIDER=gmail_api
-EMAIL_USER=<authorized Gmail sender>
-GOOGLE_CLIENT_ID=<Google OAuth client ID>
-GOOGLE_CLIENT_SECRET=<server-only client secret>
-GOOGLE_REFRESH_TOKEN=<refresh token saved by setup>
-```
-
-This needs no new npm dependency or custom email domain. Only the sender grants
-Google access. The app requests `gmail.send`, not mailbox-read access. Client
-secrets and tokens never go in frontend configuration, URLs, or application logs.
-Google's Testing-mode token expiry and sending limits still apply; see the guide.
-Setting a Gmail App Password alone does not configure this HTTPS transport.
-
-The backend also supports Resend's HTTPS API without an additional npm package.
-In Resend, verify a domain you control, then create a sending API key restricted
-to that domain where supported. A Gmail address is not a verified sender domain.
-The provider's default test sender cannot send production login links to arbitrary
-recipients. See https://resend.com/docs/send-with-nodejs.
-
-Set these only in the **backend** Render environment, then redeploy the backend:
-
-```text
-EMAIL_PROVIDER=resend
-RESEND_API_KEY=<server-only key>
-EMAIL_FROM=AlumniLink <login@your-verified-domain.example>
+EMAIL_PROVIDER=smtp
+EMAIL_USER=<sender Gmail address>
+EMAIL_PASS=<new Gmail App Password>
 FRONTEND_URL=https://sielalumnilink.onrender.com
 ```
 
-Never add the API key to `Client/.env.production` or a `VITE_*` variable. Delete
-unused Gmail credentials after switching. Revoke any password/key exposed in a
-screenshot or log. Delivery waits at most 12 seconds, aborts stalled HTTPS requests,
-closes stalled SMTP connections, and does not automatically retry sensitive emails.
-Server logs contain fixed failure categories (`ETIMEDOUT`, `EAUTH`, `ECONFIG`,
-`EPROVIDER`), never provider bodies, recipients, links, codes, or credentials.
+Use the existing authorized sender account with Google 2-Step Verification and a
+fresh App Password. Do not use the normal Google password. Revoke App Passwords
+that were exposed in chat/screenshots. Pasted display spaces are stripped from the
+App Password. Never place it in frontend configuration or VITE_* variables.
 
-Paid hosts/local development can keep `EMAIL_PROVIDER=smtp`, `EMAIL_USER`, and
-a Gmail App Password in `EMAIL_PASS`; TLS certificate validation remains enabled.
-The generic send response still does not confirm actual inbox delivery. Check the
-provider dashboard and backend log for accepted/rejected delivery. After a successful
-deployment, request a fresh link and complete the session test in the intended browser.
+The host must permit outbound Gmail SMTP connections. Render Free blocks SMTP
+ports 25, 465, and 587. Use a paid Render web-service instance or another host that
+permits Gmail SMTP. A Gmail quota of up to 500 emails/day does not remove a hosting
+network restriction, and Gmail may impose account-specific anti-abuse limits.
+See https://render.com/docs/free and https://support.google.com/mail/answer/22839.
+
+If EMAIL_PROVIDER was set to gmail_api or resend, change it to smtp. Unused Google
+OAuth/API variables are not required and can be removed from server settings.
+Keep downloaded credentials private even though the OAuth helper was removed.
+
+The transport validates TLS certificates, has a 12-second hard deadline, closes
+stalled connections, and never automatically retries sensitive emails. Logs include
+only fixed failure categories and provider=smtp, never recipients, passwords,
+login links, or OTPs. EAUTH indicates authentication rejection; ETIMEDOUT indicates
+a connection/delivery timeout. Neither a deploy nor a generic HTTP 200 proves inbox
+delivery. After the backend is Live, request one new link and complete sign-in.
 
 ### HTTP 429 and CORS diagnostics
 

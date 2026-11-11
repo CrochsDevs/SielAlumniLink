@@ -11,8 +11,10 @@ import { signSessionToken, verifySessionToken, sessionMatches } from './session-
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/auth_security_fixture';
 process.env.JWT_SECRET = 'test-only-auth-security-key';
 process.env.DOTENV_CONFIG_QUIET = 'true';
-// Always use the mocked transport, even when local Google credentials exist.
+// Never use local credentials or cloud transports during auth fixtures.
 process.env.EMAIL_PROVIDER = 'smtp';
+process.env.EMAIL_USER = 'fixture-sender@example.test';
+process.env.EMAIL_PASS = 'fixture-app-password';
 
 // Stub transport creation before loading controllers: no SMTP or database connections.
 let deliver = async () => {};
