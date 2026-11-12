@@ -59,12 +59,16 @@
   flex: 1;
   height: 34px;
   padding: 0;
-  background: transparent;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  appearance: none;
   color: inherit;
   font-size: 13px;
   outline: none;
 }
-.career-marketplace .career-search input:focus-visible { outline: none; }
+.career-marketplace .career-search input:is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; }
 .career-marketplace .career-search button {
   min-height: 34px;
   padding: 0 18px;

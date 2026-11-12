@@ -1292,7 +1292,7 @@ export default function CareerBoard({
                         {marketplace && (
                           <div className="career-card-context">
                             <div className="career-card-labels">
-                              {row.category !== "job" && (
+                              {!["job", "internship"].includes(row.category) && (
                                 <span className="career-category-badge">
                                   {category.label}
                                 </span>
