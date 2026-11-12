@@ -51,6 +51,7 @@ export default function MessageBubble({
   const callDuration = Math.max(0, Math.floor(Number(msg.call?.duration) || 0));
   const durationLabel = `${Math.floor(callDuration / 60)}:${String(callDuration % 60).padStart(2, '0')}`;
   const hasPhoto = !msg.unsent && msg.attachment?.kind === 'image' && !!msg.attachment.url;
+  const hasFile = !msg.unsent && msg.attachment?.kind === 'file' && !!msg.attachment.url;
   const canEdit = !msg.call && !msg.activity && mine && msg._id && msg.text && onEdit;
   const canUnsend = !msg.call && !msg.activity && mine && msg._id && onUnsend;
 
@@ -81,12 +82,12 @@ export default function MessageBubble({
 
   return (
     <Bubble
-      style={hasPhoto ? { maxWidth: 'min(100%, var(--chat-photo-max-width, 320px))' } : undefined}
+      style={hasPhoto ? { maxWidth: 'min(100%, var(--chat-photo-max-width, 320px))' } : hasFile ? { width: '320px', maxWidth: '90%' } : undefined}
       data-read-id={!mine && msg._id && !msg.readByMe ? msg._id : undefined}
       align={mine ? "end" : "start"}
       data-call-status={msg.call?.status}
       variant={msg.unsent ? "outline" : missedCall ? "destructive" : msg.call ? "outline" : mine ? "default" : "secondary"}
-      className={
+      className={`${hasFile ? 'chat-file-message ' : ''}${
         msg.unsent
           ? "[&>[data-slot=bubble-content]]:border-dashed [&>[data-slot=bubble-content]]:bg-transparent"
           : msg.call
@@ -94,7 +95,7 @@ export default function MessageBubble({
           : mine
             ? "[&>[data-slot=bubble-content]]:bg-brand [&>[data-slot=bubble-content]]:text-white"
             : ""
-      }
+      }`}
     >
       {msg.unsent ? (
         <BubbleContent className="text-xs italic text-muted-foreground">

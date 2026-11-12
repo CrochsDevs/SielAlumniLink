@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { chromium } from '../node_modules/.search-validation/node_modules/playwright/index.mjs';
 
 // Mocked downloads only; no real accounts or messages are changed.
 const id = number => number.toString(16).padStart(24, '0');
 const bytes = Buffer.from('PK\u0003\u0004Download fixture');
-const filename = 'PanVK fixture (1).adpkg.zip';
+const filename = 'PanVK-Kbase-Android-g615-v11-csf-v0.1.0-rc3-5a07217f.adpkg.zip';
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 try {
   for (const mobile of [false, true]) {
@@ -21,7 +23,7 @@ try {
       let data = [];
       if (['/auth/me', '/users/me'].includes(endpoint)) data = { _id: id(1), authId: id(2), name: 'Download Tester', role, passwordSetupRequired: false };
       else if (endpoint === '/conversations') data = [{ _id: id(3), name: 'Carl Fixture', authId: id(4), isGroup: false, unread: 0 }];
-      else if (endpoint.endsWith('/messages')) data = [{ _id: id(5), from: 'them', readByMe: true, at: '2026-11-12T01:00:00Z', text: '', attachment: { kind: 'file', name: filename, url: `/api/conversations/${id(3)}/messages/${id(5)}/attachment` } }];
+      else if (endpoint.endsWith('/messages')) data = ['them', 'me'].map((from, index) => ({ _id: id(5 + index), from, readByMe: true, read: true, at: '2026-11-12T01:00:00Z', text: '', attachment: { kind: 'file', name: filename, bytes: 5851150, url: `/api/conversations/${id(3)}/messages/${id(5 + index)}/attachment` } }));
       else if (endpoint.endsWith('/attachment')) return fail
         ? route.fulfill({ status: 502, json: { success: false, message: 'Storage unavailable' } })
         : route.fulfill({ contentType: 'application/octet-stream', headers: { 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}` }, body: bytes });
@@ -30,7 +32,12 @@ try {
     });
     const url = `http://localhost:5173/${role}/message?conversation=${id(3)}`;
     await page.goto(url);
-    const button = page.getByRole('button', { name: `Download ${filename}`, exact: true });
+    const button = page.getByRole('button', { name: `Download ${filename}`, exact: true }).first();
+    await button.waitFor();
+    for (const dark of [false, true]) {
+      await page.evaluate(dark => document.documentElement.classList.toggle('dark', dark), dark);
+      await page.screenshot({ animations: 'disabled', path: path.join(os.tmpdir(), `SielAlumni-file-cards-${mobile ? 'mobile' : 'desktop'}-${dark ? 'dark' : 'light'}.png`) });
+    }
     const downloadEvent = page.waitForEvent('download');
     await button.click();
     const download = await downloadEvent;

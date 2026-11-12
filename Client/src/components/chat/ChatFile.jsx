@@ -1,12 +1,26 @@
 import { useRef, useState } from 'react';
-import { Download, FileText, LoaderCircle } from 'lucide-react';
+import { Download, FileArchive, FileText, LoaderCircle } from 'lucide-react';
 import api from '../../utils/axios';
 import { chatAttachmentUrl } from '../../utils/chatAttachments';
+import './ChatFile.css';
+
+const fileSize = bytes => {
+  if (!Number.isFinite(bytes) || bytes < 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  const unit = bytes < 1024 * 1024 ? 'KB' : 'MB';
+  const value = bytes / (unit === 'KB' ? 1024 : 1024 * 1024);
+  return `${Number(value.toFixed(1))} ${unit}`;
+};
 
 export default function ChatFile({ attachment }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const pending = useRef(false);
+  const name = attachment.name || 'Attachment';
+  const extension = name.includes('.') ? name.split('.').at(-1).toUpperCase() : '';
+  const archive = ['ZIP', 'RAR', '7Z', 'GZ', 'TAR'].includes(extension);
+  const Icon = archive ? FileArchive : FileText;
+  const metadata = [extension ? `${extension} file` : 'File', fileSize(attachment.bytes)].filter(Boolean).join(' · ');
   const download = async () => {
     if (pending.current) return;
     pending.current = true;
@@ -40,14 +54,17 @@ export default function ChatFile({ attachment }) {
       setDownloading(false);
     }
   };
-  return <div className="min-w-0">
+  return <div className="chat-file">
     <button type="button" onClick={download} disabled={downloading} aria-busy={downloading}
       aria-label={`Download ${attachment.name || 'file'}`}
-      className="flex min-w-0 items-center gap-2 rounded-lg py-1 text-left font-medium underline-offset-4 hover:underline disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current">
-      <FileText className="h-4 w-4 shrink-0" />
-      <span className="min-w-0 break-all">{attachment.name || 'Download file'}</span>
-      {downloading ? <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <Download className="h-3.5 w-3.5 shrink-0" />}
+      className="chat-file-card">
+      <span className="chat-file-icon" aria-hidden="true"><Icon size={23} strokeWidth={1.6} /></span>
+      <span className="chat-file-details">
+        <span className="chat-file-name" title={name}>{name}</span>
+        <span className="chat-file-meta">{downloading ? 'Downloading…' : metadata}</span>
+      </span>
+      <span className="chat-file-download" aria-hidden="true">{downloading ? <LoaderCircle size={17} className="animate-spin" /> : <Download size={17} />}</span>
     </button>
-    {error && <p role="alert" className="mt-1 text-xs">{error}</p>}
+    {error && <p role="alert" className="chat-file-error">{error}</p>}
   </div>;
 }
