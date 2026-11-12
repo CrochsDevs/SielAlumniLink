@@ -382,7 +382,7 @@ export default function ReferralBoard({ embedded = false }) {
             </p>
           )}
           {loading ? (
-            <div role="status" className="grid gap-4 lg:grid-cols-2">
+            <div role="status" className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
               <span className="sr-only">Loading referrals…</span>
               {[0, 1, 2, 3].map((index) => (
                 <div
@@ -454,7 +454,7 @@ export default function ReferralBoard({ embedded = false }) {
                   </button>
                 </div>
               )}
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                 {paged.map((referral) => {
                   const meta = referralType(referral.type);
                   const application =
@@ -516,11 +516,12 @@ export default function ReferralBoard({ embedded = false }) {
                             </div>
                           )}
                           {application && (
-                            <div className="mb-4 flex flex-wrap items-center gap-2">
-                              {statusBadge(application)}
-                              <p className="text-[10px] text-zinc-400">
-                                Applied {referralDate(application.createdAt)}
-                              </p>
+                            <div className="referral-card-application">
+                              <div className="referral-card-application-heading">
+                                <span className="sr-only">Your application</span>
+                                {statusBadge(application)}
+                              </div>
+                              {application.createdAt && <p>Applied {referralDate(application.createdAt)}</p>}
                             </div>
                           )}
                           <div className="referral-card-actions">

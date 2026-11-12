@@ -5,19 +5,22 @@
   --referral-line: #e2e9e4;
   --referral-soft: #f3f7f4;
   --referral-accent: #007d30;
+  --referral-button: #007d30;
   --referral-tint: #eaf7ef;
   display: flex;
+  position: relative;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--referral-line);
-  border-radius: var(--panel-radius);
-  background: var(--referral-surface);
+  border-radius: 14px;
+  background: linear-gradient(140deg, var(--referral-tint), var(--referral-surface) 58%);
   color: var(--referral-ink);
-  box-shadow: var(--alumni-card-shadow, 0 3px 14px rgb(24 59 35 / 8%));
+  box-shadow: 0 0 0 1px rgb(24 59 35 / 8%), 0 3px 8px 1px rgb(24 59 35 / 18%), 0 12px 24px 2px rgb(24 59 35 / 20%);
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
-.referral-card[data-referral-type="internship"] { --referral-accent: #3760a8; --referral-tint: #edf3fc; }
-.referral-card[data-referral-type="scholarship"] { --referral-accent: #94651f; --referral-tint: #fbf4e6; }
+.referral-card::before { position: absolute; inset: 0 0 auto; height: 4px; background: var(--referral-accent); content: ""; }
+.referral-card[data-referral-type="internship"] { --referral-accent: #3760a8; --referral-button: #3760a8; --referral-tint: #edf3fc; }
+.referral-card[data-referral-type="scholarship"] { --referral-accent: #94651f; --referral-button: #94651f; --referral-tint: #fbf4e6; }
 .dark .referral-card {
   --referral-surface: var(--dark-surface);
   --referral-ink: var(--dark-text);
@@ -26,26 +29,32 @@
   --referral-soft: var(--dark-control);
   --referral-accent: #83d6a1;
   --referral-tint: var(--dark-control);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 30%), 0 3px 8px 1px rgb(0 0 0 / 35%), 0 12px 24px 2px rgb(0 0 0 / 45%);
 }
 .dark .referral-card[data-referral-type="internship"] { --referral-accent: #a6c7ff; --referral-tint: var(--dark-control); }
 .dark .referral-card[data-referral-type="scholarship"] { --referral-accent: #e7c57e; --referral-tint: var(--dark-control); }
-.referral-card-content { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 18px; }
+.referral-card-content { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 16px; }
 .referral-card-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.referral-card-category { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 6px; background: var(--referral-tint); color: var(--referral-accent); font-size: 10px; line-height: 16px; font-weight: 600; }
-.referral-card-date { color: var(--referral-muted); font-size: 10px; line-height: 16px; }
-.referral-card-identity { display: flex; align-items: flex-start; gap: 11px; margin-top: 16px; }
-.referral-card-company-mark { display: grid; flex-shrink: 0; place-items: center; width: 38px; height: 38px; border: 1px solid var(--referral-line); border-radius: 10px; background: var(--referral-soft); color: var(--referral-ink); font-size: 16px; font-weight: 600; }
-.referral-card .referral-card-title { margin: 0; color: var(--referral-ink); font-size: 15px; line-height: 21px; font-weight: 600; overflow-wrap: anywhere; }
-.referral-card-organization { margin-top: 3px; color: var(--referral-muted); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
-.referral-card-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 40px; margin: 14px 0 16px; color: var(--referral-muted); font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }
+.referral-card-category { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 7px; background: var(--referral-tint); color: var(--referral-accent); font-size: 11px; line-height: 16px; font-weight: 600; }
+.referral-card-date { color: var(--referral-muted); font-size: 11px; line-height: 16px; }
+.referral-card-identity { display: flex; align-items: flex-start; gap: 10px; margin-top: 13px; }
+.referral-card-company-mark { display: grid; flex-shrink: 0; place-items: center; width: 38px; height: 38px; border: 1px solid var(--referral-line); border-radius: 10px; background: var(--referral-accent); color: #fff; font-size: 17px; font-weight: 600; box-shadow: 0 3px 7px rgb(24 59 35 / 12%); }
+.referral-card .referral-card-title { margin: 0; color: var(--referral-ink); font-size: 16px; line-height: 21px; letter-spacing: -.2px; font-weight: 700; overflow-wrap: anywhere; }
+.referral-card-organization { margin-top: 2px; color: var(--referral-muted); font-size: 11px; line-height: 17px; overflow-wrap: anywhere; }
+.referral-card-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin: 12px 0 14px; color: var(--referral-muted); font-size: 12px; line-height: 19px; overflow-wrap: anywhere; }
 .referral-card-context { margin-top: auto; }
-.referral-card-referrer { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-.referral-card-avatar { display: grid; flex-shrink: 0; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--referral-soft); color: var(--referral-muted); font-size: 10px; font-weight: 600; }
-.referral-card-referrer-copy { display: grid; min-width: 0; gap: 1px; color: var(--referral-muted); font-size: 10px; line-height: 14px; }
-.referral-card-referrer-name { color: var(--referral-ink); font-size: 11px; font-weight: 500; overflow-wrap: anywhere; }
-.referral-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--referral-line); }
-.referral-card-actions > button { display: inline-flex; flex: 1 1 100px; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 8px 10px; border: 1px solid transparent; border-radius: 9px; font-size: 11px; line-height: 18px; font-weight: 600; transition: background-color 160ms ease; }
-.referral-card-details { color: var(--referral-ink); background: var(--referral-soft); }
+.referral-card-referrer { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.referral-card-avatar { display: grid; flex-shrink: 0; place-items: center; width: 34px; height: 34px; border: 1px solid var(--referral-line); border-radius: 50%; background: var(--referral-soft); color: var(--referral-accent); font-size: 12px; font-weight: 600; }
+.referral-card-referrer-copy { display: grid; min-width: 0; gap: 2px; color: var(--referral-muted); font-size: 11px; line-height: 16px; }
+.referral-card-referrer-name { color: var(--referral-ink); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.referral-card-application { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; margin-bottom: 12px; padding: 9px 10px; border: 1px solid color-mix(in srgb, var(--referral-accent) 35%, var(--referral-surface)); border-radius: 10px; background: color-mix(in srgb, var(--referral-accent) 16%, var(--referral-surface)); box-shadow: 0 2px 5px rgb(24 59 35 / 7%); }
+.referral-card-application-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.referral-card-application-heading > span:first-child { color: var(--referral-ink); font-size: 12px; line-height: 18px; font-weight: 600; }
+.referral-card-application > p { margin: 0; color: var(--referral-ink); font-size: 10px; line-height: 17px; }
+.referral-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 11px; border-top: 1px solid var(--referral-line); }
+.referral-card-actions > button { display: inline-flex; flex: 1 1 100px; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 10px 14px; border: 1px solid transparent; border-radius: 10px; font-size: 12px; line-height: 18px; font-weight: 600; transition: background-color 160ms ease; }
+.referral-card-actions > .referral-card-details { color: #fff; border-color: var(--referral-button); background: var(--referral-button); box-shadow: 0 3px 8px rgb(24 59 35 / 16%); }
+.dark .referral-card-company-mark { color: var(--referral-surface); }
 .referral-card-primary { color: #fff; background: hsl(var(--primary)); }
 .referral-card-management { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--referral-line); }
 .referral-card-management > span { color: var(--referral-muted); font-size: 10px; font-weight: 500; }
@@ -63,13 +72,14 @@
 .dark .referral-detail-management .referral-detail-delete { color: #fda4af; border-color: #70414b; background: #40282e; }
 .referral-card-actions > button:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 @media (hover: hover) {
-  .referral-card:hover { border-color: #afc7b7; box-shadow: var(--alumni-card-hover-shadow, 0 6px 20px rgb(24 59 35 / 12%)); }
-  .referral-card-details:hover { background: var(--referral-line); }
+  .referral-card:hover { border-color: var(--referral-accent); box-shadow: 0 0 0 1px rgb(24 59 35 / 12%), 0 4px 10px 2px rgb(24 59 35 / 22%), 0 16px 28px 3px rgb(24 59 35 / 24%); }
+  .referral-card-actions > .referral-card-details:hover { background: color-mix(in srgb, var(--referral-button), #000 15%); border-color: color-mix(in srgb, var(--referral-button), #000 15%); }
   .referral-card-primary:hover { background: #008633; }
   .referral-card-edit:hover { background: var(--referral-line); }
   .referral-card-delete:hover, .referral-detail-management .referral-detail-delete:hover { background: #ffe4e6; }
   .dark .referral-card-delete:hover, .dark .referral-detail-management .referral-detail-delete:hover { background: #562e38; }
-  .dark .referral-card:hover { border-color: var(--dark-border); }
+  .dark .referral-card:hover { border-color: var(--referral-accent); box-shadow: 0 0 0 1px rgb(0 0 0 / 40%), 0 4px 10px 2px rgb(0 0 0 / 45%), 0 16px 28px 3px rgb(0 0 0 / 55%); }
 }
-@media (max-width: 359px) { .referral-card-content { padding: 14px; } }
+@media (max-width: 480px) { .referral-card-content { padding: 15px; } }
+@media (max-width: 359px) { .referral-card-content { padding: 14px; } .referral-card-identity { gap: 10px; } }
 @media (prefers-reduced-motion: reduce) { .referral-card, .referral-card-actions > button { transition: none; } }

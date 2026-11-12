@@ -1,6 +1,6 @@
 import ContentSkeleton from "../ui/Skeleton";
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, CheckCircle2, Pencil, Send, Trash2, Users } from "lucide-react";
+import { ArrowUpRight, Building2, CalendarDays, CheckCircle2, Clock3, Pencil, Send, Trash2, Users } from "lucide-react";
 import api from "../../utils/axios";
 import { FeedDialog } from "../feed/FeedComposer";
 import {
@@ -186,6 +186,7 @@ export function ReferralDetails({
   const pending = useRef(false);
   const type = referralType(referral.type);
   const link = referralLink(referral.link);
+  const status = application ? applicationStatus(application.status) : null;
   const submit = async (event) => {
     event.preventDefault();
     if (pending.current) return;
@@ -250,28 +251,35 @@ export function ReferralDetails({
       ) : (
         <>
           <div
-            className={`mb-4 flex items-start gap-3 rounded-xl p-4 ${type.style}`}
+            className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 dark:border-zinc-700 dark:bg-zinc-900"
           >
-            <span className="mt-1 shrink-0">
-              {createElement(type.icon, { size: 24 })}
-            </span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider">
+            <div className={`absolute inset-x-0 top-0 h-1 ${type.accent}`} />
+            <div className="flex items-center gap-3">
+              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${type.style}`}>
+                {createElement(type.icon, { size: 24, "aria-hidden": true })}
+              </span>
+              <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${type.style}`}>
                 {type.singular}
-              </p>
-              <h3 className="mt-1 break-words text-lg font-semibold">
+              </span>
+            </div>
+            <div className="mt-4 min-w-0">
+              <h3 className="break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
                 {referral.title}
               </h3>
-              <p className="mt-1 text-xs">
+              <p className="mt-3 flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+                <Building2 size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
                 {referral.organization || "Alumni community"}
               </p>
             </div>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Referred by {referral.authorName || "an alumni community member"}
-            {referral.createdAt && ` · ${referralDate(referral.createdAt)}`}
-          </p>
-          <h4 className="mb-2 mt-5 text-sm font-semibold">
+          <div className="my-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-zinc-100 pb-5 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            <p className="flex min-w-0 items-start gap-2">
+              <Users size={15} className="shrink-0" aria-hidden="true" />
+              <span>Referred by <span className="font-medium text-zinc-700 dark:text-zinc-200">{referral.authorName || "an alumni community member"}</span></span>
+            </p>
+            {referral.createdAt && <p className="flex items-center gap-2"><CalendarDays size={15} aria-hidden="true" />Shared {referralDate(referral.createdAt)}</p>}
+          </div>
+          <h4 className="mb-3 text-sm font-semibold">
             About this opportunity
           </h4>
           <p className="whitespace-pre-wrap break-words text-sm leading-7 text-zinc-600 dark:text-zinc-300">
@@ -283,10 +291,13 @@ export function ReferralDetails({
               href={link}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand dark:text-brand"
+              className="group mt-5 flex items-center justify-between gap-4 rounded-xl border border-zinc-200 px-4 py-3.5 text-sm font-semibold text-brand transition hover:border-brand hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-zinc-700 dark:hover:border-brand dark:hover:bg-zinc-800"
             >
-              View official opportunity
-              <ArrowUpRight size={15} />
+              <span className="min-w-0">
+                <span className="block">View official opportunity</span>
+                <span className="mt-1 block truncate text-xs font-normal text-zinc-500 dark:text-zinc-400">{new URL(link).hostname}</span>
+              </span>
+              <ArrowUpRight size={19} className="shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           )}
@@ -300,14 +311,18 @@ export function ReferralDetails({
             </div>
           )}
           {application ? (
-            <div className="mt-5 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800">
-              <p className="text-sm font-semibold">
-                Application already submitted
-              </p>
-              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                {applicationStatus(application.status).label} ·{" "}
-                {referralDate(application.createdAt)}
-              </p>
+            <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:p-5 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-brand ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700"><CheckCircle2 size={21} aria-hidden="true" /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold">Application submitted</p>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.style}`}><Clock3 size={13} aria-hidden="true" />{status.label}</span>
+                  </div>
+                  {application.createdAt && <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">Submitted on {referralDate(application.createdAt)}</p>}
+                  <p className="mt-3 text-xs leading-5 text-zinc-600 dark:text-zinc-300">Track your progress in My applications.</p>
+                </div>
+              </div>
             </div>
           ) : (
             canApply &&
