@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ChatContext } from "./chat-context.js";
 import { gooeyToast as toast } from 'goey-toast';
 import api from "../utils/axios";
@@ -22,6 +22,7 @@ const unreadCount = (value) => Math.max(0, Number(value) || 0);
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const inMessages = /^\/(?:alumni|student|admin)\/message\/*$/i.test(pathname);
   // Compare against the AUTH id (senderAuthId from the server is the
   // auth-record id, while user._id is the profile id — they differ!).
@@ -416,6 +417,12 @@ export const ChatProvider = ({ children }) => {
     (convo) => {
       const id = String(convo._id);
       loadThread(id);
+      // The floating ChatDock is hidden below Tailwind's md breakpoint.
+      if (window.matchMedia('(max-width: 767px)').matches) {
+        const role = ['student', 'alumni', 'admin'].includes(user?.role) ? user.role : 'alumni';
+        navigate(`/${role}/message?conversation=${encodeURIComponent(id)}`);
+        return;
+      }
       setOpenChats((prev) => {
         const existing = prev.find((w) => String(w.id) === id);
         if (existing) {
@@ -437,7 +444,7 @@ export const ChatProvider = ({ children }) => {
         return next.length > 2 ? next.slice(next.length - 2) : next;
       });
     },
-    [loadThread],
+    [loadThread, navigate, user],
   );
 
   // Start (or reopen) a chat with someone by email — used by

@@ -29,6 +29,19 @@ export const messageAttachmentDto = message => {
     bytes: attachment.bytes, url: `/api/conversations/${message.conversationId}/messages/${message._id}/attachment` };
 };
 
+export function messageAttachmentDownloadUrl(attachment, cloudinary, now = Date.now()) {
+  if (attachment.kind === 'file') {
+    return cloudinary.utils.private_download_url(attachment.publicId, attachment.format, {
+      resource_type: attachment.resourceType || 'raw', type: attachment.deliveryType || 'authenticated',
+      expires_at: Math.floor(now / 1000) + 120, attachment: true,
+    });
+  }
+  return cloudinary.url(attachment.publicId, {
+    resource_type: attachment.resourceType || 'image', type: attachment.deliveryType || 'authenticated',
+    ...(attachment.format ? { format: attachment.format } : {}), secure: true, sign_url: true,
+  });
+}
+
 export function createMessageAttachmentDownload(db, signedUrl, fetchAsset = fetch) {
   return async (req, res) => {
     try {

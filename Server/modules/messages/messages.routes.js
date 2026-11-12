@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { client } from '../../config/db.js';
 import { cloudinary } from '../../config/cloudinary.js';
-import { createMessageAttachmentDownload, MAX_CHAT_FILE_BYTES } from './message-attachments.js';
+import { createMessageAttachmentDownload, messageAttachmentDownloadUrl, MAX_CHAT_FILE_BYTES } from './message-attachments.js';
 import { listConversations, openConversation, listMessages, sendMessage, createGroup, renameGroup, editMessage, unsendMessage } from './messages.controllers.js';
 import { protect } from '../../middlewares/auth.middleware.js';
 import { listGroupMembers, groupCandidates, addGroupMembers, promoteGroupAdmin, leaveGroup, removeGroupMember } from './messages.controllers.js';
@@ -35,8 +35,7 @@ router.delete('/:id/members/:authId', removeGroupMember);
 router.get('/:id/messages', listMessages);
 router.post('/:id/read', markMessagesRead);
 router.post('/:id/messages', uploadAttachment, sendMessage);
-router.get('/:id/messages/:messageId/attachment', createMessageAttachmentDownload(client.db('SielAlumni'), attachment => cloudinary.url(attachment.publicId,
-  { resource_type: attachment.resourceType, type: 'authenticated', ...(attachment.format ? { format: attachment.format } : {}), secure: true, sign_url: true })));
+router.get('/:id/messages/:messageId/attachment', createMessageAttachmentDownload(client.db('SielAlumni'), attachment => messageAttachmentDownloadUrl(attachment, cloudinary)));
 router.put('/messages/:msgId', editMessage);
 router.delete('/messages/:msgId', unsendMessage);
 

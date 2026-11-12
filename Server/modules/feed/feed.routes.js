@@ -39,6 +39,7 @@ router.get('/:id/images/:imageId', createFeedImageDownload(feed));
 router.delete('/:id', action(req => feed.remove(req.user, req.params.id)));
 router.put('/:id/moderation', action(req => feed.moderate(req.user, req.params.id, req.body)));
 router.put('/:id/like', action(req => feed.setMembership(req.user, req.params.id, 'likedBy', req.body.liked)));
+router.get('/:id/likes', action(req => feed.listLikes(req.user, req.params.id, req.query.before)));
 router.put('/:id/rsvp', action(req => feed.setMembership(req.user, req.params.id, 'attending', req.body.attending)));
 router.get('/:id/comments', action(req => feed.listComments(req.user, req.params.id, req.query.before, req.query.parentCommentId)));
 router.post('/:id/comments', action(req => feed.comment(req.user, req.params.id, req.body.body, req.body.parentCommentId), 201));

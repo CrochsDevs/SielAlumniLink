@@ -71,10 +71,10 @@ function PostCard({ post, query }) {
           </span>
         ))}
       </div>
-      <p className="mt-4 flex items-center gap-1 border-t border-zinc-100 pt-3 text-xs text-zinc-500 dark:border-zinc-800">
+      {post.source === 'feed' ? <Link to={`/feed?post=${post._id}`} className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-brand hover:underline">View post and comments</Link> : <p className="mt-4 flex items-center gap-1 border-t border-zinc-100 pt-3 text-xs text-zinc-500 dark:border-zinc-800">
         <Bookmark className="h-3.5 w-3.5" />
         {post.savesCount} saves
-      </p>
+      </p>}
     </article>
   );
 }

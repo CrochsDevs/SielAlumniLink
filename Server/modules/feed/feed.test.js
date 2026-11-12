@@ -122,6 +122,50 @@ const fixture = async ({ notifications = false } = {}) => {
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
 
+test('likes list includes public profile details and reflects unlikes', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post());
+  assert.deepEqual(await f.feed.listLikes(f.friend, p._id), { people: [], nextCursor: null });
+  await f.feed.setMembership(f.friend, p._id, 'likedBy', true);
+  const result = await f.feed.listLikes(f.stranger, p._id);
+  assert.equal(result.people.length, 1);
+  assert.equal(result.people[0].authId, String(f.friend._id));
+  assert.equal(result.people[0].name, 'friend');
+  assert.ok(result.people[0]._id);
+  assert.equal('email' in result.people[0], false);
+  assert.equal('password' in result.people[0], false);
+  await f.feed.setMembership(f.friend, p._id, 'likedBy', false);
+  assert.equal((await f.feed.listLikes(f.author, p._id)).people.length, 0);
+});
+
+test('likes list paginates without duplicates and rejects malformed cursors', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post());
+  const ids = Array.from({ length: 35 }, () => String(new ObjectId()));
+  await f.db.collection('feed_posts').updateOne({ _id: p._id }, { $set: { likedBy: [...ids, ids[0]] } });
+  const first = await f.feed.listLikes(f.friend, p._id);
+  assert.equal(first.people.length, 30);
+  assert.ok(first.nextCursor);
+  const second = await f.feed.listLikes(f.friend, p._id, first.nextCursor);
+  assert.equal(second.people.length, 5);
+  assert.equal(second.nextCursor, null);
+  assert.equal(new Set([...first.people, ...second.people].map(person => person.authId)).size, 35);
+  await rejects(f.feed.listLikes(f.friend, p._id, { $ne: null }), 400);
+});
+
+test('likes list enforces the post audience, deletion and moderation rules', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post({ audience: 'connections' }));
+  await f.feed.setMembership(f.friend, p._id, 'likedBy', true);
+  assert.equal((await f.feed.listLikes(f.friend, p._id)).people.length, 1);
+  await rejects(f.feed.listLikes(f.stranger, p._id), 404);
+  await f.db.collection('feed_posts').updateOne({ _id: p._id }, { $set: { 'moderation.blocked': true } });
+  await rejects(f.feed.listLikes(f.friend, p._id), 404);
+  assert.equal((await f.feed.listLikes(f.admin, p._id)).people.length, 1);
+  await f.db.collection('feed_posts').updateOne({ _id: p._id }, { $set: { deletedAt: new Date() } });
+  await rejects(f.feed.listLikes(f.admin, p._id), 404);
+});
+
 test('comment replies stay in one paginated thread and include legacy comments', async () => {
   const f = await fixture(), p = await f.feed.create(f.author, post());
   const root = await f.feed.comment(f.friend, p._id, 'Parent');

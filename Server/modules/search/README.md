@@ -7,7 +7,7 @@ Restart the server after pulling these changes. Startup backfills `users.searchN
 Both endpoints require the existing authentication cookie and a student, alumni, or admin role:
 
 - `GET /api/search/suggestions?q=Lester`: up to six matching people.
-- `GET /api/search/all?q=Lester&category=all&sort=relevant&page=1`: ten people and/or ten career posts per page, with independent totals and page counts. In All, a page advances both sections; exhausted sections disappear.
+- `GET /api/search/all?q=Lester&category=all&sort=relevant&page=1`: ten people and/or ten posts per page, with independent totals and page counts. Posts combine career and feed records before sorting and pagination. In All, a page advances both sections; exhausted sections disappear.
 
 Categories: `all`, `people`, `students`, `alumni`, `posts`. Sorts: `relevant`, `active`, `newest`. The active sort orders people by their most recent recorded login, falling back to profile update time. Login timestamps and audit records are not included in responses. Newest sorts posts by publication date.
 
@@ -19,7 +19,7 @@ Name substring queries use an indexed n-gram prefilter and escaped regex verific
 
 Search returns an explicit field allowlist, never auth credentials, reset codes, email addresses, audit details, or save-member lists. Existing career-post visibility is `isActive: true` for authenticated members; there are no per-post audience settings in this repository. Profile roles come from auth records. Deleted accounts are excluded from people discovery.
 
-The actual post collection is `career_posts`. It supports title, body, tags, authors, dates, and saves. It does not currently store social-feed images, likes, or comments; search shows real save counts and full expandable post bodies rather than inventing engagement. The dashboard's sample posts are not indexed. Profile pictures and current employment appear when those fields exist on the profile.
+Post search reads both `career_posts` and `feed_posts`. Feed posts match current author names, titles, bodies, organization/location fields, and accessible original repost content. Feed results link to `/feed?post=<id>` for the full post and comments. Public posts, the viewer's own posts, and posts from accepted connections are included; deleted or blocked posts and reposts with inaccessible originals are excluded. Career results retain their real save counts. Profile pictures and current employment appear when those fields exist on the profile.
 
 Connections reuse `POST /api/connections`, which now also accepts `recipientAuthId` so search need not expose email addresses. It enforces the student-to-student restriction on the server. Self/duplicate checks remain in the existing model. Existing accepted, pending, and declined relationships are displayed without offering duplicate requests. Results refresh after a connection action, on window focus, and every 30 seconds.
 

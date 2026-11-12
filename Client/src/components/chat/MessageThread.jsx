@@ -48,13 +48,14 @@ export default function MessageThread({
                 <ChatAvatar convo={avatar} />
               </span>
               <div className="message-stream-body">
-                <BubbleGroup>
+                <BubbleGroup className="gap-0.5">
                   {group.map((message, messageIndex) => (
                     <MessageBubble
                       key={message._id || messageIndex}
                       msg={message}
                       isGroup={isGroup}
                       mine={message.from === "me"}
+                      showDelivery={messageIndex === group.length - 1}
                       convoId={convoId}
                       onEdit={onEdit}
                       onUnsend={onUnsend}
@@ -69,7 +70,7 @@ export default function MessageThread({
     );
   }
   return (
-    <div ref={readRoot} className="flex min-w-0 flex-col gap-5" data-chat-thread>
+    <div ref={readRoot} className="flex min-w-0 flex-col gap-3" data-chat-thread>
       {groupMessages(messages, isGroup).map((group, index) => {
         const first = group[0];
         if (first.activity) return <MessageBubble key={first._id || `${convoId}-${index}`} msg={first} mine={first.from === 'me'} />;
@@ -81,7 +82,7 @@ export default function MessageThread({
             {!mine && <span data-message-avatar className="mb-0.5 flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[11px] font-semibold text-primary" title={name}>
               <ChatAvatar convo={avatar} />
             </span>}
-            <BubbleGroup className="min-w-0 flex-1">
+            <BubbleGroup className="min-w-0 flex-1 gap-0.5">
               {isGroup && !mine && <span className="truncate px-1 text-[10px] font-medium text-muted-foreground">{name}</span>}
               {group.map((message, messageIndex) => (
                 <MessageBubble
@@ -89,6 +90,7 @@ export default function MessageThread({
                   msg={message}
                   isGroup={isGroup}
                   mine={message.from === "me"}
+                  showDelivery={messageIndex === group.length - 1}
                   convoId={convoId}
                   onEdit={onEdit}
                   onUnsend={onUnsend}

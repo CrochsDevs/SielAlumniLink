@@ -83,13 +83,27 @@ export function buildPeoplePipeline(options, viewer) {
   ];
 }
 
-export function buildPostsPipeline(options) {
+export function buildPostsPipeline(options, viewer, network = []) {
   const { q, sort } = options;
   const tokens = [...new Set(q.split(' '))].map(escapeRegex);
   const phrase = escapeRegex(q);
+  const accessible = [String(viewer?._id), ...network.map(String)];
+  const visibility = { $or: [{ audience: 'public' }, { authorAuthId: { $in: accessible } }] };
   return [
     // Existing career posts are visible to all authenticated roles, only while active.
     { $match: { isActive: true } },
+    { $set: { source: 'career' } },
+    { $unionWith: { coll: 'feed_posts', pipeline: [
+      { $match: { deletedAt: null, 'moderation.blocked': { $ne: true }, ...visibility } },
+      { $lookup: { from: 'feed_posts', localField: 'originalPostId', foreignField: '_id', as: 'original' } },
+      { $match: { $or: [{ originalPostId: null }, { $and: [
+        { 'original.0._id': { $exists: true } }, { 'original.0.deletedAt': null },
+        { 'original.0.moderation.blocked': { $ne: true } },
+        { $or: [{ 'original.0.audience': 'public' }, { 'original.0.authorAuthId': { $in: accessible } }] },
+      ] }] } },
+      { $set: { source: 'feed', title: { $ifNull: ['$title', ''] },
+        searchableOriginal: { $concat: [text({ $arrayElemAt: ['$original.title', 0] }), ' ', text({ $arrayElemAt: ['$original.body', 0] })] } } },
+    ] } },
     { $set: { authorId: { $convert: { input: '$authorAuthId', to: 'objectId', onError: null, onNull: null } } } },
     { $lookup: { from: 'auth', localField: 'authorId', foreignField: '_id', as: 'account' } },
     { $unwind: { path: '$account', preserveNullAndEmptyArrays: true } },
@@ -100,7 +114,7 @@ export function buildPostsPipeline(options) {
     ], as: 'profile' } },
     { $set: { author: { $arrayElemAt: ['$profile', 0] },
       authorName: { $ifNull: [{ $arrayElemAt: ['$profile.name', 0] }, '$authorName'] },
-      searchable: { $concat: [text('$title'), ' ', text('$body'), ' ', { $reduce: {
+      searchable: { $concat: [text('$title'), ' ', text('$body'), ' ', text('$searchableOriginal'), ' ', text('$details.organization'), ' ', text('$details.location'), ' ', { $reduce: {
         input: { $ifNull: ['$tags', []] }, initialValue: '', in: { $concat: ['$$value', ' ', text('$$this')] },
       } }] },
     } },
@@ -114,7 +128,7 @@ export function buildPostsPipeline(options) {
       ...tokens.map(token => ({ $cond: [{ $or: [matches('$authorName', token), matches('$searchable', token)] }, 10, 0] })),
     ] } } },
     { $sort: sort === 'newest' ? { createdAt: -1, relevance: -1, _id: 1 } : { relevance: -1, createdAt: -1, _id: 1 } },
-    pageFacet(options, { _id: 1, title: 1, body: 1, tags: 1, createdAt: 1, type: 1,
+    pageFacet(options, { _id: 1, source: 1, title: 1, body: 1, tags: 1, createdAt: 1, type: 1,
       authorName: 1, authorProfileId: '$author._id', authorRole: '$account.role', profilePicture: '$author.profilePicture',
       savesCount: { $size: { $ifNull: ['$savedBy', []] } },
     }),

@@ -1,7 +1,5 @@
 import Swal from "sweetalert2";
 import {
-  FileText,
-  Download,
   Phone,
   PhoneMissed,
   PhoneOff,
@@ -14,7 +12,7 @@ import { Bubble, BubbleContent } from "../ui/bubble";
 import { messageDeliveryLabel } from './messageDelivery';
 import MessageActions from './MessageActions';
 import ChatPhoto from './ChatPhoto';
-import { chatAttachmentUrl } from '../../utils/chatAttachments';
+import ChatFile from './ChatFile';
 import { mentionParts } from './mentionText';
 import './MessageBubble.css';
 
@@ -38,6 +36,7 @@ export default function MessageBubble({
   msg,
   mine,
   isGroup = false,
+  showDelivery = true,
   convoId,
   onEdit,
   onUnsend,
@@ -105,19 +104,7 @@ export default function MessageBubble({
         <>
           {msg.attachment?.kind === 'image' && msg.attachment.url && <ChatPhoto attachment={msg.attachment} pending={!!msg.pendingId} />}
           {(msg.text || msg.call || msg.attachment?.kind === 'file') && <BubbleContent>
-            {msg.attachment?.kind === "file" && msg.attachment?.url && (
-              <a
-                href={chatAttachmentUrl(msg.attachment)}
-                download={msg.attachment.name || "file"}
-                className="flex min-w-0 items-center gap-2 rounded-lg py-1 font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
-              >
-                <FileText className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 break-all">
-                  {msg.attachment.name || "Download file"}
-                </span>
-                <Download className="h-3.5 w-3.5 shrink-0" />
-              </a>
-            )}
+            {msg.attachment?.kind === "file" && msg.attachment?.url && <ChatFile attachment={msg.attachment} />}
             {msg.call && (
               <div className="chat-call-card__layout">
                 <span className="chat-call-card__icon" aria-hidden="true">
@@ -147,10 +134,10 @@ export default function MessageBubble({
                   View shared post →
                 </Link>
               ) : (
-                <p>{mentionParts(msg.text, msg.mentions || []).map((part, index) => part.authId ? <strong key={index} data-mention-auth-id={part.authId} className="chat-message-mention rounded bg-black/10 px-0.5 underline decoration-current/40 underline-offset-2 dark:bg-white/10">{part.text}</strong> : part.text)}</p>
+                <p>{mentionParts(msg.text, msg.mentions || []).map((part, index) => part.authId ? <strong key={index} data-mention-auth-id={part.authId} className="chat-message-mention rounded bg-black/10 px-0.5 dark:bg-white/10">{part.text}</strong> : part.text)}</p>
               ))}
           </BubbleContent>}
-          {msg.edited && !mine && (
+          {msg.edited && (!mine || !showDelivery) && (
             <span className="px-1 text-[10px] text-muted-foreground">
               Edited
             </span>
@@ -162,7 +149,7 @@ export default function MessageBubble({
           )}
         </>
       )}
-      {mine && !msg.unsent && !msg.call && !msg.activity && (
+      {showDelivery && mine && !msg.unsent && !msg.call && !msg.activity && (
         <span className="self-end px-1 text-[10px] leading-4 text-muted-foreground" aria-live="polite"
           title={msg.read && isGroup ? 'Read by at least one other group member' : undefined}>
           {messageDeliveryLabel(msg)}

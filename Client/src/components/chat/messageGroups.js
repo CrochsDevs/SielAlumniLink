@@ -12,12 +12,6 @@ export function groupMessages(messages, isGroup = false) {
     const group = groups.at(-1);
     const previous = group?.at(-1);
     const sender = senderKey(message, isGroup);
-    const previousTime = Date.parse(previous?.at);
-    const time = Date.parse(message.at);
-    const closeInTime =
-      !Number.isFinite(previousTime) ||
-      !Number.isFinite(time) ||
-      (time >= previousTime && time - previousTime < 5 * 60 * 1000);
     if (
       previous &&
       sender &&
@@ -25,8 +19,7 @@ export function groupMessages(messages, isGroup = false) {
       !message.unsent &&
       !previous.unsent &&
       !message.activity &&
-      !previous.activity &&
-      closeInTime
+      !previous.activity
     ) {
       group.push(message);
     } else {

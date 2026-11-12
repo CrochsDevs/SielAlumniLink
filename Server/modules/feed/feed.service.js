@@ -162,6 +162,20 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
 
   const get = async (user, id) => serialize(await readable(id, user), user);
 
+  const listLikes = async (user, id, before) => {
+    const post = await readable(id, user);
+    if (before !== undefined && (typeof before !== 'string' || !ObjectId.isValid(before))) fail(400, 'Invalid likes cursor');
+    const ids = [...new Set((post.likedBy || []).map(String))].sort().reverse()
+      .filter(authId => !before || authId < before);
+    const page = ids.slice(0, 30);
+    const people = await Promise.all(page.map(async authId => {
+      const person = await author(authId);
+      return { _id: person._id, authId: person.authId, name: person.name,
+        profilePicture: person.profilePicture, role: person.role, program: person.program, batch: person.batch };
+    }));
+    return { people, nextCursor: ids.length > 30 ? page.at(-1) : null };
+  };
+
   const updateStory = async (user, id, input) => {
     await ensureFeedParticipation(db, user);
     if (!['alumni', 'admin'].includes(String(user.role).toLowerCase())) fail(403, 'Only alumni can edit success stories');
@@ -350,7 +364,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
   };
 
   return { list, listStories: (user, query = {}) => list(user, { ...query, type: 'story' }, true), create, updateStory, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
-    setMembership, listComments, comment, removeComment, share, remove, recipients };
+    setMembership, listLikes, listComments, comment, removeComment, share, remove, recipients };
 };
 
 export const ensureFeedIndexes = async (db) => {

@@ -25,6 +25,7 @@ import ProfileAvatar from "../profile/ProfileAvatar";
 import { profilePath } from "../search/searchLinks";
 import { AudienceSelect, FeedDialog } from "./FeedComposer";
 import FeedImages from "./FeedImages";
+import PostLikesDialog from "./PostLikesDialog";
 
 const buttonClass =
   "rounded-lg px-3 py-2 text-sm font-semibold text-brand hover:bg-emerald-50 disabled:opacity-50 dark:text-brand dark:hover:bg-zinc-800";
@@ -972,15 +973,20 @@ export default function FeedPost({
         )}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-        <span>
+        <button type="button" onClick={() => setDialog('likes')} className="hover:underline" aria-label={`View ${post.likesCount} ${post.likesCount === 1 ? 'like' : 'likes'}`}>
           {post.likesCount} {post.likesCount === 1 ? "like" : "likes"}
-        </span>
+        </button>
+        <span className="flex items-center gap-1">
         <button
+          type="button"
           onClick={() => setShowComments((prev) => !prev)}
+          aria-expanded={showComments}
           className="hover:underline"
         >
-          {post.commentsCount} comments · {post.sharesCount} reposts
+          {post.commentsCount} {post.commentsCount === 1 ? 'comment' : 'comments'}
         </button>
+        <span>· {post.sharesCount} reposts</span>
+        </span>
       </div>
       <div className="grid grid-cols-4 border-t border-zinc-100 px-1 py-1 sm:px-2 dark:border-zinc-800">
         <button
@@ -1063,6 +1069,7 @@ export default function FeedPost({
         ) : (
           <ShareLinkDialog post={post} onClose={() => setDialog(null)} />
         ))}
+      {dialog === 'likes' && <PostLikesDialog key={post._id} postId={post._id} onClose={() => setDialog(null)} />}
       {dialog === "send" && (
         <SendDialog post={post} onClose={() => setDialog(null)} />
       )}

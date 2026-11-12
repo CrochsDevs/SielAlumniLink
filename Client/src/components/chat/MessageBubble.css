@@ -93,11 +93,11 @@
 }
 
 .chat-dock-message-list [data-chat-thread] {
-  gap: 24px;
+  gap: 12px;
 }
 
 .chat-dock-message-list [data-slot="bubble-group"] {
-  gap: 12px;
+  gap: 2px;
   align-items: flex-start;
 }
 

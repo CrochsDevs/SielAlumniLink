@@ -19,7 +19,7 @@
     "test:employment": "node --test --test-isolation=none modules/employment/employment.test.js",
     "test:feed": "node --test modules/feed/feed.test.js",
     "test:feed:integration": "node --test modules/feed/feed.integration.test.js",
-    "test:search": "node --test modules/search/search.test.js",
+    "test:search": "node --test --test-isolation=none --test-force-exit modules/search/search.test.js",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "seed:users": "node scripts/seed-users.js",

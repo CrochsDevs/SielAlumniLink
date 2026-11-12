@@ -13,7 +13,7 @@ import { createConnection } from '../connections/connections.controllers.js';
 import AuthModel from '../auth/auth.models.js';
 
 // Only this uniquely named temporary database is ever written or dropped.
-const dbName = `alumnilink_search_test_${process.pid}_${Date.now()}`;
+const dbName = `alumnilink_search_test_${process.pid}_${Date.now().toString(36)}`;
 const mongo = new MongoClient(process.env.TEST_MONGO_URI || process.env.MONGO_URI, { serverSelectionTimeoutMS: 5000 });
 const db = mongo.db(dbName);
 const viewer = { _id: new ObjectId(), role: 'student' };
@@ -64,7 +64,63 @@ after(async () => {
 });
 
 const people = async (input, person = viewer) => (await db.collection('users').aggregate(buildPeoplePipeline(parseSearch(input), person)).toArray())[0];
-const posts = async input => (await db.collection('career_posts').aggregate(buildPostsPipeline(parseSearch(input))).toArray())[0];
+const posts = async (input, network = []) => (await db.collection('career_posts').aggregate(buildPostsPipeline(parseSearch(input), viewer, network)).toArray())[0];
+
+test('global search includes feed posts by current author name and links them to their source', async () => {
+  const row = { _id: new ObjectId(), authorAuthId: String(alumniId), title: '', body: 'A social update', audience: 'public', deletedAt: null, createdAt: new Date('2026-11-12'), likedBy: ['private-member-id'] };
+  await db.collection('feed_posts').insertOne(row);
+  try {
+    const result = await posts({ q: 'Lester Rodriguez' });
+    assert.equal(result.count[0].total, 4);
+    const feedPost = result.items.find(item => String(item._id) === String(row._id));
+    assert.equal(feedPost.source, 'feed');
+    assert.equal(feedPost.authorName, 'Lester Rodriguez');
+    assert.equal(feedPost.body, 'A social update');
+    assert.ok(feedPost.authorProfileId);
+    assert.equal('likedBy' in feedPost, false);
+    assert.equal('authorEmail' in feedPost, false);
+    const response = await (await fetch(`${baseUrl}/test?q=Lester&category=posts`)).json();
+    assert.ok(response.data.posts.items.some(item => item._id === String(row._id)));
+  } finally { await db.collection('feed_posts').deleteOne({ _id: row._id }); }
+});
+
+test('feed search protects private, blocked, deleted and inaccessible original posts', async () => {
+  const rows = [
+    { audience: 'public' },
+    { audience: 'connections' },
+    { audience: 'public', moderation: { blocked: true } },
+    { audience: 'public', deletedAt: new Date() },
+  ].map(row => ({ _id: new ObjectId(), authorAuthId: String(alumniId), body: 'SocialSearchPrivacy', deletedAt: null, ...row }));
+  rows.push({ _id: new ObjectId(), authorAuthId: String(viewer._id), audience: 'public', body: 'SocialSearchPrivacy repost', originalPostId: rows[1]._id });
+  await db.collection('feed_posts').insertMany(rows);
+  try {
+    assert.equal((await posts({ q: 'SocialSearchPrivacy' })).count[0].total, 1);
+    assert.equal((await posts({ q: 'SocialSearchPrivacy' }, [String(alumniId)])).count[0].total, 3);
+    await db.collection('feed_posts').updateOne({ _id: rows[1]._id }, { $set: { 'moderation.blocked': true } });
+    assert.equal((await posts({ q: 'SocialSearchPrivacy' }, [String(alumniId)])).count[0].total, 1);
+  } finally { await db.collection('feed_posts').deleteMany({ _id: { $in: rows.map(row => row._id) } }); }
+});
+
+test('career and feed posts share one stable pagination and relevant/newest ordering', async () => {
+  const rows = Array.from({ length: 14 }, (_, index) => ({ _id: new ObjectId(), authorAuthId: String(alumniId), title: `MixedSearchFixture ${index}`, body: '',
+    createdAt: new Date(Date.UTC(2026, 10, index + 1)), isActive: true, audience: 'public', deletedAt: null }));
+  await db.collection('career_posts').insertMany(rows.slice(0, 7));
+  await db.collection('feed_posts').insertMany(rows.slice(7));
+  try {
+    const first = await posts({ q: 'MixedSearchFixture', sort: 'newest' });
+    const second = await posts({ q: 'MixedSearchFixture', sort: 'newest', page: 2 });
+    assert.equal(first.count[0].total, 14);
+    assert.equal(first.items.length, 10);
+    assert.equal(second.items.length, 4);
+    assert.equal(String(first.items[0]._id), String(rows[13]._id));
+    assert.equal(new Set([...first.items, ...second.items].map(item => String(item._id))).size, 14);
+    assert.equal((await posts({ q: 'MixedSearchFixture' })).count[0].total, 14);
+  } finally {
+    const filter = { _id: { $in: rows.map(row => row._id) } };
+    await db.collection('career_posts').deleteMany(filter);
+    await db.collection('feed_posts').deleteMany(filter);
+  }
+});
 
 test('validates length, structured input, categories and bounded integer pages', () => {
   for (const input of [{ q: { $ne: '' } }, { q: ['Lester'] }, { q: 'x'.repeat(121) }, { page: -1 }, { page: '1.5' }, { page: 1001 }, { category: 'auth' }, { sort: '$where' }]) assert.throws(() => parseSearch(input));

@@ -56,8 +56,10 @@ try {
     await page.goto(`http://localhost:5173/${role}/message`);
     await page.bringToFront();
     const bubble = text => page.locator('[data-slot="bubble"]').filter({ hasText: text });
-    await bubble('Previously sent').getByText('Sent', { exact: true }).waitFor();
     await bubble('Previously read').getByText('Read', { exact: true }).waitFor();
+    assert.equal(await bubble('Previously sent').locator('[aria-live]').count(), 0);
+    const initialGroup = bubble('Previously read').locator('..');
+    assert.equal(await initialGroup.evaluate(element => getComputedStyle(element).rowGap), '2px');
     await page.waitForFunction(() => document.querySelector('[data-chat-thread] [data-read-id]') === null);
     assert.ok(reads.includes(id(22)), 'visible incoming messages are acknowledged');
 
@@ -65,21 +67,26 @@ try {
     // and a receipt can arrive before the original HTTP response.
     const input = page.getByPlaceholder('Message Alex...');
     for (let n = 0; n < 2; n++) { await input.fill('Concurrent fixture'); await input.press('Enter'); }
-    await page.waitForFunction(() => document.querySelectorAll('[data-slot="bubble"] [aria-live]').length >= 4);
-    assert.equal(await bubble('Concurrent fixture').getByText('Sending…', { exact: true }).count(), 2);
+    await page.waitForFunction(() => document.querySelectorAll('[data-slot="bubble"] [aria-live]').length === 2);
+    assert.equal(await bubble('Concurrent fixture').getByText('Sending…', { exact: true }).count(), 1);
     while (sends.length < 2) await new Promise(resolve => setTimeout(resolve, 20));
     await page.evaluate(async ({ direct, self, body, savedId }) => {
       const { getSocket } = await import('/src/realtime/socket.js');
       getSocket().emitEvent(['message:new', { conversationId: direct, message: { _id: savedId, senderAuthId: self, ...body, at: new Date().toISOString() } }]);
       getSocket().emitEvent(['message:read', { conversationId: direct, readerAuthId: 'recipient', messageIds: [savedId] }]);
     }, { direct, self, body: sends[0].body, savedId: id(30) });
-    await bubble('Concurrent fixture').getByText('Read', { exact: true }).waitFor();
+    assert.equal(await bubble('Concurrent fixture').getByText('Read', { exact: true }).count(), 0);
     assert.equal(await bubble('Concurrent fixture').getByText('Sending…', { exact: true }).count(), 1);
     for (let n = 0; n < 2; n++) await sends[n].route.fulfill({ status: 201, json: { success: true, data: { ...sends[n].body, _id: id(30 + n), from: 'me', read: false, at: new Date().toISOString() } } });
     await bubble('Concurrent fixture').getByText('Sent', { exact: true }).waitFor();
     assert.equal(await bubble('Concurrent fixture').count(), 2);
-    assert.equal(await bubble('Concurrent fixture').getByText('Read', { exact: true }).count(), 1);
+    assert.equal(await bubble('Concurrent fixture').getByText('Read', { exact: true }).count(), 0);
     await page.screenshot({ path: path.join(os.tmpdir(), `SielAlumni-chat-delivery-${mobile ? 'mobile' : 'desktop'}.png`) });
+    if (process.argv.includes('--delivery-only')) {
+      await context.close();
+      console.log(`PASS ${mobile ? 'mobile student' : 'desktop admin'}: compact groups, final-message status, read acknowledgement, concurrent sends`);
+      continue;
+    }
 
     const back = async () => { if (mobile && await page.getByRole('button', { name: 'Back to conversations' }).isVisible()) await page.getByRole('button', { name: 'Back to conversations' }).click(); };
     await back();

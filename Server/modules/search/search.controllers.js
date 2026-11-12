@@ -1,8 +1,10 @@
 import { client } from '../../config/db.js';
 import { buildPeoplePipeline, buildPostsPipeline, parseSearch } from './search.query.js';
+import { createFeedService } from '../feed/feed.service.js';
 
 const db = client.db('SielAlumni');
 export function createSearchHandler(database = db, suggestions = false) {
+  const feed = createFeedService(database);
   return async (req, res) => {
     let options;
     try { options = parseSearch(req.query, suggestions); }
@@ -16,7 +18,8 @@ export function createSearchHandler(database = db, suggestions = false) {
       };
       const [people, posts] = options.q ? await Promise.all([
         options.category !== 'posts' ? run('users', buildPeoplePipeline(options, req.user)) : empty,
-        !suggestions && ['all', 'posts'].includes(options.category) ? run('career_posts', buildPostsPipeline(options)) : empty,
+        !suggestions && ['all', 'posts'].includes(options.category)
+          ? feed.connectedIds(req.user).then(network => run('career_posts', buildPostsPipeline(options, req.user, network))) : empty,
       ]) : [empty, empty];
       res.json({ success: true, data: { query: options.q, people, posts } });
     } catch (error) {
