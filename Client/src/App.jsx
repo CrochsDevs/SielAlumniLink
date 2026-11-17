@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useLayoutEffect } from "react";
+import React, { lazy, Suspense, useLayoutEffect, useRef, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -11,7 +11,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
 import { useAuth } from "./context/useAuth";
 import GraduationCapLoader from "./components/ui/GraduationCapLoader";
-import { PageSkeleton } from "./components/ui/Skeleton";
+import { PageSkeleton, StudentFeedSkeleton } from "./components/ui/Skeleton";
 import QuarterlyTracerGate from "./components/tracer/QuarterlyTracerGate";
 import Login from "./auth/login";
 
@@ -565,7 +565,7 @@ function AppRoutes() {
         path="/student/readiness"
         element={
           <ProtectedRoute
-            allowedRoles={[Roles.STUDENT, Roles.ALUMNI, Roles.ADMIN]}
+            allowedRoles={[Roles.STUDENT]}
           >
             <StudentReadiness />
           </ProtectedRoute>
@@ -593,7 +593,7 @@ function AppRoutes() {
         path="/alumni/readiness"
         element={
           <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
-            <StudentReadiness />
+            <Navigate to="/alumni" replace />
           </ProtectedRoute>
         }
       />
@@ -636,19 +636,37 @@ function AppRoutes() {
 function MemberPages() {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
+  const previousPath = useRef(pathname);
+  const [studentRouteLoading, setStudentRouteLoading] = useState(false);
   const isAuthPage = ["/login", "/logout", "/signup", "/forgot-password", "/verify-magic-link", "/setup-password"]
     .includes(pathname.replace(/\/+$/, ""));
   const workspaceTheme = !!user && !user.passwordSetupRequired && !isAuthPage;
   useLayoutEffect(() => {
     setWorkspaceThemeEnabled(workspaceTheme);
   }, [workspaceTheme]);
+  useLayoutEffect(() => {
+    if (previousPath.current === pathname) return;
+    previousPath.current = pathname;
+    if (pathname !== "/student" && !pathname.startsWith("/student/")) {
+      setStudentRouteLoading(false);
+      return;
+    }
+    setStudentRouteLoading(true);
+    const timer = window.setTimeout(() => setStudentRouteLoading(false), 220);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
   if (loading && !isAuthPage) {
-    return <GraduationCapLoader label="Checking your session" />;
+    return pathname === "/student" || pathname.startsWith("/student/")
+      ? <StudentFeedSkeleton label="Loading your student workspace" />
+      : <GraduationCapLoader label="Checking your session" />;
+  }
+  if (studentRouteLoading) {
+    return <StudentFeedSkeleton label="Loading your student page" />;
   }
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
     <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
-      <QuarterlyTracerGate><Suspense fallback={isAuthPage || !user ? <GraduationCapLoader label="Loading page" /> : <PageSkeleton label="Loading page" />}><AppRoutes /></Suspense></QuarterlyTracerGate>
+      <QuarterlyTracerGate><Suspense fallback={isAuthPage || !user ? <GraduationCapLoader label="Loading page" /> : pathname.startsWith("/student") ? <StudentFeedSkeleton label="Loading your student page" /> : <PageSkeleton label="Loading page" />}><AppRoutes /></Suspense></QuarterlyTracerGate>
     </div>
   );
 }
@@ -666,17 +684,11 @@ function ScrollToTop() {
   return null;
 }
 
-function SignInLoading() {
-  const { signingIn } = useAuth();
-  return signingIn ? <GraduationCapLoader label="Signing you in" /> : null;
-}
-
 function App() {
   return (
     <Router>
       <ScrollToTop />
       <AuthProvider>
-        <SignInLoading />
         <ChatProvider>
           <MemberPages />
         </ChatProvider>

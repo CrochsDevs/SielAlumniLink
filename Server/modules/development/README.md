@@ -80,7 +80,7 @@ applications include opportunity titles and organizations.
 
 Frontend pages: `/student/journey`, `/student/internship`, `/student/portfolio`,
 `/student/referrals`, `/student/readiness`, and `/alumni/referral`. Alumni can also
-access `/alumni/journey` and `/alumni/readiness` after graduation.
+access `/alumni/journey` after graduation.
 
 Validation:
 
@@ -114,7 +114,7 @@ including past observations when the latest response is non-working. Existing
 historical milestones remain unchanged. Automatic milestones use atomic
 first-write preservation when snapshots arrive concurrently.
 
-Alumni navigation exposes Journey and Readiness. Shared portfolio, internship,
+Alumni navigation exposes Journey. Shared portfolio, internship,
 and certificate pages retain alumni access to saved student records. Their
 career, referral, account-settings, and participation links use the appropriate
 alumni destinations.

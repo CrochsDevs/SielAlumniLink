@@ -435,7 +435,9 @@ try {
   await until("document.body.textContent.includes('Certificate A')");
   assert.ok(await evaluate(`Boolean(document.querySelector('main a[href="/alumni/accounts"]'))`));
   await navigate("/alumni/readiness");
-  await until(`document.querySelector('[aria-label="Overall employment readiness"]')?.getAttribute('aria-valuenow') === '82'`);
+  await until(`location.pathname === '/alumni'`);
+  assert.equal(await evaluate(`document.body.textContent.includes('Employment Readiness')`), false);
+  assert.equal(await evaluate(`document.querySelectorAll('aside a[href="/alumni/readiness"]').length`), 0);
   assert.ok(await evaluate(`Boolean(document.querySelector('main a[href="/alumni/events"]'))`));
   account = student;
   await navigate("/student/referrals");

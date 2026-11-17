@@ -28,7 +28,6 @@ const authErrorMessage = (err, fallback) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState(null);
   const didCheckAuth = useRef(false);
   const pendingMagicLinkVerification = useRef(null);
@@ -157,7 +156,6 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     const startedAt = Date.now();
-    setSigningIn(true);
     try {
       setError(null);
       const response = await api.post("/auth/login", { email: email.trim(), password });
@@ -179,8 +177,6 @@ export const AuthProvider = ({ children }) => {
       const message = authErrorMessage(err, "Login failed");
       setError(message);
       return { success: false, error: message };
-    } finally {
-      setSigningIn(false);
     }
   }, [acceptSession]);
 
@@ -320,7 +316,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         loading,
-        signingIn,
         error,
         login,
         requestMagicLink,

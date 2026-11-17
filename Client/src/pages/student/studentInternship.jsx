@@ -201,12 +201,14 @@ export default function StudentInternship() {
                 </label>
               ))}
             </div>
-            <Link
-              to={alumni ? "/alumni/readiness" : "/student/readiness"}
-              className="mt-6 block text-xs font-semibold text-brand dark:text-brand"
-            >
-              View readiness score
-            </Link>
+            {!alumni && (
+              <Link
+                to="/student/readiness"
+                className="mt-6 block text-xs font-semibold text-brand dark:text-brand"
+              >
+                View readiness score
+              </Link>
+            )}
           </aside>
           <section className="order-1 min-w-0 space-y-3 md:order-none">
             <header className="rounded-lg bg-gradient-to-br from-brand to-brand p-5 text-white dark:from-zinc-900 dark:to-zinc-900">

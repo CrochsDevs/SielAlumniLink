@@ -40,3 +40,24 @@ export function PageSkeleton({ label = "Loading your workspace" }) {
     </div>
   </div>;
 }
+
+export function StudentFeedSkeleton({ label = "Loading your student page" }) {
+  return <main className="student-feed-skeleton" role="status" aria-live="polite" aria-busy="true">
+    <span className="sr-only">{label}</span>
+    <div className="student-feed-skeleton-grid" aria-hidden="true">
+      <section className="student-feed-skeleton-post">
+        <Skeleton className="student-feed-skeleton-post-media" />
+        <div className="student-feed-skeleton-post-actions">
+          <div><Skeleton className="student-feed-skeleton-line student-feed-skeleton-line-short" /><Skeleton className="student-feed-skeleton-line" /></div>
+          <Skeleton className="student-feed-skeleton-pill" />
+        </div>
+        <div className="student-feed-skeleton-copy"><Skeleton /><Skeleton className="student-feed-skeleton-line-short" /><Skeleton className="student-feed-skeleton-line-medium" /><Skeleton className="student-feed-skeleton-line" /></div>
+        <div className="student-feed-skeleton-footer"><Skeleton className="student-feed-skeleton-button" /></div>
+      </section>
+      <section className="student-feed-skeleton-side">
+        <header><Skeleton className="student-feed-skeleton-avatar" /><div><Skeleton className="student-feed-skeleton-line" /><Skeleton className="student-feed-skeleton-line-short" /></div></header>
+        <Skeleton className="student-feed-skeleton-side-media" />
+      </section>
+    </div>
+  </main>;
+}

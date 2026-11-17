@@ -66,7 +66,9 @@ export default function StudentReadiness() {
                   <div className="readiness-factor-heading"><span className="readiness-factor-icon">{createElement(config.icon, { size: 21, "aria-hidden": true })}</span><div className="min-w-0"><h3>{factor.label}</h3><span className={`readiness-factor-status${completed ? " is-complete" : ""}`}>{completed ? <CheckCircle2 size={12} /> : <Circle size={10} />}{completed ? "Completed" : factor.points > 0 ? "In progress" : "Not started"}</span></div><p className="readiness-factor-points">{factor.points}<span>/ 20</span></p></div>
                   <div className="readiness-factor-progress"><ReadinessProgress value={factor.points} max={20} label={`${factor.label} progress`} /></div>
                   <p className="readiness-factor-records"><strong>{factor.value} / {factor.target}</strong> {config.unit}</p>
-                  <Link to={factorLink(factor)} className="readiness-factor-link">{completed ? "View records" : config.action}<ArrowRight size={15} /></Link>
+                  <div className="readiness-factor-footer">
+                    <Link to={factorLink(factor)} className="readiness-factor-link">{completed ? "View records" : config.action}<ArrowRight size={15} aria-hidden="true" /></Link>
+                  </div>
                 </article>;
               })}
             </div>

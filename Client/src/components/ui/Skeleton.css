@@ -54,6 +54,25 @@
 .siel-page-skeleton-topbar > .siel-skeleton-title { max-width: 12rem; }
 .siel-page-skeleton-content { max-width: 80rem; margin: auto; padding: clamp(0.5rem, 2vw, 1.5rem); }
 .siel-page-skeleton-content > .siel-loading--detail .siel-skeleton-media { display: none; }
+.student-feed-skeleton { min-height: 100dvh; padding: clamp(1rem, 3vw, 2rem); background: #fafafa; }
+.student-feed-skeleton-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(16rem, 1fr); gap: 1.125rem; width: min(100%, 76rem); margin: 0 auto; align-items: stretch; }
+.student-feed-skeleton-post, .student-feed-skeleton-side { overflow: hidden; min-width: 0; border: 1px solid #e4e4e7; border-radius: .75rem; background: #fff; box-shadow: 0 2px 5px rgb(0 0 0 / 12%); }
+.student-feed-skeleton-post-media { height: clamp(12rem, 28vw, 18rem); margin: 1.25rem 1.25rem 0; width: calc(100% - 2.5rem); border-radius: 0; }
+.student-feed-skeleton-post-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid #e4e4e7; }
+.student-feed-skeleton-post-actions > div { display: grid; width: 42%; gap: .55rem; }
+.student-feed-skeleton-line { height: .85rem; border-radius: 999px; }
+.student-feed-skeleton-line-short { width: 48%; }
+.student-feed-skeleton-line-medium { width: 72%; }
+.student-feed-skeleton-pill { width: 42%; height: 2.5rem; border-radius: 999px; }
+.student-feed-skeleton-copy { display: grid; gap: .6rem; padding: 1.25rem; border-bottom: 1px solid #e4e4e7; }
+.student-feed-skeleton-copy > .siel-skeleton { height: .9rem; }
+.student-feed-skeleton-footer { padding: 1.25rem; }
+.student-feed-skeleton-button { height: 2.5rem; border-radius: 999px; }
+.student-feed-skeleton-side { display: flex; flex-direction: column; }
+.student-feed-skeleton-side header { display: flex; align-items: center; gap: .9rem; padding: 1.25rem; border-bottom: 1px solid #e4e4e7; }
+.student-feed-skeleton-side header > div { display: grid; flex: 1; gap: .6rem; }
+.student-feed-skeleton-avatar { width: 3.75rem; height: 3.75rem; border-radius: 50%; }
+.student-feed-skeleton-side-media { flex: 1; min-height: 14rem; margin: 1.25rem; width: calc(100% - 2.5rem); border-radius: 0; }
 @media (max-width: 1023px) { .siel-page-skeleton-sidebar { display: none; } }
-@media (max-width: 639px) { .siel-skeleton-fields { grid-template-columns: minmax(0, 1fr); } .siel-loading { padding: 0.75rem; } }
+@media (max-width: 639px) { .siel-skeleton-fields { grid-template-columns: minmax(0, 1fr); } .siel-loading { padding: 0.75rem; } .student-feed-skeleton-grid { grid-template-columns: minmax(0, 1fr); } .student-feed-skeleton-side { min-height: 20rem; } }
 @media (prefers-reduced-motion: reduce) { .siel-skeleton::after { animation: none; transform: none; } }

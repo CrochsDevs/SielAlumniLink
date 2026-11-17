@@ -7,10 +7,21 @@ import GraduationCapLoader from "../components/ui/GraduationCapLoader";
 import clsuLogo from "../assets/logo/clsu_logo.png";
 import "./login.css";
 
-const errorToast = (message) => toast.error(message);
+const errorToast = (title, description) => toast.error(title, { description });
+
+const loginMessage = (message) =>
+  /^invalid credentials?$/i.test(message?.trim() || "")
+    ? "Invalid email or password. Please check your details and try again."
+    : message;
 
 const Login = () => {
-  const { login, requestMagicLink, isAuthenticated, user, error: authError } = useAuth();
+  const {
+    login,
+    requestMagicLink,
+    isAuthenticated,
+    user,
+    error: authError,
+  } = useAuth();
   const [authMode, setAuthMode] = useState("magic");
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -20,7 +31,10 @@ const Login = () => {
 
   useEffect(() => {
     if (magicCooldown <= 0) return;
-    const timer = setTimeout(() => setMagicCooldown(seconds => Math.max(0, seconds - 1)), 1000);
+    const timer = setTimeout(
+      () => setMagicCooldown((seconds) => Math.max(0, seconds - 1)),
+      1000,
+    );
     return () => clearTimeout(timer);
   }, [magicCooldown]);
 
@@ -32,13 +46,25 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const result = await login(formData.email, formData.password);
-    if (result.success) {
-      return;
-    } else {
-      errorToast(result.error || authError || "Login failed");
+    try {
+      const result = await login(formData.email, formData.password);
+      if (result.success) return;
+      errorToast(
+        "Unable to log in",
+        loginMessage(
+          result.error ||
+            authError ||
+            "Please check your details and try again.",
+        ),
+      );
+    } catch {
+      errorToast(
+        "Unable to log in",
+        "Please try again. If the problem continues, check your internet connection.",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleMagicLinkSubmit = async (e) => {
@@ -51,7 +77,10 @@ const Login = () => {
     if (result.success) {
       setMagicMessage(result.message);
     } else {
-      errorToast(result.error || authError || "Failed to send magic link");
+      errorToast(
+        "Could not send login link",
+        result.error || authError || "Please try again.",
+      );
     }
     setLoading(false);
   };
@@ -62,13 +91,12 @@ const Login = () => {
     return (
       <>
         <GraduationCapLoader label="Signing you in" />
-        <Navigate to={user?.passwordSetupRequired ? "/setup-password" : "/"} replace />
+        <Navigate
+          to={user?.passwordSetupRequired ? "/setup-password" : "/"}
+          replace
+        />
       </>
     );
-  }
-
-  if (loading && authMode === "password") {
-    return <GraduationCapLoader label="Signing you in" />;
   }
 
   return (
@@ -252,8 +280,10 @@ const Login = () => {
                           </svg>
                           Sending link...
                         </span>
+                      ) : magicCooldown > 0 ? (
+                        `Try again in ${magicCooldown}s`
                       ) : (
-                        magicCooldown > 0 ? `Try again in ${magicCooldown}s` : "Send single-use link"
+                        "Send single-use link"
                       )}
                     </button>
 
