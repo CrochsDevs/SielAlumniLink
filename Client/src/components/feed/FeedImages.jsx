@@ -73,23 +73,23 @@ function ImageViewer({ images, initialIndex, onClose }) {
           next();
         }
       }}
-      className="m-auto h-[100dvh] max-h-[100dvh] w-screen max-w-none overflow-y-auto overscroll-contain bg-zinc-950 p-3 text-white backdrop:bg-black/80 sm:h-auto sm:max-h-[94dvh] sm:w-[calc(100%-2rem)] sm:max-w-5xl sm:rounded-2xl sm:p-5"
+      className="fixed inset-0 m-0 h-[100dvh] max-h-[100dvh] w-screen max-w-none overflow-hidden border-0 bg-black p-0 text-white backdrop:bg-black"
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 id={labelId} className="text-sm font-semibold">
+      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-3 sm:p-4">
+        <h2 id={labelId} className="rounded-full bg-black/50 px-3 py-2 text-sm font-semibold">
           Photo {index + 1} of {images.length}
         </h2>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close photo viewer"
-          className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-white/10"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/25"
         >
           <X size={24} />
         </button>
       </div>
       <div
-        className="relative flex h-[calc(100dvh-13rem)] min-h-40 items-center justify-center sm:h-[65dvh]"
+        className="relative flex h-full min-h-0 items-center justify-center px-0 pb-20 pt-16 sm:px-16 sm:pb-24 sm:pt-16"
         onTouchStart={(e) => {
           touchStart.current = e.changedTouches[0].clientX;
         }}
@@ -107,7 +107,7 @@ function ImageViewer({ images, initialIndex, onClose }) {
           key={images[index].id}
           image={images[index]}
           eager
-          className="max-h-full w-full object-contain"
+          className="max-h-full max-w-full object-contain"
         />
         {images.length > 1 && (
           <>
@@ -115,7 +115,7 @@ function ImageViewer({ images, initialIndex, onClose }) {
               type="button"
               aria-label="Previous photo"
               onClick={previous}
-              className="absolute left-1 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 hover:bg-black/80"
+              className="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 hover:bg-white/35 sm:left-4"
             >
               <ChevronLeft size={24} />
             </button>
@@ -123,7 +123,7 @@ function ImageViewer({ images, initialIndex, onClose }) {
               type="button"
               aria-label="Next photo"
               onClick={next}
-              className="absolute right-1 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 hover:bg-black/80"
+              className="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 hover:bg-white/35 sm:right-4"
             >
               <ChevronRight size={24} />
             </button>
@@ -131,13 +131,13 @@ function ImageViewer({ images, initialIndex, onClose }) {
         )}
       </div>
       {images[index].alt && (
-        <p className="mt-2 max-h-12 overflow-y-auto break-words text-center text-sm text-white/80">
+        <p className="absolute inset-x-16 bottom-20 z-10 mx-auto max-h-12 max-w-3xl overflow-y-auto break-words text-center text-sm text-white/80 sm:bottom-24">
           {images[index].alt}
         </p>
       )}
       {images.length > 1 && (
         <div
-          className="mt-3 flex gap-2 overflow-x-auto py-1"
+          className="absolute inset-x-0 bottom-0 z-20 flex justify-center gap-2 overflow-x-auto bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-8"
           aria-label="Photo thumbnails"
         >
           {images.map((image, i) => (
@@ -147,7 +147,7 @@ function ImageViewer({ images, initialIndex, onClose }) {
               onClick={() => setIndex(i)}
               aria-label={`Show photo ${i + 1}`}
               aria-pressed={i === index}
-              className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 ${i === index ? "border-brand" : "border-transparent"}`}
+              className={`h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 transition-opacity ${i === index ? "border-emerald-500 opacity-100" : "border-transparent opacity-70 hover:opacity-100"}`}
             >
               <img
                 src={postImageUrl(image)}

@@ -311,7 +311,7 @@ const AlumniDashboard = () => {
 
         <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_280px] workspace-page">
           {/* LEFT: Sieles ID card */}
-          <aside className="alumni-dashboard-rail alumni-dashboard-profile-rail order-2 min-w-0 space-y-3 lg:order-none lg:self-start">
+          <aside className={`alumni-dashboard-rail alumni-dashboard-profile-rail order-2 min-w-0 space-y-3 lg:order-none lg:self-start ${dashTab === "tracer" ? "" : "hidden lg:block"}`}>
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="h-16 overflow-hidden bg-gradient-to-r from-brand via-brand to-brand dark:from-zinc-900 dark:to-zinc-900 dark:via-zinc-900">
                 {user?.bannerImage && (
@@ -352,13 +352,6 @@ const AlumniDashboard = () => {
                     </span>
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate("/alumni/profile")}
-                  className="mt-3 w-full rounded-xl bg-brand py-2 text-[12px] font-bold text-white transition hover:bg-brand"
-                >
-                  View Profile
-                </button>
               </div>
             </div>
 
@@ -384,16 +377,18 @@ const AlumniDashboard = () => {
           {/* CENTER */}
           <section className="order-1 min-w-0 space-y-3 lg:order-none">
             {/* Feed / Mentorship tabs */}
-            <div className="flex gap-1.5">
+            <div className="flex w-full gap-1.5 overflow-x-auto whitespace-nowrap pb-1">
               {[
                 { key: "feed", label: "Feed" },
                 { key: "mentorship", label: "Mentorship" },
+                { key: "tracer", label: "Tracer Study" },
+                { key: "announcements", label: "Announcements" },
               ].map(({ key, label }) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setDashTab(key)}
-                  className={`rounded-full px-4 py-2 text-[12.5px] font-bold transition ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[12.5px] font-bold transition ${key === "tracer" ? "lg:hidden" : ""} ${
                     dashTab === key
                       ? "bg-brand text-white shadow-sm"
                       : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -404,7 +399,41 @@ const AlumniDashboard = () => {
               ))}
             </div>
 
-            {dashTab === "mentorship" ? (
+            {dashTab === "tracer" ? null : dashTab === "announcements" ? (
+              <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white shadow-sm dark:bg-zinc-900">
+                <div className="bg-gradient-to-r from-brand to-emerald-700 px-4 py-4 dark:from-zinc-900 dark:to-zinc-800">
+                  <p className="flex items-center gap-2 text-sm font-extrabold text-white">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15">
+                      <Megaphone className="h-4 w-4" />
+                    </span>
+                    Announcements
+                  </p>
+                  <p className="ml-10 mt-0.5 text-[11px] text-white/75">Updates and news from CLSU</p>
+                </div>
+                <ul className="space-y-2.5 bg-zinc-50/70 p-3 dark:bg-zinc-950/40 sm:p-4">
+                  {announcementsLoading ? <ContentSkeleton as="li" variant="list" count={2} label="Loading announcements..." /> : announcementsError ? <li className="text-xs text-zinc-500"><p role="alert">{announcementsError}</p><button type="button" onClick={loadAnnouncements} className="mt-2 font-semibold text-brand">Retry announcements</button></li> : announcements.length === 0 ? (
+                    <li className="rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+                      <Megaphone className="mx-auto h-6 w-6 text-zinc-300 dark:text-zinc-600" />
+                      <p className="mt-2 text-sm font-semibold text-zinc-600 dark:text-zinc-300">No announcements yet</p>
+                      <p className="mt-1 text-xs text-zinc-400">New CLSU updates will appear here.</p>
+                    </li>
+                  ) : announcements.map((item) => (
+                    <li key={item._id}>
+                      <button type="button" onClick={() => setSelectedAnnouncement(item)} className="group w-full rounded-xl border border-zinc-100 bg-white p-3.5 text-left shadow-sm transition hover:border-emerald-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-900">
+                        <span className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-brand dark:bg-emerald-950/50 dark:text-emerald-300"><Megaphone className="h-4 w-4" /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13px] font-bold leading-snug text-zinc-800 transition group-hover:text-brand dark:text-zinc-100">{item.title}</span>
+                            <span className="mt-1 block text-[10.5px] font-medium text-zinc-400 dark:text-zinc-500">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "CLSU update"}</span>
+                            {item.body && <span className="mt-2 line-clamp-2 block text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{item.body}</span>}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : dashTab === "mentorship" ? (
               <div className="space-y-3">
                 <div className="rounded-2xl border border-brand/10 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-sm">
                   <h3 className="flex items-center gap-2 text-[14px] font-extrabold text-zinc-900 dark:text-zinc-100">
@@ -477,7 +506,7 @@ const AlumniDashboard = () => {
           </section>
 
           {/* RIGHT: Connection requests + Suggested connects */}
-          <aside className="alumni-dashboard-rail alumni-dashboard-community-rail order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:self-start">
+          <aside className={`alumni-dashboard-rail alumni-dashboard-community-rail order-3 min-w-0 space-y-3 lg:order-none lg:col-span-2 xl:col-span-1 xl:self-start ${dashTab === "mentorship" ? "block" : "hidden xl:block"}`}>
             <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
               <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5 dark:from-zinc-900 dark:to-zinc-900">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
@@ -632,43 +661,6 @@ const AlumniDashboard = () => {
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white dark:bg-zinc-900 shadow-sm">
-              <div className="bg-gradient-to-r from-brand to-brand px-4 py-2.5 dark:from-zinc-900 dark:to-zinc-900">
-                <p className="flex items-center gap-1.5 text-[12.5px] font-bold text-white">
-                  <Megaphone className="h-3.5 w-3.5" />
-                  At CLSU Today
-                </p>
-              </div>
-              <ul className="space-y-3 p-4">
-                {announcementsLoading ? <ContentSkeleton as="li" variant="list" count={2} label="Loading announcements..." /> : announcementsError ? <li className="text-xs text-zinc-500"><p role="alert">{announcementsError}</p><button type="button" onClick={loadAnnouncements} className="mt-2 font-semibold text-brand">Retry announcements</button></li> : announcements.length === 0 ? (
-                  <li className="py-2 text-center text-[11.5px] text-zinc-400">
-                    No announcements
-                  </li>
-                ) : (
-                  announcements.map((item) => (
-                    <li key={item._id}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAnnouncement(item)}
-                        className="w-full text-left"
-                      >
-                        <p className="text-[12px] font-semibold leading-snug text-zinc-800 dark:text-zinc-100 transition hover:text-brand dark:text-brand">
-                          {item.title}
-                        </p>
-                        <p className="text-[10.5px] text-zinc-400 dark:text-zinc-500">
-                          {item.createdAt
-                            ? new Date(item.createdAt).toLocaleDateString(
-                                "en-US",
-                                { month: "short", day: "numeric" },
-                              )
-                            : ""}
-                        </p>
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
           </aside>
         </main>
         {selectedAnnouncement && (
