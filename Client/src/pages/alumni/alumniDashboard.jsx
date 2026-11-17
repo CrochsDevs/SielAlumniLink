@@ -352,6 +352,13 @@ const AlumniDashboard = () => {
                     </span>
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/alumni/profile")}
+                  className="mt-3 w-full rounded-xl bg-brand py-2.5 text-[12px] font-bold text-white transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                >
+                  View Profile
+                </button>
               </div>
             </div>
 
@@ -388,7 +395,7 @@ const AlumniDashboard = () => {
                   key={key}
                   type="button"
                   onClick={() => setDashTab(key)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[12.5px] font-bold transition ${key === "tracer" ? "lg:hidden" : ""} ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[12.5px] font-bold transition ${key === "tracer" || key === "announcements" ? "lg:hidden" : ""} ${
                     dashTab === key
                       ? "bg-brand text-white shadow-sm"
                       : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -400,7 +407,7 @@ const AlumniDashboard = () => {
             </div>
 
             {dashTab === "tracer" ? null : dashTab === "announcements" ? (
-              <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white shadow-sm dark:bg-zinc-900">
+              <div className="overflow-hidden rounded-2xl border border-brand/10 bg-white shadow-sm dark:bg-zinc-900 lg:hidden">
                 <div className="bg-gradient-to-r from-brand to-emerald-700 px-4 py-4 dark:from-zinc-900 dark:to-zinc-800">
                   <p className="flex items-center gap-2 text-sm font-extrabold text-white">
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15">
