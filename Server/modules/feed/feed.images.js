@@ -34,7 +34,7 @@ export const createFeedImageUpload = (db, uploadImage) => async (req, res) => {
     res.status(201).json({ success: true, data: { id: String(result.insertedId), width: image.width, height: image.height } });
   } catch (error) {
     res.status(error.status || 502).json({ success: false,
-      message: error.status ? error.message : 'Image upload failed. Please try again.' });
+      message: error.status ? error.message : 'Image upload failed. Please try again.', ...(error.code ? { code: error.code, caseId: error.caseId, appealUrl: error.appealUrl } : {}) });
   }
 };
 
@@ -59,6 +59,7 @@ export const createFeedImageDelete = (db, deleteImage) => async (req, res) => {
     const images = db.collection('feed_images');
     const image = await images.findOne({ _id: new ObjectId(req.params.id), ownerAuthId: String(req.user._id) });
     if (!image) fail(404, 'Image not found');
+    if (await db.collection('feed_post_reports').countDocuments({ $or: [{ 'snapshot.images.id': String(image._id) }, { 'snapshot.original.images.id': String(image._id) }] })) fail(409, 'This image is retained for administrator review');
     if (await db.collection('feed_posts').countDocuments({ 'images.id': String(image._id) })) fail(409, 'This image belongs to a published post');
     await deleteImage(image.publicId);
     await images.deleteOne({ _id: image._id, ownerAuthId: String(req.user._id) });

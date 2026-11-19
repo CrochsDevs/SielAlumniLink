@@ -1,3 +1,4 @@
+import { community } from '../community/community.runtime.js';
 import { client } from '../../config/db.js';
 import { renameGroup } from './group-name.js';
 import { promoteGroupAdmin } from './group-admin.js';
@@ -119,9 +120,16 @@ export const MessageModel = {
       ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) },
     { sort: { createdAt: -1, _id: -1 }, projection: { _id: 1, text: 1, createdAt: 1, unsent: 1, 'attachment.kind': 1 } });
   },
-  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId, mentions = [] }) {
+  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId, mentions = [], moderationChecked = false }) {
     if (attachment && (!attachment.publicId || attachment.deliveryType !== 'authenticated')) {
       throw new Error('Message attachments must be uploaded to Cloudinary first');
+    }
+    const conversation = await ConversationModel.findById(conversationId);
+    if (!conversation || !conversation.participants.some(member => String(member.authId) === key(senderAuthId))) throw Object.assign(new Error('Conversation not found'), { status: 404 });
+    await community.assertRecipients(conversation.participants.filter(member => String(member.authId) !== key(senderAuthId)).map(member => member.authId));
+    if (!call && !activity) await community.assertAllowed({ _id: senderAuthId }, 'messaging');
+    if (!call && !activity && !moderationChecked) {
+      await community.check({ _id: senderAuthId }, { type: 'message', text });
     }
     const now = new Date();
     const doc = {
@@ -185,6 +193,8 @@ export const MessageModel = {
       if (!conversation?.participants?.some(member => String(member.authId) === key(senderAuthId))) return null;
       const other = conversation.participants.find(member => String(member.authId) !== key(senderAuthId));
       if (!conversation.isGroup && other && await ConversationControls.isBlocked(senderAuthId, other.authId)) return null;
+      await community.assertRecipients(conversation.participants.filter(member => String(member.authId) !== key(senderAuthId)).map(member => member.authId));
+      await community.check({ _id: senderAuthId }, { type: 'message', targetId: messageId, text });
       const mentions = await resolveMessageMentions(conversation, text, mentionAuthIds ?? [...new Set((message.mentions || []).map(mention => mention.authId))], ids => UserModel.findChatProfilesByAuthIds(ids));
       await messagesCollection.updateOne(
         { _id: objectId },

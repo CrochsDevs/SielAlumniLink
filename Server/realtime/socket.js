@@ -1,3 +1,5 @@
+import { communityEvents } from '../modules/community/community.events.js';
+import { community, enforceCommunityPacket } from '../modules/community/community.runtime.js';
 import { Server } from "socket.io";
 import { frontendOrigins, allowedSocketOrigin } from "../config/cors.js";
 import {
@@ -91,6 +93,7 @@ export const initSocket = (server) => {
     emitToUser,
     recordJoin: createGroupCallJoinRecorder({ conversations: ConversationModel, messages: MessageModel, senders: messageSenders, emit: emitToUser }),
     authorize: async (user, id) => {
+      await community.assertAllowed(user, 'messaging');
       const group = await ConversationModel.findById(id);
       if (
         !group?.isGroup ||
@@ -143,6 +146,7 @@ export const initSocket = (server) => {
   const calls = (directCalls = createCallService({
     emit: emitToUser,
     authorize: async (caller, recipientId) => {
+      try { await community.assertAllowed(caller, 'messaging'); await community.assertRecipients([recipientId]); } catch { return null; }
       const recipient = await AuthModel.findById(recipientId);
       if (
         !recipient ||
@@ -232,13 +236,18 @@ export const initSocket = (server) => {
         return false;
       }
     });
-    socket.use(async (_packet, next) => {
-      if (await validate() && socket.connected) next();
+    socket.use(async (packet, next) => {
+      if (await validate() && socket.connected) await enforceCommunityPacket(socket, packet, next);
       else next(new Error("Authentication required"));
     });
-    const timer = setInterval(() => {
-      void validate();
-    }, 30000);
+    const checkCommunity = async () => {
+      try { await community.assertAllowed(socket.user, 'messaging'); }
+      catch { calls.disconnect(socket); if (socket.data.groupCallId) await groupCalls.removeMember(socket.data.groupCallId, String(socket.user._id)); socket.disconnect(true); }
+    };
+    const timer = setInterval(() => { void validate(); void checkCommunity(); }, 30000);
+    const onCommunityChanged = () => { void checkCommunity(); };
+    communityEvents.on('changed', onCommunityChanged);
+    socket.once('disconnect', () => communityEvents.off('changed', onCommunityChanged));
     timer.unref();
     const expires = socket.sessionExpiresAt;
     const expiryTimer = setTimeout(

@@ -10,6 +10,7 @@ const actions = new Set([
   "user_graduated",
   "users_synced",
   "post_deleted",
+  "post_report_reviewed",
   "comment_deleted",
   "post_blocked",
   "post_restored",
@@ -58,7 +59,7 @@ export async function recordAdminAudit(
 // User access monitoring excludes admin identities and admin actions. Personal
 // admin history still reads the original records through the owner-only service.
 export async function listUserAccessAudit(db, limit = 50) {
-  return db
+  const rows = await db
     .collection("activity_logs")
     .aggregate([
       { $match: { action: { $in: ["login", "logout"] } } },
@@ -88,7 +89,7 @@ export async function listUserAccessAudit(db, limit = 50) {
                 },
               },
             },
-            { $project: { role: 1 } },
+            { $project: { role: 1, name: 1, email: 1, profilePicture: 1 } },
           ],
           as: "account",
         },
@@ -109,7 +110,34 @@ export async function listUserAccessAudit(db, limit = 50) {
       { $match: { roles: { $in: ["student", "alumni"], $nin: ["admin"] } } },
       { $sort: { createdAt: -1, _id: -1 } },
       { $limit: Math.min(Math.max(limit, 1), 200) },
-      { $project: { account: 0, roles: 0 } },
+      {
+        $lookup: {
+          from: "users",
+          let: {
+            id: { $ifNull: [{ $arrayElemAt: ["$account._id", 0] }, { $convert: { input: "$authId", to: "objectId", onError: null, onNull: null } }] },
+          },
+          pipeline: [
+            { $match: { $expr: { $and: [
+              { $ne: ["$$id", null] },
+              { $or: [{ $eq: ["$authId", "$$id"] }, { $eq: ["$authId", { $toString: "$$id" }] }] },
+            ] } } },
+            { $project: { _id: 0, name: 1, profilePicture: 1 } },
+            { $limit: 1 },
+          ],
+          as: "actorProfiles",
+        },
+      },
+      { $project: { roles: 0 } },
     ])
     .toArray();
+  return rows.map(({ account, actorProfiles, ...row }) => {
+    const current = account?.[0], profile = actorProfiles?.[0];
+    return { ...row, actor: {
+      authId: row.actor?.authId || row.authId || (current?._id ? String(current._id) : null),
+      name: profile?.name || current?.name || row.actor?.name || null,
+      email: current?.email || row.actor?.email || row.email || null,
+      role: current?.role || row.actor?.role || row.role || null,
+      profilePicture: profile?.profilePicture || current?.profilePicture || row.actor?.profilePicture || null,
+    } };
+  });
 }

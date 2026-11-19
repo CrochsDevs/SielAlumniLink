@@ -1,3 +1,4 @@
+import PostActions from './PostActions';
 import ContentSkeleton from "../ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -10,7 +11,7 @@ import {
   Users,
   Trash2,
   CalendarDays,
-  MoreHorizontal,
+  Pin,
   Shield,
   Ban,
   MessageSquareOff,
@@ -834,13 +835,14 @@ export default function FeedPost({
           audience={post.audience}
           createdAt={post.createdAt}
         />
-        {isAdmin ? (
+        <PostActions post={post} user={user} onChanged={onChanged} onReplace={onReplace} />
+        {isAdmin && (
           <details className="relative shrink-0 self-start">
             <summary
               aria-label="Admin post controls"
               className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 [&::-webkit-details-marker]:hidden dark:hover:bg-zinc-800 dark:text-zinc-400"
             >
-              <MoreHorizontal size={20} />
+              <Shield size={20} />
             </summary>
             <div
               className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
@@ -896,19 +898,9 @@ export default function FeedPost({
               </button>
             </div>
           </details>
-        ) : (
-          post.isMine && (
-            <button
-              type="button"
-              onClick={() => setDialog("delete")}
-              aria-label="Delete post"
-              className="self-start rounded-lg p-2 text-zinc-500 hover:text-red-600 dark:text-zinc-400"
-            >
-              <Trash2 size={16} />
-            </button>
-          )
         )}
       </div>
+      {post.isPinned && <p className="flex items-center gap-1 px-4 pb-2 text-xs font-semibold text-brand"><Pin size={13} />Pinned post</p>}
       {isAdmin &&
         (post.moderation?.blocked || post.moderation?.authorRestricted) && (
           <div className="mx-4 mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">

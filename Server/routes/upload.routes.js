@@ -1,3 +1,4 @@
+import { community, errorData, imageInput } from '../modules/community/community.runtime.js';
 import express from 'express';
 import multer from 'multer';
 import crypto from 'node:crypto';
@@ -41,6 +42,7 @@ const handleUpload = (folder) => async (req, res) => {
       return res.status(400).json({ success: false, message: 'File size must not exceed 10MB' });
     }
 
+    await community.check(req.user, { type: 'profile', text: '', images: imageInput(req.file) });
     // Preserve the original extension's case when removing it from the basename.
     const ext = path.extname(req.file.originalname);
     const basename = path.basename(req.file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_') || 'image';
@@ -60,13 +62,13 @@ const handleUpload = (folder) => async (req, res) => {
     });
   } catch (error) {
     console.error('[upload] Failed to upload image', error);
-    return res.status(500).json({ success: false, message: 'Failed to upload image' });
+    return res.status(error.status || 500).json(errorData(error));
   }
 };
 
 router.post('/profile', protect, upload.single('image'), handleUpload(PROFILE_FOLDER));
 router.post('/cover', protect, upload.single('image'), handleUpload(COVER_FOLDER));
-router.post('/feed-image', protect, upload.single('image'), createFeedImageUpload(client.db('SielAlumni'), cloudUpload));
+router.post('/feed-image', protect, upload.single('image'), createFeedImageUpload(client.db('SielAlumni'), async (bytes, options) => { await community.check({ _id: options.folder.split('/').at(-1) }, { type: 'post', text: '', images: imageInput({ buffer: bytes }) }); return cloudUpload(bytes, options); }));
 router.delete('/feed-image/:id', protect, createFeedImageDelete(client.db('SielAlumni'), publicId => cloudinary.uploader.destroy(publicId)));
 
 router.post('/profile/delete', protect, async (req, res) => {

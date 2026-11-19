@@ -13,10 +13,11 @@ export const getSocket = () => {
           : "http://localhost:3002"),
       {
         autoConnect: false,
-        // Browser WebSocket handshakes include Origin even on same-origin deployments.
-        transports: ["websocket"],
+        // Prefer WebSocket, with polling available if an upgrade is blocked.
+        transports: ["websocket", "polling"],
+        tryAllTransports: true,
         withCredentials: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 10000,
         timeout: 10000,

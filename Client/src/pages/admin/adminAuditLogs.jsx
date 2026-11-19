@@ -10,10 +10,12 @@ import PageHeader from "../../components/ui/PageHeader";
 import DataPagination from "../../components/ui/data-pagination";
 import api from "../../utils/axios";
 import { auditLabel } from "../../utils/auditActions";
+import ProfileAvatar from "../../components/profile/ProfileAvatar";
 
 const AUDIT_COLUMNS = [
   {
-    accessorKey: "email",
+    id: "actor",
+    accessorFn: log => log.actor?.name || log.actor?.email || log.email || 'Unknown account',
     header: "Performed by",
     meta: { headerClassName: "px-5 py-3 font-semibold" },
   },
@@ -51,7 +53,31 @@ export default function AdminAuditLogs() {
     setAuditLoading(true);
     try {
       const res = await api.get("/activity", { params: { limit: 200 } });
-      setAudit(res.data.data || []);
+      let logs = res.data.data || [];
+      // Older running backends return access logs without an actor snapshot.
+      // Resolve those against the administrator's existing user directory.
+      if (logs.some(log => ['login', 'logout'].includes(log.action) && log.role !== 'admin' && log.actor?.role !== 'admin' && !log.actor?.name)) {
+        try {
+          const { data } = await api.get('/users');
+          const byId = new Map(), byEmail = new Map();
+          for (const profile of data.data || []) {
+            if (profile.authId) byId.set(String(profile.authId), profile);
+            if (profile.email) byEmail.set(profile.email.trim().toLowerCase(), profile);
+          }
+          logs = logs.map(log => {
+            const authId = log.actor?.authId || log.authId;
+            const email = log.actor?.email || log.email;
+            const profile = authId ? byId.get(String(authId)) : byEmail.get(email?.trim().toLowerCase());
+            return profile ? { ...log, actor: { ...log.actor,
+              name: log.actor?.name || profile.name,
+              email: log.actor?.email || profile.email || email,
+              role: log.actor?.role || profile.role,
+              profilePicture: log.actor?.profilePicture || profile.profilePicture,
+            } } : log;
+          });
+        } catch { /* Keep the audit history visible if the directory is unavailable. */ }
+      }
+      setAudit(logs);
       setAuditError('');
     } catch (err) {
       setAuditError(err.response?.data?.message || 'Unable to refresh audit logs. Please try again.');
@@ -187,7 +213,12 @@ export default function AdminAuditLogs() {
                           className="border-b border-zinc-50 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800 dark:bg-zinc-800/60"
                         >
                           <td className="px-5 py-3 font-medium text-zinc-800 dark:text-zinc-100">
-                            <span className="block" title={log.actor?.email || log.email}>{log.actor?.name || log.actor?.email || log.email || log.authId || 'Unknown account'}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/10 text-sm font-semibold text-brand">
+                                <ProfileAvatar user={{ ...log.actor, name: log.actor?.name || log.actor?.email || log.email || 'Unknown account' }} fallback="U" />
+                              </span>
+                              <span className="block" title={log.actor?.email || log.email}>{log.actor?.name || log.actor?.email || log.email || log.authId || 'Unknown account'}</span>
+                            </div>
                           </td>
                           <td className="px-5 py-3">
                             <span

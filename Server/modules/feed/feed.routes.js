@@ -1,3 +1,4 @@
+import { community, errorData } from '../community/community.runtime.js';
 import express from 'express';
 import { client } from '../../config/db.js';
 import { protect } from '../../middlewares/auth.middleware.js';
@@ -14,7 +15,7 @@ const router = express.Router();
 // Invalidation carries no private content or IDs. Every client reloads using
 // current server permissions; this also handles lost events on reconnect.
 const feed = createFeedService(client.db('SielAlumni'), () => getIO()?.emit('feed:changed'),
-  createFeedNotifier({ notifications: NotificationModel, emit: emitToUser }));
+  createFeedNotifier({ notifications: NotificationModel, emit: emitToUser }), community);
 const messaging = createFeedMessaging({ feed, conversations: ConversationModel, messages: MessageModel,
   senders: messageSenders, emit: emitToUser, origin: process.env.FRONTEND_URL || 'http://localhost:5173' });
 const action = (handler, status = 200) => async (req, res) => {
@@ -22,8 +23,7 @@ const action = (handler, status = 200) => async (req, res) => {
     req.body ??= {};
     res.status(status).json({ success: true, data: await handler(req) });
   }
-  catch (error) { res.status(error.status || 500).json({ success: false,
-    message: error.status ? error.message : 'Unable to complete the feed action. Please try again.' }); }
+  catch (error) { res.status(error.status || 500).json(errorData(error)); }
 };
 
 router.use(protect);
@@ -33,8 +33,15 @@ router.get('/restrictions', action(req => feed.listRestrictions(req.user)));
 router.put('/restrictions/:authId', action(req => feed.restrictAuthor(req.user, req.params.authId, req.body)));
 router.get('/', action(req => feed.list(req.user, req.query)));
 router.post('/', action(req => feed.create(req.user, req.body), 201));
+router.get('/post-reports', action(req => feed.listReports(req.user, req.query)));
+router.get('/post-reports/:reportId/images/:imageId', (req, res) => createFeedImageDownload({ getImage: (user, _id, imageId) => feed.getReportImage(user, req.params.reportId, imageId) })(req, res));
+router.get('/post-reports/:reportId', action(req => feed.detail(req.user, req.params.reportId)));
+router.patch('/post-reports/:reportId', action(req => feed.review(req.user, req.params.reportId, req.body)));
+router.put('/:id/state', action(req => feed.setState(req.user, req.params.id, req.body)));
+router.put('/:id/pin', action(req => feed.pin(req.user, req.params.id, req.body)));
+router.post('/:id/report', action(req => feed.report(req.user, req.params.id, req.body), 201));
 router.get('/:id', action(req => feed.get(req.user, req.params.id)));
-router.put('/:id', action(req => feed.updateStory(req.user, req.params.id, req.body)));
+router.put('/:id', action(req => feed.updatePost(req.user, req.params.id, req.body)));
 router.get('/:id/images/:imageId', createFeedImageDownload(feed));
 router.delete('/:id', action(req => feed.remove(req.user, req.params.id)));
 router.put('/:id/moderation', action(req => feed.moderate(req.user, req.params.id, req.body)));

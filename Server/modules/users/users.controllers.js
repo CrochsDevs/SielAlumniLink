@@ -1,3 +1,4 @@
+import { community } from '../community/community.runtime.js';
 import UserModel from './users.models.js';
 import AuthModel from '../auth/auth.models.js';
 import { fetchFromCAIS } from '../sync/cais.service.js';
@@ -551,6 +552,10 @@ export const updateMyProfile = async (req, res) => {
       return res.status(400).json({ success: false, message: "Nothing to update" });
     }
 
+    const publicFields = ['name', 'bio', 'skills', 'education', 'interests', 'location'];
+    if (publicFields.some(key => req.body[key] !== undefined) || Object.keys(mongoOps).length || updateData.profilePicture || updateData.bannerImage) {
+      await community.check(req.user, { type: 'profile', targetId: String(profile._id), text: JSON.stringify(Object.fromEntries(publicFields.filter(key => req.body[key] !== undefined).map(key => [key, req.body[key]]))) + (Object.keys(mongoOps).length ? '\n' + JSON.stringify(mongoOps) : ''), images: [updateData.profilePicture, updateData.bannerImage].filter(value => typeof value === 'string') });
+    }
     const finalUpdate = { ...updateData, ...mongoOps };
     await UserModel.updateById(String(profile._id), finalUpdate);
     const updated = await UserModel.findById(String(profile._id));
@@ -584,7 +589,7 @@ export const updateMyProfile = async (req, res) => {
       data: { ...safeProfile, role: req.user.role }
     });
   } catch (error) {
-    res.status(error.code === 'SKILL_LIMIT_EXCEEDED' ? 400 : 500).json({
+    res.status(error.status || (error.code === 'SKILL_LIMIT_EXCEEDED' ? 400 : 500)).json({
       success: false,
       message: error.message
     });
@@ -596,7 +601,9 @@ export const updateMyExperience = async (req, res) => {
   try {
     const profile = await UserModel.findByAuthId(req.user._id);
     if (!profile) return res.status(404).json({ success: false, message: 'Profile not found' });
-    const updated = await EmploymentModel.updateProfile(profile, changeExperience(profile, req.body));
+    const experienceChange = changeExperience(profile, req.body);
+    await community.check(req.user, { type: 'profile', targetId: String(profile._id), text: JSON.stringify(req.body) });
+    const updated = await EmploymentModel.updateProfile(profile, experienceChange);
     await logProfileChange(req.user._id, profile, updated);
     const { password, ...safeProfile } = updated;
     res.status(200).json({ success: true, data: { ...safeProfile, role: req.user.role, historyRevision: employmentState(updated).historyRevision } });

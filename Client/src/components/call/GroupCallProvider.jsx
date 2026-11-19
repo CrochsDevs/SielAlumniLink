@@ -53,10 +53,10 @@ export default function GroupCallProvider({ user, children }) {
     } });
     outgoingTimeout.current = timeout;
     const unlock = () => sound.unlock();
-    document.addEventListener('pointerdown', unlock);
+    document.addEventListener('click', unlock);
     document.addEventListener('keydown', unlock);
     return () => {
-      document.removeEventListener('pointerdown', unlock);
+      document.removeEventListener('click', unlock);
       document.removeEventListener('keydown', unlock);
       timeout.stop();
       sound.destroy();

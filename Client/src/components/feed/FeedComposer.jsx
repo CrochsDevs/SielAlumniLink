@@ -17,6 +17,7 @@ import {
 import api from "../../utils/axios";
 import ProfileAvatar from "../profile/ProfileAvatar";
 import {
+  postImageUrl,
   MAX_POST_IMAGES,
   removePostImage,
   uploadPostImage,
@@ -156,18 +157,20 @@ export default function FeedComposer({
   defaultType = "update",
   fixedType,
   onPublished,
+  initialPost = null,
+  onClose,
 }) {
   const navigate = useNavigate();
-  const [type, setType] = useState(null);
+  const [type, setType] = useState(initialPost?.type || null);
   const [draft, setDraft] = useState({
-    title: "",
-    body: "",
-    audience: "public",
-    details: {},
+    title: initialPost?.title || "",
+    body: initialPost?.body || "",
+    audience: initialPost?.audience || "public",
+    details: { ...initialPost?.details, ...(initialPost?.type === "event" ? Object.fromEntries(["startAt", "endAt"].map(key => [key, initialPost.details[key] ? new Date(new Date(initialPost.details[key]).getTime() - new Date(initialPost.details[key]).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""])) : {}) },
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [photos, setPhotos] = useState([]);
+  const [photos, setPhotos] = useState(() => (initialPost?.images || []).map(image => ({ key: image.id, asset: image, preview: postImageUrl(image), alt: image.alt, status: "uploaded", existing: true })));
   const [showMedia, setShowMedia] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const pending = useRef(false);
@@ -303,7 +306,7 @@ export default function FeedComposer({
     const photo = photos.find((item) => item.key === key);
     if (!photo || ["uploading", "queued", "removing"].includes(photo.status))
       return;
-    if (photo.asset) {
+    if (photo.asset && !photo.existing) {
       setPhotos((prev) =>
         prev.map((item) =>
           item.key === key ? { ...item, status: "removing" } : item,
@@ -348,7 +351,8 @@ export default function FeedComposer({
           ? new Date(details.endAt).toISOString()
           : null;
       }
-      const res = await api.post("/feed", { ...draft, type, details, images });
+      const payload = { ...draft, type, details, images };
+      const res = initialPost ? await api.put(`/feed/${initialPost._id}`, payload) : await api.post("/feed", payload);
       setDraft({ title: "", body: "", audience: "public", details: {} });
       previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
       previewUrls.current.clear();
@@ -368,7 +372,7 @@ export default function FeedComposer({
   };
   return (
     <>
-      <div className="rounded-2xl border border-brand/10 bg-white p-3 shadow-sm dark:bg-zinc-900">
+      {!initialPost && <div className="rounded-2xl border border-brand/10 bg-white p-3 shadow-sm dark:bg-zinc-900">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50 text-brand">
             <ProfileAvatar user={user} fallback="A" />
@@ -412,13 +416,13 @@ export default function FeedComposer({
               </button>
             ))}
         </div>
-      </div>
+      </div>}
       {type && (
         <FeedDialog
           composer
-          title="Create a post"
+          title={initialPost ? "Edit post" : "Create a post"}
           busy={busy}
-          onClose={() => setType(null)}
+          onClose={() => { setType(null); onClose?.(); }}
           header={
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-lg font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-200">
@@ -457,7 +461,7 @@ export default function FeedComposer({
                     />
                   </label>
                 )}
-                <label className="block">
+                {initialPost?.details?.story ? <div className="space-y-3">{["journey", "achievements", "advice"].map(key => <label key={key} className="block text-sm capitalize">{key}<textarea rows={4} maxLength={5000} value={draft.details.story[key] || ""} onChange={event => setDraft(prev => ({ ...prev, details: { ...prev.details, story: { ...prev.details.story, [key]: event.target.value } } }))} className={fieldClass} /></label>)}</div> : <label className="block">
                   <span className="sr-only">
                     {type === "story" ? "Your success story" : "Post details"}
                   </span>
@@ -478,7 +482,7 @@ export default function FeedComposer({
                     }
                     className="min-h-[200px] w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-lg leading-8 text-zinc-900 outline-none placeholder:text-zinc-500 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                   />
-                </label>
+                </label>}
                 <div
                   className={
                     showMedia || photos.length ? "space-y-3" : "hidden"
@@ -694,7 +698,7 @@ export default function FeedComposer({
                       <Smile size={24} />
                     </button>
                   </div>
-                  {!fixedType && (
+                  {!fixedType && !initialPost && (
                     <label className="max-w-full">
                       <span className="sr-only">Post type</span>
                       <select
@@ -734,7 +738,7 @@ export default function FeedComposer({
                     }
                     className="min-h-10 shrink-0 rounded-full bg-[#0a66c2] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#004182] disabled:bg-zinc-200 disabled:text-zinc-500 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                   >
-                    {busy ? "Posting…" : "Post"}
+                    {busy ? "Saving..." : initialPost ? "Save changes" : "Post"}
                   </button>
                 </div>
               </div>

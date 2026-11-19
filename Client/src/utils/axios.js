@@ -54,6 +54,7 @@ api.interceptors.response.use(
       window.dispatchEvent(new Event("auth:session-changed"));
       return Promise.reject(error);
     }
+    if (['COMMUNITY_RESTRICTED', 'COMMUNITY_MODERATED'].includes(error.response?.data?.code)) window.dispatchEvent(new CustomEvent('community:restriction', { detail: error.response.data }));
     const path = error.config?.url || "";
     // Failed sign-in credentials do not invalidate an unrelated current session.
     if (

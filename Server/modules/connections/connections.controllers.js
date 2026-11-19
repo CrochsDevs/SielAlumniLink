@@ -1,3 +1,4 @@
+import { community, errorData } from '../community/community.runtime.js';
 import ConnectionModel from './connections.models.js';
 import AuthModel from '../auth/auth.models.js';
 import UserModel from '../users/users.models.js';
@@ -35,6 +36,9 @@ export const createConnection = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Students can connect with alumni, but not fellow students.' });
     }
 
+    await community.assertAllowed(req.user, 'connections');
+    await community.assertAllowed({ _id: recipient._id }, 'social');
+    await community.check(req.user, { type: 'connection', text: String(recipient._id) });
     const connection = await ConnectionModel.request(
       req.user._id,
       req.user.email,
@@ -72,10 +76,10 @@ export const createConnection = async (req, res) => {
       message: 'Connection request sent'
     });
   } catch (error) {
-    const status = error.message === 'Connection already exists' ? 409 : 400;
+    const status = error.status || (error.message === 'Connection already exists' ? 409 : 400);
     res.status(status).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -105,7 +109,7 @@ export const listRequests = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -121,7 +125,7 @@ export const getMyConnections = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -138,7 +142,7 @@ export const getConnections = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -172,6 +176,11 @@ export const updateConnection = async (req, res) => {
       });
     }
 
+    if (status === 'accepted') {
+      await community.assertAllowed(req.user, 'connection_accept');
+      await community.assertAllowed({ _id: existing.requesterAuthId }, 'social');
+      await community.assertAllowed({ _id: existing.recipientAuthId }, 'social');
+    }
     const updated = await ConnectionModel.updateStatus(req.params.id, status);
     if (!updated) return res.status(404).json({ success: false, message: 'Connection not found' });
     emitConnectionsChanged(updated);
@@ -218,7 +227,7 @@ export const updateConnection = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -243,7 +252,7 @@ export const deleteConnection = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };

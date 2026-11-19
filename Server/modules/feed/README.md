@@ -122,3 +122,7 @@ The dashboard loads each listing source and the student's applications independe
 `GET /api/feed` accepts optional `q` (text up to 200 characters). Search treats regular expression characters literally, filters before cursor pagination, and checks title, body, organization, location, and accessible original posts in reposts. Existing audience and moderation rules remain enforced. Post cards support comments, likes, share-link copying, sending to permitted connections, long-text expansion, and category-specific actions and empty states.
 
 `Client/scripts/student-dashboard-browser-check.mjs` uses API fixtures with local Vite on port 5173 and isolated headless Edge/Chrome on debugging port 9234. It exercises all dashboard tabs, applications, registration, RSVP, search/pagination, failure/retry, comments/likes, sharing/sending, story reading, persisted navigation, unavailable post links, and mobile/desktop layouts. Server tests cover real feed filtering and permissions; the isolated MongoDB integration test also checks search and repost visibility.
+
+## Post actions and reports
+
+See [POST-ACTIONS.md](./POST-ACTIONS.md) for private saves and interests, pinning, editing, trash, administrator reports, API routes, indexes, and verification commands.

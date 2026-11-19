@@ -3,6 +3,7 @@ export function createCallRinger({
   createContext = () => new (window.AudioContext || window.webkitAudioContext)(),
   repeat = setInterval,
   cancelRepeat = clearInterval,
+  canUnlock = () => typeof navigator === 'undefined' || !navigator.userActivation || navigator.userActivation.isActive,
 } = {}) {
   let context;
   let mode;
@@ -48,7 +49,7 @@ export function createCallRinger({
   };
 
   const unlock = () => {
-    if (disposed) return;
+    if (disposed || !canUnlock()) return;
     try {
       context ||= createContext();
       if (context.state === 'suspended') {
@@ -79,7 +80,8 @@ export function createCallRinger({
       stop();
       if (!nextMode || disposed) return;
       mode = nextMode;
-      unlock();
+      if (context?.state === 'running') pulse();
+      else unlock();
       timer = repeat(pulse, 3000);
     },
     destroy() {

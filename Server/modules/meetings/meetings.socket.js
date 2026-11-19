@@ -1,3 +1,4 @@
+import { community } from '../community/community.runtime.js';
 import { client } from '../../config/db.js';
 import { createMeetingService, MEETING_LIMIT } from './meetings.service.js';
 import { fail } from '../development/development.policy.js';
@@ -94,11 +95,13 @@ export function createMeetingRuntime(io, service, { now = () => Date.now() } = {
       peer.status = Object.fromEntries(['mic', 'camera', 'sharing', 'hand'].map(key => [key, status[key] === true]));
       io.to(roomKey(socket.data.meetingId)).emit('meeting:peer-updated', publicPeer(peer));
     }));
-    socket.on('meeting:chat', action(({ text }) => {
+    socket.on('meeting:chat', action(async ({ text }) => {
       const id = socket.data.meetingId, room = rooms.get(id), peer = room?.peers.get(socket.id);
       if (!peer) fail(403, 'Join the meeting first');
       if (typeof text !== 'string' || !text.trim() || text.length > 1000) fail(400, 'Write a message of up to 1,000 characters');
       if (Date.now() - lastChat < 1000) fail(429, 'Please wait a moment before sending again');
+      await community.check(user, { type: 'message', text });
+      await community.assertRecipients([...room.peers.values()].filter(item => String(item.user._id) !== String(user._id)).map(item => item.user._id));
       lastChat = Date.now();
       const message = { id: `${socket.id}:${lastChat}`, name: peer.name, text: text.trim(), sentAt: new Date().toISOString() };
       room.messages.push(message); room.messages = room.messages.slice(-100);

@@ -1,3 +1,4 @@
+import communityRoutes from '../modules/community/community.routes.js';
 import express from "express";
 import cors from "cors";
 import { frontendOrigins } from "../config/cors.js";
@@ -85,6 +86,7 @@ app.use("/api/referrals", referralsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/feed", feedRoutes);
+app.use("/api/community", communityRoutes);
 app.use("/api/development", developmentRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/meetings", meetingRoutes);

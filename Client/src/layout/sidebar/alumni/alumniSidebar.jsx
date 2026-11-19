@@ -73,6 +73,7 @@ export default function AlumniSidebar({ user, mobileOpen: controlledOpen, setMob
         </nav>)}
       </div>
       <div className="alumni-sidebar-bottom">
+        <Link to="/community-status" onClick={() => setMobileOpen(false)} className="alumni-menu-item"><Settings size={16} aria-hidden="true" /><span>Account Status</span></Link>
         <Link to="/alumni/accounts" aria-current={settingsActive ? "page" : undefined} onClick={() => setMobileOpen(false)} className={`alumni-menu-item ${settingsActive ? "is-active !bg-primary !border-primary !text-white" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></Link>
         <div className="alumni-sidebar-account">
           <Link to="/alumni/profile" className="alumni-account-link" onClick={() => setMobileOpen(false)} aria-label="View your profile">

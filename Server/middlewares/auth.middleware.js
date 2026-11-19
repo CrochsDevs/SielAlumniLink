@@ -1,3 +1,4 @@
+import { enforceCommunityRequest, errorData } from '../modules/community/community.runtime.js';
 
 import { verifySessionToken, sessionMatches } from '../modules/auth/session-token.js';
 import AuthModel from '../modules/auth/auth.models.js';
@@ -52,6 +53,8 @@ export const protect = async (req, res, next) => {
 
         if (!requestAccountMatches(req, user)) return rejectChangedAccount(res);
         req.user = user;
+        try { await enforceCommunityRequest(req); }
+        catch (error) { return res.status(error.status || 503).json(errorData(error)); }
         next();
     } catch (error) {
         return res.status(401).json({

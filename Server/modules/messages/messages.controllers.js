@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { community, errorData, imageInput } from '../community/community.runtime.js';
 import { ConversationModel, MessageModel, conversationPreference } from './messages.models.js';
 import AuthModel from '../auth/auth.models.js';
 import UserModel from '../users/users.models.js';
@@ -26,6 +28,7 @@ const groupAction = handler => async (req, res) => {
 export const listGroupMembers = groupAction(req => groupMembers.list(req.params.id, req.user._id));
 export const groupCandidates = groupAction(req => groupMembers.candidates(req.params.id, req.user._id));
 export const addGroupMembers = groupAction(async req => {
+  if (Array.isArray(req.body?.authIds) && req.body.authIds.every(id => typeof id === 'string')) await community.assertRecipients(req.body.authIds);
   const data = await groupMembers.add(req.params.id, req.user._id, req.body?.authIds);
   for (const member of data.members) emitToUser(member.authId, 'conversation:members', data);
   return data;
@@ -121,7 +124,7 @@ export const listConversations = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -172,7 +175,7 @@ export const openConversation = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -213,7 +216,7 @@ export const listMessages = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -265,6 +268,7 @@ export const sendMessage = async (req, res) => {
 
     const messageText = (text || '').trim().slice(0, 2000);
     const mentions = await resolveMessageMentions(convo, messageText, req.body.mentionAuthIds, ids => UserModel.findChatProfilesByAuthIds(ids));
+    if (req.file) await community.check(req.user, { type: 'message', text: messageText, images: imageInput(req.file), fileName: req.file.originalname, fileHash: createHash('sha256').update(req.file.buffer).digest('hex') });
     const attachment = await uploadMessageAttachment(req.file, req.user, req.params.id, cloudUpload);
     let message;
     try { message = await MessageModel.create({
@@ -272,6 +276,7 @@ export const sendMessage = async (req, res) => {
       senderAuthId: req.user._id,
       senderEmail: req.user.email,
       clientMessageId,
+      moderationChecked: !!req.file,
       text: messageText,
       mentions,
       attachment,
@@ -319,7 +324,7 @@ export const sendMessage = async (req, res) => {
   } catch (error) {
     res.status(error.status || 500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -411,6 +416,8 @@ export const createGroup = async (req, res) => {
       members.push({ authId: account._id, email: account.email });
     }
 
+    await community.assertRecipients(members.filter(member => String(member.authId) !== String(req.user._id)).map(member => member.authId));
+    await community.check(req.user, { type: 'message', text: name });
     const convo = await ConversationModel.createGroup({ name, members });
     res.status(201).json({
       success: true,
@@ -420,7 +427,7 @@ export const createGroup = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -428,6 +435,7 @@ export const createGroup = async (req, res) => {
 const recordGroupRename = createGroupRenameRecorder({ conversations: ConversationModel, messages: MessageModel, profiles: UserModel, emit: emitToUser });
 export const renameGroup = async (req, res) => {
   try {
+    await community.check(req.user, { type: 'message', text: req.body?.name });
     const group = await ConversationModel.renameGroup(req.params.id, req.user._id, req.body?.name, recordGroupRename);
     const data = { conversationId: String(group._id), name: group.name };
     for (const member of group.participants) emitToUser(member.authId, 'conversation:renamed', data);
@@ -462,7 +470,7 @@ export const editMessage = async (req, res) => {
   } catch (error) {
     res.status(error.status || 500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };
@@ -485,7 +493,7 @@ export const unsendMessage = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      ...errorData(error)
     });
   }
 };

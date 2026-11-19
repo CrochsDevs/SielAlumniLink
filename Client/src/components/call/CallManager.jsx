@@ -49,10 +49,10 @@ const CallManager = ({ getDisplayName, getProfilePicture }) => {
       ringer.unlock();
       if (remoteAudioRef.current?.srcObject) void remoteAudioRef.current.play().catch(() => {});
     };
-    document.addEventListener('pointerdown', unlock);
+    document.addEventListener('click', unlock);
     document.addEventListener('keydown', unlock);
     return () => {
-      document.removeEventListener('pointerdown', unlock);
+      document.removeEventListener('click', unlock);
       document.removeEventListener('keydown', unlock);
       ringer.destroy();
       ringerRef.current = null;

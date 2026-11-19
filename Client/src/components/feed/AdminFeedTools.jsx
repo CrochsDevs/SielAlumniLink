@@ -71,7 +71,7 @@ export default function AdminFeedTools() {
         </div>
         <div className="p-4">
         <p className="text-[11.5px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-          Use the three-dot menu on a post to block content, manage comments,
+          Use the shield button on a post to block content, manage comments,
           restrict a member, or delete a post. Use the feed filter to review
           blocked posts.
         </p>
@@ -79,6 +79,7 @@ export default function AdminFeedTools() {
           You can review public and connections-only posts. Restoring content
           preserves its original audience.
         </p>
+        <Link to="/admin/community" className="mt-3 block text-sm font-semibold text-brand">Community Moderation</Link>
         <Link
           to="/admin/users"
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-200 py-1.5 text-[11px] font-bold text-zinc-500 transition hover:border-brand hover:text-brand dark:border-zinc-700 dark:text-zinc-400"

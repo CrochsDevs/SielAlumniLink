@@ -1,3 +1,4 @@
+import CommunityGuard from './components/community/CommunityGuard';
 import React, { lazy, Suspense, useLayoutEffect, useRef, useState } from "react";
 import {
   BrowserRouter as Router,
@@ -47,6 +48,8 @@ const AlumniRequests = lazy(() => import("./pages/alumni/alumniRequests"));
 const AlumniSurveys = lazy(() => import("./pages/alumni/alumniSurveys"));
 const AlumniSurveyAnswer = lazy(() => import("./pages/alumni/alumniSurveyAnswer"));
 const SearchResults = lazy(() => import("./pages/search/SearchResults"));
+const CommunityStatus = lazy(() => import("./pages/CommunityStatus"));
+const CommunityModeration = lazy(() => import("./pages/admin/CommunityModeration"));
 const FeedPage = lazy(() => import("./pages/FeedPage"));
 
 const StudentDashboard = lazy(() => import("./pages/student/studentDashboard"));
@@ -75,7 +78,7 @@ import { Roles } from "./utils/roles";
 import { scrollToTop } from "./lib/scroll";
 import { setWorkspaceThemeEnabled } from "./lib/theme";
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles, allowPasswordSetup = false }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
@@ -86,7 +89,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.passwordSetupRequired) {
+  if (user?.passwordSetupRequired && !allowPasswordSetup) {
     return <Navigate to="/setup-password" replace />;
   }
 
@@ -130,6 +133,7 @@ const ActivitiesIndex = () => {
 };
 
 function AppRoutes() {
+  const { search } = useLocation();
   return (
     <Routes>
       <Route
@@ -185,6 +189,10 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/community-status" element={<ProtectedRoute allowPasswordSetup><CommunityStatus /></ProtectedRoute>} />
+      <Route path="/admin/community" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><CommunityModeration /></ProtectedRoute>} />
+      <Route path="/admin/post-reports" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><Navigate to={{ pathname: '/admin/community', search }} replace /></ProtectedRoute>} />
+      <Route path="/admin/feed" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><Navigate to={{ pathname: '/admin/community', search }} replace /></ProtectedRoute>} />
       <Route
         path="/admin/settings"
         element={
@@ -689,9 +697,9 @@ function App() {
     <Router>
       <ScrollToTop />
       <AuthProvider>
-        <ChatProvider>
+        <CommunityGuard><ChatProvider>
           <MemberPages />
-        </ChatProvider>
+        </ChatProvider></CommunityGuard>
       </AuthProvider>
     </Router>
   );

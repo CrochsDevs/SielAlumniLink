@@ -1,6 +1,7 @@
 // A short, locally synthesized chime; no audio downloads are needed.
 export function createMeetingJoinSound({
   createContext = () => new (window.AudioContext || window.webkitAudioContext)(),
+  canUnlock = () => typeof navigator === 'undefined' || !navigator.userActivation || navigator.userActivation.isActive,
 } = {}) {
   let context;
   const voices = new Set();
@@ -16,6 +17,7 @@ export function createMeetingJoinSound({
   return {
     // Called directly from the Join button gesture to allow later notifications.
     unlock() {
+      if (!canUnlock()) return;
       try {
         context ||= createContext();
         if (context.state === 'suspended') void context.resume().catch(() => {});

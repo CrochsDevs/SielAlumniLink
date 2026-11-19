@@ -78,6 +78,7 @@ export default function StudentSidebar({ user, mobileOpen: controlledOpen, setMo
         </nav>)}
       </div>
       <div className="student-sidebar-bottom">
+        <Link to="/community-status" onClick={() => setMobileOpen(false)} className="student-menu-item"><Settings size={16} aria-hidden="true" /><span>Account Status</span></Link>
         <Link to="/student/accounts" aria-current={settingsActive ? "page" : undefined} onClick={() => setMobileOpen(false)} className={`student-menu-item ${settingsActive ? "is-active !bg-primary !border-primary !text-white" : ""}`}><Settings size={16} strokeWidth={1.7} aria-hidden="true" /><span>Settings</span></Link>
         <div className="student-sidebar-account">
           <Link to="/student/profile" className="student-account-link" onClick={() => setMobileOpen(false)} aria-label="View your profile">

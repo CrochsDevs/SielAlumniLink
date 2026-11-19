@@ -64,3 +64,21 @@ test('a delayed browser audio resume cannot play after a call ends', async () =>
   assert.equal(f.oscillators.length, 0);
   f.ringer.destroy();
 });
+
+test('incoming calls wait for a real user gesture before creating audio', () => {
+  let activated = false, created = 0;
+  const f = fixture();
+  const ringer = createCallRinger({ canUnlock: () => activated, createContext: () => { created++; return f.context; },
+    repeat: () => 1, cancelRepeat: () => {} });
+  ringer.start('incoming');
+  ringer.unlock();
+  assert.equal(created, 0);
+  activated = true;
+  ringer.unlock();
+  assert.equal(created, 1);
+  assert.equal(f.oscillators.length, 4);
+  activated = false;
+  ringer.start('outgoing');
+  assert.equal(f.oscillators.length, 6);
+  ringer.destroy();
+});

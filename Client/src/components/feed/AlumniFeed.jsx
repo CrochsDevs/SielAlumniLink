@@ -14,10 +14,12 @@ export default function AlumniFeed({
   moderationEnabled = false,
   searchQuery = "",
   refreshKey = 0,
+  authorId,
 }) {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
-  const postId = params.get("post");
+  const postId = authorId ? null : params.get("post");
+  const collection = authorId ? "all" : params.get("collection") || "all";
   const filter = onlyType || "all";
   const isModerator = moderationEnabled && user?.role === "admin";
   const [moderationFilter, setModerationFilter] = useState("published");
@@ -48,6 +50,7 @@ export default function AlumniFeed({
           const res = await api.get("/feed", {
             params: {
               type: filter,
+              collection, author: authorId,
               q: searchQuery || undefined,
               before: nextCursor || undefined,
               moderation: isModerator ? moderationFilter : undefined,
@@ -80,7 +83,7 @@ export default function AlumniFeed({
     } finally {
       if (request === generation.current) setLoading(false);
     }
-  }, [filter, postId, isModerator, moderationFilter, searchQuery]);
+  }, [filter, postId, isModerator, moderationFilter, searchQuery, collection, authorId]);
   useEffect(() => {
     pageCount.current = 1;
     // A new filter or account needs a fresh feed; sockets reuse this loader.
@@ -124,6 +127,7 @@ export default function AlumniFeed({
       const res = await api.get("/feed", {
         params: {
           type: filter,
+              collection, author: authorId,
           q: searchQuery || undefined,
           before: cursor,
           moderation: isModerator ? moderationFilter : undefined,
@@ -170,6 +174,8 @@ export default function AlumniFeed({
   };
   return (
     <div className="space-y-3">
+      {!authorId && <nav aria-label="Your post collections" className="flex flex-wrap gap-2">{[['all', 'Feed'], ['saved', 'Saved posts'], ['hidden', 'Not interested posts']].map(([key, label]) => <button key={key} type="button" aria-pressed={collection === key} onClick={() => { const next = new URLSearchParams(params); next.delete('post'); if (key === 'all') next.delete('collection'); else next.set('collection', key); setParams(next); }} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${collection === key ? 'border-brand bg-brand text-white' : 'border-zinc-200 text-brand dark:border-zinc-700'}`}>{label}</button>)}</nav>}
+      {collection === 'hidden' && <p className="text-sm text-zinc-500">These posts are hidden from your feed. Choose Remove preference in a post's menu to restore it.</p>}
       {participation.restricted && (
         <div
           role="status"
@@ -183,7 +189,7 @@ export default function AlumniFeed({
           </p>
         </div>
       )}
-      {showComposer &&
+      {showComposer && !authorId && collection === "all" &&
         !participation.restricted &&
         ["alumni", "admin"].includes(user?.role) && (
           <FeedComposer

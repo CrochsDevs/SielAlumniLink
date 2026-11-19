@@ -122,6 +122,23 @@ const fixture = async ({ notifications = false } = {}) => {
 const post = (overrides = {}) => ({ body: 'A meaningful update', ...overrides });
 const rejects = (promise, status) => assert.rejects(promise, error => error.status === status);
 
+test('Other reports require a nonempty explanation after sanitizing; other reasons remain optional', async () => {
+  const f = await fixture();
+  const p = await f.feed.create(f.author, post());
+  for (const description of [undefined, '', '   ', '<b> </b>']) {
+    await assert.rejects(f.feed.report(f.friend, p._id, { reason: 'Other', description }),
+      error => error.status === 400 && error.message.includes('explanation'));
+  }
+  assert.equal(await f.db.collection('feed_post_reports').countDocuments({}), 0);
+  const report = await f.feed.report(f.friend, p._id, { reason: 'Other', description: '  <b>Unlisted concern</b>  ' });
+  assert.equal((await f.db.collection('feed_post_reports').findOne({ _id: report._id })).description, 'Unlisted concern');
+
+  const other = await fixture();
+  const otherPost = await other.feed.create(other.author, post());
+  const optional = await other.feed.report(other.friend, otherPost._id, { reason: 'Spam or misleading content' });
+  assert.equal((await other.db.collection('feed_post_reports').findOne({ _id: optional._id })).description, '');
+});
+
 test('likes list includes public profile details and reflects unlikes', async () => {
   const f = await fixture();
   const p = await f.feed.create(f.author, post());

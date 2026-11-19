@@ -20,7 +20,7 @@ export default function QuarterlyTracerGate({ children }) {
   const [revision, setRevision] = useState(0);
   const owner = user?.authId || user?._id;
   const enabled = user?.role === "alumni" && !user?.passwordSetupRequired &&
-    !["/login", "/logout"].includes(pathname);
+    !["/login", "/logout", "/community-status", "/alumni/accounts"].includes(pathname);
 
   useEffect(() => {
     if (!enabled) return;

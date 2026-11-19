@@ -35,6 +35,7 @@ const menuGroups = [
     items: [
       { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
       { to: "/admin/users", label: "Users", icon: Users },
+      { to: "/admin/community", label: "Community Moderation", icon: ClipboardCheck },
       { to: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
       { to: "/feed", label: "Alumni Feed", icon: MessageSquare },
     ],

@@ -1,3 +1,4 @@
+import { createPostActions, ensurePostActionIndexes } from './post-actions.js';
 import { ObjectId } from 'mongodb';
 import { recordAdminAudit } from '../activity/admin-audit.js';
 import { canViewPost, ensureFeedParticipation, fail, isFeedAdmin, membershipUpdate, POST_TYPES, STORY_TOPICS, validateComment, validateModeration, validatePost } from './feed.policy.js';
@@ -7,14 +8,27 @@ const objectId = (value) => {
   return new ObjectId(value);
 };
 
-export const createFeedService = (db, changed = () => {}, notify = null) => {
+export const createFeedService = (db, changed = () => {}, notify = null, community = null) => {
   const posts = db.collection('feed_posts');
+  const inspectPost = async (user, data, targetId) => {
+    if (!community) return;
+    const assets = await Promise.all((data.images || []).map(image => images.findOne({ _id: objectId(image.id), ownerAuthId: String(user._id) })));
+    await community.check(user, { type: 'post', targetId, text: [data.title, data.body, data.details?.link, data.details?.organization, data.details?.location].filter(Boolean).join('\n'), images: assets.filter(Boolean).map(asset => asset.url).filter(Boolean) });
+  };
   const comments = db.collection('feed_comments');
   const images = db.collection('feed_images');
   const restrictions = db.collection('feed_restrictions');
+  const authorRestriction = async (id, user) => {
+    if (!isFeedAdmin(user)) return null;
+    const legacy = await restrictions.findOne({ _id: id, blocked: true });
+    if (legacy || !community) return legacy;
+    return (await community.activeRestrictions(id)).find(row => row.source === 'feed_controls' && row.level === 2) || null;
+  };
   const assertAdmin = user => { if (!isFeedAdmin(user)) fail(403, 'Only administrators can moderate the feed'); };
   const canRead = (post, user, network) => isFeedAdmin(user) ? !!post && !post.deletedAt : canViewPost(post, user._id, network);
   const status = async user => {
+    const central = community ? (await community.activeRestrictions(user._id)).find(row => row.level >= 2) : null;
+    if (central) return { restricted: true, reason: central.reason };
     const restriction = await restrictions.findOne({ _id: String(user._id), blocked: true });
     return { restricted: !isFeedAdmin(user) && !!restriction, reason: !isFeedAdmin(user) ? restriction?.reason || '' : '' };
   };
@@ -74,7 +88,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
       authors.get(id),
       comments.countDocuments({ postId: post._id, deletedAt: null }),
       posts.countDocuments({ originalPostId: post._id, deletedAt: null, 'moderation.blocked': { $ne: true } }),
-      isFeedAdmin(user) ? restrictions.findOne({ _id: id, blocked: true }) : null,
+      authorRestriction(id, user),
       originalRequest.then(original => original ? serialize(original, user, authors) : null),
     ]);
     return {
@@ -85,7 +99,8 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
       likesCount: (post.likedBy || []).length, likedByMe: (post.likedBy || []).includes(String(user._id)),
       commentsCount, sharesCount,
       attendingCount: (post.attending || []).length, attendingByMe: (post.attending || []).includes(String(user._id)),
-      isMine: id === String(user._id), originalPost,
+      isMine: id === String(user._id), originalPost, isPinned: !!post.isPinned,
+      viewerState: await db.collection('feed_post_states').findOne({ _id: `${user._id}:${post._id}` }, { projection: { saved: 1, preference: 1, _id: 0 } }) || {},
       commentsDisabled: !!post.moderation?.commentsDisabled,
       ...(isFeedAdmin(user) ? { moderation: {
         blocked: !!post.moderation?.blocked, reason: post.moderation?.reason || '',
@@ -96,6 +111,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
   };
 
   const list = async (user, query = {}, storyBoard = false) => {
+    if (query.collection && !['all', 'saved', 'hidden'].includes(query.collection)) fail(400, 'Invalid post collection');
     const network = await connectedIds(user);
     const accessible = [String(user._id), ...network];
     const visibility = { $or: [{ audience: 'public' }, { authorAuthId: { $in: accessible } }] };
@@ -122,12 +138,29 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
       }
       if (query.mine === 'true') filter.authorAuthId = String(user._id);
     }
-    if (query.before) filter._id = { $lt: objectId(query.before) };
+    if (query.author) filter.authorAuthId = String(objectId(query.author));
+    if (['saved', 'hidden'].includes(query.collection)) {
+      const stateRows = await db.collection('feed_post_states').find({ userId: String(user._id),
+        ...(query.collection === 'saved' ? { saved: true } : { preference: 'not_interested' }) }).toArray();
+      filter._id = { $in: stateRows.map(row => row.postId) };
+    } else if (!query.author && !['blocked', 'all'].includes(query.moderation)) {
+      const hidden = await db.collection('feed_post_states').find({ userId: String(user._id), preference: 'not_interested' }).toArray();
+      if (hidden.length) filter._id = { $nin: hidden.map(row => row.postId) };
+    }
+    if (query.before) {
+      const cursorId = objectId(query.before);
+      if (query.author) {
+        const pivot = await posts.findOne({ _id: cursorId, authorAuthId: filter.authorAuthId });
+        if (!pivot) fail(400, 'Invalid profile cursor');
+        filter.$and = [{ $or: pivot.isPinned ? [{ isPinned: true, _id: { $lt: cursorId } }, { isPinned: { $ne: true } }]
+          : [{ isPinned: { $ne: true }, _id: { $lt: cursorId } }] }];
+      } else filter._id = { ...filter._id, $lt: cursorId };
+    }
     const limit = Math.min(30, Math.max(1, Number(query.limit) || 15));
     // Both the repost and its original must be visible. This prevents reposts
     // from widening a private audience, including after a connection is removed.
     const rows = await posts.aggregate([
-      { $match: filter }, { $sort: { _id: -1 } },
+      { $match: filter }, ...(query.author ? [{ $set: { isPinned: { $ifNull: ['$isPinned', false] } } }] : []), { $sort: query.author ? { isPinned: -1, _id: -1 } : { _id: -1 } },
       { $lookup: { from: 'feed_posts', localField: 'originalPostId', foreignField: '_id', as: 'original' } },
       { $match: { $or: [{ originalPostId: null }, { $and: [
         { 'original.0.deletedAt': null }, { 'original.0._id': { $exists: true } },
@@ -152,6 +185,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
       if (!asset) fail(400, 'An attached image is unavailable or belongs to another user. Upload it again.');
       return { ...image, width: asset.width, height: asset.height };
     }));
+    await inspectPost(user, data);
     const post = { ...data, authorAuthId: String(user._id), likedBy: [], attending: [],
       originalPostId: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
     const result = await posts.insertOne(post);
@@ -176,27 +210,45 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
     return { people, nextCursor: ids.length > 30 ? page.at(-1) : null };
   };
 
-  const updateStory = async (user, id, input) => {
+  const updatePost = async (user, id, input) => {
     await ensureFeedParticipation(db, user);
-    if (!['alumni', 'admin'].includes(String(user.role).toLowerCase())) fail(403, 'Only alumni can edit success stories');
+    if (!['alumni', 'admin'].includes(String(user.role).toLowerCase())) fail(403, 'Only alumni can edit posts');
     const post = await readable(id, user);
-    if (String(post.authorAuthId) !== String(user._id)) fail(403, 'Only the author can edit this story');
-    if (post.type !== 'story' || post.originalPostId) fail(400, 'Only original success stories can be edited');
-    if (input.type !== undefined && input.type !== 'story') fail(400, 'A success story must remain a story');
+    if (String(post.authorAuthId) !== String(user._id)) fail(403, 'Only the author can edit this post');
+    if (post.originalPostId) {
+      if (typeof input.body !== 'string' || !input.body.trim() || input.body.length > 10000) fail(400, 'Provide post text of up to 10000 characters');
+      const audience = input.audience ?? post.audience;
+      const original = await readable(post.originalPostId, user);
+      if (original.audience === 'connections' && audience !== 'connections') fail(403, 'Connections-only posts can only be reposted to connections');
+      const data = validatePost({ type: 'update', body: input.body, audience });
+      await inspectPost(user, data, post._id);
+      await posts.updateOne({ _id: post._id, deletedAt: null }, { $set: { body: data.body, audience: data.audience, updatedAt: new Date() } });
+      changed();
+      return serialize(await readable(id, user), user);
+    }
+    if (input.type !== undefined && input.type !== post.type) fail(400, 'Post type cannot be changed');
+    if (input.details !== undefined && (!input.details || typeof input.details !== 'object' || Array.isArray(input.details))) fail(400, 'Provide valid post details');
     const data = validatePost({
-      type: 'story', title: post.title, body: post.body, audience: post.audience,
-      details: post.details, images: post.images, ...input,
+      type: post.type, title: post.title, body: post.body, audience: post.audience,
+      images: post.images, ...input, details: { ...post.details, ...input.details },
     });
     data.images = await Promise.all(data.images.map(async image => {
       const asset = await images.findOne({ _id: objectId(image.id), ownerAuthId: String(user._id) });
       if (!asset) fail(400, 'An attached image is unavailable or belongs to another user. Upload it again.');
       return { ...image, width: asset.width, height: asset.height };
     }));
+    await inspectPost(user, data, post._id);
     const updated = await posts.findOneAndUpdate({ _id: post._id, authorAuthId: String(user._id), deletedAt: null },
       { $set: { ...data, updatedAt: new Date() } }, { returnDocument: 'after' });
-    if (!updated) fail(404, 'Story no longer available');
+    if (!updated) fail(404, 'Post no longer available');
     changed();
     return serialize(updated, user);
+  };
+
+  const updateStory = async (user, id, input) => {
+    const post = await readable(id, user);
+    if (post.type !== 'story' || post.originalPostId) fail(400, 'Only original success stories can be edited');
+    return updatePost(user, id, input);
   };
 
   const getImage = async (user, id, imageId) => {
@@ -259,6 +311,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
       parentId = parent.parentCommentId || parent._id;
       if (parent.parentCommentId && !await comments.findOne({ _id: parentId, postId: post._id, parentCommentId: null, deletedAt: null })) fail(404, 'Comment not found');
     }
+    if (community) await community.check(user, { type: 'comment', text: valid });
     const doc = { postId: post._id, parentCommentId: parentId, replyToAuthId, authorAuthId: String(user._id), body: valid, createdAt: new Date(), deletedAt: null };
     const result = await comments.insertOne(doc);
     changed();
@@ -288,6 +341,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
     if (original.audience === 'connections' && audience !== 'connections') fail(403, 'Connections-only posts can only be reposted to connections');
     if (input.body !== undefined && typeof input.body !== 'string') fail(400, 'Post must be text');
     const data = validatePost({ type: 'update', audience, body: input.body?.trim() || 'Shared a post' });
+    await inspectPost(user, data);
     const doc = { ...data, type: original.type, authorAuthId: String(user._id), originalPostId: original._id,
       likedBy: [], attending: [], createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
     const result = await posts.insertOne(doc);
@@ -346,6 +400,7 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
     const target = await db.collection('auth').findOne({ _id: objectId(authId) });
     if (!target) fail(404, 'Member not found');
     if (isFeedAdmin(target)) fail(403, 'Administrators cannot be restricted from the feed');
+    if (community) return community.legacyFeedRestriction(user, String(target._id), { enabled, reason });
     const now = new Date();
     await restrictions.updateOne({ _id: String(target._id) }, {
       $set: { blocked: enabled, reason: enabled ? reason : '', updatedBy: String(user._id), updatedAt: now },
@@ -360,14 +415,18 @@ export const createFeedService = (db, changed = () => {}, notify = null) => {
   const listRestrictions = async user => {
     assertAdmin(user);
     const rows = await restrictions.find({ blocked: true }).sort({ updatedAt: -1 }).limit(100).toArray();
-    return Promise.all(rows.map(async row => ({ author: await author(row._id), reason: row.reason, updatedAt: row.updatedAt })));
+    const legacy = await Promise.all(rows.map(async row => ({ author: await author(row._id), reason: row.reason, updatedAt: row.updatedAt })));
+    const central = community ? await Promise.all((await community.legacyFeedRestrictions(user)).map(async row => ({ author: await author(row.userId), reason: row.reason, updatedAt: row.startsAt, expiresAt: row.expiresAt }))) : [];
+    return [...legacy, ...central];
   };
 
-  return { list, listStories: (user, query = {}) => list(user, { ...query, type: 'story' }, true), create, updateStory, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
+  const postActions = createPostActions(db, { readable, serialize, author, moderate, changed, community });
+  return { ...postActions, list, listStories: (user, query = {}) => list(user, { ...query, type: 'story' }, true), create, updateStory, updatePost, get, getImage, readable, connectedIds, status, moderate, restrictAuthor, listRestrictions,
     setMembership, listLikes, listComments, comment, removeComment, share, remove, recipients };
 };
 
 export const ensureFeedIndexes = async (db) => {
+  await ensurePostActionIndexes(db);
   await db.collection('feed_posts').createIndex({ authorAuthId: 1, audience: 1, _id: -1 });
   await db.collection('feed_posts').createIndex({ originalPostId: 1, deletedAt: 1 });
   await db.collection('feed_comments').createIndex({ postId: 1, deletedAt: 1, _id: -1 });

@@ -62,3 +62,17 @@ test('blocked browser audio never breaks meeting actions or replays delayed noti
   await Promise.resolve();
   assert.equal(tones, 0);
 });
+
+test('automatic meeting actions cannot create audio before user activation', () => {
+  let activated = false, created = 0;
+  const chime = createMeetingJoinSound({ canUnlock: () => activated, createContext: () => {
+    created++;
+    return { state: 'running', close: async () => {} };
+  } });
+  chime.unlock();
+  assert.equal(created, 0);
+  activated = true;
+  chime.unlock();
+  assert.equal(created, 1);
+  chime.destroy();
+});
