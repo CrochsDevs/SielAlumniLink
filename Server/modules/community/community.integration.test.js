@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { createCommunityService, ensureCommunityIndexes } from './community.service.js';
 import { createFeedService } from '../feed/feed.service.js';
 import { ensureFeedIndexes } from '../feed/feed.service.js';
+import { createNotificationModel } from '../notifications/notifications.models.js';
 
 test('real database: moderation decisions, strikes, API gates, expiry, appeals, privacy, and audit', { timeout: 180000 }, async t => {
   assert.ok(process.env.MONGO_URI || process.env.TEST_MONGO_URI, 'A test MongoDB connection is required');
@@ -19,7 +20,12 @@ test('real database: moderation decisions, strikes, API gates, expiry, appeals, 
   const notices = [];
   let signals = [], available = true;
   const provider = { status: () => ({ configured: false, provider: 'integration-fixture' }), analyze: async () => ({ available, reason: available ? null : 'provider_unavailable', signals }) };
-  const service = createCommunityService(db, { provider, now: () => new Date(time), notify: async notice => notices.push(notice) });
+  const notifications = createNotificationModel(db);
+  const service = createCommunityService(db, { provider, now: () => new Date(time), notify: async notice => {
+    notices.push(notice);
+    return notifications.notify({ recipientAuthId: notice.userId, title: notice.title, body: notice.body,
+      link: notice.link, kind: 'community_moderation', dedupKey: notice.key });
+  } });
   const rejected = status => error => error.status === status;
   try {
     await connection.connect(); await ensureCommunityIndexes(db); await ensureFeedIndexes(db);
@@ -131,13 +137,37 @@ test('real database: moderation decisions, strikes, API gates, expiry, appeals, 
     await t.test('reports do not prove violations, private evidence is authorized, and admin actions are audited', async () => {
       const post = await feed.create(owner, { body: 'Report review target' });
       const report = await feed.report(member, post._id, { reason: 'Other', description: 'Please review the context' });
+      const inbox = user => db.collection('notifications').find({ recipientAuthId: String(user._id), title: { $in: ['New post report', 'Report submitted', 'Your report has an update'] } }).toArray();
+      assert.equal((await inbox(admin)).length, 1);
+      assert.equal((await inbox(admin))[0].link, '/admin/community');
+      assert.equal((await inbox(member)).length, 1);
+      assert.equal((await inbox(member))[0].link, '/community-status#my-reports');
+      assert.equal((await inbox(owner)).length, 0, 'Do not disclose a pending report to the post owner');
+      await service.queueReport(report._id, await db.collection('feed_posts').findOne({ _id: new ObjectId(post._id) }), { reason: 'Other' });
+      assert.equal((await inbox(admin)).length, 1, 'Queue resync must not send duplicate notifications');
+      assert.equal((await inbox(member)).length, 1);
+      await assert.rejects(feed.report(member, post._id, { reason: 'Other', description: 'Duplicate report' }), rejected(409));
+      assert.equal((await inbox(admin)).length, 1);
       assert.equal((await db.collection('community_cases').findOne({ _id: report._id })).status, 'pending');
       assert.equal((await service.activeRestrictions(owner._id)).length, 0);
       await assert.rejects(service.list(member), rejected(403)); await assert.rejects(service.stats(member), rejected(403));
       await assert.rejects(service.detail(member, String(report._id)), rejected(404));
       const own = await service.detail(owner, String(report._id)); assert.equal(own.report, undefined); assert.equal(own.reporterId, undefined);
       await feed.review(admin, report._id, { status: 'under_review' });
-      await feed.review(admin, report._id, { status: 'dismissed', adminNotes: 'No violation found' });
+      assert.equal((await inbox(member)).length, 2);
+      // Exercise the moderation center route as well as the legacy feed review route.
+      await service.review(admin, String(report._id), { status: 'dismissed', notes: 'No violation found' });
+      assert.equal((await inbox(member)).length, 3);
+      assert.ok((await inbox(member)).some(notice => notice.body.includes('No violation found')));
+      const ownReports = (await service.ownStatus(member)).reports;
+      assert.equal(ownReports.length, 1);
+      assert.equal(ownReports[0].adminNotes, 'No violation found');
+      assert.equal(ownReports[0].status, 'dismissed');
+      assert.equal(ownReports[0].snapshot, undefined);
+      assert.equal(ownReports[0].reviewedBy, undefined);
+      assert.equal((await service.ownStatus(owner)).reports.length, 0);
+      await assert.rejects(service.review(admin, String(report._id), { status: 'dismissed', notes: 'Duplicate decision' }), rejected(409));
+      assert.equal((await inbox(member)).length, 3);
       assert.equal((await service.detail(admin, String(report._id))).status, 'dismissed');
       assert.equal((await service.stats(admin)).reports, 1);
       assert.ok((await service.auditList(admin)).events.length > 5); assert.ok(notices.length > 0);

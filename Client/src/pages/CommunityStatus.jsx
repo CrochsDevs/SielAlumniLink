@@ -51,6 +51,15 @@ export default function CommunityStatus() {
         <button disabled={busy} onClick={() => view({ _id: row.caseId })} className="mt-4 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white">View Violation Details / Appeal Decision</button>
       </section>)}
       {data && !active.length && <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">You have no active community restrictions.</p>}
+      <section id="my-reports" className="scroll-mt-5 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+        <h2 className="font-bold">My reports</h2>
+        {data?.reports?.map(row => <div key={row._id} className="mt-4 border-t border-zinc-100 pt-4 text-sm dark:border-zinc-800">
+          <div className="flex flex-wrap justify-between gap-2"><strong>{row.reason}</strong><time>{date(row.createdAt)}</time></div>
+          <p className="mt-2 capitalize">Status: {row.status.replaceAll('_', ' ')}</p>
+          {row.adminNotes && <p className="mt-2 whitespace-pre-wrap break-words"><strong>Admin response: </strong>{row.adminNotes}</p>}
+        </div>)}
+        {data && !data.reports?.length && <p className="mt-3 text-sm text-zinc-500">You have not submitted any reports.</p>}
+      </section>
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900"><h2 className="font-bold">Moderation history</h2>
         {data?.cases.map(row => <div key={row._id} className="mt-4 border-t border-zinc-100 pt-4 text-sm dark:border-zinc-800"><div className="flex flex-wrap justify-between gap-2"><strong className="capitalize">{row.category.replaceAll('_', ' ')} · {row.status.replaceAll('_', ' ')}</strong><time>{date(row.createdAt)}</time></div><p className="mt-2 whitespace-pre-wrap break-words">{row.explanation}</p><button disabled={busy} onClick={() => view(row)} className="mt-2 font-semibold text-brand">View details</button></div>)}
         {data && !data.cases.length && <p className="mt-3 text-sm text-zinc-500">No moderation cases.</p>}

@@ -48,9 +48,9 @@ export function createCommunityService(db, { provider = createModerationProvider
     if (!claimed) fail(409, 'Another moderation action is in progress for this account. Please retry.');
     try { return await work(); } finally { await locks.updateOne({ _id: String(userId), token }, { $set: { token: null } }); }
   };
-  const sendNotice = async (userId, title, body, policy, key) => {
+  const sendNotice = async (userId, title, body, policy, key, link = '/community-status') => {
     if (!policy.notificationsEnabled) return;
-    try { await notify({ userId: String(userId), title, body, link: '/community-status', key }); } catch { /* Durable case history remains accessible if notification delivery fails. */ }
+    try { await notify({ userId: String(userId), title, body, link, key }); } catch { /* Durable case history remains accessible if notification delivery fails. */ }
   };
   const issueRestriction = async (row, actor, level, days, reason, policy) => {
     if (!Number.isInteger(level) || level < 1 || level > 5 || !Number.isFinite(days) || days <= 0 || days > 365) fail(400, 'Choose level 1–5 and a duration of up to 365 days');
@@ -132,10 +132,22 @@ export function createCommunityService(db, { provider = createModerationProvider
   };
   const queueReport = async (reportId, post, report) => {
     const _id = asId(reportId), time = now();
-    await cases.updateOne({ _id }, { $setOnInsert: { _id, userId: String(post.authorAuthId), type: 'post', targetId: String(post._id), reportId: _id,
+    const queued = await cases.updateOne({ _id }, { $setOnInsert: { _id, userId: String(post.authorAuthId), type: 'post', targetId: String(post._id), reportId: _id,
       category: 'other', severity: 'medium', detection: 'user_report', confidence: null, explanation: report.reason, status: report.status === 'under_review' ? 'under_review' : 'pending',
       decision: 'review', needsReview: true, priority: 0, createdAt: report.createdAt || time, updatedAt: time, history: [] } }, { upsert: true });
     await recordEvidence(_id, {}, [post.title, post.body, post.originalPost?.body].filter(Boolean).join('\n\n'), await settings());
+    if (queued.upsertedCount) {
+      const policy = await settings();
+      const submitted = await db.collection('feed_post_reports').findOne({ _id }, { projection: { reporterId: 1 } });
+      if (submitted?.reporterId) await sendNotice(submitted.reporterId, 'Report submitted',
+        'Your post report has been submitted for administrator review. You can follow its status in My reports.', policy, `report:${_id}:submitted`, '/community-status#my-reports');
+      if (policy.notificationsEnabled) {
+        const admins = await db.collection('auth').find({ role: 'admin', disabledAt: null }, { projection: { _id: 1 } }).toArray();
+        await Promise.all(admins.map(account => sendNotice(account._id, 'New post report',
+          'A member submitted a post report. Review it in the Community Moderation Center.', policy, `report:${_id}:received`, '/admin/community')));
+      }
+      changed();
+    }
   };
   const syncReports = async () => {
     const rows = await db.collection('feed_post_reports').aggregate([{ $match: { active: true } }, { $lookup: { from: 'community_cases', localField: '_id', foreignField: '_id', as: 'existing' } }, { $match: { 'existing.0': { $exists: false } } }, { $sort: { _id: -1 } }, { $limit: 100 }]).toArray();
@@ -155,6 +167,8 @@ export function createCommunityService(db, { provider = createModerationProvider
     return { authId: userId, name: profile?.name || account?.name || 'Member', email: account?.email || '', role: account?.role || '' };
   };
   const ownStatus = async user => ({ restrictions: await activeRestrictions(user._id),
+    reports: await db.collection('feed_post_reports').find({ reporterId: String(user._id) },
+      { projection: { _id: 1, reason: 1, status: 1, adminNotes: 1, createdAt: 1, updatedAt: 1, reviewedAt: 1 } }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(),
     cases: (await cases.find({ userId: String(user._id) }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray()).map(userDto),
     appeals: await appeals.find({ userId: String(user._id) }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(), appealsEnabled: (await settings()).appealsEnabled });
   const originalContent = async row => {
@@ -215,6 +229,12 @@ export function createCommunityService(db, { provider = createModerationProvider
         $set: { status: input.status === 'confirmed' ? 'resolved' : input.status, active: input.status === 'under_review', adminNotes: notes, reviewedBy: String(user._id), reviewedAt: now(), updatedAt: now() },
         $push: { history: { status: input.status === 'confirmed' ? 'resolved' : input.status, notes, by: String(user._id), at: now() } } });
       await audit(user, `case_${input.status}`, row._id, notes);
+      if (row.reportId) {
+        const report = await db.collection('feed_post_reports').findOne({ _id: row.reportId }, { projection: { reporterId: 1 } });
+        if (report?.reporterId) await sendNotice(report.reporterId, 'Your report has an update',
+          `Status: ${input.status === 'confirmed' ? 'resolved' : input.status.replaceAll('_', ' ')}. ${notes}`,
+          policy, `report:${row.reportId}:${input.status}:${updated.history.length}`, '/community-status#my-reports');
+      }
       await sendNotice(row.userId, 'Community moderation decision updated', `${notes} Status: ${input.status}. ${input.status === 'dismissed' ? 'Associated restrictions and strikes are removed. Held content can be resubmitted.' : 'View Account Status for details and appeals.'}`, policy, `${row._id}:${input.status}`);
       return updated;
     });

@@ -176,6 +176,13 @@ Protected image proxying is limited to stored Cloudinary asset URLs.
 ## UI
 
 `/community-status` provides restriction notices, expiry, details, and appeals.
+It also lists the signed-in member's submitted reports, their current status,
+and administrator responses in My reports. New reports notify active
+administrators and acknowledge the reporter; review transitions notify the
+reporter through the existing persistent inbox and live notification socket.
+These notices respect the notification policy and repeated queue synchronization
+does not send duplicate submission notices. Pending reports do not notify the
+reported post owner or reveal the reporter's identity to that owner.
 Global account guarding shows notices after login, responds to restricted API
 responses, redirects severe restrictions to Account Status, and preserves
 password setup, appeals, and permitted account settings. Member sidebars include
