@@ -35,7 +35,8 @@ export default function PostActions({ post, user, onChanged, onReplace }) {
         : action === 'trash' ? await api.delete(path) : await api.put(`${path}/${action}`, data);
       if (['report', 'trash'].includes(action)) {
         setDialog(null);
-        setMessage(action === 'report' ? 'Report submitted to administrators for review.' : 'Post moved to trash.');
+        if (action === 'report') toast.success('Report submitted', { description: 'Your report has been submitted to administrators for review.' });
+        else setMessage('Post moved to trash.');
         if (action === 'trash') onChanged();
       } else {
         onReplace(response.data.data);
