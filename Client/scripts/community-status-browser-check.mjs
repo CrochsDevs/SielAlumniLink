@@ -66,6 +66,7 @@ const until = async (expression) => {
 
 const account = { _id: '111111111111111111111111', authId: 'aaaaaaaaaaaaaaaaaaaaaaaa', name: 'Alumni Tester', email: 'alumni@example.test', role: 'alumni', passwordSetupRequired: false };
 const caseRow = { _id: 'cccccccccccccccccccccccc', category: 'spam', status: 'confirmed', severity: 'medium', explanation: 'Repeated promotional content was posted in the community.', createdAt: new Date().toISOString(), evidence: { text: 'Example content under review' } };
+let statusReads = 0;
 let restricted = false;
 let submitted = false;
 const status = () => ({ restrictions: restricted ? [{ _id: 'rrrr', caseId: caseRow._id, level: 2, reason: 'Repeated promotional posts.', startsAt: new Date(Date.now() - 86400000).toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString() }] : [], reports: [], cases: restricted ? [caseRow] : [], appeals: submitted ? [{ _id: 'appeal', caseId: caseRow._id, status: 'pending', explanation: 'Please review the context of my post.', createdAt: new Date().toISOString() }] : [], appealsEnabled: true });
@@ -74,8 +75,9 @@ listeners.set('Fetch.requestPaused', async ({ requestId, request }) => {
   try {
     const route = new URL(request.url).pathname.replace('/api', '');
     let data = [];
-    if (route === '/auth/me' || route === '/users/me') data = account;
-    else if (route === '/community/me') data = status();
+    if (request.method === 'OPTIONS') data = null;
+    else if (route === '/auth/me' || route === '/users/me') data = account;
+    else if (route === '/community/me') { statusReads++; await new Promise(resolve => setTimeout(resolve, 100)); data = status(); }
     else if (route === `/community/cases/${caseRow._id}/appeals` && request.method === 'POST') { submitted = true; data = {}; }
     else if (route === `/community/cases/${caseRow._id}`) data = caseRow;
     else if (route.includes('notifications')) data = { notifications: [], unreadCount: 0 };
@@ -102,10 +104,12 @@ try {
   await until("document.querySelector('#access-heading')");
   assert.equal(await evaluate("Boolean(document.querySelector('aside[aria-label=\"Alumni sidebar\"] a[aria-current=page][href=\"/community-status\"]'))"), true);
   for (const width of [390, 768, 1440]) for (const dark of [false, true]) await screenshot('clear', width, dark);
+  assert.equal(statusReads, 1, 'Initial page and guard share one status request');
   restricted = true;
   await click('Refresh status');
   await until("document.querySelector('.community-restriction-card')");
   for (const width of [390, 1440]) for (const dark of [false, true]) await screenshot('restricted', width, dark);
+  assert.equal(statusReads, 2, 'Refresh makes one fresh status request');
   await click('View case details');
   await until("document.querySelector('dialog:modal textarea')");
   assert.equal(await evaluate("document.querySelector('dialog button[type=submit], dialog form button').disabled"), true);
@@ -115,6 +119,21 @@ try {
   await click('View case details');
   await until("document.querySelector('dialog:modal')?.textContent.includes('already appealed')");
   assert.equal(await evaluate("Boolean(document.querySelector('dialog textarea'))"), false);
+  assert.equal(statusReads, 3, 'Appeal submission refreshes status once');
+  const readerTests = await evaluate(`(async () => {
+    const { createCommunityStatusReader } = await import('/src/utils/communityStatus.js');
+    let calls = 0; const releases = [];
+    const read = createCommunityStatusReader(() => { calls++; return new Promise(resolve => releases.push(resolve)); });
+    const first = read('a'), shared = read('a'), other = read('b');
+    await Promise.resolve();
+    const isolated = first === shared && first !== other && calls === 2;
+    releases.forEach(resolve => resolve('ok')); await Promise.all([first, other]);
+    const fresh = read('a'); await Promise.resolve(); releases.at(-1)('fresh'); await fresh;
+    let attempts = 0; const retry = createCommunityStatusReader(async () => { if (++attempts === 1) throw new Error('offline'); return 'ok'; });
+    await retry('a').catch(() => {}); await retry('a');
+    return { isolated, fresh: calls === 3, retry: attempts === 2 };
+  })()`);
+  assert.deepEqual(readerTests, { isolated: true, fresh: true, retry: true });
   assert.deepEqual(runtimeErrors, []);
   console.log(JSON.stringify({ result: 'passed', checks: ['alumni sidebar active state', 'responsive light/dark layouts', 'restricted account notice', 'appeal validation and submission', 'duplicate appeal prevention'], artifacts }));
 } finally { await send('Page.close'); socket.close(); }

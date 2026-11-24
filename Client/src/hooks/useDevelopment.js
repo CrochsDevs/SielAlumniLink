@@ -66,5 +66,5 @@ export default function useDevelopment() {
       setLoading(false);
     }
   };
-  return { data, loading, busy, error, load, mutate };
+  return { data, loading: loading && !data, refreshing: loading && !!data, busy, error, load, mutate };
 }

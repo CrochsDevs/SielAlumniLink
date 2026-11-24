@@ -1,4 +1,6 @@
 import "./Skeleton.css";
+import { createElement } from 'react';
+import { loadingLayout } from '../../utils/loadingLayout';
 
 export function Skeleton({ className = "", style, ...props }) {
   return <span {...props} aria-hidden="true" className={`siel-skeleton ${className}`} style={style} />;
@@ -21,22 +23,26 @@ function Placeholder({ variant }) {
 }
 
 // Use inside the existing loading branch so errors and empty states stay distinct.
-export default function ContentSkeleton({ variant = "list", count = 3, label = "Loading content", className = "", as: Component = "div" }) {
-  return <Component role="status" aria-live="polite" aria-busy="true" className={`siel-loading siel-loading--${variant} ${className}`}>
-    <span className="sr-only">{label}</span>
+export default function ContentSkeleton({ variant = "list", count = 3, label = "Loading content", className = "", as: Component = "div", announce = true }) {
+  return createElement(Component, { role: announce ? 'status' : undefined, 'aria-live': announce ? 'polite' : undefined, 'aria-busy': announce ? true : undefined, className: `siel-loading siel-loading--${variant} ${className}` }, <>
+    {announce && <span className="sr-only">{label}</span>}
     <div aria-hidden="true" className="siel-loading-items">
       {Array.from({ length: count }, (_, index) => <div key={index} className="siel-loading-item">
         {variant === "table" ? Array.from({ length: 5 }, (_, column) => <Skeleton key={column} />) : <Placeholder variant={variant} />}
       </div>)}
     </div>
-  </Component>;
+  </>);
 }
 
-export function PageSkeleton({ label = "Loading your workspace" }) {
-  return <div className="siel-page-skeleton">
+export function PageSkeleton({ label = "Loading your workspace", pathname = '', variant = loadingLayout(pathname) }) {
+  return <div className="siel-page-skeleton" role="status" aria-live="polite" aria-busy="true">
+    <span className="sr-only">{label}</span>
     <aside aria-hidden="true" className="siel-page-skeleton-sidebar"><Skeleton className="siel-skeleton-logo" />{Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="siel-skeleton-input" />)}</aside>
     <div className="siel-page-skeleton-main"><div aria-hidden="true" className="siel-page-skeleton-topbar"><Skeleton className="siel-skeleton-title" /><Skeleton className="siel-skeleton-avatar" /></div>
-      <div className="siel-page-skeleton-content"><ContentSkeleton label={label} variant="detail" count={1} /><ContentSkeleton variant="cards" /><ContentSkeleton variant="table" count={5} /></div>
+      <div className="siel-page-skeleton-content" aria-hidden="true">
+        <div className="siel-page-skeleton-heading"><Skeleton className="siel-skeleton-title" /><Skeleton className="siel-skeleton-short" /></div>
+        {variant === 'dashboard' ? <><div className="siel-skeleton-stats">{Array.from({ length: 4 }, (_, index) => <div key={index}><Skeleton className="siel-skeleton-short" /><Skeleton className="siel-skeleton-stat-value" /></div>)}</div><ContentSkeleton announce={false} variant="table" count={5} /></> : <ContentSkeleton announce={false} variant={variant} count={['form', 'profile', 'calendar'].includes(variant) ? 1 : variant === 'table' ? 6 : 3} />}
+      </div>
     </div>
   </div>;
 }

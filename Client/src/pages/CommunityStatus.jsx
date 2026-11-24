@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import api from '../utils/axios';
+import { readCommunityStatus } from '../utils/communityStatus';
+import { CommunityStatusContext } from '../context/CommunityStatusContext';
 import { FeedDialog } from '../components/feed/FeedComposer';
 import { ArrowRight, CheckCircle2, Clock3, FileText, Flag, Info, RefreshCw, ShieldCheck, ShieldAlert } from 'lucide-react';
 import AlumniSidebar from '../layout/sidebar/alumni/alumniSidebar';
@@ -11,6 +13,7 @@ import StudentTopbar from '../layout/topbar/student/studentTopbar';
 import AdminSidebar from '../layout/sidebar/admin/adminSidebar';
 import AdminTopbar from '../layout/topbar/alumni/adminTopbar';
 import './communityStatus.css';
+import ContentSkeleton from '../components/ui/Skeleton';
 
 const levelLabel = level => ['Warning', 'Posting restriction', 'Communication restriction', 'Community restriction', 'Account suspension'][level - 1];
 const date = value => new Date(value).toLocaleString();
@@ -21,7 +24,10 @@ function StatusBadge({ value }) {
 }
 export default function CommunityStatus() {
   const { user } = useAuth();
-  const [data, setData] = useState(null);
+  const owner = user?.authId || user?._id;
+  const sharedStatus = useContext(CommunityStatusContext);
+  const initialStatus = useRef(sharedStatus);
+  const [data, setData] = useState(sharedStatus);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -31,11 +37,11 @@ export default function CommunityStatus() {
   const [message, setMessage] = useState('');
   const load = useCallback(async () => {
     setRefreshing(true);
-    try { const response = await api.get('/community/me'); setData(response.data.data); setError(''); window.dispatchEvent(new Event('community:refresh')); }
+    try { const response = await readCommunityStatus(owner); setData(response.data.data); setError(''); window.dispatchEvent(new CustomEvent('community:refresh', { detail: { owner, data: response.data.data } })); }
     catch (err) { setError(err.response?.data?.message || 'Unable to load account status.'); }
     finally { setRefreshing(false); }
-  }, []);
-  useEffect(() => { void Promise.resolve().then(load); }, [load]);
+  }, [owner]);
+  useEffect(() => { if (!initialStatus.current) void Promise.resolve().then(load); }, [load]);
   const view = async row => {
     setBusy(true); setError(''); setMessage('');
     try { const response = await api.get(`/community/cases/${row._id}`); setSelected(response.data.data); setExplanation(''); }
@@ -68,7 +74,7 @@ export default function CommunityStatus() {
         </header>
         {error && <div role="alert" className="community-status-notice is-error"><ShieldAlert size={20} aria-hidden="true" /><p>{error} You can use Refresh status to try again.</p></div>}
         {message && <div role="status" className="community-status-notice is-success"><CheckCircle2 size={20} aria-hidden="true" /><p>{message}</p></div>}
-        {!data && !error && <div role="status" className="community-status-card"><p>Loading your account status...</p></div>}
+        {!data && !error && <div className="community-status-card"><ContentSkeleton variant="list" count={3} label="Loading your account status" /></div>}
         {data && <>
           <section className={`community-status-card community-access-overview ${highestLevel > 1 ? 'has-restriction' : highestLevel === 1 ? 'has-warning' : 'is-clear'}`} aria-labelledby="access-heading">
             <div className="community-access-heading"><span className="community-status-icon">{highestLevel ? <ShieldAlert size={28} aria-hidden="true" /> : <ShieldCheck size={28} aria-hidden="true" />}</span><div><p className="community-status-eyebrow">Current account access</p><h2 id="access-heading">{highestLevel === 5 ? 'Your account is suspended' : highestLevel > 1 ? 'Some features are temporarily restricted' : highestLevel === 1 ? 'You have a community warning' : 'Your community features are available'}</h2><p>{highestLevel > 1 ? 'Review the notice below to see what is affected and when access returns.' : highestLevel === 1 ? 'Your features are still available. Please review the warning below.' : 'You have no active restrictions. You can continue participating in the community.'}</p></div></div>

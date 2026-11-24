@@ -197,12 +197,13 @@ export default function AdminDashboard() {
       })
       .then((response) => {
         if (!controller.signal.aborted)
-          setResult({ key: requestKey, data: response.data.data });
+          setResult({ key: requestKey, date, data: response.data.data });
       })
       .catch((error) => {
         if (!controller.signal.aborted)
           setResult({
             key: requestKey,
+            date,
             error:
               error.response?.data?.message ||
               "Unable to load dashboard reports. Please try again.",
@@ -211,7 +212,7 @@ export default function AdminDashboard() {
     return () => controller.abort();
   }, [date, requestKey]);
   const current = result?.key === requestKey ? result : null;
-  const data = current?.data;
+  const data = current?.data || (result?.date === date ? result.data : null);
   const report = data?.engagement[period];
   return (
     <div className="admin-dashboard-shell min-h-screen bg-[#f5f6f8] text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100">
@@ -259,9 +260,10 @@ export default function AdminDashboard() {
             />
           </div>
           <div hidden={view !== "overview"} className="space-y-4">
-          {!current && (
+          {!current && !data && (
             <ContentSkeleton variant="cards" count={3} label="Loading dashboard reports..." />
           )}
+          {!current && data && <p role="status" className="text-sm text-zinc-500">Updating dashboard...</p>}
           {current?.error && (
             <div className={panel} role="alert">
               <p>{current.error}</p>

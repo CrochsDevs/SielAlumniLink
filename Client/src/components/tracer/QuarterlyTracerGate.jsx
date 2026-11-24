@@ -35,29 +35,16 @@ export default function QuarterlyTracerGate({ children }) {
       }
       pending = true;
       try {
-        let data;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            const response = await api.get("/tracer/access", {
-              signal: controller.signal,
-              timeout: 8000,
-            });
-            data = response.data?.data;
-            if (response.data?.success !== true ||
-              typeof data?.updateRequired !== "boolean" ||
-              typeof data?.quarter !== "string" ||
-              !Number.isFinite(Date.parse(data?.nextUpdateAt))) {
-              throw Object.assign(new Error("Invalid quarterly status"), { response });
-            }
-            break;
-          } catch (error) {
-            if (!active) return;
-            const status = error.response?.status;
-            const retryable = !status || status >= 500 || [408, 429].includes(status);
-            if (!retryable || attempt === 2) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            if (!active) return;
-          }
+        const response = await api.get("/tracer/access", {
+          signal: controller.signal,
+          timeout: 8000,
+        });
+        const data = response.data?.data;
+        if (response.data?.success !== true ||
+          typeof data?.updateRequired !== "boolean" ||
+          typeof data?.quarter !== "string" ||
+          !Number.isFinite(Date.parse(data?.nextUpdateAt))) {
+          throw Object.assign(new Error("Invalid quarterly status"), { response });
         }
         if (active) setResult({ owner, data });
       } catch (error) {
@@ -99,7 +86,7 @@ export default function QuarterlyTracerGate({ children }) {
 
   if (!enabled) return children;
   if (result?.owner !== owner || !result)
-    return <PageSkeleton label="Checking your Tracer Study update" />;
+    return <PageSkeleton pathname={pathname} label="Checking your Tracer Study update" />;
   // A failed refresh must preserve a confirmed status and any form in progress.
   // A previous-quarter confirmation cannot unlock the new reporting period.
   const hasCurrentStatus = result.data && (

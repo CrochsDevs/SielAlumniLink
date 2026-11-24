@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { getSocket } from "../../realtime/socket";
-import api from "../../utils/axios";
-import GraduationCapLoader from "../ui/GraduationCapLoader";
+import { readCommunityStatus } from "../../utils/communityStatus";
+import { PageSkeleton } from "../ui/Skeleton";
+import { CommunityStatusContext } from "../../context/CommunityStatusContext";
 
 export default function CommunityGuard({ children }) {
   const { user } = useAuth();
@@ -11,11 +12,10 @@ export default function CommunityGuard({ children }) {
   const owner = user?.authId || user?._id;
   const [result, setResult] = useState(null);
   const [blocked, setBlocked] = useState(null);
-  const [loaderReadyOwner, setLoaderReadyOwner] = useState(null);
   const load = useCallback(async () => {
     if (!owner) return;
     try {
-      const { data } = await api.get("/community/me");
+      const { data } = await readCommunityStatus(owner);
       setResult({ owner, data: data?.data ?? null, checkedAt: Date.now() });
       setBlocked(null);
     } catch {
@@ -27,14 +27,19 @@ export default function CommunityGuard({ children }) {
   useEffect(() => {
     if (!owner) return;
     let active = true;
-    // Keep the cap visible for at least one second for each signed-in account.
-    const loaderTimer = setTimeout(() => setLoaderReadyOwner(owner), 1000);
     Promise.resolve().then(() => {
       if (active) void load();
     });
     const socket = getSocket();
     const changed = () => {
       if (active) void load();
+    };
+    const refreshed = event => {
+      if (!active) return;
+      if (event.detail?.owner === owner && event.detail?.data) {
+        setResult({ owner, data: event.detail.data, checkedAt: Date.now() });
+        setBlocked(null);
+      } else changed();
     };
     const restricted = (event) => {
       setBlocked({ owner, ...event.detail });
@@ -48,17 +53,16 @@ export default function CommunityGuard({ children }) {
     socket.on("community:restricted", socketRestricted);
     window.addEventListener("community:restriction", restricted);
     window.addEventListener("focus", changed);
-    window.addEventListener("community:refresh", changed);
+    window.addEventListener("community:refresh", refreshed);
     const timer = setInterval(changed, 60000);
     return () => {
       active = false;
-      clearTimeout(loaderTimer);
       clearInterval(timer);
       socket.off("community:changed", changed);
       socket.off("community:restricted", socketRestricted);
       window.removeEventListener("community:restriction", restricted);
       window.removeEventListener("focus", changed);
-      window.removeEventListener("community:refresh", changed);
+      window.removeEventListener("community:refresh", refreshed);
     };
   }, [owner, load]);
   const data = owner && result?.owner === owner ? result?.data : null;
@@ -81,10 +85,10 @@ export default function CommunityGuard({ children }) {
     pathname === "/setup-password";
   if (
     owner &&
-    (result?.owner !== owner || loaderReadyOwner !== owner) &&
+    result?.owner !== owner &&
     pathname !== "/community-status"
   )
-    return <GraduationCapLoader label="Signing you in" />;
+    return <PageSkeleton pathname={pathname} label="Checking your community access" />;
   if (
     severe &&
     !permitted &&
@@ -92,7 +96,7 @@ export default function CommunityGuard({ children }) {
   )
     return <Navigate to="/community-status" replace />;
   return (
-    <>
+    <CommunityStatusContext.Provider value={data}>
       {owner &&
         !permitted &&
         (active.length > 0 ||
@@ -115,6 +119,6 @@ export default function CommunityGuard({ children }) {
           </aside>
         )}
       {children}
-    </>
+    </CommunityStatusContext.Provider>
   );
 }

@@ -1,3 +1,4 @@
+import ContentSkeleton from '../../components/ui/Skeleton';
 import FeedImages from '../../components/feed/FeedImages';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/useAuth';
@@ -68,7 +69,7 @@ export default function CommunityModeration() {
   const [severity, setSeverity] = useState('medium');
   const [removeContent, setRemoveContent] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const load = useCallback(async (before, signal) => {
@@ -122,7 +123,7 @@ export default function CommunityModeration() {
           {tab === 'queue' && <label className="block max-w-xs text-sm">Case status<select value={status} onChange={event => { setStatus(event.target.value); setRows([]); }} className={field}><option value="">All statuses</option>{['pending', 'under_review', 'confirmed', 'dismissed'].map(value => <option key={value} value={value}>{label(value)}</option>)}</select></label>}
           <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"><table className="w-full text-left text-sm"><thead><tr>{(tab === 'queue' ? ['User', 'Content', 'Violation', 'Severity', 'Detection', 'Confidence', 'Date', 'Status', 'Action'] : tab === 'appeals' ? ['User', 'Explanation', 'Submitted', 'Status', 'Action'] : ['Actor', 'Action', 'Target', 'Notes', 'Date']).map(title => <th className="whitespace-nowrap p-3" key={title}>{title}</th>)}</tr></thead><tbody>
             {rows.map(row => <tr key={row._id} className="border-t border-zinc-100 dark:border-zinc-800">{tab === 'queue' ? <><td className="p-3"><button disabled={busy} onClick={() => userHistory(row.userId)} className="font-semibold text-brand">{row.user.name}</button></td><td className="min-w-52 max-w-xs p-3"><p className="line-clamp-3 break-words">{row.preview || row.explanation}</p><span className="text-xs capitalize text-zinc-500">{label(row.type)}</span></td><td className="p-3 capitalize">{row.category}</td><td className="p-3"><Badge value={row.severity} /></td><td className="p-3 capitalize">{label(row.detection)}</td><td className="p-3">{row.confidence === null ? '—' : `${(row.confidence * 100).toFixed(1)}%`}</td><td className="whitespace-nowrap p-3">{date(row.createdAt)}</td><td className="p-3"><Badge value={row.status} /></td><td className="p-3"><button disabled={busy} onClick={() => view(row._id)} className="font-semibold text-brand">Review</button></td></> : tab === 'appeals' ? <><td className="p-3">{row.user.name}</td><td className="max-w-xs p-3"><p className="line-clamp-3 break-words">{row.explanation}</p></td><td className="whitespace-nowrap p-3">{date(row.createdAt)}</td><td className="p-3"><Badge value={row.status} /></td><td className="p-3"><button disabled={busy} onClick={() => { setAppeal(row); setNotes(''); setError(''); }} className="font-semibold text-brand">Review Appeal</button></td></> : <><td className="p-3 font-mono text-xs">{row.actorId}</td><td className="p-3 capitalize">{label(row.action)}</td><td className="p-3 font-mono text-xs">{row.targetId}</td><td className="max-w-sm break-words p-3">{row.notes}</td><td className="whitespace-nowrap p-3">{date(row.at)}</td></>}</tr>)}
-          </tbody></table>{!loading && !rows.length && <p className="p-5 text-sm">No records in this view.</p>}</div>
+          </tbody></table>{loading && !rows.length && <ContentSkeleton variant="table" count={5} label="Loading moderation records" />}{!loading && !error && !rows.length && <p className="p-5 text-sm">No records in this view.</p>}</div>
           {cursor && <button disabled={loading} className={button} onClick={() => load(cursor)}>Load more</button>}
         </>}
       </main>

@@ -166,11 +166,18 @@ export function createCommunityService(db, { provider = createModerationProvider
     const profile = await db.collection('users').findOne({ authId: { $in: keys } }, { projection: { name: 1 } });
     return { authId: userId, name: profile?.name || account?.name || 'Member', email: account?.email || '', role: account?.role || '' };
   };
-  const ownStatus = async user => ({ restrictions: await activeRestrictions(user._id),
-    reports: await db.collection('feed_post_reports').find({ reporterId: String(user._id) },
-      { projection: { _id: 1, reason: 1, status: 1, adminNotes: 1, createdAt: 1, updatedAt: 1, reviewedAt: 1 } }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(),
-    cases: (await cases.find({ userId: String(user._id) }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray()).map(userDto),
-    appeals: await appeals.find({ userId: String(user._id) }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(), appealsEnabled: (await settings()).appealsEnabled });
+  const ownStatus = async user => {
+    const userId = String(user._id);
+    const [active, reports, ownCases, ownAppeals, policy] = await Promise.all([
+      activeRestrictions(user._id),
+      db.collection('feed_post_reports').find({ reporterId: userId },
+        { projection: { _id: 1, reason: 1, status: 1, adminNotes: 1, createdAt: 1, updatedAt: 1, reviewedAt: 1 } }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(),
+      cases.find({ userId }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(),
+      appeals.find({ userId }).sort({ createdAt: -1, _id: -1 }).limit(100).toArray(),
+      settings(),
+    ]);
+    return { restrictions: active, reports, cases: ownCases.map(userDto), appeals: ownAppeals, appealsEnabled: policy.appealsEnabled };
+  };
   const originalContent = async row => {
     if (!row.targetId || !ObjectId.isValid(row.targetId)) return null;
     const collection = { post: 'feed_posts', comment: 'feed_comments', message: 'messages', profile: 'users' }[row.type];
