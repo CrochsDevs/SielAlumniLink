@@ -5,6 +5,7 @@ import api from '../../utils/axios';
 import AdminSidebar from '../../layout/sidebar/admin/adminSidebar';
 import AdminTopbar from '../../layout/topbar/alumni/adminTopbar';
 import { FeedDialog } from '../../components/feed/FeedComposer';
+import './communityModeration.css';
 
 const field = 'mt-1 w-full rounded-xl border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700 dark:[&>option]:bg-zinc-900';
 const button = 'rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-brand disabled:opacity-50 dark:border-zinc-700';
@@ -57,6 +58,7 @@ export default function CommunityModeration() {
   const [rows, setRows] = useState([]);
   const [cursor, setCursor] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [casePanel, setCasePanel] = useState('review');
   const [history, setHistory] = useState(null);
   const [appeal, setAppeal] = useState(null);
   const [notes, setNotes] = useState('');
@@ -84,12 +86,12 @@ export default function CommunityModeration() {
   useEffect(() => { const controller = new AbortController(); Promise.resolve().then(() => { if (!controller.signal.aborted) void load(undefined, controller.signal); }); return () => controller.abort(); }, [load]);
   const view = async id => {
     setBusy(true); setError(''); setMessage('');
-    try { const { data } = await api.get(`/community/admin/cases/${id}`); setSelected(data.data); setNotes(''); setCategory(data.data.category); setSeverity(data.data.severity); setRemoveContent(false); setLevel(1); setDays(1); }
+    try { const { data } = await api.get(`/community/admin/cases/${id}`); setSelected(data.data); setHistory(null); setCasePanel('review'); setNotes(''); setCategory(data.data.category); setSeverity(data.data.severity); setRemoveContent(false); setLevel(1); setDays(1); }
     catch (err) { setError(err.response?.data?.message || 'Unable to load case.'); }
     finally { setBusy(false); }
   };
   const userHistory = async userId => {
-    setBusy(true);
+    setBusy(true); setError('');
     try { const { data } = await api.get(`/community/admin/users/${userId}`); setHistory(data.data); }
     catch (err) { setError(err.response?.data?.message || 'Unable to load account history.'); }
     finally { setBusy(false); }
@@ -125,27 +127,85 @@ export default function CommunityModeration() {
         </>}
       </main>
     </div>
-    {selected && <FeedDialog title="Review Moderation Case" busy={busy} onClose={() => setSelected(null)} wide><div className="space-y-4 text-sm">
-      <div className="flex flex-wrap gap-2"><Badge value={selected.status} /><Badge value={selected.severity} /></div>
-      <p><strong>Member:</strong> {selected.user.name} · {selected.user.email} <button disabled={busy} onClick={() => userHistory(selected.userId)} className="ml-2 text-brand underline">View moderation history</button></p>
-      <p><strong>Detection:</strong> {label(selected.detection)} · Score {selected.confidence ?? 'unavailable'}</p><p className="whitespace-pre-wrap break-words">{selected.explanation}</p>
-      {selected.signals?.map((signal, index) => <p className="text-xs text-zinc-500" key={index}>{signal.explanation} ({signal.score})</p>)}
+    {selected && !history && <FeedDialog key={casePanel} title={casePanel === 'restrictions' ? 'Restrictions' : casePanel === 'decisions' ? 'Decision history' : 'Review Moderation Case'} busy={busy} onClose={() => setSelected(null)} wide className="moderation-review-dialog"><div className="moderation-review-body space-y-4 text-sm">
+      {casePanel === 'review' ? <>
+      <section className="moderation-case-overview">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3>Case overview</h3>
+          <dl className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2"><dt className="moderation-review-help">Status</dt><dd><Badge value={selected.status} /></dd></div>
+            <div className="flex items-center gap-2"><dt className="moderation-review-help">Severity</dt><dd><Badge value={selected.severity} /></dd></div>
+          </dl>
+        </div>
+        <nav aria-label="Moderation records" className="moderation-review-navigation moderation-record-links">
+          <div><p className="moderation-record-label">Member records</p><button type="button" disabled={busy} onClick={() => userHistory(selected.userId)} className={button}>View moderation history</button></div>
+          <div><p className="moderation-record-label">This case</p><div className="flex flex-wrap gap-2">
+            <button type="button" disabled={busy} onClick={() => setCasePanel('restrictions')} className={button}>Restrictions ({selected.restrictions.length})</button>
+            <button type="button" disabled={busy} onClick={() => setCasePanel('decisions')} className={button}>Decision history ({selected.history.length})</button>
+          </div></div>
+        </nav>
+      </section>
+      <section>
+        <h3>Member details</h3>
+        <dl className="moderation-detail-grid">
+          <div><dt>Name</dt><dd>{selected.user.name}</dd></div>
+          <div><dt>Email address</dt><dd>{selected.user.email}</dd></div>
+        </dl>
+      </section>
+      <section>
+        <h3>Detection details</h3>
+        <dl className="moderation-detail-grid">
+          <div><dt>Detection source</dt><dd className="capitalize">{label(selected.detection)}</dd></div>
+          <div><dt>Confidence score</dt><dd>{selected.confidence ?? 'Unavailable'}</dd></div>
+        </dl>
+        <div className="moderation-detection-reason"><p className="moderation-record-label">Reason for review</p><p className="whitespace-pre-wrap break-words">{selected.explanation || 'No explanation provided.'}</p></div>
+        {selected.signals?.map((signal, index) => <p className="mt-2 text-xs text-zinc-500" key={index}>{signal.explanation} ({signal.score})</p>)}
+      </section>
       <section className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"><h3 className="font-semibold">Submitted evidence</h3>{selected.evidence ? <><p className="mt-2 whitespace-pre-wrap break-words">{selected.evidence.text || 'Image submission'}</p><div className="mt-3 grid grid-cols-2 gap-2">{selected.evidence.imageIndexes.map(index => <img key={index} alt={`Moderation evidence ${index + 1}`} className="max-h-64 w-full rounded-lg object-contain" src={new URL(`/api/community/admin/cases/${selected._id}/images/${index}`, new URL(api.defaults.baseURL, window.location.origin)).href} />)}</div><p className="mt-2 text-xs text-zinc-500">Evidence expires {date(selected.evidence.expiresAt)}.</p></> : <p>Evidence expired or unavailable.</p>}</section>
       {selected.originalContent && <section className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700"><h3 className="font-semibold">Current original content</h3><p className="mt-2 font-semibold">{selected.originalContent.title}</p><p className="whitespace-pre-wrap break-words">{selected.originalContent.text || (selected.originalContent.unavailable ? 'Content has been removed from visibility.' : '')}</p>{selected.originalContent.attachmentName && <p className="mt-2 text-xs">Attachment: {selected.originalContent.attachmentName}</p>}{!selected.originalContent.unavailable && <FeedImages images={selected.originalContent.images} />}</section>}
       {selected.report && <section className="rounded-xl border p-3"><h3 className="font-semibold">Confidential user report</h3><p>Reporter ID: {selected.report.reporterId}</p><p>{selected.report.reason}</p><p className="whitespace-pre-wrap break-words">{selected.report.description}</p>{selected.report.snapshot?.original && <div className="mt-3 rounded-lg border p-3"><p className="font-semibold">{selected.report.snapshot.original.title}</p><p className="whitespace-pre-wrap break-words">{selected.report.snapshot.original.body}</p></div>}<FeedImages images={[...(selected.report.snapshot?.images || []), ...(selected.report.snapshot?.original?.images || [])].map(image => ({ ...image, url: `/api/feed/post-reports/${selected.reportId}/images/${image.id}` }))} /><p className="mt-2 text-xs">A report alone does not prove a violation.</p></section>}
-      {selected.status !== 'dismissed' && <fieldset disabled={busy} className="space-y-3">
-        <label className="block">Administrator explanation<textarea required maxLength={2000} rows={3} value={notes} onChange={event => setNotes(event.target.value)} className={field} /></label>
+      {selected.status !== 'dismissed' && <fieldset disabled={busy} className="moderation-review-decision space-y-3">
+        <legend>Review decision</legend>
+        <label className="block">Administrator explanation<textarea required maxLength={2000} rows={3} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Explain your findings and the reason for your decision..." aria-describedby="moderation-notes-help" className={field} /></label>
+        <p id="moderation-notes-help" className="moderation-review-help">An explanation is required before taking action. {notes.length}/2000 characters.</p>
         {['under_review', 'confirmed'].includes(selected.status) && <>
           <div className="grid gap-3 sm:grid-cols-2"><label>Violation category<select className={field} value={category} onChange={event => setCategory(event.target.value)}>{categories.map(value => <option key={value}>{value}</option>)}</select></label><label>Severity<select className={field} value={severity} onChange={event => setSeverity(event.target.value)}>{['low', 'medium', 'high', 'critical'].map(value => <option key={value}>{value}</option>)}</select></label><label>Restriction level<select className={field} value={level} onChange={event => setLevel(Number(event.target.value))}>{levels.map((title, index) => <option key={title} value={index + 1}>{index + 1} · {title}</option>)}</select></label><label>Duration (days, up to 365)<input type="number" min="0.0416666667" max="365" step="any" value={days} onChange={event => setDays(Number(event.target.value))} className={field} /><span className="mt-1 flex flex-wrap gap-2">{[1, 3, 7, 14, 30].map(value => <button type="button" key={value} onClick={() => setDays(value)} className="text-xs text-brand underline">{value}d</button>)}</span></label></div>
           {selected.targetId && ['post', 'comment', 'message', 'profile'].includes(selected.type) && <label className="flex items-center gap-2"><input type="checkbox" checked={removeContent} onChange={event => setRemoveContent(event.target.checked)} />Remove the original content when confirming this violation</label>}
         </>}
-        <div className="flex flex-wrap gap-2">{selected.status === 'pending' && <button disabled={!notes.trim()} className={button} onClick={() => review('under_review')}>Mark Under Review</button>}{selected.status === 'under_review' && <button disabled={!notes.trim() || days <= 0} className={button} onClick={() => review('confirmed')}>Confirm Violation</button>}{selected.status === 'confirmed' && selected.needsReview && <button disabled={!notes.trim()} className={button} onClick={() => review('confirmed')}>Confirm Existing Decision</button>}{selected.status === 'confirmed' && <button disabled={!notes.trim() || days <= 0} className={button} onClick={() => act(`cases/${selected._id}/restrictions`, { notes, level, durationDays: days }, 'post')}>Apply / Change Restriction</button>}<button disabled={!notes.trim()} className={button} onClick={() => review('dismissed')}>{selected.status === 'confirmed' ? 'Overturn Violation and Restore' : 'Dismiss Detection'}</button></div>
+        <div className="moderation-review-actions flex flex-wrap gap-2">{selected.status === 'pending' && <button disabled={!notes.trim()} className={button} onClick={() => review('under_review')}>Mark Under Review</button>}{selected.status === 'under_review' && <button disabled={!notes.trim() || days <= 0} className={button} onClick={() => review('confirmed')}>Confirm Violation</button>}{selected.status === 'confirmed' && selected.needsReview && <button disabled={!notes.trim()} className={button} onClick={() => review('confirmed')}>Confirm Existing Decision</button>}{selected.status === 'confirmed' && <button disabled={!notes.trim() || days <= 0} className={button} onClick={() => act(`cases/${selected._id}/restrictions`, { notes, level, durationDays: days }, 'post')}>Apply / Change Restriction</button>}<button disabled={!notes.trim()} className={button} onClick={() => review('dismissed')}>{selected.status === 'confirmed' ? 'Overturn Violation and Restore' : 'Dismiss Detection'}</button></div>
       </fieldset>}
-      <section><h3 className="font-semibold">Restrictions</h3>{selected.restrictions.map(row => <div key={row._id} className="mt-2 rounded-lg border p-3"><p>{levels[row.level - 1]} · {row.revokedAt ? 'Revoked' : new Date(row.expiresAt) <= new Date() ? 'Expired' : 'Active'} · Expires {date(row.expiresAt)}</p>{!row.revokedAt && new Date(row.expiresAt) > new Date() && <button disabled={busy || !notes.trim()} onClick={() => act(`restrictions/${row._id}/restore`, { notes })} className="mt-2 font-semibold text-brand">Restore functionality (requires explanation)</button>}</div>)}</section>
-      <section><h3 className="font-semibold">Decision history</h3>{selected.history.map((entry, index) => <p key={index} className="mt-2 whitespace-pre-wrap break-words text-xs">{label(entry.action)} · {date(entry.at)} · {entry.by}<br />{entry.notes}</p>)}</section>
       {error && <p role="alert" className="text-red-600">{error}</p>}{message && <p role="status">{message}</p>}
+      </> : <>
+        <div className="moderation-review-navigation flex flex-wrap items-center justify-between gap-3">
+          <button type="button" disabled={busy} onClick={() => setCasePanel('review')} className={button}>Back to review case</button>
+          <p className="font-semibold">{selected.user.name}</p>
+        </div>
+        {casePanel === 'restrictions' ? <>
+          <section><h3 className="font-semibold">Restrictions</h3>{!selected.restrictions.length && <p className="moderation-review-help mt-2">No restrictions recorded for this case.</p>}{selected.restrictions.map(row => <div key={row._id} className="mt-2 rounded-lg border p-3"><p>{levels[row.level - 1]} · {row.revokedAt ? 'Revoked' : new Date(row.expiresAt) <= new Date() ? 'Expired' : 'Active'} · Expires {date(row.expiresAt)}</p>{!row.revokedAt && new Date(row.expiresAt) > new Date() && <button disabled={busy || !notes.trim()} onClick={() => act(`restrictions/${row._id}/restore`, { notes })} className="mt-2 font-semibold text-brand">Restore functionality (requires explanation)</button>}</div>)}</section>
+          {selected.restrictions.some(row => !row.revokedAt && new Date(row.expiresAt) > new Date()) && <section>
+            <label className="block font-medium">Administrator explanation<textarea maxLength={2000} rows={3} value={notes} onChange={event => setNotes(event.target.value)} disabled={busy} placeholder="Explain why functionality should be restored..." className={field} /></label>
+            <p className="moderation-review-help mt-2">An explanation is required to restore functionality.</p>
+          </section>}
+        </> : <section><h3 className="font-semibold">Decision history</h3>{!selected.history.length && <p className="moderation-review-help mt-2">No decisions recorded for this case.</p>}{selected.history.map((entry, index) => <p key={index} className="mt-2 whitespace-pre-wrap break-words text-xs">{label(entry.action)} · {date(entry.at)} · {entry.by}<br />{entry.notes}</p>)}</section>}
+        {error && <p role="alert" className="text-red-600">{error}</p>}{message && <p role="status">{message}</p>}
+      </>}
     </div></FeedDialog>}
     {appeal && <FeedDialog title="Review Appeal" busy={busy} onClose={() => setAppeal(null)}><div className="space-y-4 text-sm"><p><strong>{appeal.user.name}</strong></p><Badge value={appeal.status} /><p className="whitespace-pre-wrap break-words">{appeal.explanation}</p><button disabled={busy} className={button} onClick={() => { const id = appeal.caseId; setAppeal(null); void view(id); }}>View original case</button><label className="block">Decision explanation<textarea rows={4} maxLength={2000} value={notes} onChange={event => setNotes(event.target.value)} className={field} /></label><div className="flex flex-wrap gap-2">{(appeal.status === 'pending' ? ['under_review'] : appeal.status === 'under_review' ? ['approved', 'rejected'] : []).map(next => <button key={next} disabled={busy || !notes.trim()} className={button} onClick={() => act(`appeals/${appeal._id}`, { status: next, notes })}>{next === 'under_review' ? 'Mark Under Review' : next === 'approved' ? 'Approve and Restore' : 'Reject Appeal'}</button>)}</div><p className="text-xs text-zinc-500">Approval removes this case's strike and restrictions. Rejection keeps the original expiry.</p>{error && <p role="alert" className="text-red-600">{error}</p>}</div></FeedDialog>}
-    {history && <FeedDialog title="User Moderation History" busy={busy} onClose={() => setHistory(null)} wide><div className="space-y-4 text-sm"><p className="font-semibold">{history.user.name} · {history.user.email}</p><div className="grid grid-cols-2 gap-3"><p>Confirmed violations / active strikes: <strong>{history.confirmedViolations}</strong></p><p>Warnings: <strong>{history.restrictions.filter(row => row.level === 1).length}</strong></p><p>Active restrictions: <strong>{history.activeRestrictions.filter(row => row.level > 1).length}</strong></p><p>Suspensions: <strong>{history.restrictions.filter(row => row.level === 5).length}</strong></p></div><h3 className="font-semibold">Violation history</h3>{history.cases.map(row => <p key={row._id}><Badge value={row.status} /> {row.category} · {date(row.createdAt)}<button disabled={busy} onClick={() => { setHistory(null); void view(row._id); }} className="ml-2 text-brand underline">Review case</button></p>)}<h3 className="font-semibold">Appeals</h3>{history.appeals.map(row => <p className="whitespace-pre-wrap break-words" key={row._id}>{label(row.status)} · {date(row.createdAt)} · {row.explanation}</p>)}</div></FeedDialog>}
+    {history && <FeedDialog title="User Moderation History" busy={busy} onClose={() => { setHistory(null); setSelected(null); }} wide className="moderation-review-dialog"><div className="moderation-review-body space-y-4 text-sm">
+      {selected && <div className="moderation-review-navigation"><button type="button" disabled={busy} onClick={() => setHistory(null)} className={button}>Back to review case</button></div>}
+      <section><h3>{history.user.name}</h3><p className="break-words text-zinc-500">{history.user.email}</p></section>
+      <section><h3>Moderation summary</h3><dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {[['Confirmed violations / active strikes', history.confirmedViolations], ['Warnings', history.restrictions.filter(row => row.level === 1).length], ['Active restrictions', history.activeRestrictions.filter(row => row.level > 1).length], ['Suspensions', history.restrictions.filter(row => row.level === 5).length]].map(([title, count]) => <div key={title} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700"><dt className="text-xs text-zinc-500">{title}</dt><dd className="mt-1 text-xl font-bold">{count}</dd></div>)}
+      </dl></section>
+      <section><h3>Violation history</h3>
+        {!history.cases.length && <p className="moderation-review-help mt-2">No violations recorded for this member.</p>}
+        <div className="mt-3 space-y-3">{history.cases.map(row => <div key={row._id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700"><div><Badge value={row.status} /><p className="mt-2 font-medium capitalize">{label(row.category)}</p><p className="text-xs text-zinc-500">{date(row.createdAt)}</p></div><button type="button" disabled={busy} onClick={() => { if (selected?._id === row._id) { setCasePanel('review'); setHistory(null); } else { void view(row._id); } }} className={button}>Review case</button></div>)}</div>
+      </section>
+      <section><h3>Appeals</h3>
+        {!history.appeals.length && <p className="moderation-review-help mt-2">No appeals submitted by this member.</p>}
+        <div className="mt-3 space-y-3">{history.appeals.map(row => <div key={row._id} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700"><Badge value={row.status} /><p className="mt-2 text-xs text-zinc-500">{date(row.createdAt)}</p><p className="mt-2 whitespace-pre-wrap break-words">{row.explanation}</p></div>)}</div>
+      </section>
+      {error && <p role="alert" className="text-red-600">{error}</p>}
+    </div></FeedDialog>}
   </div>;
 }
