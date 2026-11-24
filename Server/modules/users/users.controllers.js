@@ -2,6 +2,8 @@ import { community } from '../community/community.runtime.js';
 import UserModel from './users.models.js';
 import AuthModel from '../auth/auth.models.js';
 import { fetchFromCAIS } from '../sync/cais.service.js';
+import { mapSyncedUser } from '../sync/user-schema.js';
+import { activeAccount } from '../auth/session-token.js';
 import Roles from '../../constant/roles.js';
 import bcrypt from 'bcryptjs';
 import { ConversationModel } from '../messages/messages.models.js';
@@ -68,20 +70,15 @@ export const syncUsers = async (req, res) => {
     const seen = new Set();
 
     for (const entry of users) {
-      const email = String(entry.email || '').trim().toLowerCase();
-      const name = String(entry.name || '').trim();
-      const role = String(entry.role || '').trim().toLowerCase();
-      const profileData = {
-        name,
-        email,
-        role,
-        studentId: String(entry.studentId || '').trim(),
-        program: String(entry.program || '').trim(),
-        yearLevel: String(entry.yearLevel || '').trim(),
-        section: String(entry.section || '').trim(),
-        academicStatus: String(entry.academicStatus || '').trim(),
-        contactNumber: String(entry.contactNumber || '').trim(),
-      };
+      let profileData;
+      try { profileData = mapSyncedUser(entry); }
+      catch (error) {
+        summary.skipped.push({ email: typeof entry?.email === 'string' ? entry.email : null, reason: error.message });
+        continue;
+      }
+      const { name, email, role } = profileData;
+      const sourceAccess = Object.fromEntries(['sourceIsActive', 'sourceDeletedAt']
+        .filter(key => Object.hasOwn(profileData, key)).map(key => [key, profileData[key]]));
 
       if (!isValidEmail(email)) {
         summary.skipped.push({ email: entry.email || null, reason: 'Invalid email' });
@@ -109,7 +106,12 @@ export const syncUsers = async (req, res) => {
           summary.skipped.push({ email, reason: 'Account is disabled' });
           continue;
         }
-        // Keep existing password/state; only refresh synced fields.
+        if (!SYNCABLE_ROLES.includes(existingAuth.role)) {
+          summary.skipped.push({ email, reason: 'Account role cannot be managed by sync' });
+          continue;
+        }
+        // Keep local credentials and admin disablement; source access is separate.
+        if (Object.keys(sourceAccess).length) await AuthModel.updateSourceAccessById(existingAuth._id, sourceAccess);
         if (existingAuth.role !== role) {
           await AuthModel.updateRoleById(existingAuth._id, role);
         }
@@ -121,7 +123,7 @@ export const syncUsers = async (req, res) => {
         }
         summary.updated += 1;
       } else {
-        const newAuth = await AuthModel.createSyncedUser({ email, role });
+        const newAuth = await AuthModel.createSyncedUser({ email, role, ...sourceAccess });
         await UserModel.createUserProfile(newAuth._id, profileData);
         summary.created += 1;
       }
@@ -192,7 +194,7 @@ export const getUserById = async (req, res) => {
     }
     
     const auth = user.authId ? await AuthModel.findById(user.authId) : user.email ? await AuthModel.findByEmail(user.email) : null;
-    if (auth?.disabledAt) return res.status(404).json({ success: false, message: 'User not found' });
+    if ((auth && !activeAccount(auth)) || user.sourceIsActive === false || user.sourceDeletedAt) return res.status(404).json({ success: false, message: 'User not found' });
     const role = auth?.role || user.role || null;
     const safeUser = visibleProfile({ ...user, role }, req.user, { detail: true });
 

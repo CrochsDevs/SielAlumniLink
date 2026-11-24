@@ -8,6 +8,7 @@ export const AUTH_LIMITS = {
     verify: { ip: 60, account: 20, windowMs: 15 * 60 * 1000 },
     reset: { ip: 20, windowMs: 15 * 60 * 1000 },
     change: { ip: 60, account: 10, windowMs: 15 * 60 * 1000 },
+    invite: { ip: 30, account: 30, windowMs: 60 * 1000 },
 };
 
 export async function ensureAuthSecurityIndexes(db) {

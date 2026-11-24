@@ -101,14 +101,14 @@ export const AuthModel = {
         }
         // Charge every guess atomically against the current challenge, across IPs.
         const attempt = await authCollection.findOneAndUpdate(
-            { email, disabledAt: null, resetOTPExpires: { $gt: new Date() }, resetOTPHash: { $type: 'string' },
+            { email, disabledAt: null, sourceIsActive: { $ne: false }, sourceDeletedAt: null, resetOTPExpires: { $gt: new Date() }, resetOTPHash: { $type: 'string' },
                 $or: [{ resetOTPAttempts: { $exists: false } }, { resetOTPAttempts: { $lt: 5 } }] },
             { $inc: { resetOTPAttempts: 1 } }, { returnDocument: 'after' }
         );
         if (!attempt || attempt.resetOTPHash !== otpHash(email, otp)) return null;
         // Only one concurrent verifier can replace this OTP with a reset credential.
         return await authCollection.findOneAndUpdate(
-            { email, disabledAt: null, resetOTPHash: otpHash(email, otp), resetOTPExpires: attempt.resetOTPExpires,
+            { email, disabledAt: null, sourceIsActive: { $ne: false }, sourceDeletedAt: null, resetOTPHash: otpHash(email, otp), resetOTPExpires: attempt.resetOTPExpires,
                 passwordSetupRequired: false, password: { $type: 'string', $ne: '' } },
             { $set: { passwordResetTokenHash: tokenHash, passwordResetTokenExpires: expiresAt, updatedAt: new Date() },
                 $unset: { resetOTP: '', resetOTPHash: '', resetOTPExpires: '', resetOTPAttempts: '' } },
@@ -118,7 +118,7 @@ export const AuthModel = {
 
     async findByResetToken(tokenHash) {
         if (!isResetToken(tokenHash)) return null;
-        return await authCollection.findOne({ passwordResetTokenHash: tokenHash, disabledAt: null,
+        return await authCollection.findOne({ passwordResetTokenHash: tokenHash, disabledAt: null, sourceIsActive: { $ne: false }, sourceDeletedAt: null,
             passwordResetTokenExpires: { $gt: new Date() }, passwordSetupRequired: false,
             password: { $type: 'string', $ne: '' } });
     },
@@ -127,7 +127,7 @@ export const AuthModel = {
         if (!isResetToken(tokenHash)) throw new TypeError('Invalid recovery input');
         // Password update and token consumption happen in the same atomic write.
         return await notifyChange(authId, authCollection.updateOne(
-            { _id: accountId(authId), disabledAt: null, passwordResetTokenHash: tokenHash, passwordResetTokenExpires: { $gt: new Date() },
+            { _id: accountId(authId), disabledAt: null, sourceIsActive: { $ne: false }, sourceDeletedAt: null, passwordResetTokenHash: tokenHash, passwordResetTokenExpires: { $gt: new Date() },
                 passwordSetupRequired: false, password: { $type: 'string', $ne: '' } },
             { $set: { password: hashedPassword, passwordSetupRequired: false, updatedAt: new Date() }, $inc: { sessionVersion: 1 },
                 $unset: { passwordResetTokenHash: '', passwordResetTokenExpires: '', resetOTP: '', resetOTPHash: '', resetOTPExpires: '', resetOTPAttempts: '' } }
@@ -140,7 +140,7 @@ export const AuthModel = {
     },
 
     async updatePasswordById(authId, hashedPassword, expectedState) {
-        const filter = { _id: accountId(authId), disabledAt: null };
+        const filter = { _id: accountId(authId), disabledAt: null, sourceIsActive: { $ne: false }, sourceDeletedAt: null };
         if (expectedState) {
             // Compare the state authorized by the request in the password write itself.
             // Missing legacy versions mean zero, exactly as in session authorization.
@@ -205,13 +205,35 @@ export const AuthModel = {
 
     // CAIS-synced accounts: no local password. The user sets it later
     // via magic link -> setup-password. Role is pre-validated by caller.
-    async createSyncedUser({ email, role }) {
+    async updateSourceAccessById(authId, fields) {
+        const sourceAccess = {};
+        if (Object.hasOwn(fields, 'sourceIsActive')) {
+            if (typeof fields.sourceIsActive !== 'boolean') throw new TypeError('Invalid source access');
+            sourceAccess.sourceIsActive = fields.sourceIsActive;
+        }
+        if (Object.hasOwn(fields, 'sourceDeletedAt')) {
+            if (fields.sourceDeletedAt !== null && !(fields.sourceDeletedAt instanceof Date)) throw new TypeError('Invalid source deletion');
+            sourceAccess.sourceDeletedAt = fields.sourceDeletedAt;
+        }
+        if (!Object.keys(sourceAccess).length) return { modifiedCount: 0 };
+        // Revoke only when source access changes, not on every repeat import.
+        return notifyChange(authId, authCollection.updateOne(
+            { _id: accountId(authId), disabledAt: null,
+                $or: Object.entries(sourceAccess).map(([key, value]) => ({ [key]: { $ne: value } })) },
+            { $set: { ...sourceAccess, updatedAt: new Date() }, $inc: { sessionVersion: 1 } }
+        ));
+    },
+
+    async createSyncedUser({ email, role, sourceIsActive = true, sourceDeletedAt = null }) {
         if (!authEmail(email) || !CREATABLE_ROLES.includes(role)) throw new TypeError('Invalid imported account');
+        if (typeof sourceIsActive !== 'boolean' || (sourceDeletedAt !== null && !(sourceDeletedAt instanceof Date))) throw new TypeError('Invalid source access');
         const newUser = {
             email,
             role,
             isVerified: true,
             passwordSetupRequired: true,
+            sourceIsActive,
+            sourceDeletedAt,
             createdAt: new Date(),
             updatedAt: new Date()
         };

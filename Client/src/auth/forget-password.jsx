@@ -361,7 +361,7 @@ const ForgetPassword = () => {
                         </button>
                       </div>
                       <p id="recovery-password-help">
-                        Use at least 15 characters.
+                        Use at least 8 characters.
                       </p>
                     </div>
                     <div className="recovery-field">

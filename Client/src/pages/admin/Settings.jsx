@@ -302,12 +302,12 @@ export default function Settings() {
                       <input
                         type="password"
                         required
-                        minLength={15}
+                        minLength={8}
                         value={pwForm.newPassword}
                         onChange={(e) =>
                           setPwForm({ ...pwForm, newPassword: e.target.value })
                         }
-                        placeholder="At least 15 characters"
+                        placeholder="At least 8 characters"
                         className={inputClass}
                       />
                     </div>
@@ -318,7 +318,7 @@ export default function Settings() {
                       <input
                         type="password"
                         required
-                        minLength={15}
+                        minLength={8}
                         value={pwForm.confirmPassword}
                         onChange={(e) =>
                           setPwForm({

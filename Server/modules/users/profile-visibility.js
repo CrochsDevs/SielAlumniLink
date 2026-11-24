@@ -3,9 +3,10 @@ const memberFields = ['_id', 'authId', 'name', 'role', 'program', 'batch', 'prof
 const publicDetails = ['contactEmail', 'profileLinks', 'projects', 'research', 'certifications', 'seminars', 'awards'];
 const privateFields = ['email', 'studentId', 'yearLevel', 'section', 'academicStatus', 'graduatedAt',
     'contactNumber', 'createdAt', 'updatedAt', 'profileViews', 'profilePicturePublicId', 'bannerImagePublicId',
-    'employmentStatus', 'employmentUpdatedAt', 'employmentRevision', 'historyRevision'];
+    'employmentStatus', 'employmentUpdatedAt', 'employmentRevision', 'historyRevision',
+    'firstName', 'middleName', 'lastName', 'extensionName'];
 const pick = (value, fields) => Object.fromEntries(fields.filter(key => value && Object.hasOwn(value, key)).map(key => [key, value[key]]));
-export const profileProjection = Object.fromEntries([...memberFields, ...publicDetails, ...privateFields, 'education', 'employmentHistory'].map(key => [key, 1]));
+export const profileProjection = Object.fromEntries([...memberFields, ...publicDetails, ...privateFields, 'education', 'employmentHistory', 'sourceIsActive', 'sourceDeletedAt'].map(key => [key, 1]));
 
 export function visibleProfile(profile, viewer, { detail = false } = {}) {
     const privileged = viewer?.role === 'admin' || (profile.authId && String(profile.authId) === String(viewer?._id));

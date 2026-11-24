@@ -2,6 +2,8 @@ import { newPasswordError } from '../utils/password-policy';
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import { Eye, EyeOff } from 'lucide-react';
+import './setup-password.css';
 
 import GraduationCapLoader from "../components/ui/GraduationCapLoader";
 
@@ -10,6 +12,8 @@ const SetupPassword = () => {
   const { user, setupPassword, loading: authLoading } = useAuth();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -53,8 +57,8 @@ const SetupPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#e6e6e6`] px-6">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-zinc-900/5 border border-zinc-100">
+    <div className="setup-password-page min-h-screen flex items-center justify-center px-4 py-8">
+      <div className="setup-password-card w-full max-w-md rounded-2xl bg-white p-6 sm:p-8">
         <div className="flex justify-center mb-5">
           <div className="h-12 w-12 rounded-xl bg-brand flex items-center justify-center shadow-md shadow-brand/20">
             <svg
@@ -77,12 +81,11 @@ const SetupPassword = () => {
           Set your password
         </h1>
         <p className="text-center text-[12px] text-zinc-500 mb-6 leading-relaxed">
-          Your CAIS login credentials are synced. Create a SielAlumni password
-          to continue.
+          Create your AlumniLink password to continue. Use it to sign in on your next visit.
         </p>
 
         {error && (
-          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[12px] leading-relaxed mb-5">
+          <div role="alert" className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-[12px] leading-relaxed mb-5">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-4 h-4 mt-0.5 shrink-0"
@@ -103,33 +106,55 @@ const SetupPassword = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
+            <label htmlFor="setup-new-password" className="block text-[11px] font-semibold text-zinc-700 mb-1">
               New Password
             </label>
+            <div className="setup-password-field">
             <input
-              type="password"
+              id="setup-new-password"
+              type={showNewPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              aria-describedby="setup-password-hint"
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               required
-              minLength={15}
+              minLength={8}
               placeholder="Enter a new password"
               className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />
+            <button type="button" className="setup-password-toggle"
+              aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+              aria-pressed={showNewPassword} aria-controls="setup-new-password"
+              onClick={() => setShowNewPassword(value => !value)}>
+              {showNewPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
+            </div>
+            <p id="setup-password-hint" className="setup-password-hint">Use at least 8 characters.</p>
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-700 mb-1">
+            <label htmlFor="setup-confirm-password" className="block text-[11px] font-semibold text-zinc-700 mb-1">
               Confirm Password
             </label>
+            <div className="setup-password-field">
             <input
-              type="password"
+              id="setup-confirm-password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
-              minLength={15}
+              minLength={8}
               placeholder="Confirm your new password"
               className="w-full h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[12.5px] text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 outline-none transition-all duration-200 hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-brand focus:ring-2 focus:ring-brand/15"
             />
+            <button type="button" className="setup-password-toggle"
+              aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+              aria-pressed={showConfirmPassword} aria-controls="setup-confirm-password"
+              onClick={() => setShowConfirmPassword(value => !value)}>
+              {showConfirmPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
+            </div>
           </div>
 
           <button

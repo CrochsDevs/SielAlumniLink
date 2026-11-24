@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { logAccountAuth, maskedAuthEmail } from './auth-account-log.js';
 import { authEmail, isOTP, newPasswordError } from './auth.validation.js';
+import { newPasswordError as clientPasswordError } from '../../../Client/src/utils/password-policy.js';
 import { createPasswordReset, resetTokenHash, otpHash } from './password-reset.js';
 import { signSessionToken, verifySessionToken, sessionMatches } from './session-token.js';
 
@@ -31,6 +32,7 @@ test.beforeEach(t => t.mock.method(ActivityModel, 'logAdmin', async () => {}));
 const { protect, optionalProtect } = await import('../../middlewares/auth.middleware.js');
 const { deleteUser, getUsers, getUserById, syncUsers } = await import('../users/users.controllers.js');
 const { visibleProfile } = await import('../users/profile-visibility.js');
+const { default: usersRouter } = await import('../users/users.routes.js');
 
 const account = { _id: 'fixture', email: 'member@example.test', password: 'fixture-hash', passwordSetupRequired: false };
 const response = () => ({ statusCode: 200,
@@ -47,6 +49,21 @@ const captureLogs = t => {
     t.mock.method(console, 'error', (...args) => logs.push(args.join(' ')));
     return logs;
 };
+
+test('manual registration and resend routes reject member roles before invitation handlers run', async () => {
+    for (const path of ['/invitations', '/:id/invitation']) {
+        const route = usersRouter.stack.find(layer => layer.route?.path === path && layer.route.methods.post).route;
+        for (const role of ['student', 'alumni']) {
+            const res = response(); let reached = false;
+            await route.stack[0].handle({ user: { ...account, role } }, res, () => { reached = true; });
+            assert.equal(res.statusCode, 403);
+            assert.equal(reached, false);
+        }
+        let reached = false;
+        await route.stack[0].handle({ user: { ...account, role: 'admin' } }, response(), () => { reached = true; });
+        assert.equal(reached, true);
+    }
+});
 
 test('a stale tab cannot use another account cookie to reach protected handlers', async t => {
     t.mock.method(AuthModel, 'findById', async () => account);
@@ -764,11 +781,73 @@ test('later imports cannot recreate a disabled account profile', async t => {
     assert.equal(create.mock.callCount(), 0); assert.equal(update.mock.callCount(), 0);
 });
 
+test('schema-based sync creates a passwordless account and retains normalized profile fields', async t => {
+    t.mock.method(AuthModel, 'findByEmail', async () => null);
+    const createAuth = t.mock.method(AuthModel, 'createSyncedUser', async fields => ({ ...fields, _id: 'new-auth' }));
+    const createProfile = t.mock.method(UserModel, 'createUserProfile', async () => ({}));
+    const res = response();
+    await syncUsers({ body: { users: [{
+        id: '123', external_id: '456', first_name: 'Ana', middle_name: 'Maria',
+        last_name: 'Cruz', extension_name: 'Jr.', email: ' ANA@example.test ',
+        student_number: '2020-001', source_user_type: 'alumni', is_active: 1,
+        source_deleted_at: null, first_time_login: 0, password: 'upstream-password',
+        two_factor_secret: 'upstream-secret', remember_token: 'upstream-token',
+    }] } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.data.created, 1);
+    assert.deepEqual(createAuth.mock.calls[0].arguments[0], {
+        email: 'ana@example.test', role: 'alumni', sourceIsActive: true, sourceDeletedAt: null,
+    });
+    const [authId, profile] = createProfile.mock.calls[0].arguments;
+    assert.equal(authId, 'new-auth');
+    assert.equal(profile.name, 'Ana Maria Cruz Jr.');
+    assert.equal(profile.studentId, '2020-001');
+    assert.equal(profile.sourceId, '123');
+    assert.equal(profile.externalId, '456');
+    assert.equal(profile.sourceFirstTimeLogin, false);
+    assert.equal(Object.hasOwn(profile, 'password'), false);
+    assert.equal(Object.hasOwn(profile, 'two_factor_secret'), false);
+    assert.equal(Object.hasOwn(profile, 'remember_token'), false);
+});
+
+test('sync updates source access separately while preserving local credentials and administrator roles', async t => {
+    t.mock.method(AuthModel, 'findByEmail', async () => ({ ...account, role: 'student' }));
+    t.mock.method(UserModel, 'findByAuthId', async () => ({ _id: 'profile' }));
+    const access = t.mock.method(AuthModel, 'updateSourceAccessById', async () => ({ modifiedCount: 1 }));
+    const profile = t.mock.method(UserModel, 'updateById', async () => true);
+    const passwords = t.mock.method(AuthModel, 'updatePasswordById', async () => assert.fail('Sync changed a local password'));
+    const roles = t.mock.method(AuthModel, 'updateRoleById', async () => assert.fail('Sync changed an administrator role'));
+    const row = { email: account.email, first_name: 'Member', last_name: 'Cruz', source_user_type: 'student', is_active: 0 };
+    const res = response(); await syncUsers({ body: { users: [row] } }, res);
+    assert.equal(res.body.data.updated, 1);
+    assert.deepEqual(access.mock.calls[0].arguments, [account._id, { sourceIsActive: false }]);
+    assert.equal(profile.mock.calls[0].arguments[1].sourceIsActive, false);
+    assert.equal(passwords.mock.callCount(), 0);
+    t.mock.method(AuthModel, 'findByEmail', async () => ({ ...account, role: 'admin' }));
+    const adminRes = response(); await syncUsers({ body: { users: [row] } }, adminRes);
+    assert.equal(adminRes.body.data.skipped[0].reason, 'Account role cannot be managed by sync');
+    assert.equal(access.mock.callCount(), 1);
+    assert.equal(roles.mock.callCount(), 0);
+});
+
+test('malformed schema rows are skipped without preventing the remaining valid imports', async t => {
+    t.mock.method(AuthModel, 'findByEmail', async () => null);
+    t.mock.method(AuthModel, 'createSyncedUser', async () => ({ _id: 'new-auth' }));
+    t.mock.method(UserModel, 'createUserProfile', async () => ({}));
+    const res = response(); await syncUsers({ body: { users: [null,
+        { email: 'bad@example.test', name: 'Bad', role: 'student', is_active: 'invalid' },
+        { email: 'valid@example.test', name: 'Valid', role: 'student' },
+    ] } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.data.created, 1);
+    assert.equal(res.body.data.skipped.length, 2);
+});
+
 
 test('new password endpoints reject malformed, weak, and bcrypt-truncated inputs before hashing or writing', async t => {
     t.mock.method(bcrypt, 'hash', async () => assert.fail('invalid password must not be hashed'));
     t.mock.method(AuthModel, 'updatePasswordById', async () => assert.fail('invalid password must not be persisted'));
-    for (const value of [123456789012345, ['fixture-password'], {}, 'short', 'a'.repeat(73), '\u754c'.repeat(25)]) {
+    for (const value of [123456789012345, ['fixture-password'], {}, 'short', '1234567', 'a'.repeat(73), '\u754c'.repeat(25)]) {
         for (const handler of [setupPassword, changePassword, resetPassword]) {
             const res = response();
             await handler({ user: account, body: { currentPassword: 'Fixture-current-password', newPassword: value, confirmPassword: value, token: 'a'.repeat(64) } }, res);
@@ -779,6 +858,15 @@ test('new password endpoints reject malformed, weak, and bcrypt-truncated inputs
     assert.equal(newPasswordError('A long passphrase with spaces!'), null);
     assert.equal(newPasswordError('\u754c'.repeat(24)), null);
     assert.ok(newPasswordError('\u754c'.repeat(25)));
+});
+
+test('frontend and backend agree on the eight-character password minimum', () => {
+    for (const validate of [newPasswordError, clientPasswordError]) {
+        assert.equal(validate('Demo@123'), null);
+        assert.equal(validate('1234567'), 'Use at least 8 characters for your new password');
+        assert.equal(validate('\u754c'.repeat(8)), null);
+        assert.ok(validate('a'.repeat(73)));
+    }
 });
 
 test('login and session lookup failures never expose internal database errors', async t => {

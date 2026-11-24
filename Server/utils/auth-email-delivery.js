@@ -41,7 +41,7 @@ export function createAuthEmailSender({
             if (frontend.protocol === 'https:') logo = new URL('/clsu_favicon.png', frontend.origin).href;
           } catch { /* The message can still render its text branding. */ }
           const htmlContent = message.html.replace(/<img\b[^>]*src="cid:clsu-logo@alumnilink"[^>]*>/g,
-            logo ? `<img src="${logo}" width="76" height="76" alt="CLSU seal" style="display:block;margin:0 auto 14px;">` : '');
+            logo ? `<img src="${logo}" width="76" height="76" alt="CLSU seal" style="display:block;width:76px;height:76px;border:0;border-radius:50%;background:transparent;margin:0 auto 14px;">` : '');
           const response = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
             method: 'POST', redirect: 'error', signal: controller.signal,
             headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },

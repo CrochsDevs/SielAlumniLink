@@ -1,4 +1,5 @@
 import GraduationCapLoader from "../../components/ui/GraduationCapLoader";
+import RegisterUserDialog from './RegisterUserDialog';
 import ContentSkeleton from "../../components/ui/Skeleton";
 import {
   flexRender,
@@ -23,6 +24,8 @@ import {
   RefreshCw,
   DatabaseZap,
   Circle,
+  UserPlus,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { usePresence } from "../../realtime/usePresence";
@@ -124,6 +127,9 @@ export default function AdminUsers() {
   const [syncOpen, setSyncOpen] = useState(false);
   const [syncSummary, setSyncSummary] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [resending, setResending] = useState(null);
+  const resendPending = useRef(false);
 
   const usersPending = useRef(false);
   const auditPending = useRef(false);
@@ -210,6 +216,21 @@ export default function AdminUsers() {
   const closeSync = () => {
     setSyncOpen(false);
     setSyncSummary(null);
+  };
+
+  const resendInvitation = async (member) => {
+    if (resendPending.current) return;
+    resendPending.current = true;
+    setResending(member.authId);
+    try {
+      const response = await api.post(`/users/${member.authId}/invitation`);
+      const sent = response.data.data.invitationDelivery === 'accepted';
+      if (sent) toast.success('Invitation sent', { description: response.data.message });
+      else toast.error('Invitation not sent', { description: response.data.message });
+      fetchUsers();
+    } catch (error) {
+      toast.error('Unable to send invitation', { description: error.response?.data?.message || 'Please try again later.' });
+    } finally { resendPending.current = false; setResending(null); }
   };
 
   const counts = useMemo(() => {
@@ -369,6 +390,10 @@ export default function AdminUsers() {
                       <DatabaseZap size={15} />
                       Sync CAIS
                     </AdminButton>
+                    <AdminButton onClick={() => setRegisterOpen(true)}>
+                      <UserPlus size={15} />
+                      Register user
+                    </AdminButton>
                   </div>
                 </div>
 
@@ -431,6 +456,17 @@ export default function AdminUsers() {
                               </td>
                               <td className="px-5 py-3 font-semibold text-zinc-800 dark:text-zinc-100 whitespace-nowrap min-w-[200px]">
                                 {u.name || "—"}
+                                {u.invitationStatus && <div className="admin-user-invitation">
+                                  <span className={`admin-invitation-badge ${u.invitationStatus === 'failed' ? 'is-failed' : ''}`}>
+                                    {u.invitationStatus === 'completed' ? 'Password set' : u.invitationStatus === 'failed' ? 'Invitation failed'
+                                      : u.invitationStatus === 'accepted' ? (new Date(u.invitationExpiresAt).getTime() < Date.now() ? 'Invitation expired' : 'Invited · password pending') : 'Invitation pending'}
+                                  </span>
+                                  {u.invitationStatus !== 'completed' && <button type="button"
+                                    disabled={resending !== null}
+                                    onClick={() => resendInvitation(u)} aria-label={`Resend invitation to ${u.name}`}>
+                                    <Mail size={13} />{resending === u.authId ? 'Sending...' : 'Resend invitation'}
+                                  </button>}
+                                </div>}
                               </td>
                               <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">
                                 {u.program || "—"}
@@ -503,6 +539,7 @@ export default function AdminUsers() {
               </div>
 
               {/* CAIS sync modal */}
+              {registerOpen && <RegisterUserDialog onClose={() => setRegisterOpen(false)} onRegistered={fetchUsers} />}
               {syncOpen && (
                 <div
                   className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"

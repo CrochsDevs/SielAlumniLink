@@ -15,7 +15,7 @@ const emailShell = ({ preheader, label, title, description, content, security })
     <tr><td align="center" style="padding:32px 12px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#ffffff;border:1px solid #dfe7e1;border-radius:16px;overflow:hidden;">
         <tr><td align="center" bgcolor="#006b32" style="padding:28px 24px 24px;background-color:#006b32;border-radius:15px 15px 0 0;">
-          <img src="cid:clsu-logo@alumnilink" width="76" height="76" alt="Central Luzon State University seal" style="display:block;width:76px;height:76px;border:0;margin:0 auto 14px;">
+          <img src="cid:clsu-logo@alumnilink" width="76" height="76" alt="Central Luzon State University seal" style="display:block;width:76px;height:76px;border:0;border-radius:50%;background:transparent;margin:0 auto 14px;">
           <p style="margin:0;color:#ffffff;font-size:25px;line-height:32px;font-weight:700;letter-spacing:-0.5px;">AlumniLink</p>
           <p style="margin:5px 0 0;color:#e0eee4;font-size:12px;line-height:19px;">Central Luzon State University</p>
         </td></tr>
@@ -63,6 +63,23 @@ export const magicLinkEmail = (loginUrl) => ({
           <p style="margin:0;font-size:11px;line-height:19px;word-break:break-all;overflow-wrap:anywhere;"><a href="${escapeHtml(loginUrl)}" style="color:#007d35;text-decoration:underline;word-break:break-all;">${escapeHtml(loginUrl)}</a></p>`,
         security: 'Do not share this link. If you did not request this email, you can safely ignore it.'
     })
+});
+
+export const invitationEmail = (invitationUrl) => ({
+    subject: "You're invited to AlumniLink",
+    text: `AlumniLink | Central Luzon State University\n\nAn administrator has created your AlumniLink account.\n\nAccept your invitation and create your own password:\n${invitationUrl}\n\nThis single-use invitation expires in 24 hours. No password has been assigned to you. After setting your password, use it for future logins. If this link expires, request a single-use link from the login page using this email address.\n\nDo not share this invitation. If you were not expecting it, you can ignore it.`,
+    html: emailShell({
+        preheader: 'Your AlumniLink account is ready. Set your password to get started.',
+        label: 'Your invitation',
+        title: "You're invited to AlumniLink.",
+        description: 'An administrator has registered your account with the CLSU Alumni Network. Accept your invitation to verify your email and create your own password.',
+        content: `<p style="margin:0 0 22px;color:#52635a;font-size:14px;line-height:23px;">1. Open this invitation.<br>2. Create your own password.<br>3. Use your email and password for future logins.</p>
+          <a href="${escapeHtml(invitationUrl)}" style="display:inline-block;padding:15px 24px;border-radius:8px;background:#009639;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">Accept invitation &amp; set password</a>
+          <p style="margin:16px 0;color:#52635a;font-size:13px;line-height:22px;">This invitation can be used once and expires in <strong>24 hours</strong>. If it expires, request a single-use link from the login page using this email address.</p>
+          <p style="margin:0;color:#52635a;font-size:12px;line-height:20px;">Button not working? Copy this link into your browser:</p>
+          <p style="font-size:11px;line-height:19px;word-break:break-all;"><a href="${escapeHtml(invitationUrl)}" style="color:#007d35;">${escapeHtml(invitationUrl)}</a></p>`,
+        security: 'No password has been assigned to you. Do not share this invitation. If you were not expecting it, you can ignore it.',
+    }),
 });
 
 export const passwordResetEmail = (otp) => ({

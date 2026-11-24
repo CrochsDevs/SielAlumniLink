@@ -5,6 +5,7 @@ import { frontendOrigins, allowedSocketOrigin } from "../config/cors.js";
 import {
   verifySessionToken,
   sessionMatches,
+  activeAccount,
 } from "../modules/auth/session-token.js";
 import { sessionEvents } from "../modules/auth/session-events.js";
 import { sessionValidation } from './session-validation.js';
@@ -149,8 +150,7 @@ export const initSocket = (server) => {
       try { await community.assertAllowed(caller, 'messaging'); await community.assertRecipients([recipientId]); } catch { return null; }
       const recipient = await AuthModel.findById(recipientId);
       if (
-        !recipient ||
-        recipient.disabledAt ||
+        !activeAccount(recipient) ||
         (await ConversationControls.isBlocked(caller._id, recipientId))
       )
         return null;

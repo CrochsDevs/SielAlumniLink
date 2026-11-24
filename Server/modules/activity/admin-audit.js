@@ -2,6 +2,7 @@ const text = (value, max = 300) =>
   typeof value === "string" ? value.slice(0, max) : "";
 const actions = new Set([
   "user_created",
+  "user_invitation_sent",
   "user_updated",
   "email_changed",
   "role_changed",

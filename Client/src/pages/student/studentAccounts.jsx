@@ -400,7 +400,7 @@ const StudentAccounts = () => {
                       </span>
                     </h2>
                     <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
-                      Use at least 15 characters with a mix of letters and
+                      Use at least 8 characters with a mix of letters and
                       numbers.
                     </p>
                   </div>
@@ -430,7 +430,7 @@ const StudentAccounts = () => {
                         <input
                           type="password"
                           required
-                          minLength={15}
+                          minLength={8}
                           value={pwForm.newPassword}
                           onChange={(e) =>
                             setPwForm({
@@ -438,7 +438,7 @@ const StudentAccounts = () => {
                               newPassword: e.target.value,
                             })
                           }
-                          placeholder="At least 15 characters"
+                          placeholder="At least 8 characters"
                           className={inputClass}
                         />
                       </div>
@@ -447,7 +447,7 @@ const StudentAccounts = () => {
                         <input
                           type="password"
                           required
-                          minLength={15}
+                          minLength={8}
                           value={pwForm.confirmPassword}
                           onChange={(e) =>
                             setPwForm({

@@ -18,6 +18,8 @@ import Roles from '../../constant/roles.js';
 import { client } from '../../config/db.js';
 import { createFeedService } from '../feed/feed.service.js';
 import { createMemberActivityService } from '../activity/member-activity.service.js';
+import { registerInvitedUser, resendUserInvitation } from './user-invitations.controllers.js';
+import { createAuthLimiter } from '../auth/auth-limits.js';
 
 const router = express.Router();
 
@@ -55,6 +57,8 @@ router.post('/graduate', authorize(Roles.ADMIN), graduateUser);
 router.post('/sync', authorize(Roles.ADMIN), syncUsers);
 
 // Management: admin only
+router.post('/invitations', authorize(Roles.ADMIN), createAuthLimiter('invite'), registerInvitedUser);
+router.post('/:id/invitation', authorize(Roles.ADMIN), createAuthLimiter('invite'), resendUserInvitation);
 router.post('/', authorize(Roles.ADMIN), createUser);
 router.put('/:id', authorize(Roles.ADMIN), updateUser);
 router.put('/:id/role', authorize(Roles.ADMIN), updateUserRole);

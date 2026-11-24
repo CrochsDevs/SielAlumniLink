@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 const issuer = 'alumnilink';
 const audience = 'alumnilink-session';
 export const sessionVersion = user => Number.isSafeInteger(user?.sessionVersion) ? user.sessionVersion : 0;
-export const activeAccount = user => !!user && !user.disabledAt;
+export const activeAccount = user => !!user && !user.disabledAt && user.sourceIsActive !== false && !user.sourceDeletedAt;
 export const sessionMatches = (claims, user) => activeAccount(user) && claims.sv === sessionVersion(user);
 
 export const signSessionToken = user => jwt.sign(

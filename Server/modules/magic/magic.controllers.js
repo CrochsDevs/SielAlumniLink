@@ -9,8 +9,8 @@ import { authEmail } from '../auth/auth.validation.js';
 import { signSessionToken, activeAccount, sessionVersion } from '../auth/session-token.js';
 import { sessionCookieOptions } from '../../config/session-cookie.js';
 import { logAccountAuth, authDeliveryContext } from '../auth/auth-account-log.js';
+import { frontendOrigin } from '../../config/frontend-origin.js';
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 
 const hasUsableLocalPassword = (user) => (
@@ -43,7 +43,8 @@ export const sendMagicLink = async (req, res) => {
         logAccountAuth(res, { operation: 'magic_link_send', outcome: 'not_eligible', email });
         return res.status(200).json({ success: true, message: 'If an account exists, a login link has been sent.' });
       }
-      const newAuth = await AuthModel.createSyncedUser({ email, role });
+      const newAuth = await AuthModel.createSyncedUser({ email, role,
+        sourceIsActive: profile.sourceIsActive ?? true, sourceDeletedAt: profile.sourceDeletedAt ?? null });
       // Link the existing profile to the new login record.
       await UserModel.updateById(String(profile._id), { authId: newAuth._id });
       user = newAuth;
@@ -68,7 +69,7 @@ export const sendMagicLink = async (req, res) => {
       sessionVersion: sessionVersion(user)
     });
 
-    const loginUrl = `${FRONTEND_URL}/verify-magic-link?token=${token}`;
+    const loginUrl = `${frontendOrigin(process.env, req.headers?.origin)}/verify-magic-link?token=${token}`;
     const emailResult = await sendMagicLinkEmail(email, loginUrl, authDeliveryContext(res));
 
     if (!emailResult.success) {
