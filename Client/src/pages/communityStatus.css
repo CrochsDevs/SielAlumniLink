@@ -1,0 +1,104 @@
+.community-status-page {
+  --status-canvas: #eaf0ec;
+  --status-surface: #fff;
+  --status-soft: #f3f6f4;
+  --status-border: #bdcdc3;
+  --status-muted: #53645a;
+  --status-shadow: 0 2px 5px rgb(27 51 38 / 8%), 0 10px 24px -8px rgb(27 51 38 / 16%);
+  background: var(--status-canvas);
+}
+
+.community-status-main { display: grid; gap: 24px; }
+.community-status-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.community-status-heading h1 { margin: 4px 0 8px; font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 750; letter-spacing: -0.035em; }
+.community-status-heading p:not(.community-status-eyebrow) { max-width: 600px; color: var(--status-muted); font-size: 14px; line-height: 1.7; }
+.community-status-eyebrow { color: var(--status-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; }
+.community-status-card { min-width: 0; padding: 24px; border: 1px solid var(--status-border); border-radius: 18px; background: var(--status-surface); box-shadow: var(--status-shadow); }
+.community-status-card h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.community-status-card h3 { font-size: 14px; font-weight: 650; }
+.community-status-card p { font-size: 14px; line-height: 1.7; }
+.community-status-card :is(p, dd, h3) { overflow-wrap: anywhere; }
+.community-status-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border: 1px solid var(--status-border, #bdcdc3); border-radius: 10px; background: var(--status-surface, #fff); box-shadow: 0 2px 3px rgb(27 51 38 / 5%); font-size: 13px; font-weight: 650; line-height: 1.4; text-align: center; }
+.community-status-heading > button { flex-shrink: 0; }
+.community-status-button.is-primary { border-color: hsl(var(--primary)); background: hsl(var(--primary)); color: #fff; }
+.community-status-button:enabled:hover, a.community-status-button:hover { filter: brightness(0.96); }
+.community-status-button:disabled { cursor: not-allowed; opacity: 0.55; }
+.community-status-page :is(button, a):focus-visible, .community-case-dialog :is(button, textarea):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 4px; }
+.community-access-overview { border-top: 4px solid #268552; }
+.community-access-overview.has-restriction, .community-access-overview.has-warning { border-top-color: #c28718; }
+.community-access-heading { display: flex; align-items: flex-start; gap: 16px; }
+.community-access-heading h2 { margin: 3px 0 8px; font-size: 21px; }
+.community-access-heading p:last-child { color: var(--status-muted); }
+.community-status-icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 54px; height: 54px; border: 1px solid #b1d7bf; border-radius: 15px; background: #e9f6ee; color: #1e7044; }
+:is(.has-restriction, .has-warning) .community-status-icon { border-color: #e8cd8d; background: #fff4d9; color: #94600a; }
+.community-access-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--status-border); }
+.community-access-footer > p { display: flex; align-items: flex-start; gap: 8px; max-width: 430px; color: var(--status-muted); font-size: 12px; }
+.community-access-footer svg { flex-shrink: 0; margin-top: 2px; }
+.community-status-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.community-status-shortcuts a { display: grid; grid-template-columns: 19px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 16px; border: 1px solid var(--status-border); border-radius: 13px; background: var(--status-surface); box-shadow: var(--status-shadow); font-size: 12px; font-weight: 600; }
+.community-status-shortcuts a:hover { border-color: hsl(var(--primary)); }
+.community-status-shortcuts svg { color: var(--status-muted); }
+.community-status-shortcuts strong { margin-left: auto; font-size: 21px; }
+.community-status-section-heading { padding-bottom: 18px; border-bottom: 1px solid var(--status-border); }
+.community-status-section-heading p { margin-top: 6px; color: var(--status-muted); font-size: 13px; }
+.community-status-empty { display: flex; align-items: flex-start; gap: 12px; padding: 22px 0 4px; }
+.community-status-empty svg { flex-shrink: 0; color: var(--status-muted); }
+.community-status-empty strong { font-size: 14px; font-weight: 600; }
+.community-status-empty p { margin-top: 4px; color: var(--status-muted); font-size: 13px; }
+.community-status-content-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; gap: 20px; }
+.community-status-content-grid > div { min-width: 0; }
+.community-status-record { padding: 18px 0; border-bottom: 1px solid var(--status-border); }
+.community-status-record:last-child { border-bottom: 0; padding-bottom: 0; }
+.community-status-record time { color: var(--status-muted); font-size: 11px; }
+.community-status-badge { display: inline-flex; align-items: center; padding: 4px 10px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 650; line-height: 1.5; text-transform: capitalize; }
+.community-status-badge.is-positive { border-color: #abd3ba; background: #edf9f1; color: #20653d; }
+.community-status-badge.is-negative { border-color: #ebbbb6; background: #fff0ef; color: #9e3530; }
+.community-status-badge.is-pending { border-color: #e6ce8e; background: #fff6dc; color: #825c0b; }
+.community-restriction-card { margin-top: 18px; padding: 20px; border: 1px solid #dec381; border-radius: 12px; background: var(--status-surface); }
+.community-status-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+.community-status-facts dt { color: var(--status-muted); font-size: 12px; }
+.community-status-facts dd { margin-top: 4px; font-size: 13px; font-weight: 600; }
+.community-feature-notice { margin-top: 16px; padding: 14px; border: 1px solid var(--status-border, #bdcdc3); border-radius: 10px; background: var(--status-soft, #f3f6f4); font-size: 13px; line-height: 1.7; }
+.community-feature-notice p { margin-top: 4px; font-size: 13px; }
+.community-status-help ol { display: grid; gap: 18px; margin: 18px 0 0; padding-left: 20px; list-style: decimal; font-size: 13px; }
+.community-status-help li { padding-left: 5px; }
+.community-status-help li::marker { color: var(--status-muted); font-weight: 700; }
+.community-status-help li p { margin-top: 4px; color: var(--status-muted); font-size: 13px; }
+.community-status-notice { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid; border-radius: 12px; font-size: 14px; }
+.community-status-notice svg { flex-shrink: 0; }
+.community-status-notice.is-error { border-color: #e3a6a0; background: #fff1ef; color: #93352c; }
+.community-status-notice.is-success { border-color: #abd3ba; background: #edf9f1; color: #20653d; }
+.community-status-page :is(section[id]) { scroll-margin-top: 95px; }
+dialog.community-case-dialog { --status-border: #bdcdc3; --status-soft: #f3f6f4; border: 1px solid var(--status-border); box-shadow: 0 0 0 1px rgb(255 255 255 / 50%), 0 24px 70px rgb(20 40 28 / 30%); }
+.community-case-dialog::backdrop { background: rgb(17 29 23 / 50%); backdrop-filter: blur(4px); }
+
+.dark .community-status-page, .dark dialog.community-case-dialog {
+  --status-canvas: rgb(var(--neutral-950, 9 9 11));
+  --status-surface: rgb(var(--neutral-900, 24 24 27));
+  --status-soft: rgb(var(--neutral-800, 39 39 42));
+  --status-border: rgb(var(--neutral-700, 63 63 70));
+  --status-muted: rgb(var(--neutral-400, 161 161 170));
+  --status-shadow: 0 4px 16px rgb(0 0 0 / 22%);
+}
+.dark .community-status-badge.is-positive { border-color: #325c44; background: #183425; color: #ade6c2; }
+.dark .community-status-badge.is-negative { border-color: #6c3936; background: #402321; color: #f8b6af; }
+.dark .community-status-badge.is-pending { border-color: #6d562a; background: #382e1a; color: #edcf87; }
+.dark .community-status-icon { border-color: #325c44; background: #183425; color: #ade6c2; }
+.dark :is(.has-restriction, .has-warning) .community-status-icon { border-color: #6d562a; background: #382e1a; color: #edcf87; }
+.dark .community-restriction-card { border-color: #6d562a; }
+.dark .community-status-notice.is-error { border-color: #6c3936; background: #402321; color: #f8b6af; }
+.dark .community-status-notice.is-success { border-color: #325c44; background: #183425; color: #ade6c2; }
+
+@media (max-width: 1100px) { .community-status-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+  .community-status-content-grid { grid-template-columns: 1fr; }
+  .community-status-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .community-status-card { padding: 18px; border-radius: 14px; }
+  .community-access-heading { gap: 12px; }
+  .community-access-heading h2 { font-size: 18px; }
+  .community-status-icon { width: 42px; height: 42px; border-radius: 12px; }
+  .community-status-main { gap: 18px; }
+  .community-status-shortcuts a { padding: 12px; gap: 8px; }
+  .community-restriction-card { padding: 14px; }
+  .community-status-facts { grid-template-columns: 1fr; }
+}
