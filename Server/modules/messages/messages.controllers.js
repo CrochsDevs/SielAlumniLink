@@ -191,13 +191,24 @@ export const listMessages = async (req, res) => {
       });
     }
     const preference = await ConversationControls.preference(convo._id, req.user._id);
-    const messages = await MessageModel.listByConversation(req.params.id, 100, preference?.clearedAt);
-    const senders = await messageSenders(messages);
+    const messages = await MessageModel.listByConversation(req.params.id, 100, preference?.clearedAt, req.user._id);
+    const replyIds = [...new Set(messages.filter(message => !message.unsent && message.replyToId).map(message => message.replyToId))];
+    const [replySources, hiddenMessageIds] = await Promise.all([
+      replyIds.length ? MessageModel.replySources(convo._id, replyIds, req.user._id, preference?.clearedAt) : [],
+      MessageModel.hiddenMessageIds(convo._id, req.user._id),
+    ]);
+    const senders = await messageSenders([...messages, ...replySources]);
+    const replies = new Map(replySources.map(source => [String(source._id), { _id: source._id, text: source.text,
+      from: String(source.senderAuthId) === String(req.user._id) ? 'me' : 'them',
+      senderName: senders.get(String(source.senderAuthId))?.senderName || 'Member', attachment: source.attachment || null }]));
     res.status(200).json({
       success: true,
+      hiddenMessageIds,
       data: messages.map((m) => ({
         _id: m._id,
         clientMessageId: m.clientMessageId,
+        replyToId: m.unsent ? null : m.replyToId || null,
+        replyPreview: !m.unsent && m.replyToId ? replies.get(String(m.replyToId)) || null : null,
         from: String(m.senderAuthId) === String(req.user._id) ? 'me' : 'them',
         text: m.text,
         mentions: m.unsent ? [] : m.mentions || [],
@@ -239,7 +250,8 @@ export const markMessagesRead = groupAction(async req => {
 // Send + push live to both sides.
 export const sendMessage = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, replyToId } = req.body;
+    if (replyToId !== undefined && (typeof replyToId !== 'string' || !/^[a-f\d]{24}$/i.test(replyToId))) return res.status(400).json({ success: false, message: 'Invalid reply message' });
     const clientMessageId = typeof req.body.clientMessageId === 'string' && /^[\w-]{1,100}$/.test(req.body.clientMessageId) ? req.body.clientMessageId : undefined;
     if (text !== undefined && typeof text !== 'string') return res.status(400).json({ success: false, message: 'Invalid message text' });
     if ((!text || !text.trim()) && !req.file) {
@@ -277,6 +289,7 @@ export const sendMessage = async (req, res) => {
       senderEmail: req.user.email,
       clientMessageId,
       moderationChecked: !!req.file,
+      replyToId,
       text: messageText,
       mentions,
       attachment,
@@ -290,14 +303,17 @@ export const sendMessage = async (req, res) => {
       at: message.createdAt,
       by: String(req.user._id),
     };
-    await ConversationModel.touch(req.params.id, lastMessage);
-
-    const sender = (await messageSenders([message])).get(String(req.user._id));
+    const [, senders] = await Promise.all([
+      ConversationModel.touch(req.params.id, lastMessage),
+      messageSenders([message]),
+    ]);
+    const sender = senders.get(String(req.user._id));
     const payload = {
       conversationId: String(convo._id),
       message: {
         _id: message._id,
         clientMessageId,
+        replyToId: message.replyToId || null,
         text: message.text,
         mentions: message.mentions || [],
         at: message.createdAt,
@@ -319,7 +335,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: { _id: message._id, clientMessageId, from: 'me', text: message.text, mentions: message.mentions || [], attachment: messageAttachmentDto(message), at: message.createdAt, read: false, ...sender }
+      data: { _id: message._id, clientMessageId, replyToId: message.replyToId || null, from: 'me', text: message.text, mentions: message.mentions || [], attachment: messageAttachmentDto(message), at: message.createdAt, read: false, ...sender }
     });
   } catch (error) {
     res.status(error.status || 500).json({
@@ -497,3 +513,10 @@ export const unsendMessage = async (req, res) => {
     });
   }
 };
+
+export const hideMessage = groupAction(async req => {
+  if (!/^[a-f\d]{24}$/i.test(req.params.msgId)) throw Object.assign(new Error('Message not found'), { status: 404 });
+  const data = await MessageModel.hideMessage(req.params.msgId, req.user._id);
+  emitToUser(req.user._id, 'message:hidden', data);
+  return data;
+});

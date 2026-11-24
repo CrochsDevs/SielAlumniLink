@@ -54,6 +54,14 @@ export const ChatProvider = ({ children }) => {
   const listEpoch = useRef(0);
   const pendingRequests = useRef(new Map());
   const receivedReads = useRef(new Set());
+  const hiddenMessages = useRef(new Map());
+  const recordHidden = useCallback((conversationId, ids) => {
+    const key = JSON.stringify([myAuthIdRef.current, String(conversationId)]);
+    const hidden = hiddenMessages.current.get(key) || new Set();
+    for (const id of ids) hidden.add(String(id));
+    hiddenMessages.current.set(key, hidden);
+    return [...hidden];
+  }, []);
   const applyReadReceipt = useCallback(({ conversationId, readerAuthId, messageIds, unread }) => {
     const ids = new Set(messageIds.map(String));
     const mine = String(readerAuthId) === myAuthIdRef.current;
@@ -141,12 +149,12 @@ export const ChatProvider = ({ children }) => {
       try {
         const res = await getChatData(`/conversations/${id}/messages`);
         if (myAuthIdRef.current !== myAuthId || (threadEpochs.current.get(String(id)) || 0) !== epoch) return;
-        setThreads((prev) => ({ ...prev, [id]: mergeMessageHistory(prev[id] || [], res.data.data || []) }));
+        setThreads((prev) => ({ ...prev, [id]: mergeMessageHistory(prev[id] || [], res.data.data || [], recordHidden(id, res.data.hiddenMessageIds || [])) }));
       } catch (error) {
         if (myAuthIdRef.current === myAuthId && error.response?.status === 404) removeGroupLocally({ conversationId: id });
       }
     });
-  }, [myAuthId, storageKey, getChatData, removeGroupLocally]);
+  }, [myAuthId, storageKey, getChatData, removeGroupLocally, recordHidden]);
 
   // Persist on every change.
   useEffect(() => {
@@ -286,6 +294,7 @@ export const ChatProvider = ({ children }) => {
               senderProfilePicture: message.senderProfilePicture,
               text: message.text,
               mentions: message.mentions || [],
+              replyToId: message.replyToId || null,
               at: message.at,
               call: message.call || null,
               activity: message.activity || null,
@@ -322,7 +331,7 @@ export const ChatProvider = ({ children }) => {
         [conversationId]: (prev[conversationId] || []).map((m) =>
           String(m._id) === String(message._id)
             ? { ...m, text: message.text, mentions: message.mentions || [], edited: true }
-            : m,
+            : String(m.replyToId) === String(message._id) && m.replyPreview ? { ...m, replyPreview: { ...m.replyPreview, text: message.text } } : m,
         ),
       }));
     };
@@ -334,7 +343,7 @@ export const ChatProvider = ({ children }) => {
         [conversationId]: (prev[conversationId] || []).map((m) =>
           String(m._id) === String(messageId)
             ? { ...m, text: "", unsent: true }
-            : m,
+            : String(m.replyToId) === String(messageId) ? { ...m, replyPreview: null } : m,
         ),
       }));
     };
@@ -366,6 +375,12 @@ export const ChatProvider = ({ children }) => {
     socket.on("message:new", onNew);
     socket.on("message:read", applyReadReceipt);
     socket.on("message:edited", onEdited);
+    const onHidden = ({ conversationId, messageId }) => {
+      recordHidden(conversationId, [messageId]);
+      setThreads(previous => ({ ...previous, [conversationId]: (previous[conversationId] || []).filter(message => String(message._id) !== String(messageId)).map(message => String(message.replyToId) === String(messageId) ? { ...message, replyPreview: null } : message) }));
+      refreshConvos();
+    };
+    socket.on("message:hidden", onHidden);
     socket.on("message:unsent", onUnsent);
     return () => {
       socket.off("profile:updated", onProfileUpdated);
@@ -377,9 +392,10 @@ export const ChatProvider = ({ children }) => {
       socket.off("message:new", onNew);
       socket.off("message:read", applyReadReceipt);
       socket.off("message:edited", onEdited);
+      socket.off("message:hidden", onHidden);
       socket.off("message:unsent", onUnsent);
     };
-  }, [refreshConvos, applyGroupName, applyGroupMembers, removeGroupLocally, applyConversationDeleted, applyConversationUpdated, applyReadReceipt]);
+  }, [refreshConvos, applyGroupName, applyGroupMembers, removeGroupLocally, applyConversationDeleted, applyConversationUpdated, applyReadReceipt, recordHidden]);
 
   const loadThread = useCallback(
     async (convoId) => {
@@ -391,14 +407,14 @@ export const ChatProvider = ({ children }) => {
       try {
         const res = await getChatData(`/conversations/${convoId}/messages`);
         if (myAuthIdRef.current !== authId || (threadEpochs.current.get(String(convoId)) || 0) !== epoch) return;
-        setThreads((prev) => ({ ...prev, [convoId]: mergeMessageHistory(prev[convoId] || [], res.data.data || []) }));
+        setThreads((prev) => ({ ...prev, [convoId]: mergeMessageHistory(prev[convoId] || [], res.data.data || [], recordHidden(convoId, res.data.hiddenMessageIds || [])) }));
       } catch {
         // ignore
       } finally {
         if (myAuthIdRef.current === authId) setThreadLoading(previous => ({ ...previous, [convoId]: false }));
       }
     },
-    [getChatData],
+    [getChatData, recordHidden],
   );
 
   useEffect(() => {
@@ -489,7 +505,7 @@ export const ChatProvider = ({ children }) => {
     );
   }, []);
 
-  const sendChat = useCallback(async (id, text, attachment = null, mentionAuthIds = []) => {
+  const sendChat = useCallback(async (id, text, attachment = null, mentionAuthIds = [], replyToId = null) => {
     if (convosRef.current.find(conversation => String(conversation._id) === String(id))?.blocked) {
       toast.error('Messaging unavailable', { description: 'This conversation is blocked.' });
       return false;
@@ -501,10 +517,10 @@ export const ChatProvider = ({ children }) => {
     setThreads((prev) => ({
       ...prev,
       [id]: [...(prev[id] || []), { from: "me", text,
-        attachment: attachment ? { kind: attachment.kind, name: attachment.name, url: attachment.url } : null, pendingId }],
+        attachment: attachment ? { kind: attachment.kind, name: attachment.name, url: attachment.url } : null, replyToId, pendingId }],
     }));
     try {
-      const response = await api.post(`/conversations/${id}/messages`, messageUploadBody(text, pendingId, attachment, mentionAuthIds), { timeout: attachment ? 90000 : 30000 });
+      const response = await api.post(`/conversations/${id}/messages`, messageUploadBody(text, pendingId, attachment, mentionAuthIds, replyToId), { timeout: attachment ? 90000 : 30000 });
       const saved = response.data.data;
       if (myAuthIdRef.current !== owner || (threadEpochs.current.get(String(id)) || 0) !== epoch) return true;
       setThreads(previous => {
@@ -531,6 +547,19 @@ export const ChatProvider = ({ children }) => {
       return false;
     }
   }, []);
+
+  const hideChatMessage = useCallback(async (conversationId, messageId) => {
+    const owner = myAuthIdRef.current;
+    try {
+      await api.post(`/conversations/messages/${messageId}/hide`);
+      if (owner !== myAuthIdRef.current) return;
+      recordHidden(conversationId, [messageId]);
+      setThreads(previous => ({ ...previous, [conversationId]: (previous[conversationId] || []).filter(message => String(message._id) !== String(messageId)).map(message => String(message.replyToId) === String(messageId) ? { ...message, replyPreview: null } : message) }));
+      void refreshConvos();
+    } catch (error) {
+      toast.error('Unable to hide message', { description: error.response?.data?.message || 'Please try again.' });
+    }
+  }, [refreshConvos, recordHidden]);
 
   const editChatMessage = useCallback(
     async (convoId, msgId, text, mentionAuthIds = []) => {
@@ -608,6 +637,7 @@ export const ChatProvider = ({ children }) => {
         sendChat,
         editChatMessage,
         unsendChatMessage,
+        hideChatMessage,
         createGroupChat,
         blockConversation,
         deleteConversation,

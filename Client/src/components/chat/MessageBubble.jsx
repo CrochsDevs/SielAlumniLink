@@ -1,3 +1,4 @@
+import { useChat } from '../../context/useChat';
 import Swal from "sweetalert2";
 import {
   Phone,
@@ -6,6 +7,7 @@ import {
   Video,
   VideoOff,
   Users,
+  Reply,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Bubble, BubbleContent } from "../ui/bubble";
@@ -40,7 +42,12 @@ export default function MessageBubble({
   convoId,
   onEdit,
   onUnsend,
+  onReply,
+  replyMessage,
+  senderName,
 }) {
+  const { hideChatMessage } = useChat();
+  const canReply = !!(onReply && msg._id && !msg.unsent && !msg.call && !msg.activity && !msg.pendingId);
   const postId = sharedPostId(msg.text);
   const missedCall = msg.call?.status === 'missed';
   const declinedCall = msg.call?.status === 'declined';
@@ -54,6 +61,10 @@ export default function MessageBubble({
   const hasFile = !msg.unsent && msg.attachment?.kind === 'file' && !!msg.attachment.url;
   const canEdit = !msg.call && !msg.activity && mine && msg._id && msg.text && onEdit;
   const canUnsend = !msg.call && !msg.activity && mine && msg._id && onUnsend;
+  const replyAuthor = mine ? 'You' : senderName || msg.senderName || 'Member';
+  const replyTarget = !replyMessage || replyMessage.unsent ? 'a message'
+    : replyMessage.from === 'me' ? (mine ? 'yourself' : 'you')
+    : replyMessage.senderName || 'a message';
 
   if (msg.activity) {
     return (
@@ -85,6 +96,8 @@ export default function MessageBubble({
       style={hasPhoto ? { maxWidth: 'min(100%, var(--chat-photo-max-width, 320px))' } : hasFile ? { width: '320px', maxWidth: '90%' } : undefined}
       data-read-id={!mine && msg._id && !msg.readByMe ? msg._id : undefined}
       align={mine ? "end" : "start"}
+      data-message-id={msg._id}
+      data-reply={!!msg.replyToId && !msg.unsent ? 'true' : undefined}
       data-call-status={msg.call?.status}
       variant={msg.unsent ? "outline" : missedCall ? "destructive" : msg.call ? "outline" : mine ? "default" : "secondary"}
       className={`${hasFile ? 'chat-file-message ' : ''}${
@@ -103,6 +116,16 @@ export default function MessageBubble({
         </BubbleContent>
       ) : (
         <>
+          {msg.replyToId && <div className="chat-reply-context">
+            <span className="chat-reply-label"><Reply size={13} aria-hidden="true" />{replyAuthor} replied to {replyTarget}</span>
+            <button type="button" className="chat-reply-quote" disabled={!replyMessage || replyMessage.unsent}
+            aria-label="View original message" onClick={event => {
+              const original = event.currentTarget.closest('[data-chat-thread]')?.querySelector(`[data-message-id="${msg.replyToId}"]`);
+              original?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              original?.animate([{ outline: '2px solid #008c42', outlineOffset: '3px' }, { outline: '2px solid transparent', outlineOffset: '3px' }], { duration: 1500 });
+            }}>
+            <span>{!replyMessage || replyMessage.unsent ? 'Original message unavailable' : replyMessage.text || (replyMessage.attachment?.kind === 'image' ? 'Photo' : replyMessage.attachment?.name || 'Attachment')}</span>
+          </button></div>}
           {msg.attachment?.kind === 'image' && msg.attachment.url && <ChatPhoto attachment={msg.attachment} pending={!!msg.pendingId} />}
           {(msg.text || msg.call || msg.attachment?.kind === 'file') && <BubbleContent>
             {msg.attachment?.kind === "file" && msg.attachment?.url && <ChatFile attachment={msg.attachment} />}
@@ -143,8 +166,12 @@ export default function MessageBubble({
               Edited
             </span>
           )}
-          {(canEdit || canUnsend) && (
-            <MessageActions canEdit={canEdit} canDelete={canUnsend}
+          {(canEdit || canUnsend || canReply || (msg._id && !msg.activity)) && (
+            <MessageActions mine={mine} onReply={canReply ? () => onReply(msg) : undefined}
+              onHide={msg._id && !msg.pendingId ? async () => {
+                const result = await Swal.fire({ title: 'Hide this message?', text: 'It will be hidden only for you. Other people in the chat can still see it.', icon: 'question', showCancelButton: true, confirmButtonText: 'Hide for me', confirmButtonColor: '#008c42' });
+                if (result.isConfirmed) hideChatMessage(convoId, msg._id);
+              } : undefined} canEdit={canEdit} canDelete={canUnsend}
               onEdit={() => onEdit(convoId, msg._id, msg.text, msg.mentions || [])}
               onDelete={confirmUnsend} />
           )}

@@ -75,6 +75,7 @@ test('real send and history handlers carry validated mentions and reject nonmemb
   t.mock.method(UserModel, 'findChatProfilesByAuthIds', profiles);
   t.mock.method(MessageModel, 'create', async doc => { writes++; saved = { ...doc, _id: new ObjectId(), createdAt: new Date() }; return saved; });
   t.mock.method(MessageModel, 'listByConversation', async () => [saved]);
+  t.mock.method(MessageModel, 'hiddenMessageIds', async () => []);
   t.mock.method(ConversationControls, 'preference', async () => null);
   const invoke = async (action, body) => {
     const res = { status(code) { this.code = code; return this; }, json(body) { this.body = body; } };

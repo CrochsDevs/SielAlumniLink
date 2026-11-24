@@ -96,11 +96,15 @@ export function createCommunityService(db, { provider = createModerationProvider
     // Dismissed or overturned candidates may be retried unchanged for 30 days.
     if (await cases.findOne({ userId: String(user._id), fingerprint, status: 'dismissed', updatedAt: { $gt: new Date(now().getTime() - 30 * day) } })) { await assertAllowed(user, feature); return { allowed: true }; }
     const bucket = Math.floor(now().getTime() / 600000), expiresAt = new Date((bucket + 2) * 600000);
-    const attempts = text.trim() || input.type === 'connection' ? await counter(`same:${user._id}:${input.type}:${fingerprint}:${bucket}`, expiresAt) : 1;
-    const frequency = await counter(`rate:${user._id}:${input.type}:${Math.floor(now().getTime() / 60000)}`, expiresAt);
+    // Independent counters and provider analysis can share the same wait.
+    // All three must finish before deciding whether content may be delivered.
+    const [attempts, frequency, analysis] = await Promise.all([
+      text.trim() || input.type === 'connection' ? counter(`same:${user._id}:${input.type}:${fingerprint}:${bucket}`, expiresAt) : 1,
+      counter(`rate:${user._id}:${input.type}:${Math.floor(now().getTime() / 60000)}`, expiresAt),
+      input.type === 'connection' ? { available: true, signals: [] } : provider.analyze({ text, images: input.images || [], hash: fingerprint }),
+    ]);
     const rules = ruleSignals(text, attempts, frequency, policy);
     if (input.fileName && /\.(?:exe|scr|bat|cmd|ps1|msi|vbs|js|jar)$/i.test(input.fileName) && policy.enabledCategories.includes('malware')) rules.push({ category: 'malware', score: 0.9, severity: 'medium', explanation: 'Executable attachment requires administrator review; no malware verdict or automatic strike.' });
-    const analysis = input.type === 'connection' ? { available: true, signals: [] } : await provider.analyze({ text, images: input.images || [], hash: fingerprint });
     const contextual = /\b(?:for awareness|educational|research|prevention|quoted|quoting|someone (?:said|sent|threatened)|i (?:received|was threatened)|fiction|movie|novel|case study)\b/i.test(text);
     const aiSignals = analysis.signals.map(signal => contextual ? { ...signal, severity: 'medium', explanation: signal.explanation + ' Quotation, reporting, or educational context requires human review; no automatic strike.' } : signal);
     const signals = [...rules.map(signal => ({ ...signal, ...(contextual ? { severity: 'medium', explanation: signal.explanation + ' Educational/reporting context requires human review.' } : {}), detection: 'automated_rule' })), ...aiSignals.map(signal => ({ ...signal, detection: 'ai' }))]

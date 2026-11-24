@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { gooeyToast as toast } from 'goey-toast';
 import { CHAT_IMAGE_ACCEPT, MAX_CHAT_FILE_BYTES } from '../../utils/chatAttachments';
 
-const emptyComposer = conversationId => ({ conversationId, draft: '', mentionAuthIds: [], mentionPeople: [], edit: null, saving: false, attachment: null });
+const emptyComposer = conversationId => ({ conversationId, draft: '', mentionAuthIds: [], mentionPeople: [], edit: null, reply: null, saving: false, attachment: null });
 
 // Full-page and floating chats share the same edit/save/cancel behavior.
 export function useMessageComposer(conversationId, onSend, onEdit) {
@@ -26,9 +26,16 @@ export function useMessageComposer(conversationId, onSend, onEdit) {
   const startEdit = (id, messageId, text, mentions = []) => {
     if (String(id) !== String(conversationId) || state.saving) return;
     setState(previous => ({ ...previous, draft: text, mentionPeople: mentions, mentionAuthIds: [...new Set(mentions.map(mention => mention.authId))],
-      edit: { messageId, originalText: text, originalMentions: [...new Set(mentions.map(mention => mention.authId))], restoreDraft: previous.edit?.restoreDraft ?? previous.draft, restoreMentions: previous.edit?.restoreMentions ?? previous.mentionAuthIds, restorePeople: previous.edit?.restorePeople ?? previous.mentionPeople } }));
+      reply: null, edit: { messageId, originalText: text, originalMentions: [...new Set(mentions.map(mention => mention.authId))], restoreDraft: previous.edit?.restoreDraft ?? previous.draft, restoreMentions: previous.edit?.restoreMentions ?? previous.mentionAuthIds, restorePeople: previous.edit?.restorePeople ?? previous.mentionPeople } }));
     focus();
   };
+  const startReply = message => {
+    if (state.saving || !message?._id || message.unsent) return;
+    setState(previous => ({ ...previous, edit: null, reply: message,
+      ...(previous.edit ? { draft: previous.edit.restoreDraft, mentionAuthIds: previous.edit.restoreMentions, mentionPeople: previous.edit.restorePeople } : {}) }));
+    focus();
+  };
+  const cancelReply = () => { setState(previous => previous.saving ? previous : ({ ...previous, reply: null })); focus(); };
   const cancelEdit = () => {
     if (state.saving) return;
     setState(previous => ({ ...previous, draft: previous.edit?.restoreDraft ?? previous.draft, mentionAuthIds: previous.edit?.restoreMentions ?? [], mentionPeople: previous.edit?.restorePeople ?? [], edit: null }));
@@ -67,15 +74,15 @@ export function useMessageComposer(conversationId, onSend, onEdit) {
         const attachment = state.attachment;
         setState(previous => ({ ...previous, saving: true }));
         let saved = false;
-        try { saved = (await onSend(conversationId, state.draft.trim(), attachment, state.mentionAuthIds)) !== false; }
+        try { saved = (await onSend(conversationId, state.draft.trim(), attachment, state.mentionAuthIds, state.reply?._id)) !== false; }
         finally {
           setState(previous => previous.conversationId !== conversationId || previous.attachment !== attachment ? previous : ({ ...previous, saving: false,
-            ...(saved ? { draft: '', mentionAuthIds: [], mentionPeople: [], attachment: null } : {}) }));
+            ...(saved ? { draft: '', mentionAuthIds: [], mentionPeople: [], attachment: null, reply: null } : {}) }));
         }
         return;
       }
-      void onSend(conversationId, state.draft.trim(), null, state.mentionAuthIds);
-      setDraft('');
+      void onSend(conversationId, state.draft.trim(), null, state.mentionAuthIds, state.reply?._id);
+      setState(previous => ({ ...previous, draft: '', mentionAuthIds: [], mentionPeople: [], reply: null }));
       return;
     }
     const edit = state.edit;
@@ -91,5 +98,5 @@ export function useMessageComposer(conversationId, onSend, onEdit) {
   return { draft: state.draft, setDraft, mentionAuthIds: state.mentionAuthIds, mentionPeople: state.mentionPeople, editing: !!state.edit, saving: state.saving,
     attachment: state.attachment, removeImage, onPaste, attachFile,
     canSubmit: !!(state.draft.trim() || (!state.edit && state.attachment)) && !state.saving,
-    startEdit, cancelEdit, submit, bindInput, addMention };
+    reply: state.reply, startReply, cancelReply, startEdit, cancelEdit, submit, bindInput, addMention };
 }

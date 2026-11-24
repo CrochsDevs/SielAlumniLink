@@ -1,5 +1,7 @@
+import ComposerGallery from './ComposerGallery';
+import ComposerReplyNotice from './ComposerReplyNotice';
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { X, Minus, Send, Smile, ImagePlus, Paperclip } from "lucide-react";
+import { X, Minus, Send, Smile } from "lucide-react";
 import { useMessageComposer } from './useMessageComposer';
 import MentionInput from './MentionInput';
 import ComposerEditNotice from './ComposerEditNotice';
@@ -201,10 +203,11 @@ const ChatWindow = ({
             className="chat-dock-message-list h-[min(340px,calc(100dvh-140px))] overflow-y-auto bg-[#f8faf8] dark:bg-zinc-950 px-2 py-4"
           >
             <div ref={messageContentRef}>
-              <MessageThread messages={messages} isGroup={convo.isGroup} conversation={convo} convoId={id} onEdit={composer.startEdit} onUnsend={onUnsend} />
+              <MessageThread messages={messages} isGroup={convo.isGroup} conversation={convo} convoId={id} onReply={composer.startReply} onEdit={composer.startEdit} onUnsend={onUnsend} />
             </div>
           </div>
           {convo.blocked ? <p role="status" className="border-t border-border p-3 text-center text-xs text-muted-foreground">Messaging is unavailable for this conversation.</p> : <>
+          {!composer.editing && composer.reply && <ComposerReplyNotice message={composer.reply} onCancel={composer.cancelReply} saving={composer.saving} />}
           {composer.editing && <ComposerEditNotice onCancel={composer.cancelEdit} saving={composer.saving} />}
           {!composer.editing && <ComposerImagePreview attachment={composer.attachment} saving={composer.saving} onRemove={composer.removeImage} />}
           <form
@@ -237,37 +240,12 @@ const ChatWindow = ({
                 </div>
               )}
             </div>
-            <label
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
-              title="Send photo"
-            >
-              <ImagePlus className="h-4 w-4" />
-              <input
-                type="file"
-                disabled={composer.editing || composer.saving}
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) sendFile(e.target.files[0], "image");
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            <label
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
-              title="Attach file"
-            >
-              <Paperclip className="h-4 w-4" />
-              <input
-                type="file"
-                disabled={composer.editing || composer.saving}
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) sendFile(e.target.files[0], "file");
-                  e.target.value = "";
-                }}
-              />
-            </label>
+            <ComposerGallery
+              disabled={composer.editing || composer.saving}
+              onAttach={sendFile}
+              onOpen={() => setShowEmoji(false)}
+              compact
+            />
             <MentionInput
               compact
               key={id}
@@ -278,7 +256,7 @@ const ChatWindow = ({
               value={draft}
               disabled={composer.saving}
               aria-label={composer.editing ? 'Edit message text' : undefined}
-              onKeyDown={event => { if (event.key === 'Escape' && composer.editing) { event.preventDefault(); composer.cancelEdit(); } }}
+              onKeyDown={event => { if (event.key === 'Escape' && (composer.editing || composer.reply)) { event.preventDefault(); if (composer.editing) composer.cancelEdit(); else composer.cancelReply(); } }}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Write a message..."
               className="h-9 min-w-0 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-3.5 text-[12.5px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:bg-zinc-50 dark:focus:bg-zinc-700 focus:ring-2 focus:ring-brand/20"
@@ -286,7 +264,7 @@ const ChatWindow = ({
             <button
               type="submit"
               disabled={!composer.canSubmit}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand transition hover:bg-emerald-50 disabled:opacity-40"
+              className="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand transition hover:bg-emerald-50 disabled:opacity-40"
               aria-label={composer.editing ? 'Save edit' : 'Send message'}
             >
               <Send className="h-4 w-4" />

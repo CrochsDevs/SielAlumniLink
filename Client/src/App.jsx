@@ -651,7 +651,7 @@ function MemberPages() {
     setWorkspaceThemeEnabled(workspaceTheme);
   }, [workspaceTheme]);
   if (loading && !isAuthPage) {
-    return <PageSkeleton pathname={pathname} label="Checking your session" />;
+    return <GraduationCapLoader label="Checking your session" />;
   }
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (

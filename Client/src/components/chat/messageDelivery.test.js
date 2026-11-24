@@ -21,3 +21,12 @@ test('server correlation removes only the matching optimistic send', () => {
   assert.equal(merged.length, 2);
   assert.equal(merged[1].pendingId, 'second');
 });
+
+
+test('hidden messages and quoted previews cannot reappear through stale history or cache', () => {
+  const current = [{ _id: 'hidden', at: '2026-10-29T03:00:00Z' }];
+  const fetched = [{ _id: 'reply', replyToId: 'hidden', replyPreview: { text: 'Private' }, at: '2026-10-29T02:00:00Z' }, ...current];
+  const merged = mergeMessageHistory(current, fetched, ['hidden']);
+  assert.deepEqual(merged.map(message => message._id), ['reply']);
+  assert.equal(merged[0].replyPreview, null);
+});

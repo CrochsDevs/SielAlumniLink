@@ -116,20 +116,28 @@ export const MessageModel = {
   async latestIncoming(conversationId, readerAuthId, clearedAt = null) {
     // Group activity belongs to the whole group, including its actor.
     return messagesCollection.findOne({ conversationId: await toObjectId(conversationId),
-      ...receivedMessageFilter(readerAuthId),
+      ...receivedMessageFilter(readerAuthId), hiddenFor: { $ne: key(readerAuthId) },
       ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) },
     { sort: { createdAt: -1, _id: -1 }, projection: { _id: 1, text: 1, createdAt: 1, unsent: 1, 'attachment.kind': 1 } });
   },
-  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId, mentions = [], moderationChecked = false }) {
+  async create({ conversationId, senderAuthId, senderEmail, text, attachment, call, activity, clientMessageId, mentions = [], moderationChecked = false, replyToId }) {
     if (attachment && (!attachment.publicId || attachment.deliveryType !== 'authenticated')) {
       throw new Error('Message attachments must be uploaded to Cloudinary first');
     }
     const conversation = await ConversationModel.findById(conversationId);
     if (!conversation || !conversation.participants.some(member => String(member.authId) === key(senderAuthId))) throw Object.assign(new Error('Conversation not found'), { status: 404 });
+    if (replyToId) {
+      const preference = await ConversationControls.preference(conversationId, senderAuthId);
+      const original = await messagesCollection.findOne({ _id: await toObjectId(replyToId), conversationId: await toObjectId(conversationId),
+        unsent: { $ne: true }, hiddenFor: { $ne: key(senderAuthId) }, call: { $exists: false }, activity: { $exists: false },
+        ...(preference?.clearedAt ? { createdAt: { $gt: preference.clearedAt } } : {}) });
+      if (!original) throw Object.assign(new Error('This message is no longer available to reply to.'), { status: 400 });
+    }
     await community.assertRecipients(conversation.participants.filter(member => String(member.authId) !== key(senderAuthId)).map(member => member.authId));
-    if (!call && !activity) await community.assertAllowed({ _id: senderAuthId }, 'messaging');
-    if (!call && !activity && !moderationChecked) {
-      await community.check({ _id: senderAuthId }, { type: 'message', text });
+    // check() already enforces sender restrictions before and after analysis.
+    if (!call && !activity) {
+      if (moderationChecked) await community.assertAllowed({ _id: senderAuthId }, 'messaging');
+      else await community.check({ _id: senderAuthId }, { type: 'message', text });
     }
     const now = new Date();
     const doc = {
@@ -137,6 +145,7 @@ export const MessageModel = {
       senderAuthId: key(senderAuthId),
       senderEmail,
       ...(clientMessageId ? { clientMessageId } : {}),
+      ...(replyToId ? { replyToId: String(replyToId) } : {}),
       ...(call ? { call } : {}),
       ...(activity ? { activity } : {}),
       text: String(text || '').slice(0, 2000),
@@ -150,16 +159,39 @@ export const MessageModel = {
     return { ...doc, _id: result.insertedId };
   },
 
-  async listByConversation(conversationId, limit = 100, clearedAt = null) {
+  async listByConversation(conversationId, limit = 100, clearedAt = null, viewerAuthId = null) {
     try {
       return await messagesCollection
-        .find({ conversationId: await toObjectId(conversationId), ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) })
+        .find({ conversationId: await toObjectId(conversationId), ...(viewerAuthId ? { hiddenFor: { $ne: key(viewerAuthId) } } : {}), ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) })
         .sort({ createdAt: -1, _id: -1 })
         .limit(limit)
         .toArray().then(messages => messages.reverse());
     } catch {
       return [];
     }
+  },
+
+  async hiddenMessageIds(conversationId, viewerAuthId) {
+    return messagesCollection.find({ conversationId: await toObjectId(conversationId), hiddenFor: key(viewerAuthId) },
+      { projection: { _id: 1 } }).toArray().then(rows => rows.map(row => String(row._id)));
+  },
+
+  async replySources(conversationId, ids, viewerAuthId, clearedAt) {
+    if (!ids.length) return [];
+    const valid = ids.filter(id => /^[a-f\d]{24}$/i.test(String(id)));
+    return messagesCollection.find({ _id: { $in: await Promise.all(valid.map(toObjectId)) },
+      conversationId: await toObjectId(conversationId), hiddenFor: { $ne: key(viewerAuthId) }, unsent: { $ne: true },
+      ...(clearedAt ? { createdAt: { $gt: clearedAt } } : {}) },
+      { projection: { _id: 1, text: 1, senderAuthId: 1, senderEmail: 1, 'attachment.kind': 1, 'attachment.name': 1 } }).toArray();
+  },
+
+  async hideMessage(messageId, authId) {
+    const message = await messagesCollection.findOne({ _id: await toObjectId(messageId) });
+    if (!message || message.activity) throw Object.assign(new Error('Message not found'), { status: 404 });
+    const conversation = await ConversationModel.findById(message.conversationId);
+    if (!conversation?.participants.some(member => key(member.authId) === key(authId))) throw Object.assign(new Error('Message not found'), { status: 404 });
+    await messagesCollection.updateOne({ _id: message._id }, { $addToSet: { hiddenFor: key(authId) } });
+    return { conversationId: String(message.conversationId), messageId: String(message._id) };
   },
 
   markRead(conversationId, readerAuthId, messageIds, clearedAt) {
@@ -170,6 +202,7 @@ export const MessageModel = {
     try {
       return await messagesCollection.countDocuments({
         conversationId: await toObjectId(conversationId),
+        hiddenFor: { $ne: key(readerAuthId) },
         $and: [
           receivedMessageFilter(readerAuthId),
           { $or: [{ readBy: { $exists: true, $ne: key(readerAuthId) } }, { readBy: { $exists: false }, read: false }] },

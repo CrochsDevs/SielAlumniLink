@@ -424,6 +424,7 @@
     margin: 0 10px 12px;
     gap: 0;
     padding-inline: 4px;
+    padding-right: 8px;
   }
   .messages-workspace .inbox-composer > label,
   .messages-workspace .inbox-composer > div > button {

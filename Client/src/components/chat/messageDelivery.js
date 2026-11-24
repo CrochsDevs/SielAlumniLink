@@ -1,5 +1,8 @@
 // Preserve socket receipts and in-flight sends when an older history request resolves.
-export function mergeMessageHistory(current, fetched) {
+export function mergeMessageHistory(current, fetched, hiddenMessageIds = []) {
+  const hidden = new Set(hiddenMessageIds.map(String));
+  current = current.filter(message => !hidden.has(String(message._id)));
+  fetched = fetched.filter(message => !hidden.has(String(message._id)));
   const previous = new Map(current.filter(message => message._id).map(message => [String(message._id), message]));
   const savedClientIds = new Set(fetched.map(message => message.clientMessageId).filter(Boolean));
   const ids = new Set(fetched.map(message => String(message._id)));
@@ -10,7 +13,7 @@ export function mergeMessageHistory(current, fetched) {
       readByMe: !!message.readByMe || !!previous.get(String(message._id))?.readByMe })),
     ...current.filter(message => message.pendingId ? !savedClientIds.has(message.pendingId)
       : !ids.has(String(message._id)) && new Date(message.at || 0).getTime() > newest),
-  ];
+  ].map(message => hidden.has(String(message.replyToId)) ? { ...message, replyPreview: null } : message);
 }
 
 export const messageDeliveryLabel = message => message.pendingId ? 'Sending…' : message.edited ? 'Edited' : message.read ? 'Read' : 'Sent';

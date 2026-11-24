@@ -12,6 +12,7 @@ export default function MessageThread({
   convoId,
   onEdit,
   onUnsend,
+  onReply,
   layout = "bubbles",
   user,
   conversation,
@@ -53,12 +54,15 @@ export default function MessageThread({
                     <MessageBubble
                       key={message._id || messageIndex}
                       msg={message}
+                      senderName={name}
                       isGroup={isGroup}
                       mine={message.from === "me"}
                       showDelivery={messageIndex === group.length - 1}
                       convoId={convoId}
                       onEdit={onEdit}
                       onUnsend={onUnsend}
+                  onReply={onReply}
+                  replyMessage={messages.find(item => String(item._id) === String(message.replyToId)) || message.replyPreview}
                     />
                   ))}
                 </BubbleGroup>
@@ -88,12 +92,15 @@ export default function MessageThread({
                 <MessageBubble
                   key={message._id || messageIndex}
                   msg={message}
+                      senderName={name}
                   isGroup={isGroup}
                   mine={message.from === "me"}
                   showDelivery={messageIndex === group.length - 1}
                   convoId={convoId}
                   onEdit={onEdit}
                   onUnsend={onUnsend}
+                  onReply={onReply}
+                  replyMessage={messages.find(item => String(item._id) === String(message.replyToId)) || message.replyPreview}
                 />
               ))}
             </BubbleGroup>

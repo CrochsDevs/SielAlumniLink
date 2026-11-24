@@ -1,3 +1,5 @@
+import ComposerGallery from './ComposerGallery';
+import ComposerReplyNotice from './ComposerReplyNotice';
 import ContentSkeleton from "../ui/Skeleton";
 import MentionInput from './MentionInput';
 import { useChat } from "../../context/useChat";
@@ -487,7 +489,7 @@ const ThreadPane = ({
           messages={messages}
           isGroup={active.isGroup}
           convoId={activeId}
-          onEdit={composer.startEdit}
+          onReply={composer.startReply} onEdit={composer.startEdit}
           onUnsend={unsendChatMessage}
           layout={workspace ? "stream" : "bubbles"}
           user={user}
@@ -498,7 +500,8 @@ const ThreadPane = ({
       {active.blocked ? <p role="status" className="border-t border-border p-4 text-center text-xs text-muted-foreground">
         {active.blockedByMe ? 'You blocked this account. Use the chat options to unblock it.' : 'Messaging is unavailable for this conversation.'}
       </p> : <>
-      {composer.editing && <ComposerEditNotice onCancel={composer.cancelEdit} saving={composer.saving} />}
+      {!composer.editing && composer.reply && <ComposerReplyNotice message={composer.reply} onCancel={composer.cancelReply} saving={composer.saving} />}
+          {composer.editing && <ComposerEditNotice onCancel={composer.cancelEdit} saving={composer.saving} />}
       {!composer.editing && <ComposerImagePreview attachment={composer.attachment} saving={composer.saving} onRemove={composer.removeImage} />}
       <form
         onSubmit={send}
@@ -522,8 +525,8 @@ const ThreadPane = ({
                 onEmojiClick={(emojiData) =>
                   setDraft((prev) => prev + emojiData.emoji)
                 }
-                width={320}
-                height={360}
+                width="min(320px, calc(100vw - 48px))"
+                height="min(360px, calc(100dvh - 100px))"
                 theme="auto"
                 lazyLoadEmojis
                 previewConfig={{ showPreview: false }}
@@ -531,37 +534,11 @@ const ThreadPane = ({
             </div>
           )}
         </div>
-        <label
-          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
-          title="Send photo"
-        >
-          <ImagePlus className="h-4 w-4" />
-          <input
-            type="file"
-            disabled={composer.editing || composer.saving}
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.[0]) sendFile(e.target.files[0], "image");
-              e.target.value = "";
-            }}
-          />
-        </label>
-        <label
-          className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-brand"
-          title="Attach file"
-        >
-          <Paperclip className="h-4 w-4" />
-          <input
-            type="file"
-            disabled={composer.editing || composer.saving}
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.[0]) sendFile(e.target.files[0], "file");
-              e.target.value = "";
-            }}
-          />
-        </label>
+        <ComposerGallery
+          disabled={composer.editing || composer.saving}
+          onAttach={sendFile}
+          onOpen={() => setShowEmoji(false)}
+        />
         <MentionInput
           key={activeId}
           conversationId={activeId}
@@ -571,7 +548,7 @@ const ThreadPane = ({
           value={draft}
           disabled={composer.saving}
           aria-label={composer.editing ? 'Edit message text' : undefined}
-          onKeyDown={event => { if (event.key === 'Escape' && composer.editing) { event.preventDefault(); composer.cancelEdit(); } }}
+          onKeyDown={event => { if (event.key === 'Escape' && (composer.editing || composer.reply)) { event.preventDefault(); if (composer.editing) composer.cancelEdit(); else composer.cancelReply(); } }}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={`Message ${active.isGroup ? "group" : active.name.split(" ")[0]}...`}
           className="inbox-message-input h-10 min-w-0 flex-1 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 text-[13px] text-zinc-800 dark:text-zinc-100 outline-none transition focus:border-brand focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand/15"
@@ -579,7 +556,7 @@ const ThreadPane = ({
         <button
           type="submit"
           disabled={!composer.canSubmit}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-sm transition hover:bg-brand disabled:opacity-40"
+          className="ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-sm transition hover:bg-brand disabled:opacity-40"
           aria-label={composer.editing ? 'Save edit' : 'Send message'}
         >
           <Send className="h-4 w-4" />

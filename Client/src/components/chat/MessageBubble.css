@@ -152,3 +152,27 @@
   font-size: 10px;
   line-height: 1.4;
 }
+
+.chat-reply-composer { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid #c9ded1; background: #edf7f0; color: #176137; }
+.chat-reply-composer strong { display: block; font-size: 12px; }
+.chat-reply-composer p { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 3px; font-size: 12px; color: #476451; }
+.chat-reply-composer > svg { flex-shrink: 0; }
+.chat-reply-composer button { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; }
+.chat-reply-composer button:hover { background: #d7ebde; }
+.chat-reply-context { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; max-width: 100%; margin-top: 8px; }
+[data-align="end"] > .chat-reply-context { align-items: flex-end; }
+.chat-reply-label { display: flex; align-items: center; gap: 4px; max-width: 100%; padding: 0 9px; color: #65676b; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.chat-reply-label svg { flex-shrink: 0; fill: currentColor; }
+.chat-reply-quote { display: block; width: fit-content; min-width: 0; max-width: 280px; padding: 9px 13px 15px; border: 0; border-radius: 18px 18px 5px 5px; background: #e4e6eb; color: #60636a; text-align: left; }
+.chat-reply-quote span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; }
+.chat-reply-quote:not(:disabled):hover { background: #d8dbe1; }
+[data-slot="bubble"][data-reply="true"] > [data-slot="bubble-content"] { position: relative; margin-top: -10px; border-radius: 20px; padding: 8px 14px; }
+.chat-reply-quote:focus-visible, .chat-reply-composer button:focus-visible { outline: 2px solid #008c42; outline-offset: 2px; }
+.dark .chat-reply-composer { background: #1a3023; border-color: #365940; color: #a5e6b9; }
+.dark .chat-reply-composer p { color: #bfd3c4; }
+.dark .chat-reply-composer button:hover, .dark .chat-reply-quote:not(:disabled):hover { background: #365940; }
+.dark .chat-reply-quote { background: #3a3b3c; color: #c4c7cd; }
+.dark .chat-reply-label { color: #b0b3b8; }
+.dark .chat-reply-quote:not(:disabled):hover { background: #464749; }
+
+.messages-workspace .message-stream-body [data-slot="bubble"][data-reply="true"] > [data-slot="bubble-content"] { border-radius: 20px; }
