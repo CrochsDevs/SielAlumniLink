@@ -78,6 +78,16 @@ const USER_COLUMNS = [
     meta: { headerClassName: "px-5 py-3 font-semibold" },
   },
   {
+    accessorKey: "address",
+    header: "Address",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
+    accessorKey: "birthday",
+    header: "Birthday",
+    meta: { headerClassName: "px-5 py-3 font-semibold" },
+  },
+  {
     accessorKey: "role",
     header: "Role",
     meta: { headerClassName: "px-5 py-3 font-semibold" },
@@ -98,6 +108,13 @@ const ROLE_META = {
     icon: BookOpen,
     style: "bg-blue-50 text-blue-600 ring-blue-200/60",
   },
+};
+
+const formatBirthday = (value) => {
+  if (!value || typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "\u2014";
+  const date = new Date(`${value}T00:00:00Z`);
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) return "\u2014";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 };
 
 const formatRelative = (iso) => {
@@ -243,6 +260,8 @@ export default function AdminUsers() {
       u.section,
       u.academicStatus,
       u.contactNumber,
+      u.address,
+      u.birthday,
     ]
       .filter(Boolean)
       .join(" ")
@@ -357,7 +376,7 @@ export default function AdminUsers() {
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search name or email..."
+                      placeholder="Search users..."
                       className="h-10 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-9 pr-3 text-[12.5px] outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/15"
                     />
                   </div>
@@ -477,6 +496,12 @@ export default function AdminUsers() {
                               <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">
                                 {u.contactNumber || "—"}
                               </td>
+                              <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300">
+                                {u.address || "\u2014"}
+                              </td>
+                              <td className="px-5 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                                {formatBirthday(u.birthday)}
+                              </td>
                               <td className="px-5 py-3">
                                 <span
                                   className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide ring-1 ${meta.style}`}
@@ -503,7 +528,7 @@ export default function AdminUsers() {
                         {filtered.length === 0 && (
                           <tr>
                             <td
-                              colSpan={10}
+                              colSpan={USER_COLUMNS.length}
                               className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-500"
                             >
                               No users found.

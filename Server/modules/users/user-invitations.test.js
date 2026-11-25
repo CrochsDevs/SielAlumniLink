@@ -78,7 +78,7 @@ test('manual registration creates linked passwordless records and emails a hashe
   assert.equal(String(profile.authId), String(account._id));
   assert.equal(profile.name, 'Ana Maria Cruz');
   assert.equal(profile.studentId, '2020-001');
-  assert.match(profile.externalId, /^\d{1,20}$/);
+  assert.match(profile.externalId, /^[1-9]\d{7}$/);
   assert.equal(result.externalId, profile.externalId);
   assert.equal(profile.address, row.address);
   assert.equal(profile.birthday, row.birthday);
@@ -201,8 +201,8 @@ test('manual registration automatically assigns distinct IDs and ignores client-
   const f = fixture();
   const first = await f.service.register({ ...row, external_id: '123', externalId: '456' }, actor);
   const second = await f.service.register({ ...row, email: 'another@example.test' }, actor);
-  assert.match(first.externalId, /^\d{1,20}$/);
-  assert.match(second.externalId, /^\d{1,20}$/);
+  assert.match(first.externalId, /^[1-9]\d{7}$/);
+  assert.match(second.externalId, /^[1-9]\d{7}$/);
   assert.notEqual(first.externalId, second.externalId);
   assert.notEqual(first.externalId, '123');
   assert.notEqual(first.externalId, '456');

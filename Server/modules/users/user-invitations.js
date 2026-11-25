@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomInt } from 'node:crypto';
 import { ObjectId } from 'mongodb';
 import { authEmail } from '../auth/auth.validation.js';
 import { resetTokenHash } from '../auth/password-reset.js';
@@ -94,10 +94,10 @@ export function createUserInvitations({ db, transaction, sendEmail, frontendUrl,
             throw failure(409, 'An account with this email already exists.');
           }
           // Manual registrations receive a server-generated numeric identifier.
-          // Keep it as a string to preserve every digit of the 64-bit value.
+          // Use eight digits for readable manual IDs and check existing records before saving.
           let externalId;
           for (let attempt = 0; attempt < 5; attempt += 1) {
-            const candidate = randomBytes(8).readBigUInt64BE().toString();
+            const candidate = String(randomInt(10_000_000, 100_000_000));
             if (!await users.findOne({ externalId: candidate }, options)) { externalId = candidate; break; }
           }
           if (!externalId) throw failure(503, 'Unable to assign an external ID. Please try again.');

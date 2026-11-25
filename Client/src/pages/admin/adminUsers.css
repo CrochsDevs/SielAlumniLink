@@ -1,5 +1,5 @@
 .member-workspace.admin-workspace main.admin-users table {
-  min-width: 1600px;
+  min-width: 2000px;
 }
 
 .member-workspace.admin-workspace main.admin-users table :is(th, td):nth-child(1) {
@@ -21,7 +21,7 @@
   white-space: nowrap;
 }
 
-.member-workspace.admin-workspace main.admin-users table :is(th, td):nth-child(10) {
+.member-workspace.admin-workspace main.admin-users table :is(th, td):nth-child(12) {
   min-width: 160px;
 }
 
@@ -79,4 +79,15 @@
   .admin-register-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .admin-register-field :is(input, select) { font-size: 16px; }
   .admin-register-footer > * { flex: 1; }
+}
+
+.member-workspace.admin-workspace main.admin-users table :is(th, td):nth-child(9) {
+  min-width: 260px;
+  max-width: 340px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.member-workspace.admin-workspace main.admin-users table :is(th, td):nth-child(10) {
+  min-width: 160px;
+  white-space: nowrap;
 }
