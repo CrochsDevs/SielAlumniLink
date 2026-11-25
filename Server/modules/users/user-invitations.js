@@ -19,14 +19,14 @@ export async function ensureInvitationIndexes(db) {
 
 export function invitationProfile(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw failure(400, 'Please provide user details.');
-  for (const key of ['first_name', 'last_name', 'email', 'source_user_type']) {
-    if (typeof body[key] !== 'string' || !body[key].trim()) throw failure(400, 'First name, last name, email, and account type are required.');
+  for (const key of ['first_name', 'last_name', 'email', 'source_user_type', 'address', 'birthday']) {
+    if (typeof body[key] !== 'string' || !body[key].trim()) throw failure(400, 'First name, last name, email, account type, address, and birthday are required.');
   }
   if (!['student', 'alumni'].includes(body.source_user_type)) throw failure(400, 'Choose Student or Alumni.');
   // Only editable registration fields enter the schema adapter. Source audit
   // timestamps, credentials, privilege and activation state are server-owned.
   const allowed = ['first_name', 'middle_name', 'last_name', 'extension_name', 'email',
-    'contact_no', 'student_number', 'source_user_type', 'program', 'year_level', 'section', 'status'];
+    'address', 'birthday', 'contact_no', 'student_number', 'source_user_type', 'program', 'year_level', 'section', 'status'];
   const fields = Object.fromEntries(allowed.filter(key => Object.hasOwn(body, key)).map(key => [key, body[key]]));
   for (const [key, value] of Object.entries(fields)) {
     if (typeof value !== 'string') throw failure(400, `Invalid ${key.replaceAll('_', ' ')}.`);
@@ -93,6 +93,15 @@ export function createUserInvitations({ db, transaction, sendEmail, frontendUrl,
           if (await auth.findOne({ email: profile.email }, options) || await users.findOne({ email: profile.email }, options)) {
             throw failure(409, 'An account with this email already exists.');
           }
+          // Manual registrations receive a server-generated numeric identifier.
+          // Keep it as a string to preserve every digit of the 64-bit value.
+          let externalId;
+          for (let attempt = 0; attempt < 5; attempt += 1) {
+            const candidate = randomBytes(8).readBigUInt64BE().toString();
+            if (!await users.findOne({ externalId: candidate }, options)) { externalId = candidate; break; }
+          }
+          if (!externalId) throw failure(503, 'Unable to assign an external ID. Please try again.');
+          profile.externalId = externalId;
           await auth.insertOne({ _id: authId, email: profile.email, role: profile.role,
             isVerified: true, passwordSetupRequired: true, registrationSource: 'manual',
             registeredBy: String(actor._id), sourceIsActive: true, sourceDeletedAt: null,
@@ -109,7 +118,7 @@ export function createUserInvitations({ db, transaction, sendEmail, frontendUrl,
       let result;
       try { result = await deliver(authId, requestOrigin); }
       catch { result = { invitationDelivery: 'failed', invitationExpiresAt: null }; }
-      return { authId: String(authId), name: profile.name, email: profile.email, ...result };
+      return { authId: String(authId), externalId: profile.externalId, name: profile.name, email: profile.email, ...result };
     },
     async resend(id, requestOrigin) {
       if (!ObjectId.isValid(id)) throw failure(404, 'Invitable account not found.');

@@ -30,49 +30,46 @@
   max-height: min(90dvh, 860px);
   margin: auto;
   padding: 0;
-  overflow-y: auto;
-  border: 1px solid #dce5df;
-  border-radius: 18px;
-  background: #fff;
-  color: #183528;
-  box-shadow: 0 24px 80px #0003;
+  overflow: hidden;
+  border: 1px solid var(--admin-line, hsl(var(--border)));
+  border-radius: var(--panel-radius);
+  background: var(--admin-surface, hsl(var(--card)));
+  color: var(--admin-ink, hsl(var(--foreground)));
+  box-shadow: var(--shadow-panel);
 }
-.admin-register-dialog::backdrop { background: #071b14a6; backdrop-filter: blur(3px); }
-.admin-register-heading { display: flex; align-items: center; gap: 12px; padding: 22px 24px; border-bottom: 1px solid #e4eae6; }
+.admin-register-dialog::backdrop { background: rgb(0 0 0 / 40%); }
+.admin-register-heading { flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 22px 24px; border-bottom: 1px solid var(--admin-line, hsl(var(--border))); }
 .admin-register-heading h2 { margin: 0; font-size: 18px; font-weight: 750; line-height: 1.4; }
-.admin-register-heading p { margin: 4px 0 0; color: #596a61; font-size: 12px; line-height: 1.6; }
-.admin-register-icon { display: grid; flex-shrink: 0; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #e9f6ee; color: #08733b; }
-.admin-register-close { display: grid; place-items: center; flex-shrink: 0; margin-left: auto; width: 36px; height: 36px; border-radius: 9px; color: #52635a; }
-.admin-register-close:hover { background: #f0f4f1; }
-.admin-register-body { padding: 20px 24px; }
-.admin-register-note { display: flex; gap: 10px; align-items: flex-start; padding: 13px; border: 1px solid #cde7d6; border-radius: 10px; background: #eff9f2; color: #245637; }
+.admin-register-heading p { margin: 4px 0 0; color: var(--admin-muted, hsl(var(--muted-foreground))); font-size: 12px; line-height: 1.6; }
+.admin-register-icon { display: grid; flex-shrink: 0; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--color-primary-soft); color: hsl(var(--primary)); }
+.admin-register-close { display: grid; place-items: center; flex-shrink: 0; margin-left: auto; width: 36px; height: 36px; border-radius: 9px; color: var(--admin-muted); }
+.admin-register-close:hover { background: var(--admin-soft); }
+.admin-register-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 20px 24px; }
+.admin-register-note { display: flex; gap: 10px; align-items: flex-start; padding: 13px; border: 1px solid var(--admin-line); border-radius: 10px; background: var(--admin-soft); color: var(--admin-ink); }
 .admin-register-note svg { flex-shrink: 0; margin-top: 2px; }
 .admin-register-note p { margin: 0; font-size: 12px; line-height: 1.7; }
-.admin-register-required { margin: 18px 0 12px; font-size: 11px; color: #596a61; }
+.admin-register-required { margin: 18px 0 12px; font-size: 11px; color: var(--admin-muted, hsl(var(--muted-foreground))); }
 .admin-register-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .admin-register-field { display: flex; min-width: 0; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 600; }
 .admin-register-wide { grid-column: 1 / -1; }
-.admin-register-field :is(input, select) { min-height: 44px; width: 100%; padding: 10px 12px; border: 1px solid #ccd8cf; border-radius: 8px; background: #fff; color: #183528; font-size: 14px; font-weight: 400; outline: none; }
-.admin-register-field :is(input, select):focus { border-color: #008f43; box-shadow: 0 0 0 3px #008f431f; }
-.admin-register-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 16px 24px; border-top: 1px solid #e4eae6; }
-.admin-register-error { margin-top: 16px; padding: 12px; border: 1px solid #fecaca; border-radius: 8px; background: #fff1f2; color: #9f1239; font-size: 13px; line-height: 1.6; }
-.admin-register-result { padding: 26px 24px 0; }
+.admin-register-field :is(input, select) { min-height: 44px; width: 100%; padding: 10px 12px; border: 1px solid var(--admin-line); border-radius: var(--radius); background: var(--admin-surface, hsl(var(--card))); color: var(--admin-ink, hsl(var(--foreground))); font-size: 14px; font-weight: 400; outline: none; box-shadow: none; }
+.admin-register-field :is(input, select):focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .15); }
+.admin-register-footer { flex-shrink: 0; background: var(--admin-surface, hsl(var(--card))); display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--admin-line, hsl(var(--border))); }
+.admin-register-error { margin-top: 16px; padding: 12px; border: 1px solid #fecaca; border-radius: var(--radius); background: #fff1f2; color: #9f1239; font-size: 13px; line-height: 1.6; }
+.admin-register-result { overflow-y: auto; padding: 26px 24px 0; }
 .admin-register-result h3 { margin: 14px 0 10px; font-size: 18px; font-weight: 700; }
 .admin-register-result p { margin: 10px 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.8; }
-.admin-register-result .admin-register-footer { margin: 24px -24px 0; }
+.admin-register-result .admin-register-footer { flex-shrink: 0; background: var(--admin-surface, hsl(var(--card))); margin: 24px -24px 0; }
+.admin-register-dialog[open] { display: flex; flex-direction: column; }
+.admin-register-dialog > form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.admin-register-field input[type="date"] { min-width: 0; }
+.admin-register-field :is(input, select):disabled { opacity: .65; }
+.admin-register-close:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
 .admin-user-invitation { display: flex; align-items: flex-start; flex-direction: column; gap: 6px; margin-top: 6px; font-size: 11px; font-weight: 500; }
 .admin-invitation-badge { color: #146c3a; }
 .admin-invitation-badge.is-failed { color: #b45309; }
 .admin-user-invitation button { display: inline-flex; align-items: center; gap: 5px; padding-block: 4px; color: #146c3a; text-decoration: underline; text-underline-offset: 3px; }
 .admin-user-invitation button:disabled { opacity: .5; }
-.dark .admin-register-dialog { background: #181d1a; color: #edf4ef; border-color: #38443c; }
-.dark .admin-register-heading p, .dark .admin-register-required { color: #b2c3b8; }
-.dark .admin-register-heading, .dark .admin-register-footer { border-color: #38443c; }
-.dark .admin-register-field :is(input, select) { background: #222b25; color: #edf4ef; border-color: #4b5c51; }
-.dark .admin-register-note { background: #193524; color: #cef1d9; border-color: #366b47; }
-.dark .admin-register-close { color: #b2c3b8; }
-.dark .admin-register-close:hover { background: #303d34; }
-.dark .admin-register-icon { background: #193524; color: #8de3ad; }
 .dark .admin-invitation-badge, .dark .admin-user-invitation button { color: #8de3ad; }
 .dark .admin-invitation-badge.is-failed { color: #fcd195; }
 @media (max-width: 480px) {

@@ -7,7 +7,7 @@ import { createUserDirectory } from './user-directory.js';
 import { frontendOrigin } from '../../config/frontend-origin.js';
 
 const row = { first_name: 'Ana', middle_name: 'Maria', last_name: 'Cruz', email: ' ANA@example.test ',
-  source_user_type: 'alumni', student_number: '2020-001', contact_no: '09123456789' };
+  source_user_type: 'alumni', address: '123 Sample Street, Manila', birthday: '2000-02-29', student_number: '2020-001', contact_no: '09123456789' };
 const actor = { _id: 'admin', role: 'admin' };
 const at = new Date('2026-11-24T08:00:00Z');
 const same = (a, b) => a instanceof Date || b instanceof Date ? +a === +b : String(a) === String(b);
@@ -78,6 +78,10 @@ test('manual registration creates linked passwordless records and emails a hashe
   assert.equal(String(profile.authId), String(account._id));
   assert.equal(profile.name, 'Ana Maria Cruz');
   assert.equal(profile.studentId, '2020-001');
+  assert.match(profile.externalId, /^\d{1,20}$/);
+  assert.equal(result.externalId, profile.externalId);
+  assert.equal(profile.address, row.address);
+  assert.equal(profile.birthday, row.birthday);
   assert.equal(result.invitationDelivery, 'accepted');
   assert.equal(sent[0].to, 'ana@example.test');
   const token = new URL(sent[0].url).searchParams.get('token');
@@ -179,4 +183,29 @@ test('only administrators see invitation delivery and password-setup status in t
   const [memberRow] = await list({ _id: 'other-member', role: 'student' });
   assert.equal(memberRow.invitationStatus, undefined);
   assert.equal(memberRow.email, undefined);
+});
+
+
+test('registration requires complete personal details and rejects invalid dates and identifiers', () => {
+  for (const key of ['address', 'birthday']) {
+    assert.throws(() => invitationProfile({ ...row, [key]: ' ' }), error => error.status === 400);
+  }
+  for (const birthday of ['2001-02-29', '2000-02-30', '2099-01-01', '2000-13-01', 'yesterday']) {
+    assert.throws(() => invitationProfile({ ...row, birthday }), error => error.status === 400);
+  }
+  assert.throws(() => invitationProfile({ ...row, address: 'x'.repeat(1001) }), error => error.status === 400);
+});
+
+
+test('manual registration automatically assigns distinct IDs and ignores client-provided identifiers', async () => {
+  const f = fixture();
+  const first = await f.service.register({ ...row, external_id: '123', externalId: '456' }, actor);
+  const second = await f.service.register({ ...row, email: 'another@example.test' }, actor);
+  assert.match(first.externalId, /^\d{1,20}$/);
+  assert.match(second.externalId, /^\d{1,20}$/);
+  assert.notEqual(first.externalId, second.externalId);
+  assert.notEqual(first.externalId, '123');
+  assert.notEqual(first.externalId, '456');
+  assert.equal(f.records.users[0].externalId, first.externalId);
+  assert.equal(f.records.users[1].externalId, second.externalId);
 });

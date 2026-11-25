@@ -4,11 +4,12 @@ import api from '../../utils/axios';
 import { AdminButton } from '../../components/admin/AdminUI';
 
 const initial = { first_name: '', middle_name: '', last_name: '', extension_name: '', email: '',
-  contact_no: '', student_number: '', source_user_type: 'alumni', program: '', year_level: '', section: '', status: 'Graduated' };
+  address: '', birthday: '', contact_no: '', student_number: '', source_user_type: 'alumni', program: '', year_level: '', section: '', status: 'Graduated' };
 const fields = [
   ['first_name', 'First name', true, 255], ['last_name', 'Last name', true, 255],
   ['middle_name', 'Middle name', false, 255], ['extension_name', 'Extension name', false, 255],
-  ['email', 'Email address', true, 254], ['contact_no', 'Contact number', false, 20],
+  ['birthday', 'Birthday', true, 10],
+  ['address', 'Address', true, 1000], ['email', 'Email address', true, 254], ['contact_no', 'Contact number', false, 20],
   ['student_number', 'Student number', false, 100], ['program', 'Program / Course', false, 255],
   ['year_level', 'Year level', false, 255], ['section', 'Section', false, 255], ['status', 'Academic status', false, 255],
 ];
@@ -24,8 +25,10 @@ export default function RegisterUserDialog({ onClose, onRegistered }) {
 
   useEffect(() => {
     const element = dialog.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     element.showModal();
-    return () => element.close();
+    return () => { element.close(); document.body.style.overflow = previousOverflow; };
   }, []);
   useEffect(() => {
     if (!cooldown) return;
@@ -80,6 +83,7 @@ export default function RegisterUserDialog({ onClose, onRegistered }) {
           {result.invitationDelivery === 'accepted' ? <CheckCircle2 size={36} className="text-emerald-600" /> : <AlertCircle size={36} className="text-amber-600" />}
           <h3>{result.invitationDelivery === 'accepted' ? 'User registered. Invitation sent.' : 'User registered. Email needs a retry.'}</h3>
           <p><strong>{result.name}</strong> now has an account for <strong>{result.email}</strong>.</p>
+          <p>External ID: <strong>{result.externalId}</strong></p>
           <p>{result.invitationDelivery === 'accepted'
             ? 'The email provider accepted the invitation. They can open the link within 24 hours and set their own password. Ask them to check their spam folder too.'
             : 'The email provider could not send the invitation. Their account is saved. Check the email configuration, then resend the invitation here or from the user list.'}</p>
@@ -96,7 +100,7 @@ export default function RegisterUserDialog({ onClose, onRegistered }) {
         <form onSubmit={submit}>
           <div className="admin-register-body">
             <div className="admin-register-note"><Mail size={18} /><p>An invitation will be emailed after registration. The user will verify their email and create a password. No temporary password is needed.</p></div>
-            <p className="admin-register-required">Fields marked * are required.</p>
+            <p className="admin-register-required">Fields marked * are required. External ID is assigned automatically.</p>
             <div className="admin-register-grid">
               <label className="admin-register-field admin-register-wide">Account type *
                 <select value={form.source_user_type} disabled={saving} onChange={event => {
@@ -106,9 +110,10 @@ export default function RegisterUserDialog({ onClose, onRegistered }) {
                 }}><option value="alumni">Alumni</option><option value="student">Student</option></select>
               </label>
               {fields.map(([key, label, required, maxLength]) => (
-                <label key={key} className={`admin-register-field ${key === 'email' || key === 'program' ? 'admin-register-wide' : ''}`}>
+                <label key={key} className={`admin-register-field ${['email', 'program', 'address'].includes(key) ? 'admin-register-wide' : ''}`}>
                   {label}{required ? ' *' : ''}
-                  <input name={key} type={key === 'email' ? 'email' : key === 'contact_no' ? 'tel' : 'text'}
+                  <input name={key} type={key === 'email' ? 'email' : key === 'contact_no' ? 'tel' : key === 'birthday' ? 'date' : 'text'}
+                    max={key === 'birthday' ? new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) : undefined}
                     value={form[key]} required={required} maxLength={maxLength} disabled={saving}
                     autoComplete="off" onChange={event => setForm(previous => ({ ...previous, [key]: event.target.value }))} />
                 </label>

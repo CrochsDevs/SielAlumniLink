@@ -4,7 +4,7 @@ const publicDetails = ['contactEmail', 'profileLinks', 'projects', 'research', '
 const privateFields = ['email', 'studentId', 'yearLevel', 'section', 'academicStatus', 'graduatedAt',
     'contactNumber', 'createdAt', 'updatedAt', 'profileViews', 'profilePicturePublicId', 'bannerImagePublicId',
     'employmentStatus', 'employmentUpdatedAt', 'employmentRevision', 'historyRevision',
-    'firstName', 'middleName', 'lastName', 'extensionName'];
+    'firstName', 'middleName', 'lastName', 'extensionName', 'externalId', 'address', 'birthday'];
 const pick = (value, fields) => Object.fromEntries(fields.filter(key => value && Object.hasOwn(value, key)).map(key => [key, value[key]]));
 export const profileProjection = Object.fromEntries([...memberFields, ...publicDetails, ...privateFields, 'education', 'employmentHistory', 'sourceIsActive', 'sourceDeletedAt'].map(key => [key, 1]));
 

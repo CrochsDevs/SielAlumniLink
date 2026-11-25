@@ -67,6 +67,21 @@ export function mapSyncedUser(entry, source) {
     academicStatus: academicStatus || (source === 'alumni' ? 'Graduated' : ''),
     contactNumber: text(entry, ['contactNumber', 'contact_number', 'contactnumber', 'contact_no', 'mobile', 'phone', 'cp_number'], 60),
   };
+  // Keep birthdays as calendar dates, without timezone conversion.
+  const birthdayAliases = ['birthday', 'birth_date', 'date_of_birth', 'dateOfBirth'];
+  if (birthdayAliases.some(alias => own(entry, alias))) {
+    const birthday = text(entry, birthdayAliases, 10);
+    if (birthday) {
+      const parsed = new Date(`${birthday}T00:00:00Z`);
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date());
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || !Number.isFinite(+parsed)
+        || parsed.toISOString().slice(0, 10) !== birthday || birthday < '0001-01-01' || birthday > today) {
+        throw new TypeError('Birthday must be a valid date that is not in the future');
+      }
+    }
+    result.birthday = birthday || null;
+  }
+  if (own(entry, 'address')) result.address = text(entry, ['address'], 1000) || null;
   for (const [key, value, aliases] of [
     ['firstName', firstName, ['firstName', 'first_name', 'firstname', 'given_name']],
     ['middleName', middleName, ['middleName', 'middle_name', 'middlename']],

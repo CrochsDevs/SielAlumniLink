@@ -74,3 +74,17 @@ test('source inactivity and deletion block both sign-in and existing sessions', 
   }
   assert.equal(activeAccount({ ...account, sourceIsActive: true, sourceDeletedAt: null }), true);
 });
+
+
+test('CAIS personal details survive repeat mapping and omitted values remain untouched', () => {
+  const mapped = mapSyncedUser({ email: 'ana@example.test', name: 'Ana', external_id: '9007199254740993',
+    address: ' Manila ', birth_date: '2000-02-29' }, 'student');
+  assert.equal(mapped.birthday, '2000-02-29');
+  assert.equal(mapped.address, 'Manila');
+  const repeated = mapSyncedUser(mapped);
+  for (const key of ['externalId', 'address', 'birthday']) assert.equal(repeated[key], mapped[key]);
+  const partial = mapSyncedUser({ name: 'Ana', email: 'ana@example.test' });
+  assert.equal(Object.hasOwn(partial, 'birthday'), false);
+  assert.equal(Object.hasOwn(partial, 'address'), false);
+  assert.throws(() => mapSyncedUser({ birthday: '2001-02-29' }), /Birthday/);
+});
