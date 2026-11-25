@@ -165,17 +165,6 @@ export default function AdminUsers() {
     fetchAudit();
   }, [fetchUsers, fetchAudit]);
 
-  // Auto-refresh every 30s so Last Login / Status stay current
-  // while the admin keeps this page open.
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (document.hidden) return;
-      fetchUsers();
-      fetchAudit();
-    }, 30000);
-    return () => clearInterval(id);
-  }, [fetchUsers, fetchAudit]);
-
   // Per-email last login/logout from the audit trail (persistent,
   // survives server restarts — unlike socket lastSeen).
   const lastActivity = useMemo(() => {
