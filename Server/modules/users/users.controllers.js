@@ -1,37 +1,54 @@
-import { community } from '../community/community.runtime.js';
-import UserModel from './users.models.js';
-import AuthModel from '../auth/auth.models.js';
-import { fetchFromCAIS } from '../sync/cais.service.js';
-import { mapSyncedUser } from '../sync/user-schema.js';
-import { activeAccount } from '../auth/session-token.js';
-import Roles from '../../constant/roles.js';
-import bcrypt from 'bcryptjs';
-import { ConversationModel } from '../messages/messages.models.js';
-import { emitToUser } from '../../realtime/socket.js';
-import { contactUpdates } from './profile-contact.js';
-import { profileOperations } from './profile-operations.js';
-import { EmploymentModel } from '../employment/employment.models.js';
-import { changeExperience, employmentState } from '../employment/employment.policy.js';
-import MagicLinkModel from '../magic/magic.models.js';
-import { visibleProfile } from './profile-visibility.js';
-import { client } from '../../config/db.js';
-import { recordProfileActivity } from '../activity/member-activity.service.js';
-import ActivityModel from '../activity/activity.models.js';
-import { createUserDirectory } from './user-directory.js';
+import { community } from "../community/community.runtime.js";
+import UserModel from "./users.models.js";
+import AuthModel from "../auth/auth.models.js";
+import { fetchFromCAIS } from "../sync/cais.service.js";
+import { mapSyncedUser } from "../sync/user-schema.js";
+import { activeAccount } from "../auth/session-token.js";
+import Roles from "../../constant/roles.js";
+import bcrypt from "bcryptjs";
+import { ConversationModel } from "../messages/messages.models.js";
+import { emitToUser } from "../../realtime/socket.js";
+import { contactUpdates } from "./profile-contact.js";
+import { profileOperations } from "./profile-operations.js";
+import { EmploymentModel } from "../employment/employment.models.js";
+import {
+  changeExperience,
+  employmentState,
+} from "../employment/employment.policy.js";
+import MagicLinkModel from "../magic/magic.models.js";
+import { visibleProfile } from "./profile-visibility.js";
+import { client } from "../../config/db.js";
+import { recordProfileActivity } from "../activity/member-activity.service.js";
+import ActivityModel from "../activity/activity.models.js";
+import { createUserDirectory } from "./user-directory.js";
 
-const listDirectory = createUserDirectory(client.db('SielAlumni'));
+const listDirectory = createUserDirectory(client.db("SielAlumni"));
 
-const auditUser = (req, action, profile, details = '') => ActivityModel.logAdmin(req.user, action,
-  { type: 'user', id: profile.authId || profile._id, label: profile.name || profile.email }, details, req.ip);
+const auditUser = (req, action, profile, details = "") =>
+  ActivityModel.logAdmin(
+    req.user,
+    action,
+    {
+      type: "user",
+      id: profile.authId || profile._id,
+      label: profile.name || profile.email,
+    },
+    details,
+    req.ip,
+  );
 
 const logProfileChange = async (authId, before, after) => {
-  try { await recordProfileActivity(client.db('SielAlumni'), authId, before, after); }
-  catch (error) { console.error('[profile] Unable to record profile activity', error.message); }
+  try {
+    await recordProfileActivity(client.db("SielAlumni"), authId, before, after);
+  } catch (error) {
+    console.error("[profile] Unable to record profile activity", error.message);
+  }
 };
 
 const SYNCABLE_ROLES = [Roles.STUDENT, Roles.ALUMNI];
 
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ''));
+const isValidEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
 
 // Admin-only: bulk upsert from CAIS.
 // Body: { source: 'cais' } pulls live from CAIS_API_URL.
@@ -46,7 +63,7 @@ export const syncUsers = async (req, res) => {
     const { source } = req.body;
     let caisMeta = null;
 
-    if (source === 'cais') {
+    if (source === "cais") {
       const pulled = await fetchFromCAIS();
       users = pulled.users;
       caisMeta = pulled.meta;
@@ -55,47 +72,65 @@ export const syncUsers = async (req, res) => {
     if (!Array.isArray(users) || users.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a non-empty users array'
+        message: "Please provide a non-empty users array",
       });
     }
 
     if (users.length > 5000) {
       return res.status(400).json({
         success: false,
-        message: 'Batch too large (max 5000 per sync)'
+        message: "Batch too large (max 5000 per sync)",
       });
     }
 
-    const summary = { total: users.length, created: 0, updated: 0, skipped: [] };
+    const summary = {
+      total: users.length,
+      created: 0,
+      updated: 0,
+      skipped: [],
+    };
     const seen = new Set();
 
     for (const entry of users) {
       let profileData;
-      try { profileData = mapSyncedUser(entry); }
-      catch (error) {
-        summary.skipped.push({ email: typeof entry?.email === 'string' ? entry.email : null, reason: error.message });
+      try {
+        profileData = mapSyncedUser(entry);
+      } catch (error) {
+        summary.skipped.push({
+          email: typeof entry?.email === "string" ? entry.email : null,
+          reason: error.message,
+        });
         continue;
       }
       const { name, email, role } = profileData;
-      const sourceAccess = Object.fromEntries(['sourceIsActive', 'sourceDeletedAt']
-        .filter(key => Object.hasOwn(profileData, key)).map(key => [key, profileData[key]]));
+      const sourceAccess = Object.fromEntries(
+        ["sourceIsActive", "sourceDeletedAt"]
+          .filter((key) => Object.hasOwn(profileData, key))
+          .map((key) => [key, profileData[key]]),
+      );
 
       if (!isValidEmail(email)) {
-        summary.skipped.push({ email: entry.email || null, reason: 'Invalid email' });
+        summary.skipped.push({
+          email: entry.email || null,
+          reason: "Invalid email",
+        });
         continue;
       }
       if (seen.has(email)) {
-        summary.skipped.push({ email, reason: 'Duplicate in batch' });
+        summary.skipped.push({ email, reason: "Duplicate in batch" });
         continue;
       }
       seen.add(email);
 
       if (!name) {
-        summary.skipped.push({ email, reason: 'Missing name' });
+        summary.skipped.push({ email, reason: "Missing name" });
         continue;
       }
       if (!SYNCABLE_ROLES.includes(role)) {
-        summary.skipped.push({ email, reason: `Invalid role (must be ${SYNCABLE_ROLES.join('/')})` });
+        summary.skipped.push({
+          email,
+          reason: `Invalid role (must be ${SYNCABLE_ROLES.join("/")})`,
+        });
         continue;
       }
 
@@ -103,15 +138,22 @@ export const syncUsers = async (req, res) => {
 
       if (existingAuth) {
         if (existingAuth.disabledAt) {
-          summary.skipped.push({ email, reason: 'Account is disabled' });
+          summary.skipped.push({ email, reason: "Account is disabled" });
           continue;
         }
         if (!SYNCABLE_ROLES.includes(existingAuth.role)) {
-          summary.skipped.push({ email, reason: 'Account role cannot be managed by sync' });
+          summary.skipped.push({
+            email,
+            reason: "Account role cannot be managed by sync",
+          });
           continue;
         }
         // Keep local credentials and admin disablement; source access is separate.
-        if (Object.keys(sourceAccess).length) await AuthModel.updateSourceAccessById(existingAuth._id, sourceAccess);
+        if (Object.keys(sourceAccess).length)
+          await AuthModel.updateSourceAccessById(
+            existingAuth._id,
+            sourceAccess,
+          );
         if (existingAuth.role !== role) {
           await AuthModel.updateRoleById(existingAuth._id, role);
         }
@@ -123,23 +165,32 @@ export const syncUsers = async (req, res) => {
         }
         summary.updated += 1;
       } else {
-        const newAuth = await AuthModel.createSyncedUser({ email, role, ...sourceAccess });
+        const newAuth = await AuthModel.createSyncedUser({
+          email,
+          role,
+          ...sourceAccess,
+        });
         await UserModel.createUserProfile(newAuth._id, profileData);
         summary.created += 1;
       }
     }
 
-    await ActivityModel.logAdmin(req.user, 'users_synced', { type: 'directory', label: 'User directory' },
-      `Created ${summary.created}; updated ${summary.updated}; skipped ${summary.skipped.length}.`, req.ip);
+    await ActivityModel.logAdmin(
+      req.user,
+      "users_synced",
+      { type: "directory", label: "User directory" },
+      `Created ${summary.created}; updated ${summary.updated}; skipped ${summary.skipped.length}.`,
+      req.ip,
+    );
     res.status(200).json({
       success: true,
       data: { ...summary, sources: caisMeta },
-      message: 'Sync complete'
+      message: "Sync complete",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -151,12 +202,12 @@ export const getUsers = async (req, res) => {
     res.status(200).json({
       success: true,
       data,
-      message: "Users fetched successfully"
+      message: "Users fetched successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -165,12 +216,18 @@ export const getMyProfile = async (req, res) => {
   try {
     const user = await UserModel.findByAuthId(req.user._id);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Profile not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Profile not found" });
     }
     const safeUser = visibleProfile(user, req.user, { detail: true });
     res.status(200).json({
       success: true,
-      data: { ...safeUser, role: req.user.role, historyRevision: employmentState(user).historyRevision }
+      data: {
+        ...safeUser,
+        role: req.user.role,
+        historyRevision: employmentState(user).historyRevision,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -181,32 +238,45 @@ export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
     let user = await UserModel.findById(id);
-    
+
     if (!user) {
       user = await UserModel.findByAuthId(id);
     }
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
-    
-    const auth = user.authId ? await AuthModel.findById(user.authId) : user.email ? await AuthModel.findByEmail(user.email) : null;
-    if ((auth && !activeAccount(auth)) || user.sourceIsActive === false || user.sourceDeletedAt) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const auth = user.authId
+      ? await AuthModel.findById(user.authId)
+      : user.email
+        ? await AuthModel.findByEmail(user.email)
+        : null;
+    if (
+      (auth && !activeAccount(auth)) ||
+      user.sourceIsActive === false ||
+      user.sourceDeletedAt
+    )
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     const role = auth?.role || user.role || null;
-    const safeUser = visibleProfile({ ...user, role }, req.user, { detail: true });
+    const safeUser = visibleProfile({ ...user, role }, req.user, {
+      detail: true,
+    });
 
     res.status(200).json({
       success: true,
       data: { ...safeUser, role },
-      message: "User fetched successfully"
+      message: "User fetched successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -214,43 +284,43 @@ export const getUserById = async (req, res) => {
 export const createUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    
+
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please provide name, email, and password"
+        message: "Please provide name, email, and password",
       });
     }
-    
+
     const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User with this email already exists"
+        message: "User with this email already exists",
       });
     }
-    
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    
+
     const newUser = await UserModel.create({
       name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
     });
-    
+
     const { password: _, ...safeUser } = newUser;
-    await auditUser(req, 'user_created', newUser, 'Created a directory user.');
-    
+    await auditUser(req, "user_created", newUser, "Created a directory user.");
+
     res.status(201).json({
       success: true,
       data: safeUser,
-      message: "User created successfully"
+      message: "User created successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -264,7 +334,7 @@ export const updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
@@ -277,20 +347,25 @@ export const updateUser = async (req, res) => {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid email format"
+          message: "Invalid email format",
         });
       }
       const taken = await AuthModel.findByEmail(email);
       if (taken && String(taken._id) !== String(user.authId)) {
         return res.status(400).json({
           success: false,
-          message: "Email is already used by another account"
+          message: "Email is already used by another account",
         });
       }
       updateData.email = email;
       if (user.authId) {
         await AuthModel.updateEmailById(user.authId, email);
-        await auditUser(req, 'email_changed', user, `Login email changed to ${email}.`);
+        await auditUser(
+          req,
+          "email_changed",
+          user,
+          `Login email changed to ${email}.`,
+        );
       }
       emailChanged = true;
     }
@@ -299,20 +374,30 @@ export const updateUser = async (req, res) => {
 
     const updatedUser = await UserModel.findById(id);
     const { password, ...safeUser } = updatedUser;
-    const fields = Object.keys(updateData).filter(field => updateData[field] !== user[field] && !(field === 'email' && user.authId && emailChanged));
-    if (fields.length) await auditUser(req, 'user_updated', updatedUser, `Updated fields: ${fields.join(', ')}.`);
+    const fields = Object.keys(updateData).filter(
+      (field) =>
+        updateData[field] !== user[field] &&
+        !(field === "email" && user.authId && emailChanged),
+    );
+    if (fields.length)
+      await auditUser(
+        req,
+        "user_updated",
+        updatedUser,
+        `Updated fields: ${fields.join(", ")}.`,
+      );
 
     res.status(200).json({
       success: true,
       data: { ...safeUser, emailChanged },
       message: emailChanged
         ? "User updated. Email changed — the user must log in again."
-        : "User updated successfully"
+        : "User updated successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -320,37 +405,49 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await UserModel.findById(id);
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
-    
-    const auth = user.authId ? await AuthModel.findById(user.authId) : await AuthModel.findByEmail(user.email);
+
+    const auth = user.authId
+      ? await AuthModel.findById(user.authId)
+      : await AuthModel.findByEmail(user.email);
     if (auth && String(auth._id) === String(req.user._id)) {
-      return res.status(403).json({ success: false, message: 'You cannot delete your own administrator account' });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "You cannot delete your own administrator account",
+        });
     }
     if (auth) {
       // Disable first: even a later cleanup failure must leave login revoked.
       await AuthModel.disableById(auth._id);
-      await auditUser(req, 'account_disabled', { ...user, authId: auth._id }, 'Disabled account and revoked its sessions.');
+      await auditUser(
+        req,
+        "account_disabled",
+        { ...user, authId: auth._id },
+        "Disabled account and revoked its sessions.",
+      );
       await MagicLinkModel.deleteByEmail(auth.email);
       await UserModel.deleteByAuthId(auth._id);
     }
     await UserModel.deleteById(id);
-    await auditUser(req, 'user_deleted', user, 'Removed directory profile.');
-    
+    await auditUser(req, "user_deleted", user, "Removed directory profile.");
+
     res.status(200).json({
       success: true,
-      message: "User deleted successfully"
+      message: "User deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -364,34 +461,41 @@ export const graduateUser = async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide the graduate email'
+        message: "Please provide the graduate email",
       });
     }
 
-    const auth = await AuthModel.findByEmail(String(email).trim().toLowerCase());
+    const auth = await AuthModel.findByEmail(
+      String(email).trim().toLowerCase(),
+    );
     if (!auth) {
       return res.status(404).json({
         success: false,
-        message: 'Account not found'
+        message: "Account not found",
       });
     }
     if (auth.role === Roles.ADMIN) {
       return res.status(403).json({
         success: false,
-        message: 'Cannot graduate an admin account'
+        message: "Cannot graduate an admin account",
       });
     }
 
     if (auth.role !== Roles.ALUMNI) {
       await AuthModel.updateRoleById(auth._id, Roles.ALUMNI);
-      await auditUser(req, 'role_changed', { ...auth, authId: auth._id }, `${auth.role} → alumni (graduation).`);
+      await auditUser(
+        req,
+        "role_changed",
+        { ...auth, authId: auth._id },
+        `${auth.role} → alumni (graduation).`,
+      );
     }
 
     const profile = await UserModel.findByAuthId(auth._id);
     if (profile) {
       await UserModel.updateById(String(profile._id), {
         role: Roles.ALUMNI,
-        academicStatus: 'Graduated',
+        academicStatus: "Graduated",
         graduatedAt: profile.graduatedAt || new Date(),
       });
     } else {
@@ -399,21 +503,26 @@ export const graduateUser = async (req, res) => {
         name: auth.email,
         email: auth.email,
         role: Roles.ALUMNI,
-        academicStatus: 'Graduated',
+        academicStatus: "Graduated",
         graduatedAt: new Date(),
       });
     }
 
-    await auditUser(req, 'user_graduated', { ...auth, authId: auth._id }, 'Marked profile as graduated.');
+    await auditUser(
+      req,
+      "user_graduated",
+      { ...auth, authId: auth._id },
+      "Marked profile as graduated.",
+    );
     res.status(200).json({
       success: true,
       message: `${auth.email} is now an alumnus`,
-      data: { email: auth.email, role: Roles.ALUMNI }
+      data: { email: auth.email, role: Roles.ALUMNI },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -425,7 +534,7 @@ export const updateUserRole = async (req, res) => {
     if (!Object.values(Roles).includes(role)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid role. Allowed: ${Object.values(Roles).join(', ')}`
+        message: `Invalid role. Allowed: ${Object.values(Roles).join(", ")}`,
       });
     }
 
@@ -433,38 +542,46 @@ export const updateUserRole = async (req, res) => {
     if (!profile) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     if (!profile.authId) {
       return res.status(400).json({
         success: false,
-        message: "This profile has no linked login account"
+        message: "This profile has no linked login account",
       });
     }
 
     // Safety: an admin cannot demote/remove their own admin access
-    if (String(profile.authId) === String(req.user._id) && role !== Roles.ADMIN) {
+    if (
+      String(profile.authId) === String(req.user._id) &&
+      role !== Roles.ADMIN
+    ) {
       return res.status(403).json({
         success: false,
-        message: "You cannot remove your own admin role"
+        message: "You cannot remove your own admin role",
       });
     }
 
     await AuthModel.updateRoleById(profile.authId, role);
-    await auditUser(req, 'role_changed', profile, `${profile.role || 'Unspecified'} → ${role}.`);
+    await auditUser(
+      req,
+      "role_changed",
+      profile,
+      `${profile.role || "Unspecified"} → ${role}.`,
+    );
     await UserModel.updateById(String(profile._id), { role });
 
     res.status(200).json({
       success: true,
       message: `Role updated to ${role}`,
-      data: { role }
+      data: { role },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -475,14 +592,41 @@ export const updateUserRole = async (req, res) => {
 export const updateMyProfile = async (req, res) => {
   try {
     let mongoOps;
-    try { mongoOps = profileOperations(req.body); }
-    catch (error) { return res.status(400).json({ success: false, message: error.message }); }
-    const employmentFields = ['employmentHistory', 'employmentStatus', 'employmentRevision', 'employmentUpdatedAt', 'historyRevision'];
-    const touchesEmployment = fields => Object.keys(fields || {}).some(key => employmentFields.includes(key.split('.')[0]));
-    if (touchesEmployment(req.body)) {
-      return res.status(400).json({ success: false, message: 'Use the experience or employment form to update employment records.' });
+    try {
+      mongoOps = profileOperations(req.body);
+    } catch (error) {
+      return res.status(400).json({ success: false, message: error.message });
     }
-    const { name, program, batch, location, bio, skills, education, interests } = req.body;
+    const employmentFields = [
+      "employmentHistory",
+      "employmentStatus",
+      "employmentRevision",
+      "employmentUpdatedAt",
+      "historyRevision",
+    ];
+    const touchesEmployment = (fields) =>
+      Object.keys(fields || {}).some((key) =>
+        employmentFields.includes(key.split(".")[0]),
+      );
+    if (touchesEmployment(req.body)) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message:
+            "Use the experience or employment form to update employment records.",
+        });
+    }
+    const {
+      name,
+      program,
+      batch,
+      location,
+      bio,
+      skills,
+      education,
+      interests,
+    } = req.body;
 
     let updateData;
     try {
@@ -493,7 +637,9 @@ export const updateMyProfile = async (req, res) => {
 
     if (name !== undefined) {
       if (!String(name).trim()) {
-        return res.status(400).json({ success: false, message: "Please provide a name" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Please provide a name" });
       }
       updateData.name = String(name).trim();
     }
@@ -503,8 +649,8 @@ export const updateMyProfile = async (req, res) => {
     if (bio !== undefined) updateData.bio = String(bio).trim();
     // Store Cloudinary URLs and asset IDs, never image buffers/base64 in MongoDB.
     for (const [field, publicIdField, folder] of [
-      ['profilePicture', 'profilePicturePublicId', 'profiles'],
-      ['bannerImage', 'bannerImagePublicId', 'covers'],
+      ["profilePicture", "profilePicturePublicId", "profiles"],
+      ["bannerImage", "bannerImagePublicId", "covers"],
     ]) {
       const value = req.body[field];
       const publicId = req.body[publicIdField];
@@ -513,15 +659,33 @@ export const updateMyProfile = async (req, res) => {
         let valid = false;
         try {
           const url = new URL(value);
-          valid = typeof value === 'string' && value.length <= 2048 && url.protocol === 'https:' &&
-            url.hostname === 'res.cloudinary.com' && url.pathname.startsWith(`/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/`);
-        } catch { /* invalid URL */ }
-        if (!valid) return res.status(400).json({ success: false, message: `Invalid ${field} URL` });
+          valid =
+            typeof value === "string" &&
+            value.length <= 2048 &&
+            url.protocol === "https:" &&
+            url.hostname === "res.cloudinary.com" &&
+            url.pathname.startsWith(
+              `/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/`,
+            );
+        } catch {
+          /* invalid URL */
+        }
+        if (!valid)
+          return res
+            .status(400)
+            .json({ success: false, message: `Invalid ${field} URL` });
       }
-      if (publicId !== undefined && publicId !== null &&
-          (typeof publicId !== 'string' || publicId.length > 200 ||
-           !publicId.startsWith(`alumnilink/${folder}/${req.user._id}/`) || publicId.split('/').includes('..'))) {
-        return res.status(400).json({ success: false, message: `Invalid ${publicIdField}` });
+      if (
+        publicId !== undefined &&
+        publicId !== null &&
+        (typeof publicId !== "string" ||
+          publicId.length > 200 ||
+          !publicId.startsWith(`alumnilink/${folder}/${req.user._id}/`) ||
+          publicId.split("/").includes(".."))
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: `Invalid ${publicIdField}` });
       }
       if (value !== undefined) updateData[field] = value;
       if (publicId !== undefined) updateData[publicIdField] = publicId;
@@ -529,34 +693,81 @@ export const updateMyProfile = async (req, res) => {
     }
     if (skills !== undefined) {
       if (!Array.isArray(skills)) {
-        return res.status(400).json({ success: false, message: "Skills must be an array" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Skills must be an array" });
       }
       updateData.skills = skills.map((s) => String(s).trim()).filter(Boolean);
       if (updateData.skills.length > 10) {
-        return res.status(400).json({ success: false, message: 'You can add up to 10 skills only' });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "You can add up to 10 skills only",
+          });
       }
     }
     if (education !== undefined) updateData.education = education;
     if (interests !== undefined) {
       if (!Array.isArray(interests) || interests.length > 20) {
-        return res.status(400).json({ success: false, message: "Interests must be an array (max 20)" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Interests must be an array (max 20)",
+          });
       }
-      updateData.interests = interests.map((i) => String(i).trim()).filter(Boolean).slice(0, 20);
+      updateData.interests = interests
+        .map((i) => String(i).trim())
+        .filter(Boolean)
+        .slice(0, 20);
     }
 
     const profile = await UserModel.findByAuthId(req.user._id);
     if (!profile) {
-      return res.status(404).json({ success: false, message: "Profile not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Profile not found" });
     }
 
-    const hasUpdates = Object.keys(updateData).length > 0 || Object.keys(mongoOps).length > 0;
+    const hasUpdates =
+      Object.keys(updateData).length > 0 || Object.keys(mongoOps).length > 0;
     if (!hasUpdates) {
-      return res.status(400).json({ success: false, message: "Nothing to update" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Nothing to update" });
     }
 
-    const publicFields = ['name', 'bio', 'skills', 'education', 'interests', 'location'];
-    if (publicFields.some(key => req.body[key] !== undefined) || Object.keys(mongoOps).length || updateData.profilePicture || updateData.bannerImage) {
-      await community.check(req.user, { type: 'profile', targetId: String(profile._id), text: JSON.stringify(Object.fromEntries(publicFields.filter(key => req.body[key] !== undefined).map(key => [key, req.body[key]]))) + (Object.keys(mongoOps).length ? '\n' + JSON.stringify(mongoOps) : ''), images: [updateData.profilePicture, updateData.bannerImage].filter(value => typeof value === 'string') });
+    const publicFields = [
+      "name",
+      "bio",
+      "skills",
+      "education",
+      "interests",
+      "location",
+    ];
+    if (
+      publicFields.some((key) => req.body[key] !== undefined) ||
+      Object.keys(mongoOps).length ||
+      updateData.profilePicture ||
+      updateData.bannerImage
+    ) {
+      await community.check(req.user, {
+        type: "profile",
+        targetId: String(profile._id),
+        text:
+          JSON.stringify(
+            Object.fromEntries(
+              publicFields
+                .filter((key) => req.body[key] !== undefined)
+                .map((key) => [key, req.body[key]]),
+            ),
+          ) +
+          (Object.keys(mongoOps).length ? "\n" + JSON.stringify(mongoOps) : ""),
+        images: [updateData.profilePicture, updateData.bannerImage].filter(
+          (value) => typeof value === "string",
+        ),
+      });
     }
     const finalUpdate = { ...updateData, ...mongoOps };
     await UserModel.updateById(String(profile._id), finalUpdate);
@@ -565,7 +776,10 @@ export const updateMyProfile = async (req, res) => {
 
     await logProfileChange(req.user._id, profile, updated);
 
-    if (updateData.profilePicture !== undefined || updateData.name !== undefined) {
+    if (
+      updateData.profilePicture !== undefined ||
+      updateData.name !== undefined
+    ) {
       try {
         const conversations = await ConversationModel.findMine(req.user._id);
         const recipients = new Set([String(req.user._id)]);
@@ -579,22 +793,28 @@ export const updateMyProfile = async (req, res) => {
           name: safeProfile.name,
           profilePicture: safeProfile.profilePicture || null,
         };
-        recipients.forEach((authId) => emitToUser(authId, 'profile:updated', payload));
+        recipients.forEach((authId) =>
+          emitToUser(authId, "profile:updated", payload),
+        );
       } catch (error) {
-        console.error('[profile] Failed to deliver chat profile update', error);
+        console.error("[profile] Failed to deliver chat profile update", error);
       }
     }
 
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      data: { ...safeProfile, role: req.user.role }
+      data: { ...safeProfile, role: req.user.role },
     });
   } catch (error) {
-    res.status(error.status || (error.code === 'SKILL_LIMIT_EXCEEDED' ? 400 : 500)).json({
-      success: false,
-      message: error.message
-    });
+    res
+      .status(
+        error.status || (error.code === "SKILL_LIMIT_EXCEEDED" ? 400 : 500),
+      )
+      .json({
+        success: false,
+        message: error.message,
+      });
   }
 };
 
@@ -602,15 +822,36 @@ export const updateMyProfile = async (req, res) => {
 export const updateMyExperience = async (req, res) => {
   try {
     const profile = await UserModel.findByAuthId(req.user._id);
-    if (!profile) return res.status(404).json({ success: false, message: 'Profile not found' });
+    if (!profile)
+      return res
+        .status(404)
+        .json({ success: false, message: "Profile not found" });
     const experienceChange = changeExperience(profile, req.body);
-    await community.check(req.user, { type: 'profile', targetId: String(profile._id), text: JSON.stringify(req.body) });
-    const updated = await EmploymentModel.updateProfile(profile, experienceChange);
+    await community.check(req.user, {
+      type: "profile",
+      targetId: String(profile._id),
+      text: JSON.stringify(req.body),
+    });
+    const updated = await EmploymentModel.updateProfile(
+      profile,
+      experienceChange,
+    );
     await logProfileChange(req.user._id, profile, updated);
     const { password, ...safeProfile } = updated;
-    res.status(200).json({ success: true, data: { ...safeProfile, role: req.user.role, historyRevision: employmentState(updated).historyRevision } });
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: {
+          ...safeProfile,
+          role: req.user.role,
+          historyRevision: employmentState(updated).historyRevision,
+        },
+      });
   } catch (error) {
-    res.status(error.status || 500).json({ success: false, message: error.message });
+    res
+      .status(error.status || 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -619,13 +860,19 @@ export const trackProfileView = async (req, res) => {
   try {
     const { id } = req.params;
     if (String(id) === String(req.user._id)) {
-      return res.status(200).json({ success: true, message: 'Own profile — not counted' });
+      return res
+        .status(200)
+        .json({ success: true, message: "Own profile — not counted" });
     }
-    const result = await UserModel.updateById(id, { $inc: { profileViews: 1 } });
+    const result = await UserModel.updateById(id, {
+      $inc: { profileViews: 1 },
+    });
     if (!result) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
-    res.status(200).json({ success: true, message: 'Profile view recorded' });
+    res.status(200).json({ success: true, message: "Profile view recorded" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

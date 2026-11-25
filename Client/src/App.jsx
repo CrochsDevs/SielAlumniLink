@@ -1,4 +1,4 @@
-import CommunityGuard from './components/community/CommunityGuard';
+import CommunityGuard from "./components/community/CommunityGuard";
 import React, { lazy, Suspense, useLayoutEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -21,13 +21,19 @@ const AdminUsers = lazy(() => import("./pages/admin/adminUsers"));
 const AdminAuditLogs = lazy(() => import("./pages/admin/adminAuditLogs"));
 const AdminTracer = lazy(() => import("./pages/admin/adminTracer"));
 const AdminJobs = lazy(() => import("./pages/admin/adminJobs"));
-const CareerOpportunityPage = lazy(() => import("./pages/CareerOpportunityPage"));
+const CareerOpportunityPage = lazy(
+  () => import("./pages/CareerOpportunityPage"),
+);
 const AdminSurveys = lazy(() => import("./pages/admin/adminSurveys"));
 const AdminEvents = lazy(() => import("./pages/admin/adminEvents"));
 const AdminCertificates = lazy(() => import("./pages/admin/adminCertificates"));
-const AdminActivityAttendance = lazy(() => import("./pages/admin/adminActivityAttendance"));
+const AdminActivityAttendance = lazy(
+  () => import("./pages/admin/adminActivityAttendance"),
+);
 const AdminConnections = lazy(() => import("./pages/admin/adminConnections"));
-const AdminAnnouncements = lazy(() => import("./pages/admin/adminAnnouncements"));
+const AdminAnnouncements = lazy(
+  () => import("./pages/admin/adminAnnouncements"),
+);
 const AdminMessage = lazy(() => import("./pages/admin/adminMessage"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 
@@ -37,7 +43,9 @@ const AlumniAccounts = lazy(() => import("./pages/alumni/alumniAccounts"));
 const AlumniMessage = lazy(() => import("./pages/alumni/alumniMessage"));
 const AlumniCareer = lazy(() => import("./pages/alumni/alumniCareer"));
 const AlumniMentorship = lazy(() => import("./pages/alumni/alumniMentorship"));
-const StudentEvaluation = lazy(() => import("./pages/alumni/studentEvaluation"));
+const StudentEvaluation = lazy(
+  () => import("./pages/alumni/studentEvaluation"),
+);
 const AlumniEmployment = lazy(() => import("./pages/alumni/alumniEmployment"));
 const AlumniReferral = lazy(() => import("./pages/alumni/alumniReferral"));
 const AlumniSuccess = lazy(() => import("./pages/alumni/alumniSuccess"));
@@ -46,10 +54,14 @@ const AlumniEvents = lazy(() => import("./pages/alumni/alumniEvents"));
 const AlumniTracer = lazy(() => import("./pages/alumni/alumniTracer"));
 const AlumniRequests = lazy(() => import("./pages/alumni/alumniRequests"));
 const AlumniSurveys = lazy(() => import("./pages/alumni/alumniSurveys"));
-const AlumniSurveyAnswer = lazy(() => import("./pages/alumni/alumniSurveyAnswer"));
+const AlumniSurveyAnswer = lazy(
+  () => import("./pages/alumni/alumniSurveyAnswer"),
+);
 const SearchResults = lazy(() => import("./pages/search/SearchResults"));
 const CommunityStatus = lazy(() => import("./pages/CommunityStatus"));
-const CommunityModeration = lazy(() => import("./pages/admin/CommunityModeration"));
+const CommunityModeration = lazy(
+  () => import("./pages/admin/CommunityModeration"),
+);
 const FeedPage = lazy(() => import("./pages/FeedPage"));
 
 const StudentDashboard = lazy(() => import("./pages/student/studentDashboard"));
@@ -58,11 +70,19 @@ const StudentJourney = lazy(() => import("./pages/student/studentJourney"));
 const StudentPortfolio = lazy(() => import("./pages/student/studentPortfolio"));
 const StudentCareer = lazy(() => import("./pages/student/studentCareer"));
 const StudentReferrals = lazy(() => import("./pages/student/studentReferrals"));
-const StudentMentorship = lazy(() => import("./pages/student/studentMentorship"));
-const StudentInternship = lazy(() => import("./pages/student/studentInternship"));
+const StudentMentorship = lazy(
+  () => import("./pages/student/studentMentorship"),
+);
+const StudentInternship = lazy(
+  () => import("./pages/student/studentInternship"),
+);
 const StudentReadiness = lazy(() => import("./pages/student/studentReadiness"));
-const StudentCompetency = lazy(() => import("./pages/student/studentCompetency"));
-const StudentCertificates = lazy(() => import("./pages/student/studentCertificate"));
+const StudentCompetency = lazy(
+  () => import("./pages/student/studentCompetency"),
+);
+const StudentCertificates = lazy(
+  () => import("./pages/student/studentCertificate"),
+);
 const StudentEvents = lazy(() => import("./pages/student/studentEvents"));
 const MeetingRoom = lazy(() => import("./pages/meetings/MeetingRoom"));
 const StudentRequests = lazy(() => import("./pages/student/studentRequests"));
@@ -78,7 +98,11 @@ import { Roles } from "./utils/roles";
 import { scrollToTop } from "./lib/scroll";
 import { setWorkspaceThemeEnabled } from "./lib/theme";
 
-const ProtectedRoute = ({ children, allowedRoles, allowPasswordSetup = false }) => {
+const ProtectedRoute = ({
+  children,
+  allowedRoles,
+  allowPasswordSetup = false,
+}) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
@@ -189,10 +213,38 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/community-status" element={<ProtectedRoute allowPasswordSetup><CommunityStatus /></ProtectedRoute>} />
-      <Route path="/admin/community" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><CommunityModeration /></ProtectedRoute>} />
-      <Route path="/admin/post-reports" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><Navigate to={{ pathname: '/admin/community', search }} replace /></ProtectedRoute>} />
-      <Route path="/admin/feed" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><Navigate to={{ pathname: '/admin/community', search }} replace /></ProtectedRoute>} />
+      <Route
+        path="/community-status"
+        element={
+          <ProtectedRoute allowPasswordSetup>
+            <CommunityStatus />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/community"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <CommunityModeration />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/post-reports"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <Navigate to={{ pathname: "/admin/community", search }} replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/feed"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <Navigate to={{ pathname: "/admin/community", search }} replace />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admin/settings"
         element={
@@ -209,9 +261,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/admin/audit-logs" element={
-        <ProtectedRoute allowedRoles={[Roles.ADMIN]}><AdminAuditLogs /></ProtectedRoute>
-      } />
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <AdminAuditLogs />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admin/tracer"
         element={
@@ -236,9 +293,30 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/admin/jobs/:jobId" element={<ProtectedRoute allowedRoles={[Roles.ADMIN]}><CareerOpportunityPage /></ProtectedRoute>} />
-      <Route path="/alumni/career/:jobId" element={<ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}><CareerOpportunityPage /></ProtectedRoute>} />
-      <Route path="/student/career/:jobId" element={<ProtectedRoute allowedRoles={[Roles.STUDENT]}><CareerOpportunityPage /></ProtectedRoute>} />
+      <Route
+        path="/admin/jobs/:jobId"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <CareerOpportunityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/alumni/career/:jobId"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ALUMNI, Roles.ADMIN]}>
+            <CareerOpportunityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/career/:jobId"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.STUDENT]}>
+            <CareerOpportunityPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admin/jobs"
         element={
@@ -345,9 +423,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/alumni/activity-logs" element={
-        <ProtectedRoute allowedRoles={[Roles.ALUMNI]}><Navigate to="/alumni/accounts?tab=activity" replace /></ProtectedRoute>
-      } />
+      <Route
+        path="/alumni/activity-logs"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.ALUMNI]}>
+            <Navigate to="/alumni/accounts?tab=activity" replace />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/alumni/profile/:id"
         element={
@@ -492,9 +575,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/student/activity-logs" element={
-        <ProtectedRoute allowedRoles={[Roles.STUDENT]}><Navigate to="/student/accounts?tab=activity" replace /></ProtectedRoute>
-      } />
+      <Route
+        path="/student/activity-logs"
+        element={
+          <ProtectedRoute allowedRoles={[Roles.STUDENT]}>
+            <Navigate to="/student/accounts?tab=activity" replace />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/student/profile/:id"
         element={
@@ -508,9 +596,7 @@ function AppRoutes() {
       <Route
         path="/student/journey"
         element={
-          <ProtectedRoute
-            allowedRoles={[Roles.STUDENT]}
-          >
+          <ProtectedRoute allowedRoles={[Roles.STUDENT]}>
             <StudentJourney />
           </ProtectedRoute>
         }
@@ -572,9 +658,7 @@ function AppRoutes() {
       <Route
         path="/student/readiness"
         element={
-          <ProtectedRoute
-            allowedRoles={[Roles.STUDENT]}
-          >
+          <ProtectedRoute allowedRoles={[Roles.STUDENT]}>
             <StudentReadiness />
           </ProtectedRoute>
         }
@@ -644,8 +728,14 @@ function AppRoutes() {
 function MemberPages() {
   const { user, loading } = useAuth();
   const { pathname } = useLocation();
-  const isAuthPage = ["/login", "/logout", "/signup", "/forgot-password", "/verify-magic-link", "/setup-password"]
-    .includes(pathname.replace(/\/+$/, ""));
+  const isAuthPage = [
+    "/login",
+    "/logout",
+    "/signup",
+    "/forgot-password",
+    "/verify-magic-link",
+    "/setup-password",
+  ].includes(pathname.replace(/\/+$/, ""));
   const workspaceTheme = !!user && !user.passwordSetupRequired && !isAuthPage;
   useLayoutEffect(() => {
     setWorkspaceThemeEnabled(workspaceTheme);
@@ -655,8 +745,31 @@ function MemberPages() {
   }
   const isMember = [Roles.STUDENT, Roles.ALUMNI].includes(user?.role);
   return (
-    <div className={isMember ? "member-workspace" : user?.role === Roles.ADMIN ? "member-workspace admin-workspace" : undefined} data-workspace-role={isMember || user?.role === Roles.ADMIN ? user.role : undefined}>
-      <QuarterlyTracerGate><Suspense fallback={isAuthPage || !user ? <GraduationCapLoader label="Loading page" /> : <PageSkeleton pathname={pathname} label="Loading page" />}><AppRoutes /></Suspense></QuarterlyTracerGate>
+    <div
+      className={
+        isMember
+          ? "member-workspace"
+          : user?.role === Roles.ADMIN
+            ? "member-workspace admin-workspace"
+            : undefined
+      }
+      data-workspace-role={
+        isMember || user?.role === Roles.ADMIN ? user.role : undefined
+      }
+    >
+      <QuarterlyTracerGate>
+        <Suspense
+          fallback={
+            isAuthPage || !user ? (
+              <GraduationCapLoader label="Loading page" />
+            ) : (
+              <PageSkeleton pathname={pathname} label="Loading page" />
+            )
+          }
+        >
+          <AppRoutes />
+        </Suspense>
+      </QuarterlyTracerGate>
     </div>
   );
 }
@@ -666,7 +779,9 @@ function ScrollToTop() {
   useLayoutEffect(() => {
     const previous = window.history.scrollRestoration;
     window.history.scrollRestoration = "manual";
-    return () => { window.history.scrollRestoration = previous; };
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
   }, []);
   useLayoutEffect(() => {
     scrollToTop();
@@ -679,9 +794,11 @@ function App() {
     <Router>
       <ScrollToTop />
       <AuthProvider>
-        <CommunityGuard><ChatProvider>
-          <MemberPages />
-        </ChatProvider></CommunityGuard>
+        <CommunityGuard>
+          <ChatProvider>
+            <MemberPages />
+          </ChatProvider>
+        </CommunityGuard>
       </AuthProvider>
     </Router>
   );

@@ -4,7 +4,7 @@ import AccountSettingsNavigation from "../../components/ui/AccountSettingsNaviga
 import MemberActivity from "../../components/profile/MemberActivity";
 import { useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/ui/PageHeader";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { gooeyToast as toast } from 'goey-toast';
 import {
   UserRound,
@@ -260,7 +260,22 @@ const AlumniAccounts = () => {
   const activeTab = TAB_GROUPS.flatMap(group => group.tabs).some(tab => tab.key === params.get("tab")) ? params.get("tab") : "profile";
   const setActiveTab = tab => setParams(previous => { const next = new URLSearchParams(previous); next.set("tab", tab); return next; });
   const [name, setName] = useState(user?.name || "");
+  const [address, setAddress] = useState("");
+  const [birthday, setBirthday] = useState("");
+  const [profileReady, setProfileReady] = useState(false);
+  const [profileLoadError, setProfileLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    let active = true;
+    api.get("/users/me").then(({ data }) => {
+      if (!active) return;
+      setName(data.data.name || "");
+      setAddress(data.data.address || "");
+      setBirthday(data.data.birthday || "");
+      setProfileReady(true);
+    }).catch(() => { if (active) setProfileLoadError(true); });
+    return () => { active = false; };
+  }, []);
   const [pwForm, setPwForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -279,13 +294,14 @@ const AlumniAccounts = () => {
 
   const handleSaveName = async (e) => {
     e.preventDefault();
+    if (!profileReady || saving) return;
     if (!name.trim()) {
       toast.error("Error", { description: "Please enter your name" });
       return;
     }
     setSaving(true);
     try {
-      await api.put("/users/me", { name: name.trim() });
+      await api.put("/users/me", { name: name.trim(), address: address.trim(), birthday });
       await refreshUser();
       toast.success("Saved", { description: "Your profile has been updated." });
     } catch (err) {
@@ -385,10 +401,26 @@ const AlumniAccounts = () => {
                         className={`${inputClass} cursor-not-allowed !bg-zinc-100 !text-zinc-400 dark:!bg-zinc-800/70 dark:!text-zinc-500`}
                       />
                     </div>
+                    <div>
+                      <label htmlFor="account-birthday" className={labelClass}>Date of birth</label>
+                      <input id="account-birthday" type="date" value={birthday}
+                        onChange={(event) => setBirthday(event.target.value)}
+                        max={new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())}
+                        disabled={!profileReady || saving} autoComplete="bday" className={inputClass} />
+                    </div>
+                    <div>
+                      <label htmlFor="account-address" className={labelClass}>Address</label>
+                      <input id="account-address" type="text" value={address}
+                        onChange={(event) => setAddress(event.target.value)} maxLength={1000}
+                        disabled={!profileReady || saving} autoComplete="street-address"
+                        placeholder="Your complete address" className={inputClass} />
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Your address and date of birth are visible only to you and administrators.</p>
+                    {profileLoadError && <p role="alert" className="text-sm text-red-600">Unable to load your profile. Refresh the page to try again.</p>}
                     <div className="flex justify-end border-t border-zinc-100 pt-4 dark:border-zinc-800">
                       <button
                         type="submit"
-                        disabled={saving}
+                        disabled={saving || !profileReady}
                         className="h-10 rounded-xl bg-brand px-6 text-[13px] font-bold text-white shadow-sm transition hover:bg-brand disabled:opacity-60"
                       >
                         {saving ? "Saving..." : "Save changes"}
