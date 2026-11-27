@@ -6,6 +6,25 @@ export const MENTORSHIP_GOALS = [
 export const GOAL_STATUSES = ['not_started', 'in_progress', 'completed'];
 const fail = message => { throw Object.assign(new Error(message), { status: 400 }); };
 
+export function resumeChecklist(profile = {}, portfolio = {}) {
+  profile ||= {};
+  portfolio ||= {};
+  const filled = value => typeof value === 'string' && !!value.trim();
+  const contact = [profile.contactEmail, profile.contactNumber, profile.location].some(filled);
+  const links = Array.isArray(profile.profileLinks)
+    ? profile.profileLinks.some(link => filled(link?.url))
+    : [profile.portfolioWebsite, profile.website, profile.github, profile.linkedin].some(filled);
+  const sections = [
+    { key: 'about', label: 'About', filled: filled(profile.bio), recordedAt: profile.updatedAt || null },
+    { key: 'contact', label: 'Contact & links', filled: contact || links, recordedAt: profile.updatedAt || null },
+    ...[['skills', 'Skills'], ['projects', 'Projects'], ['research', 'Research Papers'], ['certifications', 'Certifications'], ['seminars', 'Seminars Attended'], ['awards', 'Awards']].map(([key, label]) => {
+      const values = portfolio[key] ?? profile[key];
+      return { key, label, filled: Array.isArray(values) && values.some(entry => filled(entry) || filled(entry?.title)), recordedAt: portfolio[key] !== undefined ? portfolio.updatedAt || null : profile.updatedAt || null };
+    }),
+  ];
+  return sections.map(section => ({ ...section, recordedAt: section.filled ? section.recordedAt : null }));
+}
+
 export function validateGoal(key, input) {
   if (!MENTORSHIP_GOALS.some(goal => goal.key === key)) fail('Unknown mentorship goal');
   if (!input || !GOAL_STATUSES.includes(input.status)) fail('Choose Not Started, In Progress, or Completed');

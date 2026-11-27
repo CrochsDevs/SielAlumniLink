@@ -38,14 +38,12 @@ router.get("/:id/activity", async (req, res) => {
       data: await memberActivity(req.user, req.params.id, req.query),
     });
   } catch (error) {
-    res
-      .status(error.status || 500)
-      .json({
-        success: false,
-        message: error.status
-          ? error.message
-          : "Unable to load activity. Please try again.",
-      });
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.status
+        ? error.message
+        : "Unable to load activity. Please try again.",
+    });
   }
 });
 

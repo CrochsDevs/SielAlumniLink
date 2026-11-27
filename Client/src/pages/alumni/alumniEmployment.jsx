@@ -1,29 +1,56 @@
 import ContentSkeleton from "../../components/ui/Skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Building2, Briefcase, Plus, Trash2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import AlumniSidebar from "../../layout/sidebar/alumni/alumniSidebar";
 import AlumniTopbar from "../../layout/topbar/alumni/alumniTopbar";
-import { FeedDialog } from "../../components/feed/FeedComposer";
 import api from "../../utils/axios";
+import EmploymentSectorSelect from "../../components/career/EmploymentSectorSelect";
 import "./alumniEmployment.css";
 
 const STATUSES = ["Employed", "Self-employed", "Unemployed", "Studying"];
-const INDUSTRIES = [
-  "Agriculture",
-  "Business Services",
-  "Construction",
-  "Education",
-  "Engineering",
-  "Finance",
-  "Government",
-  "Healthcare",
-  "Hospitality",
-  "Information Technology",
-  "Manufacturing",
-  "Marketing",
-  "Retail",
-  "Transportation",
+const OTHER_SECTOR = "Other / Not Specified";
+const EMPLOYMENT_SECTORS = [
+  "Government / Public Sector",
+  "Private Sector",
+  "Local Government Unit (LGU)",
+  "National Government Agency (NGA)",
+  "State Universities and Colleges (SUCs)",
+  "Private Educational Institutions",
+  "Academe / Education",
+  "Information Technology (IT) / ICT",
+  "Business Process Outsourcing (BPO)",
+  "Banking and Finance",
+  "Healthcare and Medical Services",
+  "Manufacturing and Industrial",
+  "Construction and Engineering",
+  "Agriculture, Forestry, and Fisheries",
+  "Hospitality, Tourism, and Food Services",
+  "Retail and Wholesale Trade",
+  "Transportation and Logistics",
+  "Telecommunications",
+  "Media and Communications",
+  "Research and Development",
+  "Non-Government Organizations (NGOs)",
+  "Non-Profit Organizations",
+  "Freelancing / Independent Contractor",
+  "Self-Employed / Entrepreneurship",
+  "Professional and Technical Services",
+  "Legal Services",
+  "Security and Defense",
+  "Energy and Utilities",
+  "Real Estate and Property Management",
+  "Arts, Design, and Creative Industries",
+  "Religious Organizations",
+  "International Organizations",
+  "Social Services and Community Development",
+  "Mining and Quarrying",
+  "Environmental and Natural Resources",
+  "Education and Training Services",
+  "Science and Technology",
+  "Automotive and Transportation Services",
+  "E-commerce and Digital Services",
+  "Other / Not Specified",
 ];
 const emptyForm = {
   employmentStatus: "",
@@ -33,32 +60,18 @@ const emptyForm = {
   location: "",
   startDate: "",
 };
-const emptyPast = {
-  company: "",
-  position: "",
-  industry: "",
-  location: "",
-  startDate: "",
-  endDate: "",
-};
 const card =
   "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6";
 const input =
   "alumni-employment-field mt-1 h-9 w-full min-w-0 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:[color-scheme:dark]";
 const button =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-xs font-semibold text-white hover:bg-brand disabled:opacity-50";
-const monthLabel = (value) =>
-  /^\d{4}-\d{2}/.test(value || "")
-    ? new Date(`${value.slice(0, 7)}-01T00:00:00`).toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
-      })
-    : "Date not provided";
 const fromState = (state) => ({
   ...emptyForm,
   ...Object.fromEntries(
     Object.keys(emptyForm).map((key) => [key, state[key] || ""]),
   ),
+  industry: state.industry === "Other" ? OTHER_SECTOR : state.industry || "",
   employmentStatus: STATUSES.includes(state.employmentStatus)
     ? state.employmentStatus
     : "",
@@ -69,9 +82,6 @@ export default function AlumniEmployment() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [record, setRecord] = useState(null);
   const [form, setForm] = useState(emptyForm);
-  const [past, setPast] = useState(emptyPast);
-  const [showAdd, setShowAdd] = useState(false);
-  const [deleting, setDeleting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -108,9 +118,6 @@ export default function AlumniEmployment() {
       const response = await task();
       setRecord(response.data.data);
       setForm(fromState(response.data.data));
-      setShowAdd(false);
-      setDeleting(null);
-      setPast(emptyPast);
       setMessage(success);
       await refreshUser();
     } catch (err) {
@@ -146,19 +153,10 @@ export default function AlumniEmployment() {
         }}
         required={required}
         maxLength={200}
-        list={name === "industry" ? "employment-industries" : undefined}
         className={input}
       />
     </label>
   );
-  const history = (record?.employmentHistory || [])
-    .map((job, index) => ({ ...job, index }))
-    .sort(
-      (a, b) =>
-        Number(b.current) - Number(a.current) ||
-        (b.startDate || "").localeCompare(a.startDate || ""),
-    );
-
   return (
     <div className="min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <AlumniSidebar
@@ -179,7 +177,7 @@ export default function AlumniEmployment() {
               <h1 className="text-xl font-semibold">My employment</h1>
             </div>
             <p className="mt-2 text-sm leading-6 text-white/85">
-              Keep your current role up to date and track your career journey.
+              Keep your employment status and current role up to date.
             </p>
             {record && (
               <p className="mt-4 text-sm font-semibold">
@@ -224,13 +222,17 @@ export default function AlumniEmployment() {
                   </h2>
                   <p className="mt-1 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
                     A new company or position adds a step to your history.
-                    Previous roles remain available below.
+                    Manage your work history in the Experience section of your profile.
                   </p>
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
+                      if (working && !form.industry.trim()) {
+                        setError("Please select your employment sector.");
+                        return;
+                      }
                       void mutate(
-                        () => api.put("/employment/me", { ...form, revision: record.historyRevision }),
+                        () => api.put("/employment/me", { ...form, industry: form.industry.trim(), revision: record.historyRevision }),
                         "Employment updated.",
                       );
                     }}
@@ -273,7 +275,19 @@ export default function AlumniEmployment() {
                             true,
                           )}
                           {field("position", "Position", form, setForm, true)}
-                          {field("industry", "Industry", form, setForm, true)}
+                          <EmploymentSectorSelect
+                            options={EMPLOYMENT_SECTORS}
+                            value={form.industry}
+                            disabled={busy}
+                            className={input}
+                            onChange={(sector) => {
+                              setForm((previous) => ({
+                                ...previous,
+                                industry: sector,
+                              }));
+                              setMessage("");
+                            }}
+                          />
                           {field("location", "Location", form, setForm)}
                           {field(
                             "startDate",
@@ -311,187 +325,11 @@ export default function AlumniEmployment() {
                     </fieldset>
                   </form>
                 </section>
-                <section className={card}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-semibold">
-                        Career progression
-                      </h2>
-                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        Your current and previous roles
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => setShowAdd(true)}
-                      className={button}
-                    >
-                      <Plus size={15} />
-                      Add past experience
-                    </button>
-                  </div>
-                  <ol className="mt-5 space-y-3">
-                    {!history.length && (
-                      <li className="py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                        No employment history yet.
-                      </li>
-                    )}
-                    {history.map((job) => (
-                      <li
-                        key={job._id || job.index}
-                        className="flex gap-3 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/60"
-                      >
-                        <Briefcase
-                          size={20}
-                          className="mt-1 shrink-0 text-brand"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap gap-2">
-                            <h3 className="break-words text-sm font-semibold">
-                              {job.position || job.role}
-                            </h3>
-                            {job.current && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-brand dark:bg-zinc-800 dark:text-brand">
-                                Current
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-1 break-words text-xs text-zinc-600 dark:text-zinc-300">
-                            {job.company}
-                            {job.industry && ` · ${job.industry}`}
-                          </p>
-                          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            {job.startDate
-                              ? `${monthLabel(job.startDate)} – ${job.current ? "Present" : job.endDate ? monthLabel(job.endDate) : "End date not provided"}`
-                              : job.period || "Dates not provided"}
-                            {job.location && ` · ${job.location}`}
-                          </p>
-                        </div>
-                        {!job.current && (
-                          <button
-                            type="button"
-                            aria-label={`Remove ${job.position || job.role} at ${job.company}`}
-                            onClick={() => setDeleting(job)}
-                            disabled={busy}
-                            className="h-9 rounded-lg p-2 text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                </section>
               </>
             )
           )}
-          <datalist id="employment-industries">
-            {INDUSTRIES.map((industry) => (
-              <option key={industry} value={industry} />
-            ))}
-          </datalist>
         </main>
       </div>
-      {showAdd && (
-        <FeedDialog
-          title="Add past experience"
-          busy={busy}
-          onClose={() => setShowAdd(false)}
-        >
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void mutate(
-                () => api.post("/employment/history", { ...past, revision: record.historyRevision }),
-                "Past experience added.",
-              );
-            }}
-          >
-            <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2">
-              {field("company", "Company", past, setPast, true)}
-              {field("position", "Past position", past, setPast, true)}
-              {field("industry", "Past industry", past, setPast)}
-              {field("location", "Past location", past, setPast)}
-              {field(
-                "startDate",
-                "Past start month",
-                past,
-                setPast,
-                true,
-                "month",
-              )}
-              {field("endDate", "Past end month", past, setPast, true, "month")}
-              {error && (
-                <p
-                  role="alert"
-                  className="text-sm text-red-600 sm:col-span-2 dark:text-red-400"
-                >
-                  {error}
-                </p>
-              )}
-              <div className="flex justify-end gap-2 sm:col-span-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAdd(false)}
-                  className="rounded-lg border border-zinc-200 px-4 text-xs dark:border-zinc-700"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className={button}>
-                  {busy ? "Saving…" : "Add experience"}
-                </button>
-              </div>
-            </fieldset>
-          </form>
-        </FeedDialog>
-      )}
-      {deleting && (
-        <FeedDialog
-          title="Remove past experience?"
-          busy={busy}
-          onClose={() => setDeleting(null)}
-        >
-          <p className="text-sm">
-            Remove {deleting.position || deleting.role} at {deleting.company}{" "}
-            from your career history?
-          </p>
-          {error && (
-            <p
-              role="alert"
-              className="mt-3 text-sm text-red-600 dark:text-red-400"
-            >
-              {error}
-            </p>
-          )}
-          <div className="mt-5 flex justify-end gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setDeleting(null)}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-xs dark:border-zinc-700"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                mutate(
-                  () =>
-                    api.delete(`/employment/history/${deleting.index}`, {
-                      data: { revision: record.historyRevision },
-                    }),
-                  "Experience removed.",
-                )
-              }
-              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white"
-            >
-              {busy ? "Removing…" : "Remove"}
-            </button>
-          </div>
-        </FeedDialog>
-      )}
     </div>
   );
 }

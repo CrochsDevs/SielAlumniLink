@@ -1,7 +1,7 @@
 import { createElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, LayoutGrid, Briefcase, FileText, CalendarDays,
+  Newspaper, LayoutGrid, Briefcase, FileText, CalendarDays,
   ClipboardList, Trophy, UserPlus, MessageSquare, Settings, LogOut, X,
 } from "lucide-react";
 import clsuLogo from "../../../assets/logo/clsu_logo.png";
@@ -12,7 +12,7 @@ let sidebarScrollTop = 0;
 
 const menuGroups = [
   { label: "Overview", items: [
-    { to: "/alumni", label: "Dashboard", icon: LayoutDashboard, end: true, aliases: ["/feed"] },
+    { to: "/alumni", label: "Alumni Feed", icon: Newspaper, end: true, aliases: ["/feed"] },
   ] },
   { label: "Career & Growth", items: [
     { to: "/alumni/career", label: "Career", icon: Briefcase },

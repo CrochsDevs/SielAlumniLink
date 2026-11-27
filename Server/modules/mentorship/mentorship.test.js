@@ -2,12 +2,85 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createMentorshipService } from './mentorship.service.js';
 import { goalSnapshot, validateGoal } from './mentorship.policy.js';
+import { INTERVIEW_QUESTIONS } from './interview.policy.js';
 
 const student = { _id: 'aaaaaaaaaaaaaaaaaaaaaaaa', role: 'student', email: 'student@example.test' };
 const mentor = { _id: 'bbbbbbbbbbbbbbbbbbbbbbbb', role: 'alumni', email: 'mentor@example.test' };
 const stranger = { _id: 'cccccccccccccccccccccccc', role: 'student', email: 'stranger@example.test' };
 const secondMentor = { _id: 'dddddddddddddddddddddddd', role: 'alumni', email: 'second@example.test' };
 const connectionId = 'eeeeeeeeeeeeeeeeeeeeeeee';
+const interviewAnswers = text => Object.fromEntries(INTERVIEW_QUESTIONS.map(q => [q.id, `${text} ${q.id}`]));
+
+test('interview drafts, submission, revisions, and completion persist with private drafts and exact submitted answers', async () => {
+  const { service } = fixture();
+  const work = tracker => tracker.goals[1].interview;
+  let result = await service.interview(student, connectionId, { action: 'draft', revision: 0, answers: { introduction: 'Private draft' } });
+  assert.equal(result.goals[1].status, 'in_progress');
+  assert.equal(work(result).draft.introduction, 'Private draft');
+  assert.equal(work(await service.get(mentor, connectionId)).draft, undefined);
+  assert.equal(work(await service.get(mentor, connectionId)).submission, null);
+  const answers = interviewAnswers('Initial answer');
+  result = await service.interview(student, connectionId, { action: 'submit', revision: 1, answers });
+  assert.equal(work(result).state, 'submitted');
+  assert.deepEqual(work(await service.get(mentor, connectionId)).submission.answers, answers);
+  await assert.rejects(service.interview(student, connectionId, { action: 'draft', revision: 2, answers }), { status: 409 });
+  const feedback = interviewAnswers('Use a specific example');
+  result = await service.interview(mentor, connectionId, { action: 'request_revision', revision: 2, feedback });
+  assert.equal(work(result).state, 'revision_requested');
+  result = await service.interview(student, connectionId, { action: 'draft', revision: 3, answers: interviewAnswers('Revised') });
+  assert.deepEqual(work(result).submission.answers, answers, 'draft edits do not alter submitted evidence');
+  assert.deepEqual(work(result).feedback, feedback);
+  result = await service.interview(student, connectionId, { action: 'submit', revision: 4, answers: interviewAnswers('Revised') });
+  assert.equal(work(result).submission.version, 2);
+  assert.deepEqual(work(result).feedback, {});
+  result = await service.interview(mentor, connectionId, { action: 'complete', revision: 5, feedback: interviewAnswers('Good example') });
+  assert.equal(result.goals[1].status, 'completed');
+  assert.equal(result.summary.percent, 33);
+  assert.equal(work(result).reviewedBy, mentor._id);
+  assert.ok(result.goals[1].completedAt);
+  assert.equal(work(await service.get(student, connectionId)).state, 'completed');
+  await assert.rejects(service.update(mentor, connectionId, 'interview_preparation', { status: 'completed', revision: 6 }), { status: 409 });
+  result = await service.interview(mentor, connectionId, { action: 'request_revision', revision: 6, feedback });
+  assert.equal(result.summary.completed, 0);
+  assert.equal(result.goals[1].completedAt, null);
+});
+
+test('interview access and mutations enforce accepted connection and participant roles', async () => {
+  const f = fixture();
+  const request = { action: 'submit', revision: 0, answers: interviewAnswers('Answer') };
+  for (const actor of [stranger, secondMentor, { ...mentor, role: 'admin' }]) {
+    await assert.rejects(f.service.interview(actor, connectionId, request), { status: 403 });
+  }
+  await assert.rejects(f.service.interview(mentor, connectionId, request), { status: 403 });
+  await assert.rejects(f.service.interview(student, connectionId, { action: 'complete', revision: 0, feedback: interviewAnswers('Feedback') }), { status: 403 });
+  await f.service.interview(student, connectionId, request);
+  const otherConnection = 'ffffffffffffffffffffffff';
+  f.seed('connections', { _id: otherConnection, requesterAuthId: student._id, recipientAuthId: secondMentor._id, status: 'accepted' });
+  assert.equal((await f.service.get(secondMentor, otherConnection)).goals[1].interview.submission, null);
+  f.seed('connections', { _id: connectionId, requesterAuthId: student._id, recipientAuthId: mentor._id, status: 'declined' });
+  await assert.rejects(f.service.interview(mentor, connectionId, { action: 'complete', revision: 1, feedback: interviewAnswers('Feedback') }), { status: 403 });
+  await assert.rejects(f.service.get(student, connectionId), { status: 403 });
+});
+
+test('interview rejects incomplete submissions, malformed answers, and reviews without feedback', async () => {
+  const { service } = fixture();
+  for (const answers of [{}, { introduction: 'Only one answer' }, { ...interviewAnswers('Answer'), extra: 'spoofed' }, { ...interviewAnswers('Answer'), introduction: {} }, { ...interviewAnswers('Answer'), introduction: 'x'.repeat(3001) }]) {
+    await assert.rejects(service.interview(student, connectionId, { action: 'submit', revision: 0, answers }), { status: 400 });
+  }
+  await assert.rejects(service.interview(mentor, connectionId, { action: 'complete', revision: 0, feedback: interviewAnswers('Feedback') }), { status: 409 });
+  await service.interview(student, connectionId, { action: 'submit', revision: 0, answers: interviewAnswers('Answer') });
+  await assert.rejects(service.interview(mentor, connectionId, { action: 'complete', revision: 1, feedback: {} }), { status: 400 });
+  await assert.rejects(service.interview(student, connectionId, { action: 'unknown', revision: 1 }), { status: 400 });
+});
+
+test('concurrent interview saves conflict without overwriting answers', async () => {
+  const { service } = fixture();
+  const results = await Promise.allSettled(['First', 'Second'].map(answer => service.interview(student, connectionId, { action: 'draft', revision: 0, answers: { introduction: answer } })));
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(results.find(result => result.status === 'rejected').reason.status, 409);
+  await assert.rejects(service.interview(student, connectionId, { action: 'draft', revision: 0, answers: {} }), { status: 409 });
+  assert.equal((await service.get(student, connectionId)).goals[1].revision, 1);
+});
 
 function fixture(status = 'accepted') {
   const collections = new Map();
@@ -152,6 +225,34 @@ test('saved portfolio and career preferences start progress automatically withou
   assert.deepEqual((await f.service.get(mentor, connectionId)).summary, tracker.summary);
 });
 
+test('resume checklist exposes each saved section to the student and connected mentor', async () => {
+  const f = fixture();
+  f.seed('users', { _id: student._id, authId: student._id, bio: 'My summary', contactNumber: 'PRIVATE_PHONE', profileLinks: [{ type: 'github', url: 'https://github.com/example' }] });
+  f.seed('student_portfolios', { _id: student._id, skills: ['React'], projects: [{ title: 'Alumni app' }], research: [{ title: 'My paper' }], certifications: ['Certificate'], seminars: ['Workshop'], awards: ['Award'] });
+  const tracker = await f.service.get(mentor, connectionId);
+  const goal = tracker.goals[0];
+  assert.deepEqual(goal.resumeChecklist.map(section => section.label), ['About', 'Contact & links', 'Skills', 'Projects', 'Research Papers', 'Certifications', 'Seminars Attended', 'Awards']);
+  assert.ok(goal.resumeChecklist.every(section => section.filled));
+  assert.equal(goal.activitySources.length, 8);
+  assert.equal(goal.status, 'in_progress', 'filled sections still require mentor confirmation');
+  assert.equal(JSON.stringify(goal.resumeChecklist).includes('PRIVATE_PHONE'), false);
+  assert.deepEqual((await f.service.get(student, connectionId)).goals[0].resumeChecklist, goal.resumeChecklist);
+  assert.equal(f.records('mentorship_goals').length, 0);
+});
+
+test('resume checklist reflects cleared fields without counting empty entries or login email as filled', async () => {
+  const f = fixture();
+  f.seed('users', { _id: student._id, authId: student._id, email: student.email, bio: ' ', contactEmail: ' ', skills: ['Legacy skill'], profileLinks: [], github: 'https://github.com/old' });
+  f.seed('student_portfolios', { _id: student._id, skills: [], projects: [{ title: ' ' }], research: [], certifications: [' '], seminars: [], awards: [] });
+  let goal = (await f.service.get(mentor, connectionId)).goals[0];
+  assert.ok(goal.resumeChecklist.every(section => !section.filled));
+  assert.equal(goal.status, 'not_started');
+  f.seed('users', { _id: student._id, authId: student._id, profileLinks: [{ type: 'website', url: 'https://example.test' }] });
+  goal = (await f.service.get(mentor, connectionId)).goals[0];
+  assert.equal(goal.resumeChecklist.find(section => section.key === 'contact').filled, true);
+  assert.equal(goal.status, 'in_progress');
+});
+
 test('unrelated students and cleared preferences do not invent automatic progress', async () => {
   const f = fixture();
   f.seed('student_portfolios', { _id: stranger._id, skills: ['React'] });
@@ -159,6 +260,26 @@ test('unrelated students and cleared preferences do not invent automatic progres
   f.seed('users', { _id: student._id, authId: student._id, interests: ['Engineering'] });
   f.seed('mentor_match_preferences', { _id: student._id, interests: [], careerGoals: '' });
   assert.equal((await f.service.get(student, connectionId)).summary.inProgress, 0);
+});
+
+test('mentor career review includes actual goals and interests with explicit clearing respected', async () => {
+  const f = fixture();
+  const updatedAt = new Date('2026-11-01');
+  f.seed('users', { _id: student._id, authId: student._id, interests: ['Engineering'], privateField: 'DO_NOT_EXPOSE' });
+  let plan = (await f.service.get(mentor, connectionId)).goals[2].careerPlan;
+  assert.deepEqual(plan.interests, ['Engineering']);
+  assert.equal(plan.careerGoals, '');
+  f.seed('mentor_match_preferences', { _id: student._id, interests: ['Software development'], careerGoals: 'Become a frontend developer\nBuild three projects.', updatedAt, privateField: 'DO_NOT_EXPOSE' });
+  plan = (await f.service.get(mentor, connectionId)).goals[2].careerPlan;
+  assert.deepEqual(plan.interests, ['Software development']);
+  assert.equal(plan.careerGoals, 'Become a frontend developer\nBuild three projects.');
+  assert.deepEqual(plan.goalsUpdatedAt, updatedAt);
+  assert.equal(JSON.stringify(plan).includes('DO_NOT_EXPOSE'), false);
+  f.seed('mentor_match_preferences', { _id: student._id, interests: [], careerGoals: '', updatedAt });
+  plan = (await f.service.get(mentor, connectionId)).goals[2].careerPlan;
+  assert.deepEqual(plan.interests, []);
+  assert.equal(plan.careerGoals, '');
+  await assert.rejects(f.service.get(secondMentor, connectionId), { status: 403 });
 });
 
 test('logging interview practice starts only that connection and only its mentor can complete it', async () => {

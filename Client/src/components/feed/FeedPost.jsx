@@ -86,7 +86,13 @@ function Author({ person, createdAt, audience, compact = false }) {
 function PostContent({ post, onRsvp, busy = false }) {
   const [expanded, setExpanded] = useState(false);
   const details = post.details || {};
-  const longBody = (post.body || "").length > 600;
+  const body = post.body || "";
+  const preview = body.slice(0, 220).split(/\r?\n/).slice(0, 3).join("\n");
+  const longBody = body.length > preview.length;
+  // Keep whole words when the character limit falls in the middle of one.
+  const previewText = longBody && /\S/.test(body[preview.length] || "")
+    ? preview.replace(/\s+\S*$/, "").trimEnd()
+    : preview.trimEnd();
   return (
     <>
       {post.type !== 'update' && <span className="inline-block rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold capitalize text-brand dark:bg-zinc-800 dark:text-brand">
@@ -95,18 +101,18 @@ function PostContent({ post, onRsvp, busy = false }) {
       {post.title && <h3 className="mt-2 text-base font-bold">{post.title}</h3>}
       {post.body && (
         <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
-          {longBody && !expanded ? `${post.body.slice(0, 600)}…` : post.body}
+          {longBody && !expanded ? `${previewText}…` : body}
+          {longBody && (
+            <>{" "}<button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((value) => !value)}
+              className="rounded-sm font-semibold text-zinc-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:text-zinc-300"
+            >
+              {expanded ? "See less" : "See more"}
+            </button></>
+          )}
         </p>
-      )}
-      {longBody && (
-        <button
-          type="button"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((value) => !value)}
-          className="mt-2 min-h-9 text-xs font-semibold text-brand dark:text-brand"
-        >
-          {expanded ? "Show less" : "Read more"}
-        </button>
       )}
       {post.type === "story" && !post.originalPost && (
         <Link

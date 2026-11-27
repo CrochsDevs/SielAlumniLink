@@ -17,6 +17,7 @@ export function createMentorshipRouter(progressService = service, matchingServic
   router.put('/matches/preferences', authorize('student'), action(req => matchingService.save(req.user, req.body)));
   router.get('/:connectionId', action(req => progressService.get(req.user, req.params.connectionId)));
   router.put('/:connectionId/goals/:key', action(req => progressService.update(req.user, req.params.connectionId, req.params.key, req.body)));
+  router.put('/:connectionId/interview', action(req => progressService.interview(req.user, req.params.connectionId, req.body)));
   return router;
 }
 export default createMentorshipRouter();

@@ -305,7 +305,7 @@ const AlumniDashboard = () => {
       <div className="lg:pl-64">
         <AlumniTopbar
           user={user}
-          title="Dashboard"
+          title="Alumni Feed"
           onMenuClick={() => setSidebarOpen(true)}
         />
 

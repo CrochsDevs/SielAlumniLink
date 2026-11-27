@@ -1,5 +1,6 @@
 import { client } from "../../config/db.js";
 import { nameGrams } from "../search/search.names.js";
+import { withTracerEmployment } from "../employment/employment.tracer.js";
 
 export const createUserModel = (db) => {
   const usersCollection = db.collection("users");
@@ -27,7 +28,13 @@ export const createUserModel = (db) => {
           ? { $in: [value, new ObjectId(value)] }
           : authId,
       };
-      return await usersCollection.findOne(query);
+      const profile = await usersCollection.findOne(query);
+      if (!profile) return null;
+      const tracer = await db.collection('tracer_responses').findOne(query, {
+        projection: { status: 1, authId: 1, company: 1, position: 1, location: 1, employmentDate: 1, updatedAt: 1, respondedAt: 1 },
+        sort: { updatedAt: -1, respondedAt: -1, _id: -1 },
+      });
+      return withTracerEmployment(profile, tracer);
     },
 
     async findChatProfilesByAuthIds(authIds) {

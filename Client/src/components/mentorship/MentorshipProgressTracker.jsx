@@ -8,6 +8,8 @@ import { useAuth } from '../../context/useAuth';
 import ProfileAvatar from '../profile/ProfileAvatar';
 import api from '../../utils/axios';
 import MentorProgressWorkspace from './MentorProgressWorkspace';
+import InterviewPractice from './InterviewPractice';
+import { FeedDialog } from '../feed/FeedComposer';
 import { createPendingTask } from '../../utils/pendingTask';
 const STATUSES = [{
   key: 'not_started',
@@ -36,7 +38,11 @@ const date = value => value ? new Date(value).toLocaleDateString('en-US', {
   year: 'numeric',
   timeZone: 'Asia/Manila'
 }) : '';
-function GoalCard({
+function GoalCard(props) {
+  return props.goal.key === 'interview_preparation'
+    ? <InterviewPractice {...props} /> : <ActivityGoalCard {...props} />;
+}
+function ActivityGoalCard({
   goal,
   connectionId,
   onSaved,
@@ -87,16 +93,50 @@ function GoalCard({
         <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{goal.title}</h3><span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${savedStatus.style}`}>{savedStatus.label}</span></div></div>
       </div>
       <p className="mentorship-goal-description mt-3 max-w-2xl text-sm leading-6 text-zinc-500 sm:ml-[60px] dark:text-zinc-400">{isMentor ? goal.description : guidance}</p>
-      {(!!goal.activitySources?.length || goal.note) && <details className="mt-4 text-xs sm:ml-[60px]"><summary className="cursor-pointer py-1 font-medium text-zinc-500 hover:text-brand dark:text-zinc-400">View saved activity{goal.activitySources?.length ? ` (${goal.activitySources.length})` : ''}</summary><div className="mt-2 rounded-lg bg-zinc-50 p-3 leading-6 dark:bg-zinc-800/50"><ul className="space-y-1">{goal.activitySources?.map((source, index) => <li key={index} className="flex items-start gap-2"><CheckCircle2 size={13} className="mt-1.5 shrink-0 text-brand" /><span>{source.label}</span></li>)}</ul>{goal.note && <p className="mt-2 whitespace-pre-wrap break-words text-zinc-600 dark:text-zinc-300">{goal.note}</p>}{goal.updatedAt && <p className="mt-2 text-[11px] text-zinc-400">Updated {date(goal.updatedAt)} by {goal.updatedByName || goal.updatedByRole}</p>}</div></details>}
+      {(goal.resumeChecklist || !!goal.activitySources?.length || goal.note) && <details open={isMentor && !!goal.resumeChecklist} className="mt-4 text-xs sm:ml-[60px]">
+        <summary className="cursor-pointer py-1 font-medium text-zinc-500 hover:text-brand dark:text-zinc-400">
+          {goal.resumeChecklist
+            ? `Portfolio checklist (${goal.resumeChecklist.filter(section => section.filled).length}/${goal.resumeChecklist.length} filled)`
+            : `View saved activity${goal.activitySources?.length ? ` (${goal.activitySources.length})` : ''}`}
+        </summary>
+        <div className="mt-2 rounded-lg bg-zinc-50 p-3 leading-6 dark:bg-zinc-800/50">
+          {goal.resumeChecklist ? <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+            {goal.resumeChecklist.map(section => <li key={section.key} className="flex min-w-0 items-start gap-2">
+              {section.filled ? <CheckCircle2 size={15} aria-hidden="true" className="mt-1 shrink-0 text-brand" /> : <Circle size={15} aria-hidden="true" className="mt-1 shrink-0 text-zinc-400" />}
+              <span>{section.label}<span className={`ml-2 text-[11px] ${section.filled ? 'text-brand' : 'text-zinc-500'}`}>{section.filled ? 'Filled' : 'Not filled yet'}</span></span>
+            </li>)}
+          </ul> : <ul className="space-y-1">{goal.activitySources?.map((source, index) => <li key={index} className="flex items-start gap-2"><CheckCircle2 size={13} className="mt-1.5 shrink-0 text-brand" /><span>{source.label}</span></li>)}</ul>}
+          {goal.note && <p className="mt-2 whitespace-pre-wrap break-words text-zinc-600 dark:text-zinc-300">{goal.note}</p>}
+          {goal.updatedAt && <p className="mt-2 text-[11px] text-zinc-400">Updated {date(goal.updatedAt)} by {goal.updatedByName || goal.updatedByRole}</p>}
+        </div>
+      </details>}
       <div className="mentorship-goal-actions mt-4 flex flex-wrap items-center gap-2 sm:pl-[60px]">
         {!isMentor && goal.status !== 'completed' && goal.key === 'resume_building' && <Link to="/student/portfolio" className={button}>Update portfolio<ArrowRight size={15} /></Link>}
         {!isMentor && goal.status !== 'completed' && goal.key === 'career_planning' && (onCareerPlanning ? <button type="button" onClick={onCareerPlanning} className={button}>Set career goals<ArrowRight size={15} /></button> : <Link to="/student/mentorship" className={button}>Set career goals<ArrowRight size={15} /></Link>)}
-        <button type="button" aria-expanded={expanded} aria-controls={`goal-editor-${connectionId}-${goal.key}`} disabled={busy} onClick={() => setExpanded(value => !value)} className={isMentor || goal.key === 'interview_preparation' ? button : 'inline-flex min-h-11 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'}><Plus size={15} />{isMentor ? goal.status === 'completed' ? 'Edit review' : 'Review goal' : goal.key === 'interview_preparation' ? 'Log practice' : goal.note ? 'Edit activity' : 'Add a note'}</button>
+        <button type="button" aria-haspopup="dialog" aria-expanded={expanded} aria-controls={`goal-editor-${connectionId}-${goal.key}`} disabled={busy} onClick={() => setExpanded(true)} className={isMentor || goal.key === 'interview_preparation' ? button : 'inline-flex min-h-11 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'}><Plus size={15} />{isMentor ? goal.status === 'completed' ? 'Edit review' : 'Review goal' : goal.key === 'interview_preparation' ? 'Log practice' : goal.note ? 'Edit activity' : 'Add a note'}</button>
         {goal.completedAt && <span className="text-xs text-brand dark:text-brand">Confirmed {date(goal.completedAt)}</span>}
       </div>
 
     </div>
-    {expanded && <form id={`goal-editor-${connectionId}-${goal.key}`} onSubmit={save} className="border-t border-zinc-100 bg-zinc-50/70 p-5 sm:p-6 dark:border-zinc-800 dark:bg-zinc-950/40"><fieldset disabled={busy} className="space-y-4">
+    {expanded && <FeedDialog title={`${goal.title} — ${isMentor ? 'Mentor review' : 'Activity note'}`} busy={busy} onClose={() => setExpanded(false)}>
+    {isMentor && goal.key === 'career_planning' && <section aria-label="Mentee career planning details" className="mb-5 space-y-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+      <h3 className="text-sm font-semibold">Mentee's career plan</h3>
+      {!goal.careerPlan ? <p className="text-xs text-zinc-500">Career plan details could not be loaded. Refresh progress and reopen this review.</p> : <>
+        <div>
+          <h4 className="text-xs font-semibold">Career interests</h4>
+          {goal.careerPlan.interests.length ? <ul className="mt-2 flex flex-wrap gap-2">{goal.careerPlan.interests.map((interest, index) => <li key={`${interest}-${index}`} className="max-w-full break-words rounded-lg bg-brand/10 px-3 py-1 text-xs text-brand">{interest}</li>)}</ul> : <p className="mt-1 text-xs text-zinc-500">No career interests saved yet.</p>}
+          {goal.careerPlan.interests.length > 0 && goal.careerPlan.interestsUpdatedAt && <p className="mt-2 text-[11px] text-zinc-500">Last saved {date(goal.careerPlan.interestsUpdatedAt)}</p>}
+        </div>
+        <div>
+          <h4 className="text-xs font-semibold">Career goals</h4>
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{goal.careerPlan.careerGoals || 'No career goals saved yet.'}</p>
+          {goal.careerPlan.careerGoals && goal.careerPlan.goalsUpdatedAt && <p className="mt-2 text-[11px] text-zinc-500">Last saved {date(goal.careerPlan.goalsUpdatedAt)}</p>}
+        </div>
+      </>}
+      {!!goal.activitySources?.length && <div><h4 className="text-xs font-semibold">Saved activity</h4><ul className="mt-2 space-y-1">{goal.activitySources.map((source, index) => <li key={index} className="flex items-start gap-2 text-xs leading-5"><CheckCircle2 size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-brand" /><span>{source.label}</span></li>)}</ul></div>}
+      {goal.note && <div><h4 className="text-xs font-semibold">Previous activity note / feedback</h4><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{goal.note}</p></div>}
+    </section>}
+    <form id={`goal-editor-${connectionId}-${goal.key}`} onSubmit={save}><fieldset disabled={busy} className="space-y-4">
       {isMentor && <label className="block max-w-sm text-xs font-semibold">Mentor review<select aria-label={`Status for ${goal.title}`} value={status} onChange={event => {
             setStatus(event.target.value);
             setError('');
@@ -109,7 +149,7 @@ function GoalCard({
             setError('');
             setExpanded(false);
           }} className="min-h-11 px-3 text-sm text-zinc-500">Cancel</button></div>
-    </fieldset></form>}
+    </fieldset></form></FeedDialog>}
   </article>;
 }
 export default function MentorshipProgressTracker({
@@ -219,7 +259,7 @@ export default function MentorshipProgressTracker({
                 </div>
                 {trackers.length > 1 && <label className="mt-5 block min-w-0 text-xs font-medium">
                   Switch mentor
-                  <select aria-label="Select mentorship connection" value={selected.connectionId} onChange={event => {
+                  <select disabled={dirty} aria-label="Select mentorship connection" value={selected.connectionId} onChange={event => {
                     setSelectedId(event.target.value);
                     setMessage("");
                   }} className={input}>
